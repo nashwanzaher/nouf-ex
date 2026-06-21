@@ -40,7 +40,7 @@ when deployed.
 
 | Layer                | Tech                                                                                  | Files                                                                |
 | -------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Database**         | PostgreSQL 17, SQL files (no migration framework)                                     | `database/schema.sql`, `database/schema-extra.sql`, `database/seed.sql`    |
+| **Database**         | PostgreSQL 17 — 27 tables across schema/schema-extra/views/functions/triggers/roles; migrations folder; `noufex_app` least-privilege role | `database/schema.sql`, `database/schema-extra.sql`, `database/views.sql`, `database/functions.sql`, `database/triggers.sql`, `database/roles.sql`, `database/seed.sql`, `database/migrations/` |
 | **API**              | Node 20 + Express 5 + `pg`                                                            | `app/server/index.ts`                                                  |
 | **DB access wrapper**| `PgDb` — async, mimics `better-sqlite3` API used by the route handlers                | `app/server/db/pg-wrapper.cjs`                                              |
 | **Frontend tooling** | Vite 7 + TypeScript 5.9 + Tailwind 3.4 + shadcn/ui (new-york, slate)                   | `app/vite.config.ts`, `app/tailwind.config.js`, `app/components.json` |
@@ -52,7 +52,7 @@ when deployed.
 | **Tests**            | Vitest 2 + supertest; `pg` mocked globally so tests run offline                       | `app/tests/`, `app/vitest.config.ts`                                 |
 | **Lint / format**    | ESLint 9 (typescript-eslint, react-hooks, react-refresh) + Prettier                   | `app/eslint.config.js`                                               |
 | **Container**        | `node:20-alpine` base, tini PID 1, entrypoint runs the API                            | `Dockerfile`, `docker/entrypoint.sh`                                 |
-| **One-time DB setup**| `db-setup.cjs` reads `.env` and applies the three SQL files in order                   | `scripts/db-setup.cjs`                                           |
+| **One-time DB setup**| `db-setup.cjs` reads `.env`, connects as `postgres` superuser, applies the 8-file pipeline (baseline + schema + extra + views + functions + triggers + roles + seed) plus any pending migrations. After this, the app uses the least-privilege `noufex_app` role. | `scripts/db-setup.cjs`                                           |
 
 ## Request lifecycle (typical)
 

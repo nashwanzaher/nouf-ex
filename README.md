@@ -30,15 +30,21 @@
 │   ├── public/                   # Static assets + JSON snapshots
 │   └── package.json, vite/vitest configs, eslint, tsconfig, …
 │
-├── database/                     # PostgreSQL schema + seed (applied by db:setup)
+├── database/                     # PostgreSQL 17 schema + seed (host-side)
 │   ├── README.md
-│   ├── schema.sql                # Base tables + indexes
-│   ├── schema-extra.sql          # Payments, coupons, refunds, …
-│   └── seed.sql                  # Idempotent demo data
+│   ├── schema.sql                # 16 base tables
+│   ├── schema-extra.sql          # 9 extra tables (payments, coupons, refunds, …)
+│   ├── views.sql                 # 4 read-only views (security_invoker)
+│   ├── functions.sql             # 7 PL/pgSQL trigger functions
+│   ├── triggers.sql              # 9 trigger definitions
+│   ├── roles.sql                 # noufex_app + noufex_owner + noufex_readonly
+│   ├── seed.sql                  # Idempotent demo data (real scrypt hashes)
+│   └── migrations/               # incremental schema changes (NNNN_*.sql)
 │
 ├── scripts/                      # Project-level helpers
 │   ├── README.md
-│   ├── db-setup.cjs              # Apply database/*.sql to the external Postgres
+│   ├── db-setup.cjs              # Applies the 8-file pipeline + migrations
+│   ├── gen-seed-hashes.cjs       # Generates scrypt hashes for seed users
 │   └── test-summary.cjs          # Clean vitest summary
 │
 ├── docker/

@@ -12,7 +12,7 @@ Daily commands. All of them assume your shell is in `app/` unless noted.
 | `npm run api`         | Run the Express API via `tsx` on `API_PORT` (default 3000).           |
 | `npm run api:prod`    | Same as `api` but with `NODE_ENV=production`.                         |
 | `npm run api:build`   | esbuild → single-file `server/index.js` for non-Node-TS deployments.  |
-| `npm run db:setup`    | Apply `database/schema.sql` + extra + seed to the external Postgres.    |
+| `npm run db:setup`    | Apply the canonical SQL pipeline (schema + extra + views + functions + triggers + roles + seed) plus any pending migrations to the external Postgres. |
 | `npm test`            | Vitest run once.                                                      |
 | `npm run test:watch`  | Vitest watch mode.                                                    |
 | `npm run test:coverage` | Vitest with V8 coverage → `coverage/`.                              |

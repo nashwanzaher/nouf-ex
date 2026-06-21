@@ -54,7 +54,7 @@ talks to relative paths (`/api/...`).
 
 - **JSON in, JSON out.** Requests send `Content-Type: application/json`.
   Responses are `application/json; charset=utf-8`.
-- **IDs are integers.** They match the `SERIAL` columns in the schema.
+- **IDs are integers.** They match the `IDENTITY` (auto-increment) columns in the schema.
 - **Errors** look like `{ "error": "human readable", "details"?: zodIssues }`
   with the appropriate 4xx/5xx status.
 - **Pagination** is currently inline (the SQL fetches a window); the

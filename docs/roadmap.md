@@ -15,7 +15,7 @@ This document consolidates the original plans, reviews, and audit reports
 | --------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **TypeScript**        | ✅ 0 errors                                                                            | `tsc -b` (app + node + server projects)      |
 | **ESLint**            | ✅ 0 errors / 0 warnings                                                               | 67 → 0 in audit pass                         |
-| **Database**          | ✅ One external PostgreSQL 17 server, database `noufex_db`. 23 tables + 18+ indexes.   | [`docs/database.md`](database.md)            |
+| **Database**          | ✅ One external PostgreSQL 17 server, database `noufex_db`. **27 tables** + 60+ indexes + 9 triggers + 4 views + 3 roles. App connects as `noufex_app` (least privilege). | [`docs/database.md`](database.md)            |
 | **DB setup**          | ✅ One-time CLI: `npm run db:setup` applies schema + seed                              | `scripts/db-setup.cjs`                   |
 | **API server**        | ✅ Express 5 + `pg`. Scrypt hashing, zod validation, CORS allow-list, in-memory rate-limiter, SPA fallback. | `app/server/index.ts`                          |
 | **Frontend**          | ✅ React 19 + TS strict + Vite 7 + Tailwind + shadcn/ui. 23 routes. AR/EN/ZH i18n.     | `app/src/App.tsx`                            |
@@ -36,7 +36,7 @@ This document consolidates the original plans, reviews, and audit reports
 | **Networking**      | CORS allow-list via `ALLOWED_ORIGINS`. Per-route in-memory rate limiter on `/api/auth/*`.                                                |
 | **Frontend**        | `useSyncExternalStore` for `useIsMobile`. `useDataHook` refactored to a stable `fetcherRef`. Side effects moved out of reducers.        |
 | **Routing**         | `ProtectedRoute` enforces roles for `/admin/*`, `/seller/*`, `/customer/*`. NotFound page covers unknown routes.                        |
-| **Documentation**   | All `.md` files consolidated under `docs/`. SQL data files kept at repo root for `db-setup.cjs` to find them.                            |
+| **Documentation**   | All `.md` files consolidated under `docs/`. SQL files live under `database/` (schema/extra/views/functions/triggers/roles/seed + migrations/).                            |
 | **VS Code**         | 34 → 13 recommended extensions, debug configurations, test runner, lint task, Vitest tasks.                                             |
 
 For the full audit of code-quality fixes, see
@@ -132,11 +132,16 @@ For the full audit of code-quality fixes, see
 │   ├── audit/                    # Code audits, extension audits, reviews
 │   ├── research/                 # Original research + plans + design study
 │   └── assets/                   # Screenshots and design images
-├── ├── database/                    # SQL schema + seed (applied by db-setup)
+├── database/                       # PostgreSQL 17 schema + seed (host-side)
 │   ├── README.md
-│   ├── schema.sql
-│   ├── schema-extra.sql
-│   └── seed.sql
+│   ├── schema.sql                   # 16 base tables
+│   ├── schema-extra.sql             # 9 extra tables (payments, coupons, refunds, …)
+│   ├── views.sql                    # 4 read-only views (security_invoker)
+│   ├── functions.sql                # 7 PL/pgSQL trigger functions
+│   ├── triggers.sql                 # 9 trigger definitions
+│   ├── roles.sql                    # noufex_app + noufex_owner + noufex_readonly + GRANTs
+│   ├── seed.sql                     # demo data (real scrypt passwords)
+│   └── migrations/                  # incremental schema changes (NNNN_*.sql)
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .env / .env.example
@@ -171,9 +176,17 @@ short version:
 
 - When picking up a P0/P1 item, create a branch and reference its P-number
   (e.g. `git commit -m "P0-1: cart→order pipeline"`).
-- When the schema changes, update `database/schema.sql` +
-  `database/schema-extra.sql` together, then re-run `npm run db:setup` to
-  re-apply idempotently.
+- When the schema changes:
+  - **Additive changes** (new columns, tables, indexes): add a new
+    `database/migrations/NNNN_description.sql` file. The next
+    `npm run db:setup` will apply it and record the version in
+    `schema_migrations`.
+  - **Destructive changes** (DROP/RENAME): also use a migration file,
+    with `DO $$ … $$` blocks that check `information_schema` first.
+  - For **demo-data changes**, edit `database/seed.sql` (idempotent
+    via `ON CONFLICT DO NOTHING`).
+  - See [`database/migrations/README.md`](database/migrations/README.md)
+    for the full workflow.
 - After every audit pass, append the diff summary to the relevant file in
   `docs/audit/` (don't overwrite history).
 - VS Code configuration changes belong in `.vscode/` + a corresponding entry

@@ -1,21 +1,26 @@
 # Database — Nouf-ex
 
-Nouf-ex uses **one external PostgreSQL 17 server**. The API container
-connects to it; nothing is created, migrated, or seeded inside the
-container. SQLite is not used.
+Nouf-ex uses **one external PostgreSQL 17 server** as the single source
+of truth. The API container connects to it; nothing is created, migrated,
+or seeded inside the container. SQLite is not used anywhere.
 
 ---
 
 ## 1. Connection
 
-| Item                | Value                                                          |
-| ------------------- | -------------------------------------------------------------- |
-| Engine              | PostgreSQL **17** (external — already running on the host)      |
-| Database            | `noufex_db`                                                    |
-| Username            | `postgres`                                                     |
-| Password            | `CHANGE_ME` (replace with your real password)                  |
-| Port                | `5432`                                                         |
-| Connection string   | `postgresql://postgres:CHANGE_ME@localhost:5432/noufex_db`     |
+| Item              | Value (production)                                                       |
+| ----------------- | ------------------------------------------------------------------------ |
+| Engine            | PostgreSQL **17** (external — already running on the host)               |
+| Database          | `noufex_db`                                                              |
+| **Runtime user**  | **`noufex_app`** (least-privilege role — no superuser)                   |
+| Runtime password | set in `.env` (`CHANGE_ME_APP` placeholder in `.env.example`)           |
+| Port              | `5432`                                                                   |
+| Connection string| `postgresql://noufex_app:<pw>@localhost:5432/noufex_db`                |
+
+The **`postgres`** superuser is used **only** for the one-time
+`npm run db:setup` to create the `noufex_app` role, schema, and seed.
+After that, the app connects as `noufex_app` with only the GRANTs it
+needs (see `database/roles.sql`).
 
 From inside the Docker container, `localhost` is the container itself, so
 `docker-compose.yml` overrides `DB_HOST=host.docker.internal` and adds an
@@ -25,16 +30,22 @@ From inside the Docker container, `localhost` is the container itself, so
 
 ## 2. Where things live
 
-| Concern                | Location                                              |
-| ---------------------- | ----------------------------------------------------- |
-| `.env` template        | [`.env.example`](../.env.example)                     |
-| Live `.env` (gitignored) | `.env`                                              |
-| Schema DDL (base)      | [`database/schema.sql`](../database/schema.sql)           |
-| Schema DDL (extras)    | [`database/schema-extra.sql`](../database/schema-extra.sql) |
-| Seed data              | [`database/seed.sql`](../database/seed.sql)               |
-| One-time setup CLI     | [`scripts/db-setup.cjs`](../scripts/db-setup.cjs) |
-| PgDb wrapper           | [`app/server/db/pg-wrapper.cjs`](../app/server/db/pg-wrapper.cjs)   |
-| API server             | [`app/server/index.ts`](../app/server/index.ts)           |
+| Concern                | Location                                                       |
+| ---------------------- | -------------------------------------------------------------- |
+| `.env` template        | [`.env.example`](../.env.example)                              |
+| Live `.env` (gitignored) | `.env`                                                       |
+| Base schema            | [`database/schema.sql`](../database/schema.sql)                 |
+| Extra tables           | [`database/schema-extra.sql`](../database/schema-extra.sql)     |
+| Read-only views        | [`database/views.sql`](../database/views.sql)                   |
+| PL/pgSQL functions      | [`database/functions.sql`](../database/functions.sql)           |
+| Trigger definitions    | [`database/triggers.sql`](../database/triggers.sql)             |
+| Roles + GRANTs          | [`database/roles.sql`](../database/roles.sql)                   |
+| Demo seed data         | [`database/seed.sql`](../database/seed.sql)                     |
+| Incremental migrations | [`database/migrations/`](../database/migrations/)               |
+| One-time setup CLI     | [`scripts/db-setup.cjs`](../scripts/db-setup.cjs)               |
+| PgDb wrapper           | [`app/server/db/pg-wrapper.cjs`](../app/server/db/pg-wrapper.cjs) |
+| API server             | [`app/server/index.ts`](../app/server/index.ts)                 |
+| Schema README          | [`database/README.md`](../database/README.md)                   |
 
 ---
 
@@ -44,94 +55,166 @@ From inside the Docker container, `localhost` is the container itself, so
 
 1. `DATABASE_URL` (single connection string)
 2. `DB_HOST` + `DB_PORT` + `DB_NAME` + `DB_USER` + `DB_PASSWORD`
-3. Built-in fallback: `postgresql://postgres:CHANGE_ME@localhost:5432/noufex_db`
+
+If **neither** is set, the server **throws** at startup:
+
+```
+DATABASE_URL is not set. Copy .env.example to .env and fill in
+DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).
+```
+
+The runtime `.env`:
 
 ```env
 # .env (committed version lives in .env.example)
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=noufex_db
-DB_USER=postgres
-DB_PASSWORD=CHANGE_ME
-DATABASE_URL=postgresql://postgres:CHANGE_ME@localhost:5432/noufex_db
+DB_USER=noufex_app
+DB_PASSWORD=CHANGE_ME_APP
+DATABASE_URL=postgresql://noufex_app:CHANGE_ME_APP@localhost:5432/noufex_db
+DB_SSL=false                          # set "true" in production when Postgres requires TLS
 ```
 
 When running inside Docker, `docker-compose.yml` overrides these to point at
 `host.docker.internal`:
 
 ```yaml
-DB_HOST: host.docker.internal
-      DATABASE_URL: postgresql://postgres:CHANGE_ME@host.docker.internal:5432/noufex_db
+DB_USER: noufex_app
+DB_PASSWORD: 'CHANGE_ME_APP'
+DATABASE_URL: postgresql://noufex_app:CHANGE_ME_APP@host.docker.internal:5432/noufex_db
+DB_SSL: 'false'
 ```
 
 ---
 
-## 4. Schema overview
+## 4. Schema overview (27 tables)
 
-| Layer          | Tables / files                                                                                             |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| **Identity**   | `users`                                                                                                    |
-| **Catalog**    | `categories`, `stores`, `products`, `product_images`, `product_variants`, `subscriptions`                  |
-| **Commerce**   | `orders`, `order_items`, `cart_items`, `wishlist`, `payments`, `coupons`, `coupon_usage`, `refunds`         |
-| **Engagement** | `reviews`, `addresses`, `notifications`, `messages`, `disputes`                                            |
-| **Operations** | `shipping_methods`, `inventory_log`, `transactions`, `store_balance`, `store_followers`, `admin_audit_log` |
+| Layer            | Tables / files                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| **Identity**     | `users`                                                                                                   |
+| **Catalog**      | `categories`, `stores`, `products`, `product_variants`, `product_images`, `subscriptions`                |
+| **Commerce**     | `orders`, `order_items`, `cart_items`, `wishlist`, `payments`, `coupons`, `coupon_usage`, `refunds`      |
+| **Engagement**   | `reviews`, `addresses`, `notifications`, `messages`, `disputes`                                           |
+| **Operations**   | `shipping_methods`, `inventory_log`, `transactions`, `store_balance`, `store_followers`, `admin_audit_log` |
+| **Meta**         | `schema_migrations` (tracks applied migrations)                                                          |
 
-All DDL uses `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`,
-so re-running `db:setup` is safe. The schema is intentionally **not** a
-migration framework: changes go into the SQL files and are re-applied
-idempotently.
+PG 17 conventions applied across the schema:
 
-For per-table detail, see the two SQL files directly. They are heavily
-commented and the only authoritative source.
+- `GENERATED ALWAYS AS IDENTITY` (replaces `SERIAL`)
+- `TIMESTAMPTZ` everywhere
+- `citext` for case-insensitive email
+- 25+ CHECK constraints (price > 0, stock >= 0, rating 0-5, …)
+- 30+ FKs with explicit `ON DELETE` (`RESTRICT` for orders, `CASCADE` for personal data)
+- 60+ indexes (B-tree, partial, GIN for FTS, BRIN for time-series)
+- Soft delete: `deleted_at TIMESTAMPTZ` on user-facing tables
 
 ---
 
-## 5. First-time setup
+## 5. Views, functions, triggers
+
+| File                       | Purpose                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| `database/views.sql`        | `v_product_with_store`, `v_store_stats`, `v_order_summary`, `v_low_stock` (all `security_invoker`) |
+| `database/functions.sql`    | 7 PL/pgSQL trigger functions (set_updated_at, orders state machine, stock decrement, …) |
+| `database/triggers.sql`     | 9 trigger definitions wiring functions to tables                                |
+
+The triggers keep `orders.timeline`, `products.review_count/rating`,
+`products.stock` + `inventory_log`, and `stores.products_count` in sync
+**at the database layer** — the API code only INSERTs rows; the trigger
+handles the math atomically inside the row's lock.
+
+---
+
+## 6. Roles and GRANTs
+
+| Role               | Purpose                                | Grants |
+| ------------------ | -------------------------------------- | ------ |
+| `postgres`         | one-time setup (DDL, role creation)   | ALL    |
+| `noufex_owner`     | owns schema objects                    | ALL on schema |
+| **`noufex_app`**   | **runtime app connection**             | SELECT/INSERT/UPDATE/DELETE on user-data tables; **NO** write to `admin_audit_log`, `inventory_log`, `transactions` |
+| `noufex_readonly`  | analytics / BI                         | SELECT only |
+
+See [`database/roles.sql`](../database/roles.sql) for the full GRANT spec.
+
+---
+
+## 7. Migrations infrastructure
+
+Each schema change lives as a numbered file:
+
+```
+database/migrations/
+├── README.md                      ← workflow
+└── 0001_baseline.sql              ← tracks initial schema + seed
+```
+
+To add a change:
+
+1. Create `database/migrations/NNNN_description.sql` (next number, e.g. `0002_add_loyalty_table.sql`).
+2. Use `ALTER TABLE … ADD COLUMN IF NOT EXISTS` so the migration is safe to re-run.
+3. Wrap in `BEGIN; … COMMIT;`.
+4. The next `npm run db:setup` applies it and records the version in `schema_migrations`.
+
+For destructive changes (DROP COLUMN, RENAME) include an `EXISTS` check
+in a `DO $$ … $$` block before applying.
+
+---
+
+## 8. First-time setup
 
 ```sh
-# 1. Confirm the database exists (one-time, on the host)
+# 1. Connect as the postgres superuser (one-time on the host)
 psql -h localhost -U postgres -c "CREATE DATABASE noufex_db;"
 
-# 2. Apply schema + seed (idempotent — safe to re-run)
+# 2. Run db-setup (as postgres — creates roles + schema + seed)
 cd app
 npm run db:setup
+
+# 3. (Optional) Switch the runtime to the noufex_app role
+psql -h localhost -U postgres -d noufex_db -c "ALTER ROLE noufex_app WITH PASSWORD 'your-real-password';"
 ```
 
-`db-setup.cjs`:
-
-- Loads `.env` from the repo root.
-- Connects to `DATABASE_URL`.
-- Runs the three SQL files in this order:
-  1. `database/schema.sql`
-  2. `database/schema-extra.sql`
-  3. `database/seed.sql`
-
-Output:
+`db-setup.cjs` runs the files in this order (all idempotent):
 
 ```
-[db:setup] target: postgresql://postgres:***@localhost:5432/noufex_db
-[db:setup] applying database/schema.sql (14283 bytes)…
-[db:setup] applying database/schema-extra.sql (8510 bytes)…
-[db:setup] applying database/seed.sql (84488 bytes)…
-[db:setup] done.
+1. migrations/0001_baseline.sql   ── creates schema_migrations tracking table
+2. schema.sql                     ── base tables + indexes + CHECK constraints
+3. schema-extra.sql               ── payments, coupons, refunds, balances, audit
+4. views.sql                      ── read convenience views (security_invoker)
+5. functions.sql                  ── PL/pgSQL trigger functions
+6. triggers.sql                   ── wires functions to tables
+7. roles.sql                      ── noufex_app + GRANTs
+8. seed.sql                       ── demo data (idempotent via ON CONFLICT)
+9. any pending migrations/NNNN_*.sql
 ```
+
+After `db-setup` succeeds, the **app** connects as `noufex_app` (not
+`postgres`).
 
 ---
 
-## 6. Running the API
+## 9. Demo credentials (seed only)
 
-| Mode                        | Command                          | `DB_HOST`               |
-| --------------------------- | -------------------------------- | ----------------------- |
-| Direct (Node)               | `npm run api`                    | `localhost` (from `.env`) |
-| Direct (Node, alt env)      | `DATABASE_URL=… npm run api`     | as in URL               |
-| Docker (Win/Mac)            | `docker compose up -d --build`   | `host.docker.internal` (built-in) |
-| Docker (Linux)              | `docker compose up -d --build`   | `host.docker.internal` (via `extra_hosts`) |
+| Email                          | Password       | Role     |
+| ------------------------------ | -------------- | -------- |
+| `admin@noufex.com`             | `admin123`     | admin    |
+| `ahmed@gmail.com`              | `customer123`  | customer |
+| `sara@gmail.com`               | `customer123`  | customer |
+| `omar@gmail.com`               | `customer123`  | customer |
+| `fatima@spice-yemen.com`       | `merchant123`  | merchant |
+| `hassan@dates-yemen.com`       | `merchant123`  | merchant |
+| `mohammed@handicrafts-yemen.com` | `merchant123` | merchant |
+| `khalid@electronics-yemen.com` | `merchant123`  | merchant |
+| `noor@perfume-yemen.com`       | `merchant123`  | merchant |
+| `layla@mokha-coffee.com`       | `merchant123`  | merchant |
 
-The API connects on startup and serves the SPA from `dist/` if present.
+Passwords are stored as `scrypt$<salt_b64>$<hash_b64>` (regenerate via
+`scripts/gen-seed-hashes.cjs`).
 
 ---
 
-## 7. PgDb wrapper
+## 10. PgDb wrapper
 
 `app/server/db/pg-wrapper.cjs` is a thin async wrapper around `pg.Pool` that mimics
 the parts of the old `better-sqlite3` API the API code was written against.

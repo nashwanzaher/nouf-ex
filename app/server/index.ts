@@ -12,8 +12,29 @@ import dotenv from 'dotenv';
 import { randomUUID, scrypt as scryptCb, randomBytes, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
 import { z } from 'zod';
+import {
+	requestId,
+	securityHeaders,
+	requestLogger,
+	errorHandler,
+	notFoundHandler,
+	sendSuccess,
+	sendError,
+	optionalAuth,
+	requireAuth,
+	requireRole,
+	loadEnv,
+	resolveDatabaseUrl,
+	signAuthToken,
+	HttpError,
+	type AuthRole,
+} from './middleware';
 
 dotenv.config();
+
+// --- Env validation -----------------------------------------------------------
+// Throws on invalid env vars (e.g. AUTH_SECRET missing in production).
+const env = loadEnv();
 
 // --- __filename / __dirname ----------------------------------------------------
 // In ESM (production `tsx server/index.ts`) we use `import.meta.url`. In Vitest's
@@ -32,31 +53,24 @@ const __dirname = (() => {
 })();
 
 const app = express();
-const PORT = process.env.API_PORT || process.env.PORT || 3000;
-// PostgreSQL connection string. Reads DATABASE_URL first, then falls back to
-// discrete env vars. Missing configuration fails LOUD at startup rather than
-// silently connecting to a bogus `CHANGE_ME` URL.
-const DATABASE_URL =
-	process.env.DATABASE_URL ||
-	(process.env.DB_HOST && process.env.DB_NAME && process.env.DB_USER && process.env.DB_PASSWORD
-		? `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME}`
-		: (() => {
-				throw new Error(
-					'DATABASE_URL is not set. Copy .env.example to .env and fill in DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).',
-				);
-			})());
-const STATIC_PATH = process.env.STATIC_PATH || path.resolve(__dirname, 'dist');
+const PORT = env.API_PORT;
+const DATABASE_URL = resolveDatabaseUrl(env);
+const STATIC_PATH = env.STATIC_PATH || path.resolve(__dirname, 'dist');
 
 // --- Database Connection (PostgreSQL via pg) ---
 // Foreign keys are always enforced in PostgreSQL, no PRAGMA needed.
 const db = new PgDb(DATABASE_URL);
 
+// --- Middleware stack (order matters) ---
+import { configureTrustProxy } from './middleware';
+configureTrustProxy(app);
+app.use(requestId);
+app.use(securityHeaders);
+
 // --- M2 fix: restrict CORS to configured origins (was open to everyone). ---
-const ALLOWED_ORIGINS = (
-	process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173'
-)
-	.split(',')
-	.map((s) => s.trim());
+const ALLOWED_ORIGINS = env.ALLOWED_ORIGINS.split(',')
+	.map((s) => s.trim())
+	.filter(Boolean);
 app.use(
 	cors({
 		origin: (origin, callback) => {
@@ -69,13 +83,20 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(optionalAuth);       // populates req.user from Bearer token if present
+app.use(requestLogger);
 
-// --- M1 fix: simple in-memory rate limiter (avoids express-rate-limit dep). ---
+// --- Rate limiter (fixed in-place; uses req.ip + method + route, not req.path) ---
 type RateBucket = { count: number; resetAt: number };
 const RATE_BUCKETS = new Map<string, RateBucket>();
-function rateLimit(windowMs: number, max: number) {
+function rateLimit(windowMs: number, max: number, bucket = 'global') {
 	return (req: Request, res: Response, next: NextFunction) => {
-		const key = (req.ip || req.socket.remoteAddress || 'anon') + ':' + req.path;
+		// Key = method + route prefix (req.route?.path when available)
+		//       + client IP. Path is intentionally NOT used so that
+		//       `/api/products/1` and `/api/products/2` share a bucket.
+		const route = (req.route?.path as string | undefined) || req.path.split('?')[0];
+		const ip = req.ip || req.socket.remoteAddress || 'anon';
+		const key = `${bucket}:${req.method}:${route}:${ip}`;
 		const now = Date.now();
 		const b = RATE_BUCKETS.get(key);
 		if (!b || now > b.resetAt) {
@@ -85,26 +106,20 @@ function rateLimit(windowMs: number, max: number) {
 		b.count += 1;
 		if (b.count > max) {
 			res.setHeader('Retry-After', Math.ceil((b.resetAt - now) / 1000));
-			return sendError(res, 'Too many requests. Try again later.', 429);
+			return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
 		}
 		next();
 	};
 }
-const authLimiter = rateLimit(15 * 60 * 1000, 20); // 20 requests / 15 min
+// Background sweeper — evicts old entries every minute so the Map doesn't grow forever.
+setInterval(() => {
+	const now = Date.now();
+	for (const [k, v] of RATE_BUCKETS) {
+		if (now > v.resetAt) RATE_BUCKETS.delete(k);
+	}
+}, 60 * 1000).unref?.();
 
-// Request logging
-app.use((req: Request, _res: Response, next: NextFunction) => {
-	console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-	next();
-});
-
-// --- Type Definitions ---
-interface ApiResponse<T = unknown> {
-	success: boolean;
-	data?: T;
-	message?: string;
-	error?: string;
-}
+const authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth'); // 20 req / 15min / IP / route
 
 // --- M17 fix: zod validation schemas for all write endpoints ---
 const emailSchema = z.string().email().max(255);
@@ -126,7 +141,6 @@ const orderItemSchema = z.object({
 	variant: z.unknown().optional(),
 });
 const orderSchema = z.object({
-	customerId: z.number().int().positive(),
 	storeId: z.number().int().positive().optional(),
 	items: z.array(orderItemSchema).min(1).max(100),
 	shippingAddress: z.record(z.string(), z.unknown()).optional(),
@@ -139,8 +153,7 @@ const orderSchema = z.object({
 });
 const reviewSchema = z.object({
 	productId: z.number().int().positive(),
-	storeId: z.number().int().positive(),
-	customerId: z.number().int().positive(),
+	storeId: z.number().int().positive().optional(),
 	rating: z.number().int().min(1).max(5),
 	title: z.string().trim().max(200).optional(),
 	comment: z.string().trim().max(2000).optional(),
@@ -192,16 +205,8 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 }
 
 // --- Helpers ---
-const sendSuccess = <T>(res: Response, data: T, message?: string) => {
-	const payload: ApiResponse<T> = { success: true, data };
-	if (message) payload.message = message;
-	res.json(payload);
-};
-
-const sendError = (res: Response, message: string, status = 500) => {
-	res.status(status).json({ success: false, error: message } as ApiResponse);
-};
-
+// `sendSuccess` and `sendError` are imported from `./middleware`. Use those.
+// Local `parseJson` helper kept for compatibility with existing handlers.
 const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
 	if (!value) return fallback;
 	try {
@@ -584,20 +589,35 @@ app.get('/api/reviews', async (req: Request, res: Response) => {
  * POST /api/reviews
  * Submit a review
  */
-app.post('/api/reviews', async (req: Request, res: Response) => {
+app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
 	try {
 		// M17 fix: validate body shape with the Zod schema.
 		const v = validate(reviewSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
-		const { productId, storeId, customerId, rating, title, comment } = v.data;
+		const { productId, storeId, rating, title, comment } = v.data;
+		// Source of truth = authenticated user. Ignore customerId in body.
+		const customerId = req.user!.id;
+
+		// Verify the reviewer actually purchased this product (verified-purchase
+		// guard). Without this any logged-in user could leave a fake review
+		// and influence the average rating.
+		const purchased = (await db
+			.prepare(
+				`SELECT 1 FROM order_items oi
+             JOIN orders o ON oi.order_id = o.id
+            WHERE o.customer_id = ? AND oi.product_id = ?
+            LIMIT 1`,
+			)
+			.get(customerId, productId)) as { '?column?': number } | undefined;
+		const isVerified = Boolean(purchased);
 
 		const result = (await db
 			.prepare(
 				`INSERT INTO reviews (product_id, store_id, customer_id, rating, title, comment, helpful_count, is_verified, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         VALUES (?, ?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
          RETURNING id`
 			)
-			.run(productId, storeId ?? null, customerId, rating, title ?? null, comment ?? null)) as {
+			.run(productId, storeId ?? null, customerId, rating, title ?? null, comment ?? null, isVerified ? 1 : 0)) as {
 			lastInsertRowid: number;
 		};
 
@@ -624,11 +644,13 @@ app.post('/api/reviews', async (req: Request, res: Response) => {
 
 /**
  * GET /api/orders
- * Query params: customerId
+ * Customers see only their own orders. Admins can pass ?customerId=
+ * to view a specific customer's orders.
  */
-app.get('/api/orders', async (req: Request, res: Response) => {
+app.get('/api/orders', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { customerId } = req.query;
+		const isAdmin = req.user!.role === 'admin';
+		const requestedCustomerId = req.query.customerId ? Number(req.query.customerId) : null;
 
 		let sql = `SELECT o.*, s.store_name as store_name, s.logo as store_logo
                FROM orders o
@@ -636,9 +658,13 @@ app.get('/api/orders', async (req: Request, res: Response) => {
                WHERE 1=1`;
 		const params: number[] = [];
 
-		if (customerId) {
+		if (isAdmin && requestedCustomerId && Number.isInteger(requestedCustomerId)) {
 			sql += ' AND o.customer_id = ?';
-			params.push(Number(customerId));
+			params.push(requestedCustomerId);
+		} else {
+			// Source of truth = authenticated user.
+			sql += ' AND o.customer_id = ?';
+			params.push(req.user!.id);
 		}
 
 		sql += ' ORDER BY o.created_at DESC';
@@ -654,9 +680,9 @@ app.get('/api/orders', async (req: Request, res: Response) => {
  * GET /api/orders/:id
  * Get single order with items
  */
-app.get('/api/orders/:id', async (req: Request, res: Response) => {
+app.get('/api/orders/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params;
+		const orderId = Number(req.params.id);
 
 		const order = (await db
 			.prepare(
@@ -665,10 +691,16 @@ app.get('/api/orders/:id', async (req: Request, res: Response) => {
          LEFT JOIN stores s ON o.store_id = s.id
          WHERE o.id = ?`
 			)
-			.get(Number(id))) as Record<string, unknown> | undefined;
+			.get(orderId)) as (Record<string, unknown> & { customer_id: number }) | undefined;
 
 		if (!order) {
 			return sendError(res, 'Order not found', 404);
+		}
+
+		// Authorization: customers can only see their own orders; admins can
+		// see any. Without this guard a customer could enumerate order ids.
+		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
+			return sendError(res, 'Forbidden', 403);
 		}
 
 		const items = (await db
@@ -678,7 +710,7 @@ app.get('/api/orders/:id', async (req: Request, res: Response) => {
          LEFT JOIN products p ON oi.product_id = p.id
          WHERE oi.order_id = ?`
 			)
-			.all(Number(id))) as Record<string, unknown>[];
+			.all(orderId)) as Record<string, unknown>[];
 
 		sendSuccess(res, { ...order, items });
 	} catch (err) {
@@ -688,15 +720,27 @@ app.get('/api/orders/:id', async (req: Request, res: Response) => {
 
 /**
  * POST /api/orders
- * Create a new order
+ * Create a new order.
+ *
+ * C2+C3 fix: single transaction. Stock validation + decrement + order
+ * writes are atomic. Stock decrement is handled by the
+ * `trg_order_items_decrement_stock` trigger on order_items — the API code
+ * only inserts rows; the trigger:
+ *   1. SELECT … FOR UPDATE on products (locks the row to prevent races)
+ *   2. RAISE EXCEPTION if stock < quantity (whole tx rolls back)
+ *   3. UPDATE products SET stock = stock - q, sold_count = sold_count + q
+ *   4. INSERT into inventory_log with reason='order_placed'
+ *
+ * Net effect: this handler no longer races, never silently oversells, and
+ * keeps inventory_log in sync. Any RAISE EXCEPTION from the trigger
+ * surfaces here as a normal Error and aborts the order.
  */
-app.post('/api/orders', async (req: Request, res: Response) => {
+app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 	try {
 		// M17 fix: validate body shape and field constraints.
 		const v = validate(orderSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
 		const {
-			customerId,
 			storeId,
 			items,
 			shippingAddress,
@@ -706,125 +750,101 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 			shippingCost,
 			discount,
 			total,
-		} = v.data;
+			couponCode,
+		} = v.data as {
+			storeId: number;
+			items: Array<{
+				productId: number;
+				variantId?: number | null;
+				quantity: number;
+				unitPrice: number;
+			}>;
+			shippingAddress: unknown;
+			paymentMethod: string;
+			notes?: string;
+			subtotal: number;
+			shippingCost: number;
+			discount: number;
+			total: number;
+			couponCode?: string;
+		};
+		// Source of truth = authenticated user. Ignore any customerId in body.
+		const customerId = req.user!.id;
 
-		// C2+C3 fix: single transaction. All stock checks + decrements + order writes succeed or all roll back.
-		// better-sqlite3 transactions are synchronous and throw on error -> automatic rollback.
-		const createOrder = await db.tx(
-			async (orderData: {
-				customerId: number;
-				storeId: number | null;
-				orderNumber: string;
-				paymentMethod: string;
-				subtotal: number;
-				shippingCost: number;
-				discount: number;
-				total: number;
-				shippingAddress: unknown;
-				notes: string | null;
-				items: Array<{
-					productId: number;
-					quantity: number;
-					unitPrice: number;
-					totalPrice?: number;
-					variant?: unknown;
-				}>;
-			}) => {
-				const orderResult = (await db
-					.prepare(
-						`INSERT INTO orders (customer_id, store_id, order_number, status, payment_method, payment_status,
-           subtotal, shipping_cost, discount, total, shipping_address, notes, created_at, updated_at)
-           VALUES (?, ?, ?, 'pending', ?, 'pending', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-           RETURNING id`
-					)
-					.run(
-						orderData.customerId,
-						orderData.storeId,
-						orderData.orderNumber,
-						orderData.paymentMethod,
-						orderData.subtotal,
-						orderData.shippingCost,
-						orderData.discount,
-						orderData.total,
-						orderData.shippingAddress ? JSON.stringify(orderData.shippingAddress) : null,
-						orderData.notes
-					)) as { lastInsertRowid: number };
-				const orderId = orderResult.lastInsertRowid;
+		// Normalise payment method: legacy client may send 'cash' → map to 'cod'.
+		const normalisedPaymentMethod = paymentMethod === 'cash' || !paymentMethod ? 'cod' : paymentMethod;
 
-				const insertItem = db.prepare(
-					`INSERT INTO order_items (order_id, product_id, quantity, unit_price, total_price, variant, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-				);
-				const decrementStock = db.prepare(
-					// C2 fix: atomic conditional decrement. If insufficient stock, 0 rows affected -> rollback via throw.
-					`UPDATE products
-            SET stock = stock - ?,
-                sold_count = sold_count + ?
-          WHERE id = ? AND stock >= ?`
-				);
-				const readProduct = db.prepare(
-					`SELECT id, name_ar, name_en, stock FROM products WHERE id = ? AND is_active = 1`
-				);
+		const orderId = await db.tx(async (txDb: { prepare: (sql: string) => { run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>; get: (...args: unknown[]) => Promise<unknown> } }) => {
+			const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
+			const result = (await txDb
+				.prepare(
+					`INSERT INTO orders
+			        (customer_id, store_id, order_number, status, payment_method,
+			         payment_status, subtotal, shipping_cost, discount,
+			         coupon_code, discount_amount, total, currency,
+			         shipping_address, notes)
+			       VALUES (?, ?, ?, 'pending', ?, 'pending',
+			               ?, ?, ?, ?, 0, ?, 'YER',
+			               ?, ?)
+			       RETURNING id`,
+				)
+				.run(
+					customerId,
+					storeId,
+					orderNumber,
+					normalisedPaymentMethod,
+					subtotal || total,
+					shippingCost || 0,
+					discount || 0,
+					couponCode || null,
+					total,
+					JSON.stringify(shippingAddress),
+					notes || null,
+				)) as { lastInsertRowid: number };
+			const newOrderId: number = result.lastInsertRowid;
 
-				for (const item of orderData.items) {
-					if (item.quantity <= 0) {
-						throw new Error(`Invalid quantity ${item.quantity} for product ${item.productId}`);
-					}
-					const product = (await readProduct.get(item.productId)) as
-						| { id: number; name_ar: string; name_en: string; stock: number }
-						| undefined;
-					if (!product) {
-						throw new Error(`Product ${item.productId} is unavailable`);
-					}
-					if (product.stock < item.quantity) {
-						throw new Error(
-							`Insufficient stock for "${product.name_en || product.name_ar}" (id=${item.productId}): ` +
-								`requested ${item.quantity}, available ${product.stock}`
-						);
-					}
-					const decResult = (await decrementStock.run(
-						item.quantity,
-						item.quantity,
-						item.productId,
-						item.quantity
-					)) as { changes: number };
-					if (decResult.changes !== 1) {
-						// Race condition: someone else bought it between SELECT and UPDATE. Whole transaction rolls back.
-						throw new Error(
-							`Stock changed for product ${item.productId}; order aborted. Please retry.`
-						);
-					}
-					await insertItem.run(
-						orderId,
-						item.productId,
-						item.quantity,
-						item.unitPrice,
-						item.totalPrice ?? item.unitPrice * item.quantity,
-						item.variant ? JSON.stringify(item.variant) : null
-					);
+			// Look up product name for the snapshot column.
+			const readProduct = txDb.prepare(
+				`SELECT name_ar, name_en FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`,
+			);
+
+			const insertItem = txDb.prepare(
+				`INSERT INTO order_items
+			        (order_id, product_id, variant_id, product_name, quantity,
+			         unit_price, total_price)
+			       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			);
+
+			for (const item of items) {
+				if (item.quantity <= 0) {
+					throw new Error(`Invalid quantity ${item.quantity} for product ${item.productId}`);
 				}
-				return orderId;
+				const product = (await readProduct.get(item.productId)) as
+					| { name_ar: string; name_en: string | null }
+					| undefined;
+				if (!product) {
+					throw new Error(`Product ${item.productId} is unavailable`);
+				}
+				const unitPrice = item.unitPrice;
+				// The stock-decrement trigger fires here on INSERT and will
+				// RAISE EXCEPTION if stock < quantity. No manual UPDATE needed.
+				await insertItem.run(
+					newOrderId,
+					item.productId,
+					item.variantId ?? null,
+					product.name_en || product.name_ar,
+					item.quantity,
+					unitPrice,
+					unitPrice * item.quantity,
+				);
 			}
-		);
-
-		const orderId = createOrder({
-			customerId,
-			storeId: storeId || null,
-			orderNumber: `ORD-${randomUUID().slice(0, 8).toUpperCase()}`,
-			paymentMethod: paymentMethod || 'cash',
-			subtotal: subtotal || total,
-			shippingCost: shippingCost || 0,
-			discount: discount || 0,
-			total,
-			shippingAddress,
-			notes: notes || null,
-			items,
+			return newOrderId;
 		});
 
 		sendSuccess(
 			res,
 			{ id: orderId, orderNumber: `ORD-...${String(orderId).slice(-4)}` },
-			'Order created successfully'
+			'Order created successfully',
 		);
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -838,9 +858,11 @@ app.post('/api/orders', async (req: Request, res: Response) => {
 /**
  * GET /api/cart/:userId
  */
-app.get('/api/cart/:userId', async (req: Request, res: Response) => {
+app.get('/api/cart/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { userId } = req.params;
+		// Defense in depth: ignore URL userId, use authenticated user.
+		// Non-admin users can only view their own cart.
+		const userId = req.user!.id;
 		const cartItems = db
 			.prepare(
 				`SELECT ci.*, p.name_en, p.name_ar, p.name_zh, p.price, p.original_price, p.main_image, p.stock, s.store_name
@@ -850,7 +872,7 @@ app.get('/api/cart/:userId', async (req: Request, res: Response) => {
          WHERE ci.user_id = ?
          ORDER BY ci.created_at DESC`
 			)
-			.all(Number(userId));
+			.all(userId);
 		sendSuccess(res, cartItems);
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -861,12 +883,14 @@ app.get('/api/cart/:userId', async (req: Request, res: Response) => {
  * POST /api/cart
  * Add to cart
  */
-app.post('/api/cart', async (req: Request, res: Response) => {
+app.post('/api/cart', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { userId, productId, quantity, variant } = req.body;
+		const { productId, quantity, variant } = req.body;
+		// Source of truth = authenticated user. Ignore any userId in body.
+		const userId = req.user!.id;
 
-		if (!userId || !productId || !quantity) {
-			return sendError(res, 'userId, productId and quantity are required', 400);
+		if (!productId || !quantity) {
+			return sendError(res, 'productId and quantity are required', 400);
 		}
 
 		// Check if already in cart
@@ -898,12 +922,14 @@ app.post('/api/cart', async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/cart/:id
- * Remove from cart
+ * Remove from cart (must belong to authenticated user)
  */
-app.delete('/api/cart/:id', async (req: Request, res: Response) => {
+app.delete('/api/cart/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params;
-		await db.prepare('DELETE FROM cart_items WHERE id = ?').run(Number(id));
+		const cartItemId = Number(req.params.id);
+		const userId = req.user!.id;
+		// Guard: only delete items belonging to the authenticated user.
+		await db.prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ?').run(cartItemId, userId);
 		sendSuccess(res, null, 'Item removed from cart');
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -914,10 +940,11 @@ app.delete('/api/cart/:id', async (req: Request, res: Response) => {
  * DELETE /api/cart/clear/:userId
  * Clear user's cart
  */
-app.delete('/api/cart/clear/:userId', async (req: Request, res: Response) => {
+app.delete('/api/cart/clear/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { userId } = req.params;
-		await db.prepare('DELETE FROM cart_items WHERE user_id = ?').run(Number(userId));
+		// Source of truth = authenticated user.
+		const userId = req.user!.id;
+		await db.prepare('DELETE FROM cart_items WHERE user_id = ?').run(userId);
 		sendSuccess(res, null, 'Cart cleared');
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -931,9 +958,9 @@ app.delete('/api/cart/clear/:userId', async (req: Request, res: Response) => {
 /**
  * GET /api/wishlist/:userId
  */
-app.get('/api/wishlist/:userId', async (req: Request, res: Response) => {
+app.get('/api/wishlist/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { userId } = req.params;
+		const userId = req.user!.id;
 		const items = db
 			.prepare(
 				`SELECT w.*, p.name_en, p.name_ar, p.name_zh, p.price, p.original_price, p.main_image, p.rating, p.review_count, s.store_name
@@ -943,7 +970,7 @@ app.get('/api/wishlist/:userId', async (req: Request, res: Response) => {
          WHERE w.user_id = ?
          ORDER BY w.created_at DESC`
 			)
-			.all(Number(userId));
+			.all(userId);
 		sendSuccess(res, items);
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -954,12 +981,13 @@ app.get('/api/wishlist/:userId', async (req: Request, res: Response) => {
  * POST /api/wishlist
  * Add to wishlist
  */
-app.post('/api/wishlist', async (req: Request, res: Response) => {
+app.post('/api/wishlist', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { userId, productId } = req.body;
+		const { productId } = req.body;
+		const userId = req.user!.id;
 
-		if (!userId || !productId) {
-			return sendError(res, 'userId and productId are required', 400);
+		if (!productId) {
+			return sendError(res, 'productId is required', 400);
 		}
 
 		// Check if already in wishlist
@@ -985,12 +1013,16 @@ app.post('/api/wishlist', async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/wishlist/:id
- * Remove from wishlist
+ * Remove from wishlist (must belong to authenticated user)
  */
-app.delete('/api/wishlist/:id', async (req: Request, res: Response) => {
+app.delete('/api/wishlist/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params;
-		await db.prepare('DELETE FROM wishlist WHERE id = ?').run(Number(id));
+		const wishlistItemId = Number(req.params.id);
+		const userId = req.user!.id;
+		// Guard: only delete items belonging to the authenticated user.
+		await db
+			.prepare('DELETE FROM wishlist WHERE id = ? AND user_id = ?')
+			.run(wishlistItemId, userId);
 		sendSuccess(res, null, 'Removed from wishlist');
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -1004,12 +1036,12 @@ app.delete('/api/wishlist/:id', async (req: Request, res: Response) => {
 /**
  * GET /api/notifications/:userId
  */
-app.get('/api/notifications/:userId', async (req: Request, res: Response) => {
+app.get('/api/notifications/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { userId } = req.params;
+		const userId = req.user!.id;
 		const items = db
 			.prepare(`SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`)
-			.all(Number(userId));
+			.all(userId);
 		sendSuccess(res, items);
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -1019,10 +1051,14 @@ app.get('/api/notifications/:userId', async (req: Request, res: Response) => {
 /**
  * PUT /api/notifications/:id/read
  */
-app.put('/api/notifications/:id/read', async (req: Request, res: Response) => {
+app.put('/api/notifications/:id/read', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params;
-		await db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ?').run(Number(id));
+		const notificationId = Number(req.params.id);
+		const userId = req.user!.id;
+		// Guard: only mark notifications owned by the authenticated user.
+		await db
+			.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?')
+			.run(notificationId, userId);
 		sendSuccess(res, null, 'Notification marked as read');
 	} catch (err) {
 		sendError(res, (err as Error).message);
@@ -1035,112 +1071,109 @@ app.put('/api/notifications/:id/read', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/register
+ * Returns the new user + an auth token (HMAC-signed). The frontend stores
+ * the token in localStorage and sends it as `Authorization: Bearer …`.
  */
 app.post('/api/auth/register', authLimiter, async (req: Request, res: Response) => {
 	try {
 		// M17 fix: validate body shape before touching the DB.
 		const v = validate(registerSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
 		const { email, password, name } = v.data;
-		const role = 'customer';
+		const role: AuthRole = 'customer';
 
-		// Check if email exists (only id needed)
-		const existing = await db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-		if (existing) {
-			return sendError(res, 'Email already registered', 409);
-		}
-
-		// C1 fix: scrypt hash with per-user salt and timing-safe verification.
+		// Use INSERT ... ON CONFLICT to make registration race-safe against
+		// concurrent registrations for the same email. A13 in audit.
 		const passwordHash = await hashPassword(password);
 
-		const result = (await db
-			.prepare(
-				`INSERT INTO users (email, password_hash, full_name, role, status, is_verified, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-         RETURNING id`
-			)
-			.run(email, passwordHash, name, role)) as { lastInsertRowid: number };
+		// Try insert; if unique violation, surface 409.
+		let userId: number;
+		try {
+			const result = (await db
+				.prepare(
+					`INSERT INTO users (email, password_hash, full_name, role, status, is_verified, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           RETURNING id`,
+				)
+				.run(email, passwordHash, name, role)) as { lastInsertRowid: number };
+			userId = result.lastInsertRowid;
+		} catch (err) {
+			const pg = err as { code?: string };
+			if (pg?.code === '23505') {
+				return sendError(res, 'Email already registered', 409, 'EMAIL_TAKEN');
+			}
+			throw err;
+		}
 
-		// C7 fix: return only safe public fields. Never expose status/is_verified to the registering client.
-		const safeUser = {
-			id: result.lastInsertRowid,
-			email,
-			full_name: name,
-			role,
-		};
-
-		sendSuccess(res, safeUser, 'User registered successfully');
+		const safeUser = { id: userId, email, full_name: name, role };
+		const token = signAuthToken({ sub: userId, role });
+		sendSuccess(res, { user: safeUser, token }, 201, 'User registered successfully');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		// Translate PG error for race-safe duplicate handling.
+		const pg = err as { code?: string };
+		if (pg?.code === '23505') {
+			return sendError(res, 'Email already registered', 409, 'EMAIL_TAKEN');
+		}
+		throw err;
 	}
 });
 
 /**
  * POST /api/auth/login
+ * Returns the user + an auth token. Uses constant-time password check.
  */
 app.post('/api/auth/login', authLimiter, async (req: Request, res: Response) => {
-	try {
-		// M17 fix: validate body shape.
-		const v = validate(loginSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
-		const { email, password } = v.data;
+	const v = validate(loginSchema, req.body);
+	if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+	const { email, password } = v.data;
 
-		const user = (await db
-			.prepare(
-				'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?'
-			)
-			.get(email)) as Record<string, unknown> | undefined;
+	const user = (await db
+		.prepare(
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?',
+		)
+		.get(email)) as
+		| (Record<string, unknown> & { id: number; password_hash: string; role: AuthRole })
+		| undefined;
 
-		if (!user) {
-			return sendError(res, 'Invalid email or password', 401);
-		}
-
-		// C1 fix: timing-safe password verification via scrypt, with legacy fallback for seed users.
-		const ok = await verifyPassword(password, String(user.password_hash ?? ''));
-		if (!ok) {
-			return sendError(res, 'Invalid email or password', 401);
-		}
-
-		// Update last login
-		await db
-			.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
-			.run(user.id as number);
-
-		// Don't return password hash
-		const { password_hash: _, ...userWithoutPassword } = user;
-
-		sendSuccess(res, userWithoutPassword, 'Login successful');
-	} catch (err) {
-		sendError(res, (err as Error).message);
+	if (!user) {
+		// Same generic message whether email or password is wrong — no
+		// enumeration.
+		return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
 	}
+
+	const ok = await verifyPassword(password, user.password_hash);
+	if (!ok) {
+		return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
+	}
+
+	// Update last login (best effort — failure shouldn't block login).
+	await db
+		.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
+		.run(user.id)
+		.catch(() => undefined);
+
+	// Strip password_hash from response.
+	const { password_hash: _omit, ...userWithoutPassword } = user;
+	const token = signAuthToken({ sub: user.id, role: user.role });
+	sendSuccess(res, { user: userWithoutPassword, token }, 200, 'Login successful');
 });
 
 /**
  * GET /api/auth/me
- * Get current user (expects x-user-id header)
+ * Returns the currently authenticated user. Requires `Authorization: Bearer …`.
  */
-app.get('/api/auth/me', async (req: Request, res: Response) => {
-	try {
-		const userId = req.headers['x-user-id'];
+app.get('/api/auth/me', requireAuth, async (req: Request, res: Response) => {
+	const userId = req.user!.id;
+	const user = (await db
+		.prepare(
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?',
+		)
+		.get(userId)) as Record<string, unknown> | undefined;
 
-		if (!userId) {
-			return sendError(res, 'Unauthorized - x-user-id header required', 401);
-		}
-
-		const user = (await db
-			.prepare(
-				'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?'
-			)
-			.get(Number(userId))) as Record<string, unknown> | undefined;
-
-		if (!user) {
-			return sendError(res, 'User not found', 404);
-		}
-
-		sendSuccess(res, user);
-	} catch (err) {
-		sendError(res, (err as Error).message);
+	if (!user) {
+		throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
 	}
+	sendSuccess(res, user);
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -1208,7 +1241,7 @@ const paymentCreateSchema = z.object({
  * POST /api/payments
  * Record a payment attempt for an order. Idempotent on (order_id, method).
  */
-app.post('/api/payments', authLimiter, async (req: Request, res: Response) => {
+app.post('/api/payments', authLimiter, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(paymentCreateSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
@@ -1220,6 +1253,11 @@ app.post('/api/payments', authLimiter, async (req: Request, res: Response) => {
 			| { id: number; customer_id: number; total: number; status: string }
 			| undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
+
+		// Authorization: only the order owner or an admin can record a payment.
+		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
+			return sendError(res, 'Forbidden', 403);
+		}
 
 		const existing = (await db
 			.prepare('SELECT id, status FROM payments WHERE order_id = ? AND method = ?')
@@ -1258,12 +1296,21 @@ app.post('/api/payments', authLimiter, async (req: Request, res: Response) => {
 
 /**
  * GET /api/payments/order/:orderId
+ * Returns payments for an order. Only the order owner or an admin may see them.
  */
-app.get('/api/payments/order/:orderId', async (req: Request, res: Response) => {
+app.get('/api/payments/order/:orderId', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const orderId = Number(req.params.orderId);
 		if (!Number.isInteger(orderId) || orderId <= 0) {
 			return sendError(res, 'Invalid order id', 400);
+		}
+		// Lookup the order owner before returning any payment data.
+		const order = (await db
+			.prepare('SELECT customer_id FROM orders WHERE id = ?')
+			.get(orderId)) as { customer_id: number } | undefined;
+		if (!order) return sendError(res, 'Order not found', 404);
+		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
+			return sendError(res, 'Forbidden', 403);
 		}
 		const payments = await db
 			.prepare('SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC')
@@ -1278,21 +1325,38 @@ app.get('/api/payments/order/:orderId', async (req: Request, res: Response) => {
  * POST /api/payments/:id/confirm
  * Manually mark a COD payment as paid.
  */
-app.post('/api/payments/:id/confirm', async (req: Request, res: Response) => {
+app.post('/api/payments/:id/confirm', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid payment id', 400);
+
+		// Look up the order owner via the payment before mutating anything.
+		const payment = (await db
+			.prepare('SELECT order_id FROM payments WHERE id = ?')
+			.get(id)) as { order_id: number } | undefined;
+		if (!payment) return sendError(res, 'Payment not found', 404);
+		const order = (await db
+			.prepare('SELECT customer_id FROM orders WHERE id = ?')
+			.get(payment.order_id)) as { customer_id: number } | undefined;
+		if (!order) return sendError(res, 'Order not found', 404);
+
+		// Only admins (or store owners / delivery staff in the future) can
+		// mark a payment as received. Without this any authenticated user
+		// could flip any payment to completed.
+		if (req.user!.role !== 'admin') {
+			return sendError(res, 'Forbidden', 403);
+		}
+
 		const result = (await db
 			.prepare(
 				`UPDATE payments SET status = 'completed', paid_at = NOW(), updated_at = NOW()
           WHERE id = ? RETURNING order_id`
 			)
 			.get(id)) as { order_id: number } | undefined;
-		if (!result) return sendError(res, 'Payment not found', 404);
 		await db
 			.prepare(`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`)
-			.run(result.order_id);
-		sendSuccess(res, { order_id: result.order_id }, 'Payment confirmed');
+			.run(result!.order_id);
+		sendSuccess(res, { order_id: result!.order_id }, 'Payment confirmed');
 	} catch (err) {
 		sendError(res, (err as Error).message);
 	}
@@ -1303,7 +1367,6 @@ app.post('/api/payments/:id/confirm', async (req: Request, res: Response) => {
 // ═══════════════════════════════════════════════════════════
 
 const addressSchema = z.object({
-	user_id: z.number().int().positive(),
 	label: z.string().trim().min(1).max(50),
 	full_name: z.string().trim().min(2).max(100),
 	phone: z.string().trim().min(5).max(20),
@@ -1316,10 +1379,10 @@ const addressSchema = z.object({
 	is_default: z.boolean().optional(),
 });
 
-app.get('/api/addresses', async (req: Request, res: Response) => {
+app.get('/api/addresses', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const userId = Number(req.query.user_id);
-		if (!Number.isInteger(userId) || userId <= 0) return sendError(res, 'user_id is required', 400);
+		// Source of truth = authenticated user. Ignore any user_id query param.
+		const userId = req.user!.id;
 		const rows = await db
 			.prepare('SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, id DESC')
 			.all(userId);
@@ -1329,14 +1392,16 @@ app.get('/api/addresses', async (req: Request, res: Response) => {
 	}
 });
 
-app.post('/api/addresses', async (req: Request, res: Response) => {
+app.post('/api/addresses', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(addressSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
 		const data = v.data;
+		// Source of truth = authenticated user. Ignore any user_id in body.
+		const userId = req.user!.id;
 
 		if (data.is_default) {
-			await db.prepare('UPDATE addresses SET is_default = 0 WHERE user_id = ?').run(data.user_id);
+			await db.prepare('UPDATE addresses SET is_default = 0 WHERE user_id = ?').run(userId);
 		}
 		const result = await db
 			.prepare(
@@ -1346,7 +1411,7 @@ app.post('/api/addresses', async (req: Request, res: Response) => {
          RETURNING *`
 			)
 			.get(
-				data.user_id,
+				userId,
 				data.label,
 				data.full_name,
 				data.phone,
@@ -1364,13 +1429,15 @@ app.post('/api/addresses', async (req: Request, res: Response) => {
 	}
 });
 
-app.delete('/api/addresses/:id', async (req: Request, res: Response) => {
+app.delete('/api/addresses/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
-		const result = (await db.prepare('DELETE FROM addresses WHERE id = ? RETURNING id').get(id)) as
-			| { id: number }
-			| undefined;
+		const userId = req.user!.id;
+		// Guard: only delete addresses owned by the authenticated user.
+		const result = (await db
+			.prepare('DELETE FROM addresses WHERE id = ? AND user_id = ? RETURNING id')
+			.get(id, userId)) as { id: number } | undefined;
 		if (!result) return sendError(res, 'Address not found', 404);
 		sendSuccess(res, { id: result.id }, 'Address deleted');
 	} catch (err) {
@@ -1514,16 +1581,17 @@ app.post('/api/coupons/redeem', async (req: Request, res: Response) => {
 
 const refundCreateSchema = z.object({
 	order_id: z.number().int().positive(),
-	user_id: z.number().int().positive(),
 	amount: z.number().nonnegative(),
 	reason: z.string().trim().min(3).max(1000),
 });
 
-app.post('/api/refunds', async (req: Request, res: Response) => {
+app.post('/api/refunds', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(refundCreateSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
-		const { order_id, user_id, amount, reason } = v.data;
+		const { order_id, amount, reason } = v.data;
+		// Source of truth = authenticated user. Ignore user_id in body.
+		const userId = req.user!.id;
 
 		const order = (await db
 			.prepare('SELECT id, customer_id, total, payment_status FROM orders WHERE id = ?')
@@ -1531,7 +1599,7 @@ app.post('/api/refunds', async (req: Request, res: Response) => {
 			| { id: number; customer_id: number; total: number; payment_status: string }
 			| undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
-		if (order.customer_id !== user_id) return sendError(res, 'Forbidden', 403);
+		if (order.customer_id !== userId) return sendError(res, 'Forbidden', 403);
 		if (order.payment_status !== 'paid') {
 			return sendError(res, 'Only paid orders are eligible for refund', 400);
 		}
@@ -1544,14 +1612,14 @@ app.post('/api/refunds', async (req: Request, res: Response) => {
 				`INSERT INTO refunds (order_id, user_id, amount, reason, status, created_at, updated_at)
          VALUES (?, ?, ?, ?, 'requested', NOW(), NOW()) RETURNING id`
 			)
-			.get(order_id, user_id, amount, reason)) as { id: number };
+			.get(order_id, userId, amount, reason)) as { id: number };
 		sendSuccess(res, result, 'Refund requested');
 	} catch (err) {
 		sendError(res, (err as Error).message);
 	}
 });
 
-app.post('/api/refunds/:id/resolve', async (req: Request, res: Response) => {
+app.post('/api/refunds/:id/resolve', requireRole('admin'), async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
@@ -1612,19 +1680,11 @@ if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true'
 // ERROR HANDLING
 // ═══════════════════════════════════════════════════════════
 
-// 404 handler
-app.use((_req: Request, res: Response) => {
-	res.status(404).json({ success: false, error: 'Route not found' } as ApiResponse);
-});
+// 404 handler — exported from middleware (logs the path, includes request_id).
+app.use(notFoundHandler);
 
-// Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-	console.error('[ERROR]', err);
-	res.status(500).json({
-		success: false,
-		error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
-	} as ApiResponse);
-});
+// Global error handler — PG error translation, structured logging, no message leak.
+app.use(errorHandler);
 
 // ═══════════════════════════════════════════════════════════
 // START SERVER
@@ -1654,7 +1714,7 @@ if (__isMainModule) {
 	app.listen(PORT, () => {
 		console.log(`═══════════════════════════════════════════`);
 		console.log(`  Nouf-ex API Server running on port ${PORT}`);
-		console.log(`  Database: ${DATABASE_URL}`);
+		console.log(`  Database: ${PgDb.redactUrl(DATABASE_URL)}`);
 		console.log(`  Static:   ${STATIC_PATH}`);
 		console.log(`  Env:      ${process.env.NODE_ENV || 'development'}`);
 		console.log(`═══════════════════════════════════════════`);

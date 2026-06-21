@@ -51,7 +51,12 @@
 
 ## Database
 
-- **SQL files only**, no migration framework. See
+- **SQL files in `database/`** (split across `schema.sql`,
+  `schema-extra.sql`, `views.sql`, `functions.sql`, `triggers.sql`,
+  `roles.sql`, `seed.sql`). Additive changes go in
+  `database/migrations/NNNN_*.sql` and are tracked by `schema_migrations`.
+  See [`database.md`](database.md) and
+  [`database/migrations/README.md`](database/migrations/README.md).
   [`database.md`](database.md).
 - **Use the PgDb wrapper** (`app/server/db/pg-wrapper.cjs`) — do not import `pg`
   directly from route handlers.

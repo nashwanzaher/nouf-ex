@@ -32,7 +32,10 @@ cd app
 npm run db:setup
 ```
 
-`db-setup.cjs` connects via `pg` and runs the three SQL files in order.
+`db-setup.cjs` connects via `pg` and runs the canonical 8-file pipeline
+(`migrations/0001_baseline.sql` + `schema.sql` + `schema-extra.sql` +
+`views.sql` + `functions.sql` + `triggers.sql` + `roles.sql` + `seed.sql`) plus any
+pending `migrations/NNNN_*.sql`.
 All DDL uses `IF NOT EXISTS`, so the script is safe to re-run.
 
 ## Quick reference

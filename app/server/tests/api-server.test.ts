@@ -84,14 +84,49 @@ vi.mock('../db/pg-wrapper.cjs', () => {
 });
 
 // Also mock dotenv so requiring the server doesn't fail if .env is missing.
+// We inject a deterministic AUTH_SECRET so HMAC token signing inside the
+// server middleware is reproducible across test runs.
+process.env.AUTH_SECRET = 'test-secret-must-be-at-least-32-chars-long-x';
+process.env.NODE_ENV = 'test';
+process.env.DB_URL = 'postgresql://test:test@localhost:5432/test';
+process.env.DB_PASSWORD = 'test';
+
 vi.mock('dotenv', () => ({
 	default: { config: () => ({ parsed: {} }) },
-	config: () => ({ parsed: {} }),
-}));
+	config: () => ({ parsed: {} }) }
+));
 
 // Now require the server. It uses `export default app` (ESM).
 import appModule from '../index';
 const app = appModule as unknown as import('express').Express;
+
+// ── Test auth helper ─────────────────────────────────────────────────────────
+// Most of the protected endpoints now require a valid HMAC-signed bearer
+// token. Sign one for a known test user and attach it to requests that need
+// authentication.
+import { createHmac } from 'crypto';
+
+function base64url(buf: Buffer): string {
+	return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function signTestToken(sub: number, role: 'customer' | 'admin' = 'customer'): string {
+	const payload = { sub, role, exp: Math.floor(Date.now() / 1000) + 3600 };
+	const body = base64url(Buffer.from(JSON.stringify(payload)));
+	const sig = base64url(createHmac('sha256', process.env.AUTH_SECRET!).update(body).digest());
+	return `${body}.${sig}`;
+}
+
+// Default customer/admin tokens; tests attach them to Authorization headers.
+const TEST_USER_TOKEN = signTestToken(5, 'customer');
+const TEST_ADMIN_TOKEN = signTestToken(1, 'admin');
+
+function authedPost(url: string): request.Test {
+	return request(app).post(url).set('Authorization', `Bearer ${TEST_USER_TOKEN}`);
+}
+function adminPost(url: string): request.Test {
+	return request(app).post(url).set('Authorization', `Bearer ${TEST_ADMIN_TOKEN}`);
+}
 
 beforeAll(() => {
 	for (const k of Object.keys(stmts)) delete stmts[k];
@@ -198,33 +233,44 @@ describe('API server — static assets', () => {
 
 describe('API server — payments (P0-2)', () => {
 	it('POST /api/payments validates body shape and rejects bad input', async () => {
-		const res = await request(app).post('/api/payments').send({ order_id: 'not-a-number' });
+		const res = await authedPost('/api/payments').send({ order_id: 'not-a-number' });
 		expect(res.status).toBe(400);
 		expect(res.body.success).toBe(false);
 	});
 
 	it('POST /api/payments returns 404 when order does not exist', async () => {
 		defaultGet = makeFakeStmt(undefined);
-		const res = await request(app)
-			.post('/api/payments')
-			.send({ order_id: 9999, amount: 100, method: 'cod' });
+		const res = await authedPost('/api/payments').send({
+			order_id: 9999,
+			amount: 100,
+			method: 'cod',
+		});
 		expect(res.status).toBe(404);
 	});
 
 	it('POST /api/payments creates a COD payment and marks it pending', async () => {
 		defaultGet = makeFakeStmt({ id: 1, customer_id: 5, total: 250, status: 'pending' });
-		const res = await request(app)
-			.post('/api/payments')
-			.send({ order_id: 1, amount: 250, method: 'cod' });
+		const res = await authedPost('/api/payments').send({
+			order_id: 1,
+			amount: 250,
+			method: 'cod',
+		});
 		expect(res.status).toBe(200);
 		expect(res.body.data.status).toBe('pending');
 	});
 
 	it('GET /api/payments/order/:orderId returns the payment list', async () => {
-		defaultGet = makeFakeStmt([{ id: 1, order_id: 1, status: 'completed', amount: 100 }]);
-		const res = await request(app).get('/api/payments/order/1');
-		expect(res.status).toBe(200);
-		expect(Array.isArray(res.body.data)).toBe(true);
+		// defaultGet is hit twice: once for the order lookup (customer_id
+		// must match the authenticated user) and once for the payments list.
+		defaultGet = makeFakeStmt({ customer_id: 5 });
+		const orderStmt = makeFakeStmt([{ id: 1, order_id: 1, status: 'completed', amount: 100 }]);
+		stmts['SELECT customer_id FROM orders WHERE id = ?'] = defaultGet;
+		stmts['SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC'] = orderStmt;
+		const getRes = await request(app)
+			.get('/api/payments/order/1')
+			.set('Authorization', `Bearer ${TEST_USER_TOKEN}`);
+		expect(getRes.status).toBe(200);
+		expect(Array.isArray(getRes.body.data)).toBe(true);
 	});
 });
 
@@ -260,20 +306,35 @@ describe('API server — coupons (P1-5)', () => {
 });
 
 describe('API server — addresses (P1-3)', () => {
-	it('GET /api/addresses requires user_id', async () => {
+	it('GET /api/addresses works when authenticated (no user_id query needed)', async () => {
+		defaultGet = makeFakeStmt([]);
+		const res = await request(app)
+			.get('/api/addresses')
+			.set('Authorization', `Bearer ${TEST_USER_TOKEN}`);
+		expect(res.status).toBe(200);
+		expect(res.body.success).toBe(true);
+		expect(Array.isArray(res.body.data)).toBe(true);
+	});
+
+	it('GET /api/addresses returns 401 when no token is provided', async () => {
 		const res = await request(app).get('/api/addresses');
-		expect(res.status).toBe(400);
+		expect(res.status).toBe(401);
 	});
 
 	it('POST /api/addresses rejects payloads missing required fields', async () => {
-		const res = await request(app).post('/api/addresses').send({ user_id: 1 });
+		const res = await authedPost('/api/addresses').send({});
 		expect(res.status).toBe(400);
 	});
 });
 
 describe('API server — refunds (P1-6)', () => {
 	it('POST /api/refunds/:id/resolve rejects an unknown status', async () => {
-		const res = await request(app).post('/api/refunds/1/resolve').send({ status: 'maybe' });
+		const res = await adminPost('/api/refunds/1/resolve').send({ status: 'maybe' });
 		expect(res.status).toBe(400);
+	});
+
+	it('POST /api/refunds/:id/resolve requires admin role (customer gets 403)', async () => {
+		const res = await authedPost('/api/refunds/1/resolve').send({ status: 'approved' });
+		expect(res.status).toBe(403);
 	});
 });

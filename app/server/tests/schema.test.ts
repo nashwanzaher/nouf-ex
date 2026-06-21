@@ -43,6 +43,7 @@ describe('SQL schema files', () => {
 				'wishlist',
 				'addresses',
 				'subscriptions',
+				'product_variants',
 			];
 			for (const table of expected) {
 				// We look for `CREATE TABLE` mentions of the name.
@@ -52,8 +53,9 @@ describe('SQL schema files', () => {
 		});
 
 		it('uses PostgreSQL types', () => {
-			expect(sql).toMatch(/SERIAL/i);
-			expect(sql).toMatch(/TIMESTAMP/i);
+			// Modern PG 17 schema uses GENERATED ... AS IDENTITY (not legacy SERIAL).
+			expect(sql).toMatch(/GENERATED\s+(ALWAYS|BY\s+DEFAULT)\s+AS\s+IDENTITY/i);
+			expect(sql).toMatch(/TIMESTAMP(TZ)?/i);
 			expect(sql).toMatch(/VARCHAR/i);
 		});
 
@@ -72,6 +74,9 @@ describe('SQL schema files', () => {
 		});
 
 		it('declares the extra business tables', () => {
+			// product_variants and notifications live in schema.sql (referenced
+			// by orders/order_items/notifications endpoints) so they are not
+			// expected here. All other business tables come from schema-extra.sql.
 			const expected = [
 				'coupons',
 				'coupon_usage',
@@ -79,7 +84,6 @@ describe('SQL schema files', () => {
 				'refunds',
 				'shipping_methods',
 				'inventory_log',
-				'product_variants',
 				'transactions',
 				'store_balance',
 				'store_followers',

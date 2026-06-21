@@ -52,13 +52,27 @@ See [`docs/conventions.md`](docs/conventions.md). The short version:
 
 ## Adding schema changes
 
-1. Edit `database/schema.sql` or `database/schema-extra.sql` (whichever
-   applies).
-2. Keep DDL idempotent (`CREATE … IF NOT EXISTS`, `CREATE OR REPLACE`).
-3. Re-run `npm run db:setup` locally to verify.
-4. Update [`docs/database.md`](docs/database.md) and the test in
+The schema is split across `database/{schema,schema-extra,views,functions,triggers,roles,seed}.sql`.
+Additive changes go into `database/migrations/NNNN_*.sql`. See
+[`database/migrations/README.md`](database/migrations/README.md) for the
+full workflow.
+
+1. **New column / table / index** → create
+   `database/migrations/NNNN_short_description.sql` with idempotent DDL
+   (`ADD COLUMN IF NOT EXISTS`, etc.). The next `npm run db:setup`
+   applies it and records the version in `schema_migrations`.
+2. **Editing an existing object** (table structure, view definition, …)
+   → edit the file in `database/` that owns it, **and** add a new
+   migration if the change is destructive (DROP/RENAME).
+3. **New demo data** → edit `database/seed.sql` (use `ON CONFLICT DO NOTHING`).
+4. **New trigger / function** → edit `database/functions.sql` and
+   `database/triggers.sql` (both idempotent).
+5. **Permissions** → edit `database/roles.sql`.
+6. Keep DDL idempotent everywhere (`IF NOT EXISTS`, `OR REPLACE`).
+7. Re-run `npm run db:setup` locally to verify.
+8. Update [`docs/database.md`](docs/database.md) and the test in
    `app/server/tests/schema.test.ts` if you added/removed tables.
-5. Mention the schema change in the PR description.
+9. Mention the schema change in the PR description.
 
 ## Adding an API endpoint
 

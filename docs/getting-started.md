@@ -27,15 +27,17 @@ cd noufex
 cp .env.example .env
 ```
 
-The defaults in `.env.example` already point at:
+The defaults in `.env.example` already point at: `noufex_app` (the
+least-privilege runtime role). The `postgres` superuser is only needed
+**once** to run `db:setup` — see step 4.
 
 ```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=noufex_db
-DB_USER=postgres
-DB_PASSWORD=CHANGE_ME
-DATABASE_URL=postgresql://postgres:CHANGE_ME@localhost:5432/noufex_db
+DB_USER=noufex_app
+DB_PASSWORD=CHANGE_ME_APP
+DATABASE_URL=postgresql://noufex_app:CHANGE_ME_APP@localhost:5432/noufex_db
 ```
 
 Adjust if your Postgres server is not on `localhost`.

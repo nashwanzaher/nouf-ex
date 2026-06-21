@@ -110,7 +110,24 @@ class PgTxDb {
 
 class PgDb {
 	constructor(connectionString) {
-		this.pool = new Pool({ connectionString, max: 10 });
+		const config = {
+			connectionString,
+			max: 10,
+			idleTimeoutMillis: 30_000,
+			connectionTimeoutMillis: 5_000,
+		};
+		// Enable SSL when explicitly requested via DB_SSL env or ?ssl=true in
+		// the connection string. Production should set DB_SSL=true (or pass
+		// sslmode=require in DATABASE_URL).
+		if (process.env.DB_SSL === 'true' || /sslmode=require/.test(connectionString)) {
+			config.ssl = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+		}
+		this.pool = new Pool(config);
+	}
+
+	/** Redact password from a postgres:// URL — safe to log. */
+	static redactUrl(url) {
+		return url.replace(/:[^:@/]+@/, ':***@');
 	}
 
 	prepare(sql) {

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="vgold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A853"/>
+      <stop offset="100%" style="stop-color:#F5E6C8"/>
+    </linearGradient>
+  </defs>
+  <path d="M24 2 L30 8 L42 8 L42 20 L48 26 L42 32 L42 44 L30 44 L24 50 L18 44 L6 44 L6 32 L0 26 L6 20 L6 8 L18 8 Z" fill="url(#vgold)"/>
+  <path d="M16 26 L21 31 L32 20" stroke="#1A1612" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="24" y="40" font-family="Cairo, sans-serif" font-size="7" font-weight="700" fill="#1A1612" text-anchor="middle">موثق</text>
+</svg>

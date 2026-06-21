@@ -1,0 +1,37 @@
+{
+	"recommendations": [
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"bradlc.vscode-tailwindcss",
+		"ms-azuretools.vscode-docker",
+		"ms-vscode.vscode-typescript-next",
+		"ms-vscode.js-debug",
+		"vitest.explorer",
+		"ms-python.python",
+		"mtxr.sqltools",
+		"redhat.vscode-yaml",
+		"editorconfig.editorconfig",
+		"streetsidesoftware.code-spell-checker"
+	],
+	"unwantedRecommendations": [
+		"ritwickdey.liveserver",
+		"alvinashcraft.windev-helper",
+		"brandonw3612.declarative-composition-language-support",
+		"brijesharung.winapp-mcp",
+		"continue.continue",
+		"danielgarysoftware.csxaml-vscode-extension",
+		"figma.figma-vscode-extension",
+		"moonshot-ai.kimi-code",
+		"ms-dotnettools.csdevkit",
+		"ms-dotnettools.csharp",
+		"ms-dotnettools.dotnet-maui",
+		"ms-dotnettools.vscode-dotnet-runtime",
+		"rooveterinaryinc.roo-cline",
+		"saoudrizwan.claude-dev",
+		"sst-dev.opencode",
+		"syncfusioninc.maui-ui-kit-vscode-extensions",
+		"hashicorp.terraform",
+		"ms-kubernetes-tools.vscode-kubernetes-tools",
+		"ckolkman.vscode-postgres"
+	]
+}

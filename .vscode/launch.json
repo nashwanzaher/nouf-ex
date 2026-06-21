@@ -1,0 +1,51 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "🟢 Run Vite Dev Server",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "--prefix", "app", "dev"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"skipFiles": ["<node_internals>/**"]
+		},
+		{
+			"name": "🚀 Run API Server (tsx)",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "--prefix", "app", "api"],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"skipFiles": ["<node_internals>/**"]
+		},
+		{
+			"name": "🔌 Attach to API (3000)",
+			"type": "node",
+			"request": "attach",
+			"port": 9229,
+			"restart": true,
+			"skipFiles": ["<node_internals>/**"]
+		},
+		{
+			"name": "🧪 Run Vitest (current file)",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "--prefix", "app", "test", "--", "${file}"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
+		}
+	],
+	"compounds": [
+		{
+			"name": "▶️ Full Stack (API + Vite)",
+			"configurations": ["🟢 Run Vite Dev Server", "🚀 Run API Server (tsx)"]
+		}
+	]
+}

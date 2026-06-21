@@ -1,0 +1,1512 @@
+[
+  {
+    "id": 2,
+    "customer_id": 4,
+    "store_id": 5,
+    "order_number": "NOUF-20260002",
+    "status": "confirmed",
+    "payment_method": "wallet",
+    "payment_status": "paid",
+    "subtotal": 90000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 90000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 12"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-17T05:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-17T05:04:14.104636",
+    "updated_at": "2026-06-17T05:04:14.104636",
+    "items": [
+      {
+        "id": 4,
+        "order_id": 2,
+        "product_id": 15,
+        "quantity": 2,
+        "unit_price": 6500.0,
+        "total_price": 13000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 5,
+        "order_id": 2,
+        "product_id": 1,
+        "quantity": 3,
+        "unit_price": 12500.0,
+        "total_price": 37500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "customer_id": 4,
+    "store_id": 1,
+    "order_number": "NOUF-20260022",
+    "status": "confirmed",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 273500.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 273500.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 12"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-15T07:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-15T07:04:14.104636",
+    "updated_at": "2026-06-15T07:04:14.104636",
+    "items": [
+      {
+        "id": 50,
+        "order_id": 22,
+        "product_id": 14,
+        "quantity": 3,
+        "unit_price": 85000.0,
+        "total_price": 255000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 51,
+        "order_id": 22,
+        "product_id": 18,
+        "quantity": 3,
+        "unit_price": 5800.0,
+        "total_price": 17400.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 52,
+        "order_id": 22,
+        "product_id": 38,
+        "quantity": 3,
+        "unit_price": 3500.0,
+        "total_price": 10500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "customer_id": 4,
+    "store_id": 6,
+    "order_number": "NOUF-20260029",
+    "status": "shipped",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 69900.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 69900.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 2"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-13T13:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-13T13:04:14.104636",
+    "updated_at": "2026-06-13T13:04:14.104636",
+    "items": [
+      {
+        "id": 65,
+        "order_id": 29,
+        "product_id": 25,
+        "quantity": 1,
+        "unit_price": 12000.0,
+        "total_price": 12000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 66,
+        "order_id": 29,
+        "product_id": 16,
+        "quantity": 1,
+        "unit_price": 2800.0,
+        "total_price": 2800.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "customer_id": 3,
+    "store_id": 6,
+    "order_number": "NOUF-20260016",
+    "status": "shipped",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 32300.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 32300.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 3"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-12T06:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-12T06:04:14.104636",
+    "updated_at": "2026-06-12T06:04:14.104636",
+    "items": [
+      {
+        "id": 37,
+        "order_id": 16,
+        "product_id": 14,
+        "quantity": 2,
+        "unit_price": 85000.0,
+        "total_price": 170000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 38,
+        "order_id": 16,
+        "product_id": 36,
+        "quantity": 2,
+        "unit_price": 6500.0,
+        "total_price": 13000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "customer_id": 2,
+    "store_id": 5,
+    "order_number": "NOUF-20260030",
+    "status": "delivered",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 127600.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 127600.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 29"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-12T01:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-12T01:04:14.104636",
+    "updated_at": "2026-06-12T01:04:14.104636",
+    "items": [
+      {
+        "id": 67,
+        "order_id": 30,
+        "product_id": 31,
+        "quantity": 1,
+        "unit_price": 8500.0,
+        "total_price": 8500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "customer_id": 3,
+    "store_id": 1,
+    "order_number": "NOUF-20260004",
+    "status": "shipped",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 235600.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 235600.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 9"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-10T02:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-10T02:04:14.104636",
+    "updated_at": "2026-06-10T02:04:14.104636",
+    "items": [
+      {
+        "id": 9,
+        "order_id": 4,
+        "product_id": 36,
+        "quantity": 2,
+        "unit_price": 6500.0,
+        "total_price": 13000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 10,
+        "order_id": 4,
+        "product_id": 18,
+        "quantity": 2,
+        "unit_price": 5800.0,
+        "total_price": 11600.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 11,
+        "order_id": 4,
+        "product_id": 4,
+        "quantity": 3,
+        "unit_price": 15000.0,
+        "total_price": 45000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "customer_id": 2,
+    "store_id": 15,
+    "order_number": "NOUF-20260011",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 278700.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 278700.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 11"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-10T00:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-10T00:04:14.104636",
+    "updated_at": "2026-06-10T00:04:14.104636",
+    "items": [
+      {
+        "id": 27,
+        "order_id": 11,
+        "product_id": 32,
+        "quantity": 1,
+        "unit_price": 9500.0,
+        "total_price": 9500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 28,
+        "order_id": 11,
+        "product_id": 15,
+        "quantity": 3,
+        "unit_price": 6500.0,
+        "total_price": 19500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "customer_id": 3,
+    "store_id": 6,
+    "order_number": "NOUF-20260008",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 22300.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 22300.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 16"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-08T23:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-08T23:04:14.104636",
+    "updated_at": "2026-06-08T23:04:14.104636",
+    "items": [
+      {
+        "id": 19,
+        "order_id": 8,
+        "product_id": 37,
+        "quantity": 3,
+        "unit_price": 22000.0,
+        "total_price": 66000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 20,
+        "order_id": 8,
+        "product_id": 36,
+        "quantity": 3,
+        "unit_price": 6500.0,
+        "total_price": 19500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "customer_id": 3,
+    "store_id": 3,
+    "order_number": "NOUF-20260005",
+    "status": "shipped",
+    "payment_method": "wallet",
+    "payment_status": "paid",
+    "subtotal": 37000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 37000.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 31"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-05T01:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-05T01:04:14.104636",
+    "updated_at": "2026-06-05T01:04:14.104636",
+    "items": [
+      {
+        "id": 12,
+        "order_id": 5,
+        "product_id": 8,
+        "quantity": 3,
+        "unit_price": 2200.0,
+        "total_price": 6600.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 13,
+        "order_id": 5,
+        "product_id": 38,
+        "quantity": 2,
+        "unit_price": 3500.0,
+        "total_price": 7000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "customer_id": 3,
+    "store_id": 1,
+    "order_number": "NOUF-20260014",
+    "status": "shipped",
+    "payment_method": "wallet",
+    "payment_status": "paid",
+    "subtotal": 41500.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 41500.0,
+    "shipping_address": {
+      "city": "عدن",
+      "street": "شارع 32"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-03T23:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-03T23:04:14.104636",
+    "updated_at": "2026-06-03T23:04:14.104636",
+    "items": [
+      {
+        "id": 34,
+        "order_id": 14,
+        "product_id": 37,
+        "quantity": 2,
+        "unit_price": 22000.0,
+        "total_price": 44000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 35,
+        "order_id": 14,
+        "product_id": 10,
+        "quantity": 1,
+        "unit_price": 7500.0,
+        "total_price": 7500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "customer_id": 2,
+    "store_id": 6,
+    "order_number": "NOUF-20260007",
+    "status": "delivered",
+    "payment_method": "wallet",
+    "payment_status": "paid",
+    "subtotal": 42200.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 42200.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 26"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-03T14:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-03T14:04:14.104636",
+    "updated_at": "2026-06-03T14:04:14.104636",
+    "items": [
+      {
+        "id": 17,
+        "order_id": 7,
+        "product_id": 32,
+        "quantity": 2,
+        "unit_price": 9500.0,
+        "total_price": 19000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 18,
+        "order_id": 7,
+        "product_id": 8,
+        "quantity": 1,
+        "unit_price": 2200.0,
+        "total_price": 2200.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "customer_id": 3,
+    "store_id": 2,
+    "order_number": "NOUF-20260017",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 119500.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 119500.0,
+    "shipping_address": {
+      "city": "عدن",
+      "street": "شارع 18"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-02T03:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-02T03:04:14.104636",
+    "updated_at": "2026-06-02T03:04:14.104636",
+    "items": [
+      {
+        "id": 39,
+        "order_id": 17,
+        "product_id": 31,
+        "quantity": 3,
+        "unit_price": 8500.0,
+        "total_price": 25500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 40,
+        "order_id": 17,
+        "product_id": 30,
+        "quantity": 1,
+        "unit_price": 85000.0,
+        "total_price": 85000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "customer_id": 3,
+    "store_id": 2,
+    "order_number": "NOUF-20260006",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 8100.0,
+    "shipping_cost": 500.0,
+    "discount": 0.0,
+    "total": 8600.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 39"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-06-01T00:04:14.104636"
+      }
+    ],
+    "created_at": "2026-06-01T00:04:14.104636",
+    "updated_at": "2026-06-01T00:04:14.104636",
+    "items": [
+      {
+        "id": 14,
+        "order_id": 6,
+        "product_id": 27,
+        "quantity": 2,
+        "unit_price": 18500.0,
+        "total_price": 37000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 15,
+        "order_id": 6,
+        "product_id": 36,
+        "quantity": 2,
+        "unit_price": 6500.0,
+        "total_price": 13000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 16,
+        "order_id": 6,
+        "product_id": 12,
+        "quantity": 3,
+        "unit_price": 18500.0,
+        "total_price": 55500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "customer_id": 3,
+    "store_id": 1,
+    "order_number": "NOUF-20260028",
+    "status": "delivered",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 128500.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 128500.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 43"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-31T11:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-31T11:04:14.104636",
+    "updated_at": "2026-05-31T11:04:14.104636",
+    "items": [
+      {
+        "id": 62,
+        "order_id": 28,
+        "product_id": 13,
+        "quantity": 1,
+        "unit_price": 4500.0,
+        "total_price": 4500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 63,
+        "order_id": 28,
+        "product_id": 30,
+        "quantity": 1,
+        "unit_price": 85000.0,
+        "total_price": 85000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 64,
+        "order_id": 28,
+        "product_id": 10,
+        "quantity": 3,
+        "unit_price": 7500.0,
+        "total_price": 22500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "customer_id": 4,
+    "store_id": 14,
+    "order_number": "NOUF-20260012",
+    "status": "shipped",
+    "payment_method": "wallet",
+    "payment_status": "paid",
+    "subtotal": 45000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 45000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 4"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-29T23:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-29T23:04:14.104636",
+    "updated_at": "2026-05-29T23:04:14.104636",
+    "items": [
+      {
+        "id": 29,
+        "order_id": 12,
+        "product_id": 5,
+        "quantity": 3,
+        "unit_price": 9500.0,
+        "total_price": 28500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 30,
+        "order_id": 12,
+        "product_id": 9,
+        "quantity": 3,
+        "unit_price": 1800.0,
+        "total_price": 5400.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "customer_id": 4,
+    "store_id": 7,
+    "order_number": "NOUF-20260013",
+    "status": "shipped",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 111000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 111000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 19"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-28T13:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-28T13:04:14.104636",
+    "updated_at": "2026-05-28T13:04:14.104636",
+    "items": [
+      {
+        "id": 31,
+        "order_id": 13,
+        "product_id": 1,
+        "quantity": 2,
+        "unit_price": 12500.0,
+        "total_price": 25000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 32,
+        "order_id": 13,
+        "product_id": 21,
+        "quantity": 3,
+        "unit_price": 78000.0,
+        "total_price": 234000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 33,
+        "order_id": 13,
+        "product_id": 29,
+        "quantity": 3,
+        "unit_price": 32000.0,
+        "total_price": 96000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "customer_id": 2,
+    "store_id": 8,
+    "order_number": "NOUF-20260024",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 147500.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 147500.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 2"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-27T11:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-27T11:04:14.104636",
+    "updated_at": "2026-05-27T11:04:14.104636",
+    "items": [
+      {
+        "id": 55,
+        "order_id": 24,
+        "product_id": 22,
+        "quantity": 3,
+        "unit_price": 28000.0,
+        "total_price": 84000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "customer_id": 2,
+    "store_id": 6,
+    "order_number": "NOUF-20260027",
+    "status": "shipped",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 18200.0,
+    "shipping_cost": 500.0,
+    "discount": 0.0,
+    "total": 18700.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 48"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-26T22:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-26T22:04:14.104636",
+    "updated_at": "2026-05-26T22:04:14.104636",
+    "items": [
+      {
+        "id": 60,
+        "order_id": 27,
+        "product_id": 2,
+        "quantity": 3,
+        "unit_price": 85000.0,
+        "total_price": 255000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 61,
+        "order_id": 27,
+        "product_id": 19,
+        "quantity": 2,
+        "unit_price": 4200.0,
+        "total_price": 8400.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "customer_id": 3,
+    "store_id": 1,
+    "order_number": "NOUF-20260025",
+    "status": "shipped",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 234000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 234000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 27"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-23T14:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-23T14:04:14.104636",
+    "updated_at": "2026-05-23T14:04:14.104636",
+    "items": [
+      {
+        "id": 56,
+        "order_id": 25,
+        "product_id": 38,
+        "quantity": 3,
+        "unit_price": 3500.0,
+        "total_price": 10500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 57,
+        "order_id": 25,
+        "product_id": 23,
+        "quantity": 2,
+        "unit_price": 5500.0,
+        "total_price": 11000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "customer_id": 3,
+    "store_id": 6,
+    "order_number": "NOUF-20260023",
+    "status": "shipped",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 8500.0,
+    "shipping_cost": 500.0,
+    "discount": 0.0,
+    "total": 9000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 30"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-22T20:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-22T20:04:14.104636",
+    "updated_at": "2026-05-22T20:04:14.104636",
+    "items": [
+      {
+        "id": 53,
+        "order_id": 23,
+        "product_id": 38,
+        "quantity": 3,
+        "unit_price": 3500.0,
+        "total_price": 10500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 54,
+        "order_id": 23,
+        "product_id": 24,
+        "quantity": 3,
+        "unit_price": 7200.0,
+        "total_price": 21600.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "customer_id": 4,
+    "store_id": 6,
+    "order_number": "NOUF-20260001",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 194000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 194000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 36"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-22T08:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-22T08:04:14.104636",
+    "updated_at": "2026-05-22T08:04:14.104636",
+    "items": [
+      {
+        "id": 1,
+        "order_id": 1,
+        "product_id": 4,
+        "quantity": 3,
+        "unit_price": 15000.0,
+        "total_price": 45000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 2,
+        "order_id": 1,
+        "product_id": 15,
+        "quantity": 3,
+        "unit_price": 6500.0,
+        "total_price": 19500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 3,
+        "order_id": 1,
+        "product_id": 1,
+        "quantity": 2,
+        "unit_price": 12500.0,
+        "total_price": 25000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "customer_id": 3,
+    "store_id": 3,
+    "order_number": "NOUF-20260009",
+    "status": "delivered",
+    "payment_method": "wallet",
+    "payment_status": "paid",
+    "subtotal": 337000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 337000.0,
+    "shipping_address": {
+      "city": "عدن",
+      "street": "شارع 30"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-20T17:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-20T17:04:14.104636",
+    "updated_at": "2026-05-20T17:04:14.104636",
+    "items": [
+      {
+        "id": 21,
+        "order_id": 9,
+        "product_id": 23,
+        "quantity": 3,
+        "unit_price": 5500.0,
+        "total_price": 16500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 22,
+        "order_id": 9,
+        "product_id": 19,
+        "quantity": 2,
+        "unit_price": 4200.0,
+        "total_price": 8400.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 23,
+        "order_id": 9,
+        "product_id": 32,
+        "quantity": 1,
+        "unit_price": 9500.0,
+        "total_price": 9500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "customer_id": 3,
+    "store_id": 8,
+    "order_number": "NOUF-20260021",
+    "status": "delivered",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 357400.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 357400.0,
+    "shipping_address": {
+      "city": "عدن",
+      "street": "شارع 31"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-20T07:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-20T07:04:14.104636",
+    "updated_at": "2026-05-20T07:04:14.104636",
+    "items": [
+      {
+        "id": 47,
+        "order_id": 21,
+        "product_id": 33,
+        "quantity": 1,
+        "unit_price": 45000.0,
+        "total_price": 45000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 48,
+        "order_id": 21,
+        "product_id": 10,
+        "quantity": 2,
+        "unit_price": 7500.0,
+        "total_price": 15000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 49,
+        "order_id": 21,
+        "product_id": 15,
+        "quantity": 2,
+        "unit_price": 6500.0,
+        "total_price": 13000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "customer_id": 2,
+    "store_id": 12,
+    "order_number": "NOUF-20260019",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 14400.0,
+    "shipping_cost": 500.0,
+    "discount": 0.0,
+    "total": 14900.0,
+    "shipping_address": {
+      "city": "تعز",
+      "street": "شارع 41"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-19T18:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-19T18:04:14.104636",
+    "updated_at": "2026-05-19T18:04:14.104636",
+    "items": [
+      {
+        "id": 43,
+        "order_id": 19,
+        "product_id": 36,
+        "quantity": 2,
+        "unit_price": 6500.0,
+        "total_price": 13000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 44,
+        "order_id": 19,
+        "product_id": 19,
+        "quantity": 3,
+        "unit_price": 4200.0,
+        "total_price": 12600.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "customer_id": 3,
+    "store_id": 14,
+    "order_number": "NOUF-20260015",
+    "status": "delivered",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 84000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 84000.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 25"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-18T23:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-18T23:04:14.104636",
+    "updated_at": "2026-05-18T23:04:14.104636",
+    "items": [
+      {
+        "id": 36,
+        "order_id": 15,
+        "product_id": 38,
+        "quantity": 3,
+        "unit_price": 3500.0,
+        "total_price": 10500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "customer_id": 3,
+    "store_id": 2,
+    "order_number": "NOUF-20260020",
+    "status": "delivered",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 9000.0,
+    "shipping_cost": 500.0,
+    "discount": 0.0,
+    "total": 9500.0,
+    "shipping_address": {
+      "city": "عدن",
+      "street": "شارع 5"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-18T14:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-18T14:04:14.104636",
+    "updated_at": "2026-05-18T14:04:14.104636",
+    "items": [
+      {
+        "id": 45,
+        "order_id": 20,
+        "product_id": 21,
+        "quantity": 3,
+        "unit_price": 78000.0,
+        "total_price": 234000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 46,
+        "order_id": 20,
+        "product_id": 4,
+        "quantity": 1,
+        "unit_price": 15000.0,
+        "total_price": 15000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "customer_id": 3,
+    "store_id": 1,
+    "order_number": "NOUF-20260018",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 85000.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 85000.0,
+    "shipping_address": {
+      "city": "عدن",
+      "street": "شارع 43"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-14T12:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-14T12:04:14.104636",
+    "updated_at": "2026-05-14T12:04:14.104636",
+    "items": [
+      {
+        "id": 41,
+        "order_id": 18,
+        "product_id": 11,
+        "quantity": 3,
+        "unit_price": 8500.0,
+        "total_price": 25500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 42,
+        "order_id": 18,
+        "product_id": 7,
+        "quantity": 1,
+        "unit_price": 145000.0,
+        "total_price": 145000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "customer_id": 3,
+    "store_id": 3,
+    "order_number": "NOUF-20260026",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 341600.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 341600.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 5"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-10T09:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-10T09:04:14.104636",
+    "updated_at": "2026-05-10T09:04:14.104636",
+    "items": [
+      {
+        "id": 58,
+        "order_id": 26,
+        "product_id": 10,
+        "quantity": 2,
+        "unit_price": 7500.0,
+        "total_price": 15000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 59,
+        "order_id": 26,
+        "product_id": 33,
+        "quantity": 3,
+        "unit_price": 45000.0,
+        "total_price": 135000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "customer_id": 4,
+    "store_id": 14,
+    "order_number": "NOUF-20260003",
+    "status": "delivered",
+    "payment_method": "cod",
+    "payment_status": "paid",
+    "subtotal": 45400.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 45400.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 11"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-09T15:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-09T15:04:14.104636",
+    "updated_at": "2026-05-09T15:04:14.104636",
+    "items": [
+      {
+        "id": 6,
+        "order_id": 3,
+        "product_id": 8,
+        "quantity": 1,
+        "unit_price": 2200.0,
+        "total_price": 2200.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 7,
+        "order_id": 3,
+        "product_id": 22,
+        "quantity": 1,
+        "unit_price": 28000.0,
+        "total_price": 28000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 8,
+        "order_id": 3,
+        "product_id": 9,
+        "quantity": 2,
+        "unit_price": 1800.0,
+        "total_price": 3600.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "customer_id": 2,
+    "store_id": 2,
+    "order_number": "NOUF-20260010",
+    "status": "delivered",
+    "payment_method": "card",
+    "payment_status": "paid",
+    "subtotal": 57100.0,
+    "shipping_cost": 0.0,
+    "discount": 0.0,
+    "total": 57100.0,
+    "shipping_address": {
+      "city": "صنعاء",
+      "street": "شارع 8"
+    },
+    "notes": null,
+    "timeline": [
+      {
+        "status": "created",
+        "at": "2026-05-08T00:04:14.104636"
+      }
+    ],
+    "created_at": "2026-05-08T00:04:14.104636",
+    "updated_at": "2026-05-08T00:04:14.104636",
+    "items": [
+      {
+        "id": 24,
+        "order_id": 10,
+        "product_id": 16,
+        "quantity": 1,
+        "unit_price": 2800.0,
+        "total_price": 2800.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 25,
+        "order_id": 10,
+        "product_id": 21,
+        "quantity": 1,
+        "unit_price": 78000.0,
+        "total_price": 78000.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      },
+      {
+        "id": 26,
+        "order_id": 10,
+        "product_id": 1,
+        "quantity": 3,
+        "unit_price": 12500.0,
+        "total_price": 37500.0,
+        "variant": null,
+        "created_at": "2026-06-21T03:04:14.104636"
+      }
+    ]
+  }
+]

@@ -1,0 +1,196 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "🚀 Start Full Stack (Docker)",
+			"type": "shell",
+			"command": "docker compose up -d --build",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "📜 Show Nouf-ex Container Logs",
+			"type": "shell",
+			"command": "docker logs -f Nouf-ex",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🛑 Stop Nouf-ex Container",
+			"type": "shell",
+			"command": "docker compose down",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🐚 Exec Into Nouf-ex Container",
+			"type": "shell",
+			"command": "docker exec -it Nouf-ex sh",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🗃️  Query Postgres (psql) on host",
+			"type": "shell",
+			"command": "psql -h localhost -U postgres -d noufex_db",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🧱 Apply Schema + Seed (db:setup)",
+			"type": "shell",
+			"command": "npm run db:setup",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "📦 Install Dependencies (app/)",
+			"type": "shell",
+			"command": "npm install --no-audit --no-fund",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "📝 TypeScript Type Check",
+			"type": "shell",
+			"command": "npx tsc --noEmit -p tsconfig.app.json",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": ["$tsc"],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🔨 Build API Server (esbuild)",
+			"type": "shell",
+			"command": "npx esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=server/index.js --packages=external",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🎨 Build Frontend (Vite)",
+			"type": "shell",
+			"command": "npm run build",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🧪 Run Vitest Tests",
+			"type": "shell",
+			"command": "npm test",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": ["$vitest"],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "👀 Vitest Watch Mode",
+			"type": "shell",
+			"command": "npm run test:watch",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": ["$vitest"],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"isBackground": true
+		},
+		{
+			"label": "📊 Vitest Coverage",
+			"type": "shell",
+			"command": "npm run test:coverage",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": ["$vitest"],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🧹 Lint (ESLint)",
+			"type": "shell",
+			"command": "npx eslint .",
+			"options": {
+				"cwd": "${workspaceFolder}/app"
+			},
+			"problemMatcher": ["$eslint-stylish"],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		}
+	]
+}

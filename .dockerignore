@@ -1,0 +1,20 @@
+# Anything not needed to build or run the API image.
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+.git/
+.vs/
+.vscode/
+
+# Database provisioning files — `npm run db:setup` runs on the HOST,
+# not inside the container, so the SQL is not needed in the image.
+database/
+
+# Project-level helper scripts — same reasoning; not needed at runtime.
+scripts/
+
+# Legacy / archived research docs.
+docs/research/

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="pgold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A853"/>
+      <stop offset="100%" style="stop-color:#F5E6C8"/>
+    </linearGradient>
+    <linearGradient id="pblue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB"/>
+      <stop offset="100%" style="stop-color:#60A5FA"/>
+    </linearGradient>
+  </defs>
+  <circle cx="200" cy="140" r="90" fill="#1A1612" opacity="0.05"/>
+  <path d="M200 60 L240 80 L240 140 Q240 190 200 210 Q160 190 160 140 L160 80 Z" fill="url(#pgold)"/>
+  <rect x="200" y="110" width="50" height="40" rx="6" fill="url(#pblue)" transform="rotate(-10 225 130)"/>
+  <circle cx="225" cy="120" r="8" fill="white"/>
+  <path d="M220 120 L225 125 L235 115" stroke="#2563EB" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M180 140 Q200 155 220 140" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="165" cy="100" r="15" fill="url(#pblue)" opacity="0.2"/>
+  <circle cx="250" cy="170" r="12" fill="url(#pgold)" opacity="0.3"/>
+  <circle cx="145" cy="160" r="10" fill="url(#pgold)" opacity="0.2"/>
+  <text x="200" y="260" font-family="Cairo, sans-serif" font-size="18" font-weight="700" fill="#1A1612" text-anchor="middle">نوف-بروتكت</text>
+  <text x="200" y="280" font-family="Cairo, sans-serif" font-size="12" fill="#6B6B6B" text-anchor="middle">حماية شاملة لكل transaction</text>
+</svg>

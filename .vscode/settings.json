@@ -1,0 +1,94 @@
+{
+	"// Nouf-ex project settings": "// Frontend: React 19 + Vite 7. API: Node 20 + Express 5. DB: external PostgreSQL 17 (database `noufex_db`). The Docker image runs the API only and connects to the external DB via `host.docker.internal`.",
+	"workspaceTrust.enabled": true,
+	"security.workspace.trust.enabled": true,
+	"files.eol": "\n",
+	"files.insertFinalNewline": true,
+	"files.trimTrailingWhitespace": true,
+	"files.trimFinalNewlines": true,
+	"editor.formatOnSave": false,
+	"editor.tabSize": 2,
+	"editor.insertSpaces": true,
+	"editor.detectIndentation": false,
+	"editor.bracketPairColorization.enabled": true,
+	"editor.guides.bracketPairs": "active",
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit",
+		"source.organizeImports": "never"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[css]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[dockerfile]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
+	},
+	"[shellscript]": {
+		"editor.defaultFormatter": "foxundermoon.shell-format"
+	},
+	"typescript.tsdk": "app/node_modules/typescript/lib",
+	"typescript.enablePromptUse": true,
+	"typescript.preferences.importModuleSpecifier": "non-relative",
+	"javascript.preferences.importModuleSpecifier": "non-relative",
+	"tailwindCSS.experimental.classRegex": [
+		["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+		["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+	],
+	"eslint.workingDirectories": ["app"],
+	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+	"docker.compose.downComposeFile": "${workspaceFolder}/docker-compose.yml",
+	"docker.compose.upComposeFile": "${workspaceFolder}/docker-compose.yml",
+	"docker.compose.buildComposeFile": "${workspaceFolder}/docker-compose.yml",
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/.git": true,
+		"**/coverage": true,
+		"app/server/index.js": true
+	},
+	"files.exclude": {
+		"**/.git": true,
+		"**/node_modules": true,
+		"**/dist": true,
+		"app/server/index.js": true
+	},
+	"files.watcherExclude": {
+		"**/node_modules/**": true,
+		"**/dist/**": true,
+		"**/.git/**": true,
+		"**/coverage/**": true
+	},
+	// Vitest — discovered automatically by the official `vitest.explorer` extension.
+	"testing.automaticallyOpenTestResults": false,
+	// Copilot Chat — keep core productivity features; drop the experimental/debug-only toggles.
+	"github.copilot.chat.executionSubagent.enabled": true,
+	"github.copilot.chat.searchSubagent.enabled": true,
+	"github.copilot.chat.inlineEdits.diagnosticsContextProvider.enabled": true,
+	"github.copilot.chat.inlineEdits.chatSessionContextProvider.enabled": true,
+	"github.copilot.chat.inlineChat.enableThinking": true,
+	"github.copilot.chat.skillTool.enabled": true,
+	"github.copilot.chat.installExtensionSkill.enabled": true,
+	"github.copilot.chat.getChangedFilesTool.enabled": true,
+	"github.copilot.chat.tools.defaultToolsGrouped": true
+}

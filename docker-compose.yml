@@ -1,0 +1,45 @@
+# ============================================================================
+# Nouf-ex — API container (connects to an existing external PostgreSQL 17).
+# ----------------------------------------------------------------------------
+# The Postgres server is NOT created here. It must already exist on the host
+# (or on another reachable network) and contain the `noufex_db` database.
+#
+# On Docker Desktop for Windows / Mac, `host.docker.internal` maps to the
+# host machine's loopback. On Linux, either run with `--network=host` or
+# replace the value with the host's IP.
+# ============================================================================
+services:
+  noufex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: noufex:latest
+    container_name: Nouf-ex
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      API_PORT: '3000'
+      HOST: 0.0.0.0
+      # From inside the container, reach the host's Postgres on 5432.
+      DB_HOST: host.docker.internal
+      DB_PORT: '5432'
+      DB_NAME: noufex_db
+      DB_USER: postgres
+      DB_PASSWORD: 'CHANGE_ME'
+      DATABASE_URL: postgresql://postgres:CHANGE_ME@host.docker.internal:5432/noufex_db
+      SERVE_STATIC: 'true'
+    extra_hosts:
+      # Ensure `host.docker.internal` resolves on Linux too.
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "node -e \"require('http').get('http://localhost:3000/api/stats/home', (r) => { if (r.statusCode !== 200) process.exit(1) })\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3

@@ -1,0 +1,52 @@
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import { defineConfig, globalIgnores } from 'eslint/config';
+
+export default defineConfig([
+	globalIgnores(['dist', 'node_modules', '**/*.cjs']),
+	{
+		files: ['**/*.{ts,tsx}'],
+		extends: [
+			js.configs.recommended,
+			tseslint.configs.recommended,
+			reactHooks.configs.flat.recommended,
+			reactRefresh.configs.vite,
+		],
+		languageOptions: {
+			ecmaVersion: 2020,
+			globals: globals.browser,
+		},
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_',
+					ignoreRestSiblings: true,
+				},
+			],
+		},
+	},
+	// shadcn/ui convention: components in src/components/ui co-export cva variants and
+	// tiny primitive constants for ergonomic consumption. Disabling the rule here is the
+	// official shadcn recommendation, not a workaround.
+	{
+		files: ['src/components/ui/**/*.{ts,tsx}'],
+		rules: {
+			'react-refresh/only-export-components': 'off',
+		},
+	},
+	// Context modules legitimately expose a Provider component alongside the useX() hook.
+	// The hook is the public API and must live next to its provider for tree-shaking.
+	{
+		files: ['src/context/**/*.{ts,tsx}'],
+		rules: {
+			'react-refresh/only-export-components': 'off',
+		},
+	},
+]);

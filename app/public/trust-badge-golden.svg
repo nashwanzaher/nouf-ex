@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="ggold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A853"/>
+      <stop offset="100%" style="stop-color:#F5E6C8"/>
+    </linearGradient>
+  </defs>
+  <polygon points="24,2 29,17 46,17 33,27 38,43 24,34 10,43 15,27 2,17 19,17" fill="url(#ggold)"/>
+  <text x="24" y="41" font-family="Cairo, sans-serif" font-size="6" font-weight="700" fill="#1A1612" text-anchor="middle">ذهبي</text>
+</svg>

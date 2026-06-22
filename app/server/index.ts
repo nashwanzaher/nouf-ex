@@ -243,11 +243,27 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 
 // --- Helpers ---
 // `sendSuccess` and `sendError` are imported from `./middleware`. Use those.
-// Local `parseJson` helper kept for compatibility with existing handlers.
-const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
-	if (!value) return fallback;
+// Local `parseJson` helper. P1-1 fix: the type is `unknown` so we can
+// also handle the case where the driver has already parsed the column
+// (JSONB) or returned a Postgres array as a JS array (TEXT[]). The
+// previous `string | null | undefined` signature silently fell back
+// to the empty value whenever the driver handed us a real array,
+// which meant `features`, `badges`, `colors`, `sizes` were always
+// `[]` and `specifications` was always `{}` for live data.
+const parseJson = <T>(value: unknown, fallback: T): T => {
+	if (value == null) return fallback;
+	// Already a JS value — only accept plain objects/arrays, otherwise
+	// fall back (e.g. a stray number should not be returned as `T`).
+	if (typeof value !== 'string') {
+		if (Array.isArray(value) || typeof value === 'object') {
+			return value as T;
+		}
+		return fallback;
+	}
+	const trimmed = value.trim();
+	if (trimmed === '') return fallback;
 	try {
-		return JSON.parse(value) as T;
+		return JSON.parse(trimmed) as T;
 	} catch {
 		return fallback;
 	}
@@ -264,11 +280,11 @@ const getProductWithParsedFields = (product: Record<string, unknown> | undefined
 	if (!product) return null;
 	return {
 		...product,
-		features: parseJson<string[]>(product.features as string, []),
-		badges: parseJson<string[]>(product.badges as string, []),
-		specifications: parseJson<Record<string, string>>(product.specifications as string, {}),
-		colors: parseJson<string[]>(product.colors as string, []),
-		sizes: parseJson<string[]>(product.sizes as string, []),
+		features: parseJson<string[]>(product.features, []),
+		badges: parseJson<string[]>(product.badges, []),
+		specifications: parseJson<Record<string, string>>(product.specifications, {}),
+		colors: parseJson<string[]>(product.colors, []),
+		sizes: parseJson<string[]>(product.sizes, []),
 	};
 };
 

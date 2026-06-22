@@ -107,4 +107,63 @@ export default defineConfig({
 			'@': path.resolve(__dirname, './src'),
 		},
 	},
+	build: {
+		// P2-2 fix: split the main bundle into vendor + framework chunks
+		// so heavy libraries (recharts, framer-motion, gsap, the
+		// radix-ui primitives, lucide icons) are cached separately and
+		// can be served in parallel by the browser. The previous
+		// single 1.4 MB chunk blocked first paint and forced a fresh
+		// download for every code change.
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					// React + react-dom + react-router share a chunk
+					react: ['react', 'react-dom', 'react-router'],
+					// Recharts (charting) is ~250 kB on its own
+					recharts: ['recharts'],
+					// Animation libraries are big and rarely used together
+					animation: ['framer-motion', 'gsap', '@gsap/react'],
+					// All 28 @radix-ui/* packages → one chunk
+					'radix-ui': [
+						'@radix-ui/react-accordion',
+						'@radix-ui/react-alert-dialog',
+						'@radix-ui/react-aspect-ratio',
+						'@radix-ui/react-avatar',
+						'@radix-ui/react-checkbox',
+						'@radix-ui/react-collapsible',
+						'@radix-ui/react-context-menu',
+						'@radix-ui/react-dialog',
+						'@radix-ui/react-dropdown-menu',
+						'@radix-ui/react-hover-card',
+						'@radix-ui/react-label',
+						'@radix-ui/react-menubar',
+						'@radix-ui/react-navigation-menu',
+						'@radix-ui/react-popover',
+						'@radix-ui/react-progress',
+						'@radix-ui/react-radio-group',
+						'@radix-ui/react-scroll-area',
+						'@radix-ui/react-select',
+						'@radix-ui/react-separator',
+						'@radix-ui/react-slider',
+						'@radix-ui/react-slot',
+						'@radix-ui/react-switch',
+						'@radix-ui/react-tabs',
+						'@radix-ui/react-toggle',
+						'@radix-ui/react-toggle-group',
+						'@radix-ui/react-tooltip',
+					],
+					// Lucide icon set is imported via the barrel, which
+					// pulls every icon. Splitting it out helps the browser
+					// cache the icon set across pages that only use a
+					// handful of glyphs.
+					lucide: ['lucide-react'],
+					// Date / time helpers
+					dates: ['date-fns', 'react-day-picker'],
+				},
+			},
+		},
+		// Raise the chunk-size warning since some of these are
+		// necessarily large (recharts alone is ~250 kB minified).
+		chunkSizeWarningLimit: 800,
+	},
 });

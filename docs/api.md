@@ -32,21 +32,24 @@ talks to relative paths (`/api/...`).
 | `PUT`    | `/api/notifications/:id/read`       | —      | Mark one notification as read.             |
 | `POST`   | `/api/auth/register`                | rate-limited | Create an account.                   |
 | `POST`   | `/api/auth/login`                   | rate-limited | Exchange credentials for a session.  |
-| `GET`    | `/api/auth/me`                      | —      | Return the current user (stub).            |
+| `GET`    | `/api/auth/me`                      | auth   | Return the currently authenticated user.   |
 | `POST`   | `/api/payments`                     | rate-limited | Create a payment for an order.         |
 | `GET`    | `/api/payments/order/:orderId`      | —      | Payments for one order.                    |
-| `POST`   | `/api/payments/:id/confirm`         | —      | Confirm a payment (e.g. on COD receipt).   |
+| `POST`   | `/api/payments/:id/confirm`         | auth (admin) | Confirm a payment (e.g. on COD receipt).   |
 | `GET`    | `/api/addresses`                    | —      | List a user's saved addresses.             |
 | `POST`   | `/api/addresses`                    | —      | Create a new address.                      |
 | `DELETE` | `/api/addresses/:id`                | —      | Remove a saved address.                    |
 | `GET`    | `/api/shipping/methods?weight_kg=N` | —      | Shipping options for a given cart weight.  |
-| `POST`   | `/api/coupons/validate`             | —      | Validate a coupon against a cart total.    |
-| `POST`   | `/api/coupons/redeem`               | —      | Redeem (persist) a coupon redemption.      |
+| `POST`   | `/api/coupons/validate`             | auth   | Validate a coupon against a cart total.    |
+| `POST`   | `/api/coupons/redeem`               | auth   | Redeem (persist) a coupon redemption.      |
 | `POST`   | `/api/refunds`                      | —      | Open a refund / dispute.                   |
 | `POST`   | `/api/refunds/:id/resolve`          | —      | Admin: resolve a refund.                   |
 
-> "Auth" column = current behaviour. The codebase ships with a stub; see
-> `docs/roadmap.md` P0-1 for the real session middleware.
+> "Auth" column = who can call this endpoint:
+> - `—` — public, no credentials.
+> - `auth` — requires a valid bearer token in `Authorization: Bearer ...`.
+> - `auth (admin)` — requires a bearer token whose `role` is `admin`.
+> - `rate-limited` — wrapped in the in-memory rate limiter (20 req / 15 min / IP).
 
 ---
 
@@ -55,8 +58,15 @@ talks to relative paths (`/api/...`).
 - **JSON in, JSON out.** Requests send `Content-Type: application/json`.
   Responses are `application/json; charset=utf-8`.
 - **IDs are integers.** They match the `IDENTITY` (auto-increment) columns in the schema.
-- **Errors** look like `{ "error": "human readable", "details"?: zodIssues }`
-  with the appropriate 4xx/5xx status.
+- **Success envelope** is `{ "success": true, "data": <T>, "request_id": "<uuid>" }`.
+  `request_id` is echoed back from the `x-request-id` request header (auto-generated
+  if absent) so a single support ticket can correlate client + server logs.
+- **Error envelope** is `{ "success": false, "error": "<human readable>",
+  "code"?: "<machine code>", "details"?: <zod issues>, "request_id": "<uuid>" }`
+  with the appropriate 4xx/5xx status. Production never leaks raw
+  `err.message` for unhandled errors — the global error handler
+  translates PG error codes (`23505` / `23503` / `40001` / ...) to a
+  sanitized user-facing message and logs the full detail server-side.
 - **Pagination** is currently inline (the SQL fetches a window); the
   frontend handles UI pagination locally.
 - **Multilingual fields** (e.g. products) are returned with all three

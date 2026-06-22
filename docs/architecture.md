@@ -74,9 +74,15 @@ together.
 
 ## Cross-cutting concerns
 
-- **Authentication** — passwords hashed with `scrypt` + 16-byte random salt
-  + `timingSafeEqual`. No JWT yet — endpoints rely on the `x-user-id` header
-  (server stub for now; real session middleware is a P0 item).
+- **Authentication** — passwords hashed with `scrypt` (base64 salt + key,
+  format `scrypt$<salt>$<key>`) and verified with `timingSafeEqual`. The
+  `/api/auth/login` and `/api/auth/register` endpoints return an
+  HMAC-SHA256-signed bearer token (`<base64url(payload)>.<base64url(sig)>`,
+  7-day TTL). The client stores the token in `localStorage` under
+  `noufex_token`; `app/src/lib/api.ts` reads it and attaches
+  `Authorization: Bearer <token>` to every request. The server-side
+  `optionalAuth` / `requireAuth` / `requireRole` middlewares live in
+  `app/server/middleware.ts` and populate `req.user` from the token.
 - **Validation** — every writable endpoint accepts its payload through a
   `zod` schema before it touches the DB.
 - **CORS** — restricted to `ALLOWED_ORIGINS` (default:

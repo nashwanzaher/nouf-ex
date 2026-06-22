@@ -806,7 +806,6 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 			notes,
 			subtotal,
 			shippingCost,
-			discount,
 			total,
 			couponCode,
 		} = v.data as {
@@ -833,17 +832,84 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		const normalisedPaymentMethod =
 			paymentMethod === 'cash' || !paymentMethod ? 'cod' : paymentMethod;
 
+		// P0-5 fix: do NOT trust the client's `discount` or `total`.
+		// If a coupon code is provided, look it up and recompute the
+		// discount and total server-side. The client's `subtotal` and
+		// `shippingCost` are still used as hints (the items[] array
+		// already pins line-item prices, so they should match the
+		// server's view in practice).
+		const resolvedSubtotal = Math.max(0, Number(subtotal) || Number(total) || 0);
+		const resolvedShippingCost = Math.max(0, Number(shippingCost) || 0);
+		let resolvedDiscount = 0;
+		const resolvedCouponCode: string | null = couponCode ? String(couponCode) : null;
+		if (resolvedCouponCode) {
+			if (resolvedSubtotal <= 0) {
+				return sendError(
+					res,
+					'Cannot apply a coupon without a positive subtotal.',
+					400
+				);
+			}
+		}
+
 		// P0-2 fix: capture the REAL orderNumber (generated above and
 		// INSERTed into the row) and return it in the response. The
 		// previous implementation returned a fake `ORD-...${last4id}`
 		// string which silently broke the audit trail and the UI.
-		const { id: orderId, orderNumber } = await db.tx(
+		const { id: orderId, orderNumber, finalDiscount, finalTotal } = await db.tx(
 			async (txDb: {
 				prepare: (sql: string) => {
 					run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>;
 					get: (...args: unknown[]) => Promise<unknown>;
 				};
 			}) => {
+				// ── P0-5: resolve the coupon inside the transaction ─────
+				// Use `SELECT ... FOR UPDATE` so two concurrent orders
+				// with the same coupon cannot both pass the usage_limit
+				// check and both increment `usage_count`. The lock is
+				// released when the transaction commits/rolls back.
+				if (resolvedCouponCode) {
+					const coupon = (await txDb
+						.prepare(
+							`SELECT ${COUPON_COLUMNS}
+                             FROM coupons
+                            WHERE code = ? AND is_active = TRUE
+                            FOR UPDATE`
+						)
+						.get(resolvedCouponCode)) as CouponRow | undefined;
+					if (!coupon) {
+						throw new Error('Coupon not found or inactive.');
+					}
+					if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+						throw new Error('Coupon has expired.');
+					}
+					if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
+						throw new Error('Coupon is not yet active.');
+					}
+					if (
+						coupon.usage_limit != null &&
+						coupon.usage_count >= coupon.usage_limit
+					) {
+						throw new Error('Coupon usage limit reached.');
+					}
+					if (
+						coupon.min_order != null &&
+						resolvedSubtotal < coupon.min_order
+					) {
+						throw new Error(
+							`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`
+						);
+					}
+					resolvedDiscount = computeCouponDiscount(coupon, resolvedSubtotal);
+				}
+				const finalDiscount = Math.round(resolvedDiscount * 100) / 100;
+				const finalTotal = Math.max(
+					0,
+					Math.round(
+						(resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100
+					) / 100
+				);
+
 				const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
 				const result = (await txDb
 					.prepare(
@@ -853,7 +919,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 			         coupon_code, discount_amount, total, currency,
 			         shipping_address, notes)
 			       VALUES (?, ?, ?, 'pending', ?, 'pending',
-			               ?, ?, ?, ?, 0, ?, 'YER',
+			               ?, ?, ?, ?, ?, ?, 'YER',
 			               ?, ?)
 			       RETURNING id`
 					)
@@ -862,11 +928,12 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 						storeId,
 						orderNumber,
 						normalisedPaymentMethod,
-						subtotal || total,
-						shippingCost || 0,
-						discount || 0,
-						couponCode || null,
-						total,
+						resolvedSubtotal,
+						resolvedShippingCost,
+						finalDiscount,
+						resolvedCouponCode,
+						finalDiscount,
+						finalTotal,
 						JSON.stringify(shippingAddress),
 						notes || null
 					)) as { lastInsertRowid: number };
@@ -907,11 +974,15 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 						unitPrice * item.quantity
 					);
 				}
-				return { id: newOrderId, orderNumber };
+				return { id: newOrderId, orderNumber, finalDiscount, finalTotal };
 			}
 		);
 
-		sendSuccess(res, { id: orderId, orderNumber }, 'Order created successfully');
+		sendSuccess(
+			res,
+			{ id: orderId, orderNumber, discount: finalDiscount, total: finalTotal },
+			'Order created successfully'
+		);
 	} catch (err) {
 		sendError(res, (err as Error).message);
 	}
@@ -1550,6 +1621,44 @@ const couponRedeemSchema = z.object({
 	order_subtotal: z.number().nonnegative(),
 });
 
+/** Shape returned by the coupon lookup in both /validate and the
+ *  in-transaction /orders flow. Keep it close to the actual columns
+ *  so adding a new column forces an explicit cast. */
+type CouponRow = {
+	id: number;
+	code: string;
+	type: 'percentage' | 'fixed';
+	value: number;
+	min_order: number | null;
+	max_discount: number | null;
+	usage_limit: number | null;
+	usage_count: number;
+	starts_at: string | null;
+	expires_at: string | null;
+};
+
+/** Pick the columns we read from the coupons table. Centralised so
+ *  the validate and orders paths stay in sync if we add columns. */
+const COUPON_COLUMNS =
+	'id, code, type, value, min_order, max_discount, usage_limit, usage_count, starts_at, expires_at';
+
+/** Pure function: given a coupon row and a subtotal, return the
+ *  discount amount in the same units (rounded to 2 decimals, clamped
+ *  to [0, subtotal]). Shared by /api/coupons/validate and the
+ *  in-transaction coupon resolver used by POST /api/orders. */
+function computeCouponDiscount(coupon: CouponRow, orderSubtotal: number): number {
+	const raw =
+		coupon.type === 'percentage'
+			? (orderSubtotal * coupon.value) / 100
+			: coupon.value;
+	const capped =
+		coupon.max_discount != null ? Math.min(raw, coupon.max_discount) : raw;
+	return Math.max(
+		0,
+		Math.min(orderSubtotal, Math.round(capped * 100) / 100)
+	);
+}
+
 app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(couponRedeemSchema, req.body);
@@ -1561,21 +1670,10 @@ app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Respons
 		const { code, order_subtotal } = v.data;
 
 		const coupon = (await db
-			.prepare('SELECT * FROM coupons WHERE code = ? AND is_active = TRUE')
-			.get(code)) as
-			| {
-					id: number;
-					code: string;
-					type: 'percentage' | 'fixed';
-					value: number;
-					min_order: number | null;
-					max_discount: number | null;
-					usage_limit: number | null;
-					usage_count: number;
-					starts_at: string | null;
-					expires_at: string | null;
-			  }
-			| undefined;
+			.prepare(
+				`SELECT ${COUPON_COLUMNS} FROM coupons WHERE code = ? AND is_active = TRUE`
+			)
+			.get(code)) as CouponRow | undefined;
 
 		if (!coupon) return sendError(res, 'Coupon not found or inactive', 404);
 		if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
@@ -1595,10 +1693,7 @@ app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Respons
 			);
 		}
 
-		let discount =
-			coupon.type === 'percentage' ? (order_subtotal * coupon.value) / 100 : coupon.value;
-		if (coupon.max_discount != null) discount = Math.min(discount, coupon.max_discount);
-		discount = Math.max(0, Math.min(order_subtotal, Math.round(discount * 100) / 100));
+		const discount = computeCouponDiscount(coupon, order_subtotal);
 
 		sendSuccess(res, {
 			code: coupon.code,

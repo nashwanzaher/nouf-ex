@@ -1,23 +1,29 @@
 /**
  * Nouf-ex React Data Hooks
- * Uses JSON data files exported from the database at build time
- * This ensures the static deployment has real data
+ * Talks to the live Express API via `lib/api.ts` (which itself reads the
+ * Bearer token from localStorage when present). When the user is signed in,
+ * `apiRequest` automatically attaches `Authorization: Bearer <token>` so the
+ * server's `optionalAuth` can populate `req.user`.
+ *
+ * For an authenticated endpoint (e.g. `/api/orders`), the hook surfaces
+ * the server's 401 as a normal error — pages decide how to handle it
+ * (redirect to /auth/login, show a login prompt, etc.).
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-	getProductsJson,
-	getProductJson,
-	getFeaturedProductsJson,
-	getDealsJson,
-	getStoresJson,
-	getStoreJson,
-	getCategoriesJson,
-	getReviewsJson,
-	getHomeStatsJson,
-	getOrdersJson,
-	getOrderJson,
-} from '../lib/jsonData';
+	getProducts,
+	getProduct,
+	getFeaturedProducts,
+	getDeals,
+	getStores,
+	getStore,
+	getCategories,
+	getReviews,
+	getHomeStats,
+	getOrders,
+	getOrder,
+} from '../lib/api';
 import type {
 	Product,
 	ProductWithDetails,
@@ -112,67 +118,87 @@ export function useProducts(filters?: {
 	store?: number;
 	minPrice?: number;
 	maxPrice?: number;
-	sort?: string;
+	sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
 	limit?: number;
 	offset?: number;
 }): HookResult<ProductsResponse> {
-	return useDataHook(() => getProductsJson(filters));
+	return useDataHook(async () => {
+		const result = await getProducts(filters);
+		// Narrow to the legacy ProductsResponse shape (used by every consumer).
+		return { products: result.products, total: result.total };
+	});
 }
 
 export function useProduct(id: number | null): HookResult<Product | null> {
-	return useDataHook(() => (id ? getProductJson(id) : Promise.resolve(null)));
+	return useDataHook(async () => {
+		if (!id) return null;
+		// The API returns the product with embedded store + reviews + images.
+		const result = (await getProduct(id)) as unknown as Product | null;
+		// If a mis-configured route returned a list payload, surface a
+		// clear error so the caller sees it instead of silently getting
+		// the wrong shape.
+		if (result && Array.isArray((result as { products?: unknown[] }).products)) {
+			throw new Error('useProduct received a list payload (route mis-match)');
+		}
+		return result ?? null;
+	});
 }
 
 export function useFeaturedProducts(): HookResult<Product[]> {
-	return useDataHook(() => getFeaturedProductsJson());
+	return useDataHook(() => getFeaturedProducts());
 }
 
 export function useDeals(): HookResult<Product[]> {
-	return useDataHook(() => getDealsJson());
+	return useDataHook(() => getDeals());
 }
 
 // ─── Stores ─────────────────────────────────────────────────
 
 export function useStores(): HookResult<Store[]> {
-	return useDataHook(() => getStoresJson());
+	return useDataHook(() => getStores());
 }
 
 export function useStore(id: number | null): HookResult<StoreWithProducts | null> {
-	return useDataHook(() =>
-		id ? (getStoreJson(id) as Promise<StoreWithProducts | null>) : Promise.resolve(null)
-	);
+	return useDataHook(async () => (id ? await getStore(id) : null));
 }
 
 export function useStoreReviews(storeId: number | null): HookResult<Review[]> {
-	return useDataHook(() => (storeId ? getReviewsJson(undefined, storeId) : Promise.resolve([])));
+	return useDataHook(() => (storeId ? getReviews({ storeId }) : Promise.resolve([] as Review[])));
 }
 
 // ─── Categories ─────────────────────────────────────────────
 
 export function useCategories(): HookResult<Category[]> {
-	return useDataHook(() => getCategoriesJson());
+	return useDataHook(() => getCategories());
 }
 
 // ─── Reviews ────────────────────────────────────────────────
 
 export function useReviews(productId?: number, storeId?: number): HookResult<Review[]> {
-	return useDataHook(() => getReviewsJson(productId, storeId));
+	return useDataHook(() => getReviews({ productId, storeId }));
 }
 
 // ─── Home Stats ─────────────────────────────────────────────
 
 export function useHomeStats(): HookResult<HomeStats> {
-	return useDataHook(() => getHomeStatsJson());
+	return useDataHook(() => getHomeStats());
 }
 
 // ─── Orders ─────────────────────────────────────────────────
+// Note: /api/orders requires authentication. If the user is not signed in,
+// the API returns 401; the hook surfaces it as a normal `error` so the
+// caller can redirect to /auth/login or show an empty state.
 
-export function useOrders(customerId?: number): HookResult<Order[]> {
-	return useDataHook(() => getOrdersJson(customerId));
+export function useOrders(_customerId?: number): HookResult<Order[]> {
+	// _customerId is intentionally ignored — the server uses `req.user.id`
+	// as the source of truth. Kept in the signature for backwards
+	// compatibility with the previous JSON-based implementation.
+	void _customerId;
+	return useDataHook(() => getOrders());
 }
 
 export function useOrder(id: number | null): HookResult<Order | null> {
-	return useDataHook(() => (id ? getOrderJson(id) : Promise.resolve(null)));
+	return useDataHook(async () => (id ? ((await getOrder(id)) as unknown as Order | null) : null));
 }
 
 // ─── Cart (localStorage) ────────────────────────────────────

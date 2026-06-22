@@ -33,13 +33,15 @@ describe('useHomeStats', () => {
 		await waitFor(() => expect(result.current.loading).toBe(false));
 
 		expect(result.current.error).toBeNull();
-		// `getHomeStatsJson` reads from /data/stats.json (the build-time
-		// snapshot). The shape is the raw JSON: top-level numeric counters.
+		// `getHomeStats` hits `/api/stats/home`. The MSW handler returns
+		// the server-shaped payload: `{ counts: { products, ... }, ... }`.
 		expect(result.current.data).toMatchObject({
-			products_count: expect.any(Number),
-			stores_count: expect.any(Number),
-			orders_count: expect.any(Number),
-			users_count: expect.any(Number),
+			counts: {
+				products: expect.any(Number),
+				stores: expect.any(Number),
+				orders: expect.any(Number),
+				users: expect.any(Number),
+			},
 		});
 	});
 

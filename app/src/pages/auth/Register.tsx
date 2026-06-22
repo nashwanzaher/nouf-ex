@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
 	Mail,
@@ -17,10 +17,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/AppContext';
+import { register, ApiError } from '@/lib/api';
 
 export default function Register() {
 	const { t, i18n } = useTranslation();
 	const isRTL = i18n.language === 'ar';
+	const navigate = useNavigate();
+	const { login: authLogin, addToast } = useAuth();
 	const [accountType, setAccountType] = useState<'buyer' | 'seller'>('buyer');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -50,8 +54,40 @@ export default function Register() {
 		e.preventDefault();
 		if (!validate()) return;
 		setIsLoading(true);
-		await new Promise((r) => setTimeout(r, 1500));
-		setIsLoading(false);
+		try {
+			// The server always creates a 'customer' account (it is the only
+			// self-service role). The buyer/seller split is captured later in
+			// the merchant onboarding flow.
+			const result = await register({
+				email: email.trim(),
+				password,
+				name: email.trim().split('@')[0] || email.trim(),
+			});
+			const authUser = {
+				id: String(result.user.id),
+				name: result.user.full_name,
+				email: result.user.email,
+				role: (result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
+				avatar: result.user.avatar ?? undefined,
+			};
+			authLogin(authUser, result.token);
+			addToast({
+				message: isRTL ? 'تم إنشاء حسابك بنجاح' : 'Account created successfully',
+				type: 'success',
+			});
+			navigate('/customer', { replace: true });
+		} catch (err) {
+			const message =
+				err instanceof ApiError
+					? err.message
+					: isRTL
+						? 'تعذّر إنشاء الحساب. حاول مرة أخرى.'
+						: 'Could not create the account. Please try again.';
+			setErrors({ form: message });
+			addToast({ message, type: 'error' });
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -173,6 +209,14 @@ export default function Register() {
 							</div>
 
 							<form onSubmit={handleSubmit} className="space-y-4">
+								{errors.form && (
+									<div
+										role="alert"
+										className="text-sm p-3 rounded"
+										style={{ background: '#FDECEA', color: '#B71C1C' }}>
+										{errors.form}
+									</div>
+								)}
 								{/* Email */}
 								<div>
 									<Label className="text-sm font-medium mb-1.5 block" style={{ color: '#333' }}>

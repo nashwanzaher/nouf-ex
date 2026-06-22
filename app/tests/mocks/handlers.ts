@@ -153,8 +153,11 @@ export const handlers = [
 		await delay(50);
 		return HttpResponse.json({ success: true, data: categoriesFixture });
 	}),
-	http.get('*/api/categories/:slug', async ({ params }) => {
-		const cat = categoriesFixture.find((c) => c.slug === params.slug);
+	http.get('*/api/categories/:slug', async (info) => {
+		const url = (info.request as Request).url;
+		const m = url.match(/\/api\/categories\/([^/?#]+)/);
+		const slug = String(info.params?.slug ?? (m ? decodeURIComponent(m[1]) : ''));
+		const cat = categoriesFixture.find((c) => c.slug === slug);
 		if (!cat) {
 			return HttpResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
 		}
@@ -185,8 +188,20 @@ export const handlers = [
 	http.get('*/api/products/deals', async () => {
 		return HttpResponse.json({ success: true, data: homeStats.deals_products });
 	}),
-	http.get('*/api/products/:id', async ({ params }) => {
-		const product = productsFixture.find((p) => p.id === Number(params.id));
+	// NOTE: keep `*/api/products/:id` AFTER the literal `featured` and
+	// `deals` handlers so the loop matches the most specific pattern
+	// first (otherwise `id` would be parsed as the string "featured").
+	http.get('*/api/products/:id', async (info) => {
+		// When invoked outside the MSW interceptor (via fetch-spy),
+		// `params` is not populated; we fall back to parsing the URL.
+		const url = (info.request as Request).url;
+		const m = url.match(/\/api\/products\/([^/?#]+)/);
+		const idStr = String(info.params?.id ?? (m ? decodeURIComponent(m[1]) : ''));
+		const id = parseInt(idStr, 10);
+		if (Number.isNaN(id)) {
+			return HttpResponse.json({ success: false, error: 'Invalid id' }, { status: 400 });
+		}
+		const product = productsFixture.find((p) => p.id === id);
 		if (!product) {
 			return HttpResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
 		}
@@ -200,8 +215,15 @@ export const handlers = [
 	http.get('*/api/stores', async () => {
 		return HttpResponse.json({ success: true, data: storesFixture });
 	}),
-	http.get('*/api/stores/:id', async ({ params }) => {
-		const store = storesFixture.find((s) => s.id === Number(params.id));
+	http.get('*/api/stores/:id', async (info) => {
+		const url = (info.request as Request).url;
+		const m = url.match(/\/api\/stores\/([^/?#]+)/);
+		const idStr = String(info.params?.id ?? (m ? decodeURIComponent(m[1]) : ''));
+		const id = parseInt(idStr, 10);
+		if (Number.isNaN(id)) {
+			return HttpResponse.json({ success: false, error: 'Invalid id' }, { status: 400 });
+		}
+		const store = storesFixture.find((s) => s.id === id);
 		if (!store) {
 			return HttpResponse.json({ success: false, error: 'Store not found' }, { status: 404 });
 		}

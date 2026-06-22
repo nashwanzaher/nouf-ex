@@ -1,4 +1,11 @@
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import {
+	createContext,
+	useContext,
+	useReducer,
+	useEffect,
+	useCallback,
+	type ReactNode,
+} from 'react';
 
 type Lang = 'ar' | 'en' | 'zh';
 type Role = 'guest' | 'customer' | 'merchant' | 'admin';
@@ -20,12 +27,17 @@ interface AppState {
 	lang: Lang;
 	dir: 'rtl' | 'ltr';
 	user: User | null;
+	/** Bearer token from the API (HMAC-signed). Stored in localStorage so
+	 *  that the `apiRequest` wrapper can attach it to outgoing requests
+	 *  without going through React context. */
+	token: string | null;
 	toasts: Toast[];
 }
 
 type Action =
 	| { type: 'SET_LANG'; payload: Lang }
 	| { type: 'SET_USER'; payload: User | null }
+	| { type: 'SET_TOKEN'; payload: string | null }
 	| { type: 'ADD_TOAST'; payload: Toast }
 	| { type: 'REMOVE_TOAST'; payload: string };
 
@@ -53,6 +65,17 @@ function loadInitialUser(): User | null {
 	}
 }
 
+/** Load the auth token lazily. Kept in localStorage so it survives a page
+ *  reload and so the non-React `apiRequest` wrapper can read it. */
+function loadInitialToken(): string | null {
+	try {
+		const v = localStorage.getItem('noufex_token');
+		return v && v.length > 0 ? v : null;
+	} catch {
+		return null;
+	}
+}
+
 // C5 fix: pass the initial state as a lazy initializer to useReducer so that
 // localStorage is read at *component mount* time, not at module-load time.
 // Otherwise a user who logs in or changes language in another tab would never
@@ -61,6 +84,7 @@ const initialStateFactory = (): AppState => ({
 	lang: loadInitialLang(),
 	dir: 'rtl',
 	user: loadInitialUser(),
+	token: loadInitialToken(),
 	toasts: [],
 });
 
@@ -81,6 +105,11 @@ function appReducer(state: AppState, action: Action): AppState {
 			else localStorage.removeItem('noufex_user');
 			return { ...state, user: action.payload };
 		}
+		case 'SET_TOKEN': {
+			if (action.payload) localStorage.setItem('noufex_token', action.payload);
+			else localStorage.removeItem('noufex_token');
+			return { ...state, token: action.payload };
+		}
 		case 'ADD_TOAST':
 			return { ...state, toasts: [...state.toasts, action.payload] };
 		case 'REMOVE_TOAST':
@@ -90,9 +119,14 @@ function appReducer(state: AppState, action: Action): AppState {
 	}
 }
 
-const AppContext = createContext<{ state: AppState; dispatch: React.Dispatch<Action> } | null>(
-	null
-);
+const AppContext = createContext<{
+	state: AppState;
+	dispatch: React.Dispatch<Action>;
+	setUser: (user: User | null) => void;
+	setToken: (token: string | null) => void;
+	addToast: (toast: Omit<Toast, 'id'>) => void;
+	removeToast: (id: string) => void;
+} | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
 	const [state, dispatch] = useReducer(appReducer, undefined, initialStateFactory);
@@ -104,13 +138,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
 		document.documentElement.dir = state.dir;
 	}, [state.lang, state.dir]);
 
-	return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
+	/** Imperative helpers — wrap the dispatch cases for convenience and
+	 *  so pages don't need to know the action shape. */
+	const setUser = useCallback(
+		(user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
+		[]
+	);
+	const setToken = useCallback(
+		(token: string | null) => dispatch({ type: 'SET_TOKEN', payload: token }),
+		[]
+	);
+	const addToast = useCallback(
+		(toast: Omit<Toast, 'id'>) =>
+			dispatch({
+				type: 'ADD_TOAST',
+				payload: { ...toast, id: `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` },
+			}),
+		[]
+	);
+	const removeToast = useCallback(
+		(id: string) => dispatch({ type: 'REMOVE_TOAST', payload: id }),
+		[]
+	);
+
+	const value = { state, dispatch, setUser, setToken, addToast, removeToast };
+	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 export function useApp() {
 	const ctx = useContext(AppContext);
 	if (!ctx) throw new Error('useApp must be inside AppProvider');
 	return ctx;
+}
+
+/** Convenience hook: returns the auth slice and helpers. Saves callers
+ *  from destructuring the context every time. */
+export function useAuth() {
+	const { state, setUser, setToken, addToast } = useApp();
+	const isAuthenticated = Boolean(state.user && state.token);
+	const login = useCallback(
+		(user: User, token: string) => {
+			setUser(user);
+			setToken(token);
+		},
+		[setUser, setToken]
+	);
+	const logout = useCallback(() => {
+		setUser(null);
+		setToken(null);
+	}, [setUser, setToken]);
+	return { user: state.user, token: state.token, isAuthenticated, login, logout, addToast };
 }
 
 export type { User, Role, Lang, Toast };

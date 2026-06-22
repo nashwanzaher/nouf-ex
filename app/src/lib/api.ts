@@ -371,11 +371,27 @@ class ApiError extends Error {
 	}
 }
 
+/** Read the auth token from localStorage. Returns null when the user is
+ *  not signed in. Reading at request time (not at module load) keeps the
+ *  client in sync with the token stored by AppContext on login/logout. */
+function readAuthToken(): string | null {
+	if (typeof window === 'undefined') return null;
+	try {
+		return window.localStorage.getItem('noufex_token');
+	} catch {
+		return null;
+	}
+}
+
 async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const url = `${API_BASE}${endpoint}`;
+	const token = readAuthToken();
 	const config: RequestInit = {
 		headers: {
 			'Content-Type': 'application/json',
+			// Only attach the Authorization header when a token exists; the
+			// server's `optionalAuth` will populate `req.user` from it.
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
 			...options?.headers,
 		},
 		...options,
@@ -558,7 +574,16 @@ export async function markNotificationAsRead(id: number): Promise<void> {
 
 // ─── Auth API ───────────────────────────────────────────────
 
-export async function login(body: { email: string; password: string }): Promise<User> {
+/** The /api/auth/login and /api/auth/register endpoints return both the
+ *  user (without password_hash) and an HMAC-signed token. The server
+ *  intentionally returns the token in the same response so the SPA can
+ *  immediately persist it without a second round-trip. */
+export interface AuthResponse {
+	user: User;
+	token: string;
+}
+
+export async function login(body: { email: string; password: string }): Promise<AuthResponse> {
 	return apiRequest('/auth/login', {
 		method: 'POST',
 		body: JSON.stringify(body),
@@ -570,19 +595,15 @@ export async function register(body: {
 	password: string;
 	name: string;
 	role?: string;
-}): Promise<User> {
+}): Promise<AuthResponse> {
 	return apiRequest('/auth/register', {
 		method: 'POST',
 		body: JSON.stringify(body),
 	});
 }
 
-export async function getCurrentUser(userId: number): Promise<User> {
-	return apiRequest('/auth/me', {
-		headers: {
-			'x-user-id': String(userId),
-		},
-	});
+export async function getCurrentUser(): Promise<User> {
+	return apiRequest('/auth/me');
 }
 
 // ─── Stats API ──────────────────────────────────────────────

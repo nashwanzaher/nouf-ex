@@ -371,6 +371,14 @@ class ApiError extends Error {
 	}
 }
 
+/** Optional extras accepted by every read-only API helper. The
+ *  `signal` lets callers (e.g. React hooks) abort an in-flight request
+ *  on unmount or dep change, so we never setState on a stale
+ *  response. */
+export interface RequestOptions {
+	signal?: AbortSignal;
+}
+
 /** Read the auth token from localStorage. Returns null when the user is
  *  not signed in. Reading at request time (not at module load) keeps the
  *  client in sync with the token stored by AppContext on login/logout. */
@@ -410,7 +418,8 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 // ─── Products API ───────────────────────────────────────────
 
 export async function getProducts(
-	filters: ProductFilters = {}
+	filters: ProductFilters = {},
+	options?: RequestOptions
 ): Promise<{ products: Product[]; total: number; limit: number; offset: number }> {
 	const params = new URLSearchParams();
 	if (filters.category) params.set('category', filters.category);
@@ -423,54 +432,69 @@ export async function getProducts(
 	if (filters.offset) params.set('offset', String(filters.offset));
 
 	const query = params.toString();
-	return apiRequest(`/products${query ? `?${query}` : ''}`);
+	return apiRequest(`/products${query ? `?${query}` : ''}`, { signal: options?.signal });
 }
 
-export async function getProduct(id: number): Promise<ProductWithDetails> {
-	return apiRequest(`/products/${id}`);
+export async function getProduct(
+	id: number,
+	options?: RequestOptions
+): Promise<ProductWithDetails> {
+	return apiRequest(`/products/${id}`, { signal: options?.signal });
 }
 
-export async function getFeaturedProducts(): Promise<Product[]> {
-	return apiRequest('/products/featured');
+export async function getFeaturedProducts(options?: RequestOptions): Promise<Product[]> {
+	return apiRequest('/products/featured', { signal: options?.signal });
 }
 
-export async function getDeals(): Promise<Product[]> {
-	return apiRequest('/products/deals');
+export async function getDeals(options?: RequestOptions): Promise<Product[]> {
+	return apiRequest('/products/deals', { signal: options?.signal });
 }
 
 // ─── Stores API ─────────────────────────────────────────────
 
-export async function getStores(): Promise<Store[]> {
-	return apiRequest('/stores');
+export async function getStores(options?: RequestOptions): Promise<Store[]> {
+	return apiRequest('/stores', { signal: options?.signal });
 }
 
-export async function getStore(id: number): Promise<StoreWithProducts> {
-	return apiRequest(`/stores/${id}`);
+export async function getStore(
+	id: number,
+	options?: RequestOptions
+): Promise<StoreWithProducts> {
+	return apiRequest(`/stores/${id}`, { signal: options?.signal });
 }
 
-export async function getStoreReviews(id: number): Promise<Review[]> {
-	return apiRequest(`/stores/${id}/reviews`);
+export async function getStoreReviews(
+	id: number,
+	options?: RequestOptions
+): Promise<Review[]> {
+	return apiRequest(`/stores/${id}/reviews`, { signal: options?.signal });
 }
 
 // ─── Categories API ─────────────────────────────────────────
 
-export async function getCategories(): Promise<Category[]> {
-	return apiRequest('/categories');
+export async function getCategories(options?: RequestOptions): Promise<Category[]> {
+	return apiRequest('/categories', { signal: options?.signal });
 }
 
-export async function getCategory(slug: string): Promise<CategoryWithProducts> {
-	return apiRequest(`/categories/${slug}`);
+export async function getCategory(
+	slug: string,
+	options?: RequestOptions
+): Promise<CategoryWithProducts> {
+	return apiRequest(`/categories/${slug}`, { signal: options?.signal });
 }
 
 // ─── Reviews API ────────────────────────────────────────────
 
-export async function getReviews(filters: ReviewFilters = {}): Promise<Review[]> {
+export async function getReviews(
+	filters: ReviewFilters = {},
+	options?: RequestOptions
+): Promise<Review[]> {
 	const params = new URLSearchParams();
 	if (filters.productId) params.set('productId', String(filters.productId));
 	if (filters.storeId) params.set('storeId', String(filters.storeId));
 
 	const query = params.toString();
-	return apiRequest(`/reviews${query ? `?${query}` : ''}`);
+	return apiRequest(`/reviews${query ? `?${query}` : ''}`, { signal: options?.signal });
 }
 
 export async function createReview(body: {
@@ -489,13 +513,19 @@ export async function createReview(body: {
 
 // ─── Orders API ─────────────────────────────────────────────
 
-export async function getOrders(customerId?: number): Promise<Order[]> {
+export async function getOrders(
+	customerId?: number,
+	options?: RequestOptions
+): Promise<Order[]> {
 	const params = customerId ? `?customerId=${customerId}` : '';
-	return apiRequest(`/orders${params}`);
+	return apiRequest(`/orders${params}`, { signal: options?.signal });
 }
 
-export async function getOrder(id: number): Promise<OrderWithItems> {
-	return apiRequest(`/orders/${id}`);
+export async function getOrder(
+	id: number,
+	options?: RequestOptions
+): Promise<OrderWithItems> {
+	return apiRequest(`/orders/${id}`, { signal: options?.signal });
 }
 
 export async function createOrder(body: CreateOrderBody): Promise<{
@@ -608,8 +638,8 @@ export async function getCurrentUser(): Promise<User> {
 
 // ─── Stats API ──────────────────────────────────────────────
 
-export async function getHomeStats(): Promise<HomeStats> {
-	return apiRequest('/stats/home');
+export async function getHomeStats(options?: RequestOptions): Promise<HomeStats> {
+	return apiRequest('/stats/home', { signal: options?.signal });
 }
 
 // ─── Payments API  (P0-2) ────────────────────────────────────

@@ -74,7 +74,16 @@ export interface HookResult<T> {
 // ─── Helper to create a hook ────────────────────────────────
 // Subscribe to the latest fetcher via useEffect — every setState lives inside a
 // Promise callback so we don't trip `react-hooks/set-state-in-effect`.
-function useDataHook<T>(fetcher: () => Promise<T>): HookResult<T> {
+//
+// P2-1 fix: every fetch is wrapped in an AbortController. When the
+// component unmounts (or the hook's deps change and triggerFetch
+// runs again), the in-flight request is aborted. We pass the
+// signal to the fetcher so it can call `fetch(url, { signal })`.
+// `AbortError` results are silently swallowed — they are an
+// expected part of the cleanup lifecycle, not a real failure.
+function useDataHook<T>(
+	fetcher: (signal: AbortSignal | undefined) => Promise<T>
+): HookResult<T> {
 	const [data, setData] = useState<T | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -84,14 +93,27 @@ function useDataHook<T>(fetcher: () => Promise<T>): HookResult<T> {
 		fetcherRef.current = fetcher;
 	}, [fetcher]);
 
+	// One controller per fetch cycle. Replaced on every refetch and
+	// aborted on unmount.
+	const controllerRef = useRef<AbortController | null>(null);
+
 	const triggerFetch = useCallback(() => {
+		// Cancel the previous request before starting a new one.
+		controllerRef.current?.abort();
+		const controller = new AbortController();
+		controllerRef.current = controller;
+		const { signal } = controller;
+
 		fetcherRef
-			.current()
+			.current(signal)
 			.then((result) => {
+				if (signal.aborted) return;
 				setData(result);
 				setLoading(false);
 			})
-			.catch((err) => {
+			.catch((err: unknown) => {
+				if (signal.aborted) return;
+				if (err instanceof Error && err.name === 'AbortError') return;
 				const message = err instanceof Error ? err.message : 'Failed to load data';
 				setError(message);
 				setLoading(false);
@@ -100,6 +122,9 @@ function useDataHook<T>(fetcher: () => Promise<T>): HookResult<T> {
 
 	useEffect(() => {
 		triggerFetch();
+		return () => {
+			controllerRef.current?.abort();
+		};
 	}, [triggerFetch]);
 
 	return { data, loading, error, refetch: triggerFetch };
@@ -122,18 +147,18 @@ export function useProducts(filters?: {
 	limit?: number;
 	offset?: number;
 }): HookResult<ProductsResponse> {
-	return useDataHook(async () => {
-		const result = await getProducts(filters);
+	return useDataHook(async (signal) => {
+		const result = await getProducts(filters, { signal });
 		// Narrow to the legacy ProductsResponse shape (used by every consumer).
 		return { products: result.products, total: result.total };
 	});
 }
 
 export function useProduct(id: number | null): HookResult<Product | null> {
-	return useDataHook(async () => {
+	return useDataHook(async (signal) => {
 		if (!id) return null;
 		// The API returns the product with embedded store + reviews + images.
-		const result = (await getProduct(id)) as unknown as Product | null;
+		const result = (await getProduct(id, { signal })) as unknown as Product | null;
 		// If a mis-configured route returned a list payload, surface a
 		// clear error so the caller sees it instead of silently getting
 		// the wrong shape.
@@ -145,43 +170,45 @@ export function useProduct(id: number | null): HookResult<Product | null> {
 }
 
 export function useFeaturedProducts(): HookResult<Product[]> {
-	return useDataHook(() => getFeaturedProducts());
+	return useDataHook((signal) => getFeaturedProducts({ signal }));
 }
 
 export function useDeals(): HookResult<Product[]> {
-	return useDataHook(() => getDeals());
+	return useDataHook((signal) => getDeals({ signal }));
 }
 
-// ─── Stores ─────────────────────────────────────────────────
+// ─── Stores ─────────────────────────────────────────────
 
 export function useStores(): HookResult<Store[]> {
-	return useDataHook(() => getStores());
+	return useDataHook((signal) => getStores({ signal }));
 }
 
 export function useStore(id: number | null): HookResult<StoreWithProducts | null> {
-	return useDataHook(async () => (id ? await getStore(id) : null));
+	return useDataHook(async (signal) => (id ? await getStore(id, { signal }) : null));
 }
 
 export function useStoreReviews(storeId: number | null): HookResult<Review[]> {
-	return useDataHook(() => (storeId ? getReviews({ storeId }) : Promise.resolve([] as Review[])));
+	return useDataHook((signal) =>
+		storeId ? getReviews({ storeId }, { signal }) : Promise.resolve([] as Review[])
+	);
 }
 
 // ─── Categories ─────────────────────────────────────────────
 
 export function useCategories(): HookResult<Category[]> {
-	return useDataHook(() => getCategories());
+	return useDataHook((signal) => getCategories({ signal }));
 }
 
 // ─── Reviews ────────────────────────────────────────────────
 
 export function useReviews(productId?: number, storeId?: number): HookResult<Review[]> {
-	return useDataHook(() => getReviews({ productId, storeId }));
+	return useDataHook((signal) => getReviews({ productId, storeId }, { signal }));
 }
 
 // ─── Home Stats ─────────────────────────────────────────────
 
 export function useHomeStats(): HookResult<HomeStats> {
-	return useDataHook(() => getHomeStats());
+	return useDataHook((signal) => getHomeStats({ signal }));
 }
 
 // ─── Orders ─────────────────────────────────────────────────
@@ -194,11 +221,13 @@ export function useOrders(_customerId?: number): HookResult<Order[]> {
 	// as the source of truth. Kept in the signature for backwards
 	// compatibility with the previous JSON-based implementation.
 	void _customerId;
-	return useDataHook(() => getOrders());
+	return useDataHook((signal) => getOrders(undefined, { signal }));
 }
 
 export function useOrder(id: number | null): HookResult<Order | null> {
-	return useDataHook(async () => (id ? ((await getOrder(id)) as unknown as Order | null) : null));
+	return useDataHook(
+		async (signal) => (id ? ((await getOrder(id, { signal })) as unknown as Order | null) : null)
+	);
 }
 
 // ─── Cart (localStorage) ────────────────────────────────────

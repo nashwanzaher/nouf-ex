@@ -301,6 +301,13 @@ const getProductWithParsedFields = (product: Record<string, unknown> | undefined
 /**
  * GET /api/products
  * Query params: category, search, store, minPrice, maxPrice, sort, limit, offset
+ *
+ * P1-7 fix: use a single SQL with the `COUNT(*) OVER ()` window
+ * function so the total count comes back in the same round-trip
+ * (and shares the same WHERE / ORDER BY / LIMIT). The previous
+ * implementation ran two separate queries with hand-copied
+ * filter clauses -- one missed filter would silently desync the
+ * totals from the page.
  */
 app.get('/api/products', async (req: Request, res: Response) => {
 	try {
@@ -315,91 +322,92 @@ app.get('/api/products', async (req: Request, res: Response) => {
 			offset = '0',
 		} = req.query;
 
-		let sql = 'SELECT * FROM products WHERE is_active = 1';
+		const where: string[] = ['is_active = 1'];
 		const params: (string | number)[] = [];
 
 		if (category) {
-			sql += ' AND category_id = (SELECT id FROM categories WHERE slug = ?)';
+			where.push('category_id = (SELECT id FROM categories WHERE slug = ?)');
 			params.push(category as string);
 		}
 		if (store) {
-			sql += ' AND store_id = ?';
+			where.push('store_id = ?');
 			params.push(Number(store));
 		}
 		if (minPrice) {
-			sql += ' AND price >= ?';
+			where.push('price >= ?');
 			params.push(Number(minPrice));
 		}
 		if (maxPrice) {
-			sql += ' AND price <= ?';
+			where.push('price <= ?');
 			params.push(Number(maxPrice));
 		}
 		if (search) {
 			const term = `%${search}%`;
-			sql += ' AND (name_en LIKE ? OR name_ar LIKE ? OR name_zh LIKE ? OR description_en LIKE ?)';
+			where.push('(name_en LIKE ? OR name_ar LIKE ? OR name_zh LIKE ? OR description_en LIKE ?)');
 			params.push(term, term, term, term);
 		}
 
 		// Sorting
+		let orderBy = ' ORDER BY created_at DESC';
 		switch (sort) {
 			case 'price_asc':
-				sql += ' ORDER BY price ASC';
+				orderBy = ' ORDER BY price ASC';
 				break;
 			case 'price_desc':
-				sql += ' ORDER BY price DESC';
+				orderBy = ' ORDER BY price DESC';
 				break;
 			case 'popular':
-				sql += ' ORDER BY sold_count DESC';
+				orderBy = ' ORDER BY sold_count DESC';
 				break;
 			case 'newest':
 			default:
-				sql += ' ORDER BY created_at DESC';
+				orderBy = ' ORDER BY created_at DESC';
 				break;
 		}
 
-		sql += ' LIMIT ? OFFSET ?';
-		params.push(Number(limit), Number(offset));
-
-		const rows = (await db.prepare(sql).all(...params)) as Record<string, unknown>[];
-		const products = rows.map(getProductWithParsedFields);
-
-		// Get total count
-		let countSql = 'SELECT COUNT(*) as count FROM products WHERE is_active = 1';
-		const countParams: (string | number)[] = [];
-		if (category) {
-			countSql += ' AND category_id = (SELECT id FROM categories WHERE slug = ?)';
-			countParams.push(category as string);
-		}
-		if (store) {
-			countSql += ' AND store_id = ?';
-			countParams.push(Number(store));
-		}
-		if (minPrice) {
-			countSql += ' AND price >= ?';
-			countParams.push(Number(minPrice));
-		}
-		if (maxPrice) {
-			countSql += ' AND price <= ?';
-			countParams.push(Number(maxPrice));
-		}
-		if (search) {
-			const term = `%${search}%`;
-			countSql +=
-				' AND (name_en LIKE ? OR name_ar LIKE ? OR name_zh LIKE ? OR description_en LIKE ?)';
-			countParams.push(term, term, term, term);
-		}
-		const countRow = (await db.prepare(countSql).get(...countParams)) as { count: number };
+		const numLimit = Math.max(1, Math.min(100, Number(limit) || 20));
+		const numOffset = Math.max(0, Number(offset) || 0);
+		// The window function returns the unfiltered count of the
+		// query (before LIMIT/OFFSET) on every row, so we can read
+		// the total from `rows[0].total_count` after one round-trip.
+		const sql = `SELECT *, COUNT(*) OVER () AS total_count
+		             FROM products
+		            WHERE ${where.join(' AND ')}
+		            ${orderBy}
+		            LIMIT ? OFFSET ?`;
+		const rows = (await db.prepare(sql).all(...params, numLimit, numOffset)) as Array<
+			Record<string, unknown> & { total_count: number | string }
+		>;
+		const total =
+			rows.length > 0 ? Number(rows[0].total_count ?? 0) : await countProducts(where, params);
+		const products = rows.map((r) => {
+			const { total_count: _omit, ...rest } = r;
+			void _omit;
+			return getProductWithParsedFields(rest);
+		});
 
 		sendSuccess(res, {
 			products,
-			total: countRow.count,
-			limit: Number(limit),
-			offset: Number(offset),
+			total,
+			limit: numLimit,
+			offset: numOffset,
 		});
 	} catch (err) {
 		sendError(res, (err as Error).message);
 	}
 });
+
+/** Helper for /api/products: count the same WHERE clause with no
+ *  LIMIT/OFFSET. Only used as a fallback when the page came back
+ *  empty (so the window function has no row to attach `total_count`
+ *  to) -- in that case the unfiltered total must be queried
+ *  separately. */
+async function countProducts(where: string[], params: (string | number)[]): Promise<number> {
+	const row = (await db
+		.prepare(`SELECT COUNT(*) AS c FROM products WHERE ${where.join(' AND ')}`)
+		.get(...params)) as { c: number | string } | undefined;
+	return row ? Number(row.c) : 0;
+}
 
 /**
  * GET /api/products/featured

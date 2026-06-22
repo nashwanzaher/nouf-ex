@@ -84,7 +84,7 @@ app.use(
 );
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(optionalAuth);       // populates req.user from Bearer token if present
+app.use(optionalAuth); // populates req.user from Bearer token if present
 app.use(requestLogger);
 
 // --- Health & readiness endpoints (un-authenticated, log-skipped) ---
@@ -109,9 +109,7 @@ app.get('/api/ready', async (_req: Request, res: Response) => {
 		// get flagged as unhealthy.
 		const result = await Promise.race([
 			db.prepare('SELECT 1 AS ok').get(),
-			new Promise<never>((_, reject) =>
-				setTimeout(() => reject(new Error('db timeout')), 2000)
-			),
+			new Promise<never>((_, reject) => setTimeout(() => reject(new Error('db timeout')), 2000)),
 		]);
 		checks.db = { ok: !!result, ms: Date.now() - startedAt };
 	} catch (e) {
@@ -512,6 +510,11 @@ app.get('/api/stores/:id', async (req: Request, res: Response) => {
 /**
  * GET /api/stores/:id/reviews
  * Get store reviews
+ *
+ * P0-3 fix: only return *visible* reviews. The DB trigger that maintains
+ * the average product rating already filters by `is_visible = TRUE`, so
+ * without this filter the API would expose hidden/spam/moderation-pending
+ * reviews that no longer count toward the rating.
  */
 app.get('/api/stores/:id/reviews', async (req: Request, res: Response) => {
 	try {
@@ -522,7 +525,7 @@ app.get('/api/stores/:id/reviews', async (req: Request, res: Response) => {
          FROM reviews r
          LEFT JOIN users u ON r.customer_id = u.id
          LEFT JOIN products p ON r.product_id = p.id
-         WHERE r.store_id = ?
+         WHERE r.store_id = ? AND r.is_visible = TRUE
          ORDER BY r.created_at DESC`
 			)
 			.all(Number(id));
@@ -592,6 +595,10 @@ app.get('/api/categories/:slug', async (req: Request, res: Response) => {
 /**
  * GET /api/reviews
  * Query params: productId, storeId
+ *
+ * P0-3 fix: only return *visible* reviews. Hidden reviews (spam,
+ * moderation queue, soft-deleted) must not leak through the public
+ * listing.
  */
 app.get('/api/reviews', async (req: Request, res: Response) => {
 	try {
@@ -603,7 +610,7 @@ app.get('/api/reviews', async (req: Request, res: Response) => {
                LEFT JOIN users u ON r.customer_id = u.id
                LEFT JOIN products p ON r.product_id = p.id
                LEFT JOIN stores s ON r.store_id = s.id
-               WHERE 1=1`;
+               WHERE r.is_visible = TRUE`;
 		const params: number[] = [];
 
 		if (productId) {
@@ -645,7 +652,7 @@ app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
 				`SELECT 1 FROM order_items oi
              JOIN orders o ON oi.order_id = o.id
             WHERE o.customer_id = ? AND oi.product_id = ?
-            LIMIT 1`,
+            LIMIT 1`
 			)
 			.get(customerId, productId)) as { '?column?': number } | undefined;
 		const isVerified = Boolean(purchased);
@@ -656,14 +663,26 @@ app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
          VALUES (?, ?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
          RETURNING id`
 			)
-			.run(productId, storeId ?? null, customerId, rating, title ?? null, comment ?? null, isVerified ? 1 : 0)) as {
+			.run(
+				productId,
+				storeId ?? null,
+				customerId,
+				rating,
+				title ?? null,
+				comment ?? null,
+				isVerified ? 1 : 0
+			)) as {
 			lastInsertRowid: number;
 		};
 
-		// Update product rating
+		// Update product rating. P0-3 fix: hidden reviews (spam, moderation
+		// queue) must NOT count toward the average. The DB trigger
+		// `trg_reviews_refresh_rating` already filters by `is_visible = TRUE`
+		// but this code path computes the value directly and would
+		// otherwise diverge from the trigger.
 		const ratingData = (await db
 			.prepare(
-				'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE product_id = ?'
+				'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE product_id = ? AND is_visible = TRUE'
 			)
 			.get(productId)) as { avg_rating: number; count: number };
 
@@ -811,17 +830,24 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		const customerId = req.user!.id;
 
 		// Normalise payment method: legacy client may send 'cash' → map to 'cod'.
-		const normalisedPaymentMethod = paymentMethod === 'cash' || !paymentMethod ? 'cod' : paymentMethod;
+		const normalisedPaymentMethod =
+			paymentMethod === 'cash' || !paymentMethod ? 'cod' : paymentMethod;
 
 		// P0-2 fix: capture the REAL orderNumber (generated above and
 		// INSERTed into the row) and return it in the response. The
 		// previous implementation returned a fake `ORD-...${last4id}`
 		// string which silently broke the audit trail and the UI.
-		const { id: orderId, orderNumber } = await db.tx(async (txDb: { prepare: (sql: string) => { run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>; get: (...args: unknown[]) => Promise<unknown> } }) => {
-			const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
-			const result = (await txDb
-				.prepare(
-					`INSERT INTO orders
+		const { id: orderId, orderNumber } = await db.tx(
+			async (txDb: {
+				prepare: (sql: string) => {
+					run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>;
+					get: (...args: unknown[]) => Promise<unknown>;
+				};
+			}) => {
+				const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
+				const result = (await txDb
+					.prepare(
+						`INSERT INTO orders
 			        (customer_id, store_id, order_number, status, payment_method,
 			         payment_status, subtotal, shipping_cost, discount,
 			         coupon_code, discount_amount, total, currency,
@@ -829,66 +855,63 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 			       VALUES (?, ?, ?, 'pending', ?, 'pending',
 			               ?, ?, ?, ?, 0, ?, 'YER',
 			               ?, ?)
-			       RETURNING id`,
-				)
-				.run(
-					customerId,
-					storeId,
-					orderNumber,
-					normalisedPaymentMethod,
-					subtotal || total,
-					shippingCost || 0,
-					discount || 0,
-					couponCode || null,
-					total,
-					JSON.stringify(shippingAddress),
-					notes || null,
-				)) as { lastInsertRowid: number };
-			const newOrderId: number = result.lastInsertRowid;
+			       RETURNING id`
+					)
+					.run(
+						customerId,
+						storeId,
+						orderNumber,
+						normalisedPaymentMethod,
+						subtotal || total,
+						shippingCost || 0,
+						discount || 0,
+						couponCode || null,
+						total,
+						JSON.stringify(shippingAddress),
+						notes || null
+					)) as { lastInsertRowid: number };
+				const newOrderId: number = result.lastInsertRowid;
 
-			// Look up product name for the snapshot column.
-			const readProduct = txDb.prepare(
-				`SELECT name_ar, name_en FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`,
-			);
+				// Look up product name for the snapshot column.
+				const readProduct = txDb.prepare(
+					`SELECT name_ar, name_en FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`
+				);
 
-			const insertItem = txDb.prepare(
-				`INSERT INTO order_items
+				const insertItem = txDb.prepare(
+					`INSERT INTO order_items
 			        (order_id, product_id, variant_id, product_name, quantity,
 			         unit_price, total_price)
-			       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			);
-
-			for (const item of items) {
-				if (item.quantity <= 0) {
-					throw new Error(`Invalid quantity ${item.quantity} for product ${item.productId}`);
-				}
-				const product = (await readProduct.get(item.productId)) as
-					| { name_ar: string; name_en: string | null }
-					| undefined;
-				if (!product) {
-					throw new Error(`Product ${item.productId} is unavailable`);
-				}
-				const unitPrice = item.unitPrice;
-				// The stock-decrement trigger fires here on INSERT and will
-				// RAISE EXCEPTION if stock < quantity. No manual UPDATE needed.
-				await insertItem.run(
-					newOrderId,
-					item.productId,
-					item.variantId ?? null,
-					product.name_en || product.name_ar,
-					item.quantity,
-					unitPrice,
-					unitPrice * item.quantity,
+			       VALUES (?, ?, ?, ?, ?, ?, ?)`
 				);
-			}
-			return { id: newOrderId, orderNumber };
-		});
 
-		sendSuccess(
-			res,
-			{ id: orderId, orderNumber },
-			'Order created successfully',
+				for (const item of items) {
+					if (item.quantity <= 0) {
+						throw new Error(`Invalid quantity ${item.quantity} for product ${item.productId}`);
+					}
+					const product = (await readProduct.get(item.productId)) as
+						| { name_ar: string; name_en: string | null }
+						| undefined;
+					if (!product) {
+						throw new Error(`Product ${item.productId} is unavailable`);
+					}
+					const unitPrice = item.unitPrice;
+					// The stock-decrement trigger fires here on INSERT and will
+					// RAISE EXCEPTION if stock < quantity. No manual UPDATE needed.
+					await insertItem.run(
+						newOrderId,
+						item.productId,
+						item.variantId ?? null,
+						product.name_en || product.name_ar,
+						item.quantity,
+						unitPrice,
+						unitPrice * item.quantity
+					);
+				}
+				return { id: newOrderId, orderNumber };
+			}
 		);
+
+		sendSuccess(res, { id: orderId, orderNumber }, 'Order created successfully');
 	} catch (err) {
 		sendError(res, (err as Error).message);
 	}
@@ -1136,7 +1159,7 @@ app.post('/api/auth/register', authLimiter, async (req: Request, res: Response) 
 				.prepare(
 					`INSERT INTO users (email, password_hash, full_name, role, status, is_verified, created_at, updated_at)
            VALUES (?, ?, ?, ?, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-           RETURNING id`,
+           RETURNING id`
 				)
 				.run(email, passwordHash, name, role)) as { lastInsertRowid: number };
 			userId = result.lastInsertRowid;
@@ -1172,7 +1195,7 @@ app.post('/api/auth/login', authLimiter, async (req: Request, res: Response) => 
 
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?',
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?'
 		)
 		.get(email)) as
 		| (Record<string, unknown> & { id: number; password_hash: string; role: AuthRole })
@@ -1209,7 +1232,7 @@ app.get('/api/auth/me', requireAuth, async (req: Request, res: Response) => {
 	const userId = req.user!.id;
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?',
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?'
 		)
 		.get(userId)) as Record<string, unknown> | undefined;
 
@@ -1348,9 +1371,9 @@ app.get('/api/payments/order/:orderId', requireAuth, async (req: Request, res: R
 			return sendError(res, 'Invalid order id', 400);
 		}
 		// Lookup the order owner before returning any payment data.
-		const order = (await db
-			.prepare('SELECT customer_id FROM orders WHERE id = ?')
-			.get(orderId)) as { customer_id: number } | undefined;
+		const order = (await db.prepare('SELECT customer_id FROM orders WHERE id = ?').get(orderId)) as
+			| { customer_id: number }
+			| undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
 		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
 			return sendError(res, 'Forbidden', 403);
@@ -1374,9 +1397,9 @@ app.post('/api/payments/:id/confirm', requireAuth, async (req: Request, res: Res
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid payment id', 400);
 
 		// Look up the order owner via the payment before mutating anything.
-		const payment = (await db
-			.prepare('SELECT order_id FROM payments WHERE id = ?')
-			.get(id)) as { order_id: number } | undefined;
+		const payment = (await db.prepare('SELECT order_id FROM payments WHERE id = ?').get(id)) as
+			| { order_id: number }
+			| undefined;
 		if (!payment) return sendError(res, 'Payment not found', 404);
 		const order = (await db
 			.prepare('SELECT customer_id FROM orders WHERE id = ?')

@@ -45,8 +45,19 @@ export function configureTrustProxy(app: import('express').Express): void {
 // =========================================================================
 // 3. Security headers — helmet-equivalent, no dependency
 // =========================================================================
+//
+// Baseline headers from the OWASP Secure Headers Project:
+//   - X-Content-Type-Options: nosniff            (prevent MIME sniffing)
+//   - X-Frame-Options: DENY                      (anti-clickjacking)
+//   - Referrer-Policy                           (limit Referer leakage)
+//   - Cross-Origin-Opener-Policy: same-origin   (Spectre mitigation)
+//   - Permissions-Policy                        (deny powerful APIs by default)
+//   - HSTS                                      (force HTTPS, prod only)
+//
+// Plus a strict-ish CSP tuned for the Nouf-ex SPA (React 19 + Vite + WOFF2
+// fonts). Override via the `CSP_DIRECTIVES` env var when needed (e.g. when
+// adding an analytics endpoint).
 export const securityHeaders: RequestHandler = (_req, res, next) => {
-    // Hardening (OWASP Secure Headers Project baseline).
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -56,6 +67,26 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
     if (process.env.NODE_ENV === 'production') {
         res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
     }
+    // Content-Security-Policy — explicit per-directive, no `unsafe-eval` even
+    // in dev. The `'unsafe-inline'` allowance for `style-src` covers the
+    // dynamic Tailwind/inline-style attributes some shadcn components emit.
+    // Remove once we move to nonced hashes.
+    res.setHeader(
+        'Content-Security-Policy',
+        [
+            "default-src 'self'",
+            // Inline styles are common in React (style={{...}}) — keep
+            // `unsafe-inline` here until we adopt nonce-based CSP.
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "script-src 'self' 'unsafe-inline'",
+            "font-src 'self' data: https://fonts.gstatic.com",
+            "img-src 'self' data: blob: https:",
+            "connect-src 'self' ws: wss:",
+            "frame-ancestors 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+        ].join('; ')
+    );
     next();
 };
 
@@ -378,10 +409,70 @@ export function sendSuccess<T>(
     });
 }
 
-export function sendError(res: Response, error: string, status = 500, code?: string): void {
+export function sendError(
+    res: Response,
+    errorOrMessage: string | Error | unknown,
+    status = 500,
+    code?: string,
+): void {
+    // P1-6 fix: when called with an Error object (typically from a
+    // route handler's `catch`), translate the failure into a safe
+    // user-facing message. We never echo `err.message` straight back
+    // to the client -- a Postgres `relation "users" does not exist`
+    // would leak schema details. We do log the full detail so the
+    // operator can diagnose.
+    if (errorOrMessage instanceof Error) {
+        const err = errorOrMessage;
+        const asPg = err as { code?: string; detail?: string; constraint?: string };
+        // 1. PG error code translation (reuse the table from the
+        //    global error handler so the two paths agree).
+        if (asPg.code && PG_TRANSLATION[asPg.code]) {
+            const t = PG_TRANSLATION[asPg.code];
+            log.warn({
+                msg: 'pg_error',
+                pg_code: asPg.code,
+                pg_constraint: asPg.constraint,
+            });
+            res.status(t.status).json({
+                success: false,
+                error: t.msg,
+                code: asPg.code,
+                request_id: res.req?.id,
+            });
+            return;
+        }
+        // 2. HttpError — preserve status + message.
+        if (err instanceof HttpError) {
+            log.warn({ msg: 'http_error', status: err.status, code: err.code });
+            res.status(err.status).json({
+                success: false,
+                error: err.message,
+                ...(err.code ? { code: err.code } : {}),
+                request_id: res.req?.id,
+            });
+            return;
+        }
+        // 3. Anything else — log full detail, return a generic
+        //    message in production or the original `err.message`
+        //    in development for easier debugging.
+        log.error({
+            msg: 'unhandled_error',
+            error_name: err.name,
+            error_message: err.message,
+        });
+        const isDev = process.env.NODE_ENV !== 'production';
+        res.status(status).json({
+            success: false,
+            error: isDev ? err.message : 'Internal server error.',
+            request_id: res.req?.id,
+        });
+        return;
+    }
+    // Original string-based path (used for explicit client errors
+    // like "Coupon not found" or "Invalid input").
     res.status(status).json({
         success: false,
-        error,
+        error: errorOrMessage,
         ...(code ? { code } : {}),
         request_id: res.req?.id,
     });

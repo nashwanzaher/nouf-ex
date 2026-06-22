@@ -393,7 +393,7 @@ app.get('/api/products', async (req: Request, res: Response) => {
 			offset: numOffset,
 		});
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -422,7 +422,7 @@ app.get('/api/products/featured', async (_req: Request, res: Response) => {
 		const products = rows.map(getProductWithParsedFields);
 		sendSuccess(res, products);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -439,7 +439,7 @@ app.get('/api/products/deals', async (_req: Request, res: Response) => {
 		const products = rows.map(getProductWithParsedFields);
 		sendSuccess(res, products);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -488,7 +488,7 @@ app.get('/api/products/:id', async (req: Request, res: Response) => {
 			images,
 		});
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -504,7 +504,7 @@ app.get('/api/stores', async (_req: Request, res: Response) => {
 		const stores = await db.prepare('SELECT * FROM stores ORDER BY rating DESC').all();
 		sendSuccess(res, stores);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -533,7 +533,7 @@ app.get('/api/stores/:id', async (req: Request, res: Response) => {
 		});
 	} catch (err) {
 		console.error('[stores/:id]', (err as Error).message);
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -561,7 +561,7 @@ app.get('/api/stores/:id/reviews', async (req: Request, res: Response) => {
 			.all(Number(id));
 		sendSuccess(res, reviews);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -586,7 +586,7 @@ app.get('/api/categories', async (_req: Request, res: Response) => {
 			.all();
 		sendSuccess(res, categories);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -614,7 +614,7 @@ app.get('/api/categories/:slug', async (req: Request, res: Response) => {
 			products: products.map(getProductWithParsedFields),
 		});
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -657,7 +657,7 @@ app.get('/api/reviews', async (req: Request, res: Response) => {
 		const reviews = await db.prepare(sql).all(...params);
 		sendSuccess(res, reviews);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -722,7 +722,7 @@ app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
 
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Review submitted successfully');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -760,7 +760,7 @@ app.get('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		const orders = await db.prepare(sql).all(...params);
 		sendSuccess(res, orders);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -802,7 +802,7 @@ app.get('/api/orders/:id', requireAuth, async (req: Request, res: Response) => {
 
 		sendSuccess(res, { ...order, items });
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1014,7 +1014,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 			'Order created successfully'
 		);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1042,7 +1042,7 @@ app.get('/api/cart/:userId', requireAuth, async (req: Request, res: Response) =>
 			.all(userId);
 		sendSuccess(res, cartItems);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1083,7 +1083,7 @@ app.post('/api/cart', requireAuth, async (req: Request, res: Response) => {
 			sendSuccess(res, { id: result.lastInsertRowid }, 'Item added to cart');
 		}
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1099,7 +1099,7 @@ app.delete('/api/cart/:id', requireAuth, async (req: Request, res: Response) => 
 		await db.prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ?').run(cartItemId, userId);
 		sendSuccess(res, null, 'Item removed from cart');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1114,7 +1114,7 @@ app.delete('/api/cart/clear/:userId', requireAuth, async (req: Request, res: Res
 		await db.prepare('DELETE FROM cart_items WHERE user_id = ?').run(userId);
 		sendSuccess(res, null, 'Cart cleared');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1140,7 +1140,7 @@ app.get('/api/wishlist/:userId', requireAuth, async (req: Request, res: Response
 			.all(userId);
 		sendSuccess(res, items);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1174,7 +1174,7 @@ app.post('/api/wishlist', requireAuth, async (req: Request, res: Response) => {
 
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Added to wishlist');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1192,7 +1192,7 @@ app.delete('/api/wishlist/:id', requireAuth, async (req: Request, res: Response)
 			.run(wishlistItemId, userId);
 		sendSuccess(res, null, 'Removed from wishlist');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1211,7 +1211,7 @@ app.get('/api/notifications/:userId', requireAuth, async (req: Request, res: Res
 			.all(userId);
 		sendSuccess(res, items);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1228,7 +1228,7 @@ app.put('/api/notifications/:id/read', requireAuth, async (req: Request, res: Re
 			.run(notificationId, userId);
 		sendSuccess(res, null, 'Notification marked as read');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1388,7 +1388,7 @@ app.get('/api/stats/home', async (_req: Request, res: Response) => {
 			deals: dealsProducts.map(getProductWithParsedFields),
 		});
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1457,7 +1457,7 @@ app.post('/api/payments', authLimiter, requireAuth, async (req: Request, res: Re
 
 		sendSuccess(res, { id: result.lastInsertRowid, status: initialStatus }, 'Payment recorded');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1484,7 +1484,7 @@ app.get('/api/payments/order/:orderId', requireAuth, async (req: Request, res: R
 			.all(orderId);
 		sendSuccess(res, payments);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1525,7 +1525,7 @@ app.post('/api/payments/:id/confirm', requireAuth, async (req: Request, res: Res
 			.run(result!.order_id);
 		sendSuccess(res, { order_id: result!.order_id }, 'Payment confirmed');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1555,7 +1555,7 @@ app.get('/api/addresses', requireAuth, async (req: Request, res: Response) => {
 			.all(userId);
 		sendSuccess(res, rows);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1592,7 +1592,7 @@ app.post('/api/addresses', requireAuth, async (req: Request, res: Response) => {
 			);
 		sendSuccess(res, result, 'Address created');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1608,7 +1608,7 @@ app.delete('/api/addresses/:id', requireAuth, async (req: Request, res: Response
 		if (!result) return sendError(res, 'Address not found', 404);
 		sendSuccess(res, { id: result.id }, 'Address deleted');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1637,7 +1637,7 @@ app.get('/api/shipping/methods', async (req: Request, res: Response) => {
 		}));
 		sendSuccess(res, enriched);
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1733,7 +1733,7 @@ app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Respons
 			final_total: Math.round((order_subtotal - discount) * 100) / 100,
 		});
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1779,7 +1779,7 @@ app.post('/api/coupons/redeem', requireAuth, async (req: Request, res: Response)
 			.run(coupon.id);
 		sendSuccess(res, result, 'Coupon redeemed');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1823,7 +1823,7 @@ app.post('/api/refunds', requireAuth, async (req: Request, res: Response) => {
 			.get(order_id, userId, amount, reason)) as { id: number };
 		sendSuccess(res, result, 'Refund requested');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 
@@ -1868,7 +1868,7 @@ app.post('/api/refunds/:id/resolve', requireRole('admin'), async (req: Request, 
 		}
 		sendSuccess(res, { id, status: finalStatus }, 'Refund resolved');
 	} catch (err) {
-		sendError(res, (err as Error).message);
+		sendError(res, err);
 	}
 });
 

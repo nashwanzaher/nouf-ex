@@ -1550,10 +1550,14 @@ const couponRedeemSchema = z.object({
 	order_subtotal: z.number().nonnegative(),
 });
 
-app.post('/api/coupons/validate', async (req: Request, res: Response) => {
+app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(couponRedeemSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+		// P0-4 fix: `user_id` in the body is intentionally ignored — the
+		// authenticated user is the source of truth. We accept the field
+		// for backward compatibility with the existing client but never
+		// trust it. (Replaced by `req.user!.id` in handlers that need it.)
 		const { code, order_subtotal } = v.data;
 
 		const coupon = (await db
@@ -1608,17 +1612,30 @@ app.post('/api/coupons/validate', async (req: Request, res: Response) => {
 	}
 });
 
-app.post('/api/coupons/redeem', async (req: Request, res: Response) => {
+app.post('/api/coupons/redeem', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const schema = couponRedeemSchema.extend({ order_id: z.number().int().positive() });
 		const v = validate(schema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
-		const { code, user_id, order_id } = v.data;
+		// P0-4 fix: override the body's `user_id` with the authenticated
+		// user. Without this guard, any logged-in customer could record
+		// a coupon redemption against any other user's order id.
+		const { code, order_id } = v.data;
+		const user_id = req.user!.id;
 
 		const coupon = (await db
 			.prepare('SELECT id FROM coupons WHERE code = ? AND is_active = TRUE')
 			.get(code)) as { id: number } | undefined;
 		if (!coupon) return sendError(res, 'Coupon not found', 404);
+
+		// Defense in depth: ensure the order belongs to the authenticated
+		// user before we record a redemption against it. This blocks
+		// a logged-in user from redeeming coupons on someone else's order.
+		const orderOwner = (await db
+			.prepare('SELECT customer_id FROM orders WHERE id = ?')
+			.get(order_id)) as { customer_id: number } | undefined;
+		if (!orderOwner) return sendError(res, 'Order not found', 404);
+		if (orderOwner.customer_id !== user_id) return sendError(res, 'Forbidden', 403);
 
 		const already = await db
 			.prepare('SELECT id FROM coupon_usage WHERE coupon_id = ? AND user_id = ? AND order_id = ?')

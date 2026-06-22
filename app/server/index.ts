@@ -1865,7 +1865,11 @@ app.post('/api/refunds/:id/resolve', requireRole('admin'), async (req: Request, 
 if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true') {
 	app.use(express.static(STATIC_PATH));
 
-	app.get('/{*splat}', (_req: Request, res: Response, next: NextFunction) => {
+	// P1-2 fix: never serve the SPA shell for an /api/* path. An
+	// unrecognised API URL must fall through to the 404 handler so
+	// clients receive a JSON error envelope, not the HTML index.
+	app.get('/{*splat}', (req: Request, res: Response, next: NextFunction) => {
+		if (req.path.startsWith('/api/')) return next();
 		const indexPath = path.join(STATIC_PATH, 'index.html');
 		// If the SPA bundle hasn't been built yet, fall through to the 404
 		// handler instead of throwing ENOENT (which the error handler would

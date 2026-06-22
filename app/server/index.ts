@@ -5,6 +5,7 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import fs from 'fs';
 import { PgDb } from './db/pg-wrapper.cjs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -85,6 +86,44 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(optionalAuth);       // populates req.user from Bearer token if present
 app.use(requestLogger);
+
+// --- Health & readiness endpoints (un-authenticated, log-skipped) ---
+// /api/health → process is alive (liveness probe for k8s / Docker / load balancers).
+// /api/ready  → process can serve traffic (DB reachable, schema applied).
+// Both are intentionally NOT behind rate limiting and never log to keep the
+// log volume sane from monitoring systems that poll every few seconds.
+app.get('/api/health', (_req: Request, res: Response) => {
+	res.status(200).json({
+		status: 'ok',
+		uptime_s: Math.round(process.uptime()),
+		ts: new Date().toISOString(),
+	});
+});
+
+const READY_STARTED_AT = Date.now();
+app.get('/api/ready', async (_req: Request, res: Response) => {
+	const checks: Record<string, { ok: boolean; ms: number; detail?: string }> = {};
+	const startedAt = Date.now();
+	try {
+		// Use a 2 s timeout so a slow DB doesn't make /api/ready hang and
+		// get flagged as unhealthy.
+		const result = await Promise.race([
+			db.prepare('SELECT 1 AS ok').get(),
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error('db timeout')), 2000)
+			),
+		]);
+		checks.db = { ok: !!result, ms: Date.now() - startedAt };
+	} catch (e) {
+		checks.db = { ok: false, ms: Date.now() - startedAt, detail: (e as Error).message };
+	}
+	const allOk = Object.values(checks).every((c) => c.ok);
+	res.status(allOk ? 200 : 503).json({
+		status: allOk ? 'ready' : 'degraded',
+		uptime_s: Math.round((Date.now() - READY_STARTED_AT) / 1000),
+		checks,
+	});
+});
 
 // --- Rate limiter (fixed in-place; uses req.ip + method + route, not req.path) ---
 type RateBucket = { count: number; resetAt: number };
@@ -774,7 +813,11 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		// Normalise payment method: legacy client may send 'cash' → map to 'cod'.
 		const normalisedPaymentMethod = paymentMethod === 'cash' || !paymentMethod ? 'cod' : paymentMethod;
 
-		const orderId = await db.tx(async (txDb: { prepare: (sql: string) => { run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>; get: (...args: unknown[]) => Promise<unknown> } }) => {
+		// P0-2 fix: capture the REAL orderNumber (generated above and
+		// INSERTed into the row) and return it in the response. The
+		// previous implementation returned a fake `ORD-...${last4id}`
+		// string which silently broke the audit trail and the UI.
+		const { id: orderId, orderNumber } = await db.tx(async (txDb: { prepare: (sql: string) => { run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>; get: (...args: unknown[]) => Promise<unknown> } }) => {
 			const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
 			const result = (await txDb
 				.prepare(
@@ -838,12 +881,12 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 					unitPrice * item.quantity,
 				);
 			}
-			return newOrderId;
+			return { id: newOrderId, orderNumber };
 		});
 
 		sendSuccess(
 			res,
-			{ id: orderId, orderNumber: `ORD-...${String(orderId).slice(-4)}` },
+			{ id: orderId, orderNumber },
 			'Order created successfully',
 		);
 	} catch (err) {
@@ -1671,8 +1714,16 @@ app.post('/api/refunds/:id/resolve', requireRole('admin'), async (req: Request, 
 if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true') {
 	app.use(express.static(STATIC_PATH));
 
-	app.get('/{*splat}', (_req: Request, res: Response) => {
-		res.sendFile(path.join(STATIC_PATH, 'index.html'));
+	app.get('/{*splat}', (_req: Request, res: Response, next: NextFunction) => {
+		const indexPath = path.join(STATIC_PATH, 'index.html');
+		// If the SPA bundle hasn't been built yet, fall through to the 404
+		// handler instead of throwing ENOENT (which the error handler would
+		// translate to 500). This matters for staging deploys and for
+		// integration tests that exercise the server before `vite build`.
+		fs.access(indexPath, fs.constants.R_OK, (err) => {
+			if (err) return next();
+			res.sendFile(indexPath);
+		});
 	});
 }
 

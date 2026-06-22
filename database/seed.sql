@@ -64,11 +64,11 @@ VALUES
   'Khalid Al-Sharjabi', '+967712345677', 'merchant', 'active',
   TRUE, TRUE, TRUE, NULL, 'ar', 'male'),
 (9,  'noor@perfume-yemen.com',
-  'scrypt$placeholder1==$placeholder==',
+  'scrypt$jS30qMRM6PJh+wS0lxz2zw==$79MVwe3lISndUcNBMQsCY95Kgg39pKMyiBh3SDKPYPo6YueYdlHy31vEsVUcm6YcE0F/6H2A43EimIhuyeLZeg==',
   'Noor Al-Khazen', '+967712345678', 'merchant', 'active',
   TRUE, TRUE, TRUE, NULL, 'ar', 'female'),
 (10, 'layla@mokha-coffee.com',
-  'scrypt$placeholder2==$placeholder==',
+  'scrypt$4+NUHh9EY7TlQjfvtpxIGw==$E48o2DOf7Yqc1QFkRJJFzEM3efKn+CjMd/fmhzZT3bkPTE2rIMrVcopScYomUZjJeKaXxdueKA+mHCYnvvMFEQ==',
   'Layla Al-Maqtari', '+967712345679', 'merchant', 'active',
   TRUE, TRUE, TRUE, NULL, 'ar', 'female')
 ON CONFLICT (id) DO NOTHING;
@@ -291,7 +291,7 @@ VALUES
 (1, 'توصيل عادي',   'Standard Delivery', '标准配送', 500.00, 200.00, 3, TRUE, 1),
 (2, 'توصيل سريع',   'Express Delivery',  '快速配送', 1000.00, 350.00, 1, TRUE, 2),
 (3, 'توصيل في اليوم التالي', 'Next-Day Delivery', '次日达', 1500.00, 500.00, 1, TRUE, 3),
-(4, 'استلام من المتجر', 'Store Pickup', '门店自提', 0.00, 0.00, 0, TRUE, 4)
+(4, 'استلام من المتجر', 'Store Pickup', '门店自提', 0.00, 0.00, 1, TRUE, 4)
 ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('shipping_methods','id'), GREATEST((SELECT MAX(id) FROM shipping_methods), 1));
 
@@ -384,13 +384,13 @@ VALUES
 (3, 'NOF-2026-0003', 3, 2, 'processing','card', 'paid',
     25000.00, 1000.00, 0.00, NULL, 0.00, 26000.00, 'YER',
     '{"name":"سارة الحضرمي","phone":"+967712345672","city":"عدن","street":"شارع 10","building":"فيلا الزهراء"}'::jsonb,
-    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL,
     '[{"status":"pending","at":"2026-06-19T09:00:00Z","payment":"pending"},{"status":"confirmed","at":"2026-06-19T10:30:00Z","payment":"paid"}]'::jsonb,
     now() - interval '3 days'),
 (4, 'NOF-2026-0004', 3, 7, 'pending',  'cod', 'pending',
     4500.00,  500.00, 500.00, 'FREESHIP', 500.00, 4500.00, 'YER',
     '{"name":"سارة الحضرمي","phone":"+967712345672","city":"عدن","street":"شارع 10","building":"فيلا الزهراء"}'::jsonb,
-    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL,
     '[{"status":"pending","at":"2026-06-21T08:00:00Z","payment":"pending"}]'::jsonb,
     now() - interval '1 day'),
 (5, 'NOF-2026-0005', 4, 5, 'delivered','wallet', 'paid',
@@ -402,13 +402,13 @@ VALUES
 (6, 'NOF-2026-0006', 2, 4, 'confirmed', 'bank_transfer', 'paid',
     15000.00, 1000.00, 0.00, NULL, 0.00, 16000.00, 'YER',
     '{"name":"أحمد المقتاري","phone":"+967712345671","city":"صنعاء","street":"شارع 30","building":"عمارة النور"}'::jsonb,
-    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL,
     '[{"status":"pending","at":"2026-06-21T07:00:00Z","payment":"pending"},{"status":"confirmed","at":"2026-06-21T08:00:00Z","payment":"paid"}]'::jsonb,
     now() - interval '12 hours'),
 (7, 'NOF-2026-0007', 3, 1, 'cancelled','card', 'failed',
     8500.00, 700.00, 0.00, NULL, 0.00, 9200.00, 'YER',
     '{"name":"سارة الحضرمي","phone":"+967712345672","city":"عدن","street":"شارع 10","building":"فيلا الزهراء"}'::jsonb,
-    NULL, NULL, NULL, now() - interval '6 hours',
+    NULL, NULL, NULL, NULL, now() - interval '6 hours',
     '[{"status":"pending","at":"2026-06-19T14:00:00Z","payment":"pending"},{"status":"cancelled","at":"2026-06-19T15:00:00Z","payment":"failed"}]'::jsonb,
     now() - interval '2 days'),
 (8, 'NOF-2026-0008', 4, 7, 'delivered','cod', 'paid',
@@ -643,21 +643,21 @@ SELECT setval(pg_get_serial_sequence('disputes','id'), GREATEST((SELECT MAX(id) 
 INSERT INTO admin_audit_log (id, user_id, action, entity_type, entity_id, old_values, new_values, created_at)
 OVERRIDING SYSTEM VALUE
 VALUES
-(1, 1, 'APPROVE',  'store',     '7', NULL,
+(1, 1, 'APPROVE',  'store',     '7',
    '{"is_verified":false,"trust_level":"verified"}'::jsonb,
    '{"is_verified":true,"trust_level":"diamond"}'::jsonb,
    now() - interval '30 days'),
-(2, 1, 'CREATE',   'coupon',    '1', NULL, NULL,
+(2, 1, 'CREATE',   'coupon',    '1', NULL,
    '{"code":"WELCOME10","type":"percentage","value":10}'::jsonb,
    now() - interval '7 days'),
-(3, 1, 'RESOLVE',  'refund',    '1', NULL, NULL,
+(3, 1, 'RESOLVE',  'refund',    '1', NULL,
    '{"status":"processed","admin_notes":"تم رد المبلغ"}'::jsonb,
    now() - interval '1 day'),
-(4, 1, 'VERIFY',   'merchant',  '5', NULL,
+(4, 1, 'VERIFY',   'merchant',  '5',
    '{"kyc_status":"pending"}'::jsonb,
    '{"kyc_status":"verified"}'::jsonb,
    now() - interval '60 days'),
-(5, 1, 'BAN',      'user',      '4', NULL,
+(5, 1, 'BAN',      'user',      '4',
    '{"status":"active"}'::jsonb,
    '{"status":"banned","reason":"fraud"}'::jsonb,
    now() - interval '15 days')

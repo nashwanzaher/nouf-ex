@@ -436,3 +436,19 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 CREATE INDEX IF NOT EXISTS idx_subscriptions_store  ON subscriptions(store_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status) WHERE status IN ('active','past_due');
+
+-- =====================================================================
+-- RATE_LIMIT_BUCKETS
+-- ----------------------------------------------------------------------------
+-- Persistent state for the application's rate limiter (moved here from
+-- the in-memory Map in server/index.ts). consume_rate_limit() and
+-- cleanup_rate_limits() in functions.sql operate on this table.
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+    bucket    TEXT        NOT NULL,
+    key       TEXT        NOT NULL,
+    count     INTEGER     NOT NULL DEFAULT 0,
+    reset_at  TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (bucket, key)
+);
+CREATE INDEX IF NOT EXISTS idx_rate_limit_reset_at ON rate_limit_buckets(reset_at);

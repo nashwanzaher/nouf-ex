@@ -15,7 +15,7 @@ export default function BottomNav() {
     { to: '/', icon: Home, label: t('nav.home') },
     { to: '/categories', icon: Grid3X3, label: t('nav.categories') },
     { to: '/search', icon: MessageSquare, label: 'Messages' },
-    { to: '/customer', icon: ShoppingCart, label: t('nav.cart') },
+    { to: '/checkout', icon: ShoppingCart, label: t('nav.cart') },
     { to: '/auth/login', icon: User, label: t('nav.account') },
   ];
 
@@ -32,7 +32,7 @@ export default function BottomNav() {
           >
             <div className="relative">
               <item.icon size={22} strokeWidth={isActive(item.to) ? 2.5 : 1.5} />
-              {item.to === '/customer' && cartCount > 0 && (
+              {item.to === '/checkout' && cartCount > 0 && (
                 <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] bg-aliOrange text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>

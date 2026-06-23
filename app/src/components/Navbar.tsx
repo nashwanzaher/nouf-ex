@@ -27,6 +27,7 @@ export default function Navbar() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [catDropdownOpen, setCatDropdownOpen] = useState(false);
 	const [searchCat, setSearchCat] = useState('all');
+	const isRTL = i18n.language === 'ar';
 	// C8 fix: declare all useState hooks BEFORE any useEffect. Rules of Hooks require consistent order.
 	const [userOpen, setUserOpen] = useState(false);
 	const userRef = useRef<HTMLDivElement>(null);
@@ -199,8 +200,9 @@ export default function Navbar() {
 
 						{/* Cart */}
 						<Link
-							to="/customer"
-							className="relative p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText">
+							to="/checkout"
+							className="relative p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
+							aria-label={isRTL ? 'السلة' : 'Cart'}>
 							<ShoppingCart size={20} />
 							{cartCount > 0 && (
 								<span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-aliOrange text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">

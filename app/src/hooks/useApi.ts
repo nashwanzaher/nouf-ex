@@ -23,6 +23,13 @@ import {
 	getHomeStats,
 	getOrders,
 	getOrder,
+	createOrder,
+	getCart,
+	getWishlist,
+	getAddresses,
+	getShippingMethods,
+	validateCoupon,
+	ApiError,
 } from '../lib/api';
 import type {
 	Product,
@@ -39,6 +46,10 @@ import type {
 	Notification,
 	User,
 	HomeStats,
+	Address,
+	ShippingMethod,
+	CouponValidation,
+	CreateOrderBody,
 	ProductFilters,
 	ReviewFilters,
 } from '../lib/api';
@@ -58,6 +69,9 @@ export type {
 	Notification,
 	User,
 	HomeStats,
+	Address,
+	ShippingMethod,
+	CouponValidation,
 	ProductFilters,
 	ReviewFilters,
 };
@@ -81,9 +95,7 @@ export interface HookResult<T> {
 // signal to the fetcher so it can call `fetch(url, { signal })`.
 // `AbortError` results are silently swallowed — they are an
 // expected part of the cleanup lifecycle, not a real failure.
-function useDataHook<T>(
-	fetcher: (signal: AbortSignal | undefined) => Promise<T>
-): HookResult<T> {
+function useDataHook<T>(fetcher: (signal: AbortSignal | undefined) => Promise<T>): HookResult<T> {
 	const [data, setData] = useState<T | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -128,6 +140,126 @@ function useDataHook<T>(
 	}, [triggerFetch]);
 
 	return { data, loading, error, refetch: triggerFetch };
+}
+
+// ─── Authenticated server-backed hooks ────────────────────────────────
+// These read from the Express API. The `apiRequest` helper inside
+// `lib/api.ts` reads the Bearer token from localStorage automatically,
+// so the server's `optionalAuth` populates `req.user` and the
+// endpoints behave correctly when the user is signed in.
+//
+// When the user is NOT signed in, the protected endpoints respond with
+// 401. The hooks surface that as `error`. Pages can decide how to
+// handle it (redirect to /auth/login, show a guest prompt, etc.).
+
+export function useOrders(): HookResult<Order[]> {
+	return useDataHook((signal) => getOrders(undefined, { signal }));
+}
+
+export function useOrder(id: number | null): HookResult<OrderWithItems | null> {
+	return useDataHook(
+		async (signal) => (id ? ((await getOrder(id, { signal })) as OrderWithItems) : null)
+	);
+}
+
+export function useUserAddresses(userId: number | null): HookResult<Address[]> {
+	return useDataHook(
+		async (signal) => (userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[]))
+	);
+}
+
+export function useShippingMethods(weightKg = 1): HookResult<ShippingMethod[]> {
+	return useDataHook((signal) => getShippingMethods(weightKg, { signal }));
+}
+
+// ─── Cart / Wishlist (server-backed) ────────────────────────────────
+// These only make sense for authenticated users; they map the local
+// CartContext state to the server. Anonymous users fall back to
+// the local CartContext state in CartContext.tsx.
+
+export function useServerCart(userId: number | null): HookResult<CartItem[]> {
+	return useDataHook(
+		async (signal) => (userId ? getCart(userId, { signal }) : Promise.resolve([] as CartItem[]))
+	);
+}
+
+export function useServerWishlist(userId: number | null): HookResult<WishlistItem[]> {
+	return useDataHook(
+		async (signal) =>
+			userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[])
+	);
+}
+
+// ─── Coupon validation (client-side, before checkout) ────────────────
+
+export function useCouponValidation() {
+	const [state, setState] = useState<{
+		validating: boolean;
+		result: CouponValidation | null;
+		error: string | null;
+	}>({ validating: false, result: null, error: null });
+
+	const validate = useCallback(
+		async (code: string, order_subtotal: number, user_id: number) => {
+			setState({ validating: true, result: null, error: null });
+			try {
+				const result = await validateCoupon({ code, order_subtotal, user_id });
+				setState({ validating: false, result, error: null });
+				return result;
+			} catch (err) {
+				const message =
+					err instanceof ApiError
+						? err.message
+						: 'Could not validate coupon. Please try again.';
+				setState({ validating: false, result: null, error: message });
+				return null;
+			}
+		},
+		[]
+	);
+
+	const reset = useCallback(() => {
+		setState({ validating: false, result: null, error: null });
+	}, []);
+
+	return { ...state, validate, reset };
+}
+
+// ─── Order creation (mutation hook) ────────────────────────────────
+
+export interface PlaceOrderResult {
+	id: number;
+	orderNumber: string;
+	discount: number;
+	total: number;
+}
+
+export function usePlaceOrder() {
+	const [submitting, setSubmitting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const placeOrder = useCallback(
+		async (body: CreateOrderBody): Promise<PlaceOrderResult | null> => {
+			setSubmitting(true);
+			setError(null);
+			try {
+				const result = await createOrder(body);
+				setSubmitting(false);
+				return result;
+			} catch (err) {
+				const message =
+					err instanceof ApiError
+						? err.message
+						: 'Could not place your order. Please try again.';
+				setError(message);
+				setSubmitting(false);
+				return null;
+			}
+		},
+		[]
+	);
+
+	return { submitting, error, placeOrder };
 }
 
 // ─── Products ───────────────────────────────────────────────
@@ -209,25 +341,6 @@ export function useReviews(productId?: number, storeId?: number): HookResult<Rev
 
 export function useHomeStats(): HookResult<HomeStats> {
 	return useDataHook((signal) => getHomeStats({ signal }));
-}
-
-// ─── Orders ─────────────────────────────────────────────────
-// Note: /api/orders requires authentication. If the user is not signed in,
-// the API returns 401; the hook surfaces it as a normal `error` so the
-// caller can redirect to /auth/login or show an empty state.
-
-export function useOrders(_customerId?: number): HookResult<Order[]> {
-	// _customerId is intentionally ignored — the server uses `req.user.id`
-	// as the source of truth. Kept in the signature for backwards
-	// compatibility with the previous JSON-based implementation.
-	void _customerId;
-	return useDataHook((signal) => getOrders(undefined, { signal }));
-}
-
-export function useOrder(id: number | null): HookResult<Order | null> {
-	return useDataHook(
-		async (signal) => (id ? ((await getOrder(id, { signal })) as unknown as Order | null) : null)
-	);
 }
 
 // ─── Cart (localStorage) ────────────────────────────────────

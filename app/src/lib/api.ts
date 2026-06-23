@@ -321,7 +321,9 @@ export interface ReviewFilters {
 }
 
 export interface CreateOrderBody {
-	customerId: number;
+	/** @deprecated The server overrides this with `req.user.id` (P0-4).
+	 *  Kept optional for backwards compatibility. */
+	customerId?: number;
 	storeId?: number;
 	items: Array<{
 		productId: number;
@@ -456,17 +458,11 @@ export async function getStores(options?: RequestOptions): Promise<Store[]> {
 	return apiRequest('/stores', { signal: options?.signal });
 }
 
-export async function getStore(
-	id: number,
-	options?: RequestOptions
-): Promise<StoreWithProducts> {
+export async function getStore(id: number, options?: RequestOptions): Promise<StoreWithProducts> {
 	return apiRequest(`/stores/${id}`, { signal: options?.signal });
 }
 
-export async function getStoreReviews(
-	id: number,
-	options?: RequestOptions
-): Promise<Review[]> {
+export async function getStoreReviews(id: number, options?: RequestOptions): Promise<Review[]> {
 	return apiRequest(`/stores/${id}/reviews`, { signal: options?.signal });
 }
 
@@ -513,24 +509,20 @@ export async function createReview(body: {
 
 // ─── Orders API ─────────────────────────────────────────────
 
-export async function getOrders(
-	customerId?: number,
-	options?: RequestOptions
-): Promise<Order[]> {
+export async function getOrders(customerId?: number, options?: RequestOptions): Promise<Order[]> {
 	const params = customerId ? `?customerId=${customerId}` : '';
 	return apiRequest(`/orders${params}`, { signal: options?.signal });
 }
 
-export async function getOrder(
-	id: number,
-	options?: RequestOptions
-): Promise<OrderWithItems> {
+export async function getOrder(id: number, options?: RequestOptions): Promise<OrderWithItems> {
 	return apiRequest(`/orders/${id}`, { signal: options?.signal });
 }
 
 export async function createOrder(body: CreateOrderBody): Promise<{
 	id: number;
 	orderNumber: string;
+	discount: number;
+	total: number;
 }> {
 	return apiRequest('/orders', {
 		method: 'POST',
@@ -540,8 +532,8 @@ export async function createOrder(body: CreateOrderBody): Promise<{
 
 // ─── Cart API ───────────────────────────────────────────────
 
-export async function getCart(userId: number): Promise<CartItem[]> {
-	return apiRequest(`/cart/${userId}`);
+export async function getCart(userId: number, options?: RequestOptions): Promise<CartItem[]> {
+	return apiRequest(`/cart/${userId}`, { signal: options?.signal });
 }
 
 export async function addToCart(body: {
@@ -570,8 +562,11 @@ export async function clearCart(userId: number): Promise<void> {
 
 // ─── Wishlist API ───────────────────────────────────────────
 
-export async function getWishlist(userId: number): Promise<WishlistItem[]> {
-	return apiRequest(`/wishlist/${userId}`);
+export async function getWishlist(
+	userId: number,
+	options?: RequestOptions
+): Promise<WishlistItem[]> {
+	return apiRequest(`/wishlist/${userId}`, { signal: options?.signal });
 }
 
 export async function addToWishlist(body: {
@@ -673,8 +668,11 @@ export async function confirmPayment(id: number): Promise<{ order_id: number }> 
 
 // ─── Addresses API  (P1-3) ──────────────────────────────────
 
-export async function getAddresses(userId: number): Promise<Address[]> {
-	return apiRequest(`/addresses?user_id=${userId}`);
+export async function getAddresses(
+	userId: number,
+	options?: RequestOptions
+): Promise<Address[]> {
+	return apiRequest(`/addresses?user_id=${userId}`, { signal: options?.signal });
 }
 
 export async function createAddress(body: CreateAddressBody): Promise<Address> {
@@ -692,8 +690,11 @@ export async function deleteAddress(id: number): Promise<{ id: number }> {
 
 // ─── Shipping API  (P1-4) ────────────────────────────────────
 
-export async function getShippingMethods(weightKg = 1): Promise<ShippingMethod[]> {
-	return apiRequest(`/shipping/methods?weight_kg=${weightKg}`);
+export async function getShippingMethods(
+	weightKg = 1,
+	options?: RequestOptions
+): Promise<ShippingMethod[]> {
+	return apiRequest(`/shipping/methods?weight_kg=${weightKg}`, { signal: options?.signal });
 }
 
 // ─── Coupons API  (P1-5) ─────────────────────────────────────

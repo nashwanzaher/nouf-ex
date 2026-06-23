@@ -18,6 +18,7 @@ import Reviews from './pages/customer/Reviews';
 import Wishlist from './pages/customer/Wishlist';
 import Deals from './pages/Deals';
 import Home from './pages/Home';
+import Checkout from './pages/Checkout';
 import NotFound from './pages/NotFound';
 import ProductDetail from './pages/ProductDetail';
 import SearchResults from './pages/SearchResults';
@@ -40,6 +41,14 @@ export default function App() {
 							<Route path="/store/:id" element={<StorePage />} />
 							<Route path="/categories" element={<Categories />} />
 							<Route path="/deals" element={<Deals />} />
+							<Route
+								path="/checkout"
+								element={
+									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+										<Checkout />
+									</ProtectedRoute>
+								}
+							/>
 							<Route
 								path="/seller"
 								element={

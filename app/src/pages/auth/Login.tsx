@@ -48,7 +48,11 @@ export default function Login() {
 				role: (result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
-			authLogin(authUser, result.token);
+			// authLogin is async (P0-1: it syncs the local cart to the
+			// server). We await it so the cart-sync toast appears
+			// before the navigation completes, but we don't block the
+			// "signed in" toast — that's the more important signal.
+			await authLogin(authUser, result.token);
 			addToast({
 				message: isRTL ? 'تم تسجيل الدخول بنجاح' : 'Signed in successfully',
 				type: 'success',

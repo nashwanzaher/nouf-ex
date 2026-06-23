@@ -6,6 +6,7 @@ import {
 	useCallback,
 	type ReactNode,
 } from 'react';
+import { clearLocalCart, syncOnLogin } from '@/lib/cart-sync';
 
 type Lang = 'ar' | 'en' | 'zh';
 type Role = 'guest' | 'customer' | 'merchant' | 'admin';
@@ -172,20 +173,50 @@ export function useApp() {
 }
 
 /** Convenience hook: returns the auth slice and helpers. Saves callers
- *  from destructuring the context every time. */
+ *  from destructuring the context every time.
+ *
+ * P0-1: `login` is async and runs `syncOnLogin` after the user/token
+ * are set. This pushes the anonymous local cart into the server cart
+ * (best-effort) and returns when done. `logout` clears the local cart
+ * synchronously (the server cart is left intact — the user may sign
+ * back in from another device and expect their items). */
 export function useAuth() {
 	const { state, setUser, setToken, addToast } = useApp();
 	const isAuthenticated = Boolean(state.user && state.token);
 	const login = useCallback(
-		(user: User, token: string) => {
+		async (user: User, token: string): Promise<void> => {
 			setUser(user);
 			setToken(token);
+			// Best-effort: if the sync fails, the local cart is
+			// preserved (cart-sync.ts only clears local on a clean
+			// push). A failed sync must never block the login.
+			try {
+				const result = await syncOnLogin(Number(user.id));
+				if (result.degraded) {
+					addToast({
+						message: 'Some cart items could not be saved to your account. Please review and retry.',
+						type: 'warning',
+					});
+				} else if (result.pushed > 0) {
+					addToast({
+						message: `Synced ${result.pushed} cart item${result.pushed === 1 ? '' : 's'} to your account.`,
+						type: 'success',
+					});
+				}
+			} catch {
+				// Silently swallow — login already succeeded.
+			}
 		},
-		[setUser, setToken]
+		[setUser, setToken, addToast]
 	);
 	const logout = useCallback(() => {
 		setUser(null);
 		setToken(null);
+		// Local cart belongs to the (now-gone) user; clear it so the
+		// next anonymous visitor starts with an empty cart. The server
+		// cart is left intact — the user may sign back in from
+		// another device.
+		clearLocalCart();
 	}, [setUser, setToken]);
 	return { user: state.user, token: state.token, isAuthenticated, login, logout, addToast };
 }

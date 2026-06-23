@@ -127,36 +127,48 @@ app.get('/api/ready', async (_req: Request, res: Response) => {
 	});
 });
 
-// --- Rate limiter (fixed in-place; uses req.ip + method + route, not req.path) ---
-type RateBucket = { count: number; resetAt: number };
-const RATE_BUCKETS = new Map<string, RateBucket>();
+// --- Rate limiter (DB-backed via consume_rate_limit()) -----------------------
+// Bucket state lives in rate_limit_buckets (database/migrations/0004).
+// consume_rate_limit() does the atomic increment + window reset; the
+// app just calls it per request and reads back (allowed, retry_after_ms).
 function rateLimit(windowMs: number, max: number, bucket = 'global') {
-	return (req: Request, res: Response, next: NextFunction) => {
+	return async (req: Request, res: Response, next: NextFunction) => {
 		// Key = method + route prefix (req.route?.path when available)
 		//       + client IP. Path is intentionally NOT used so that
 		//       `/api/products/1` and `/api/products/2` share a bucket.
 		const route = (req.route?.path as string | undefined) || req.path.split('?')[0];
 		const ip = req.ip || req.socket.remoteAddress || 'anon';
 		const key = `${bucket}:${req.method}:${route}:${ip}`;
-		const now = Date.now();
-		const b = RATE_BUCKETS.get(key);
-		if (!b || now > b.resetAt) {
-			RATE_BUCKETS.set(key, { count: 1, resetAt: now + windowMs });
-			return next();
-		}
-		b.count += 1;
-		if (b.count > max) {
-			res.setHeader('Retry-After', Math.ceil((b.resetAt - now) / 1000));
-			return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
+		try {
+			const row = (await db
+				.prepare(
+					'SELECT allowed, retry_after_ms FROM consume_rate_limit($1, $2, $3, $4)'
+				)
+				.get(bucket, key, windowMs, max)) as { allowed: boolean; retry_after_ms: number } | undefined;
+			if (!row) return next();
+			if (!row.allowed) {
+				res.setHeader('Retry-After', Math.ceil(row.retry_after_ms / 1000));
+				return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
+			}
+		} catch (err) {
+			// Don't block traffic on a transient DB error — fail open.
+			log.warn({
+				msg: 'rate_limit_db_error',
+				bucket, route,
+				error: (err as Error).message,
+			});
 		}
 		next();
 	};
 }
-// Background sweeper — evicts old entries every minute so the Map doesn't grow forever.
-setInterval(() => {
-	const now = Date.now();
-	for (const [k, v] of RATE_BUCKETS) {
-		if (now > v.resetAt) RATE_BUCKETS.delete(k);
+// Background sweeper — asks the DB to evict expired rows every minute
+// so the rate_limit_buckets table stays small.
+setInterval(async () => {
+	try {
+		const r = (await db.prepare('SELECT cleanup_rate_limits() AS n').get()) as { n: number } | undefined;
+		if (r && r.n > 0) log.debug({ msg: 'rate_limit_cleanup', deleted: r.n });
+	} catch {
+		/* ignore — next tick will retry */
 	}
 }, 60 * 1000).unref();
 
@@ -904,7 +916,9 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		} = await db.tx(
 			async (txDb: {
 				prepare: (sql: string) => {
-					run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | string | null; changes: number }>;
+					run: (
+						...args: unknown[]
+					) => Promise<{ lastInsertRowid: number | string | null; changes: number }>;
 					get: (...args: unknown[]) => Promise<unknown>;
 				};
 			}) => {
@@ -939,7 +953,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 							`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`
 						);
 					}
-					resolvedDiscount = computeCouponDiscount(coupon, resolvedSubtotal);
+					resolvedDiscount = await computeCouponDiscount(coupon, resolvedSubtotal);
 				}
 				const finalDiscount = Math.round(resolvedDiscount * 100) / 100;
 				const finalTotal = Math.max(
@@ -1691,14 +1705,20 @@ type CouponRow = {
 const COUPON_COLUMNS =
 	'id, code, type, value, min_order_amount AS min_order, max_discount, usage_limit, usage_count, starts_at, expires_at';
 
-/** Pure function: given a coupon row and a subtotal, return the
- *  discount amount in the same units (rounded to 2 decimals, clamped
- *  to [0, subtotal]). Shared by /api/coupons/validate and the
- *  in-transaction coupon resolver used by POST /api/orders. */
-function computeCouponDiscount(coupon: CouponRow, orderSubtotal: number): number {
-	const raw = coupon.type === 'percentage' ? (orderSubtotal * coupon.value) / 100 : coupon.value;
-	const capped = coupon.max_discount != null ? Math.min(raw, coupon.max_discount) : raw;
-	return Math.max(0, Math.min(orderSubtotal, Math.round(capped * 100) / 100));
+/** Calls the DB function `coupon_discount_amount(type, value,
+ *  max_discount, subtotal)` (database/migrations/0005) which centralises
+ *  the discount math. Returns a rounded NUMERIC. Used by both
+ *  /api/coupons/validate and the in-transaction coupon resolver. */
+async function computeCouponDiscount(
+	coupon: { type: string; value: number; max_discount: number | null },
+	orderSubtotal: number
+): Promise<number> {
+	const row = (await db
+		.prepare(
+			'SELECT coupon_discount_amount($1, $2::numeric, $3::numeric, $4::numeric) AS discount'
+		)
+		.get(coupon.type, coupon.value, coupon.max_discount, orderSubtotal)) as { discount: string } | undefined;
+	return row ? Number(row.discount) : 0;
 }
 
 app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Response) => {
@@ -1733,7 +1753,7 @@ app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Respons
 			);
 		}
 
-		const discount = computeCouponDiscount(coupon, order_subtotal);
+		const discount = await computeCouponDiscount(coupon, order_subtotal);
 
 		sendSuccess(res, {
 			code: coupon.code,

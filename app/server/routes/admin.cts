@@ -1,0 +1,658 @@
+/**
+ * Admin routes — every endpoint here requires role='admin'.
+ *
+ * The router is mounted by server/index.ts at `/api/admin`, so the
+ * paths below are the suffix (e.g. `app.get('/users', ...)` maps to
+ * `GET /api/admin/users`).
+ *
+ * Read-only (GET) endpoints are listed first; mutating (PATCH)
+ * endpoints that write to admin_audit_log come after.
+ */
+import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
+import {
+	db,
+	sendError,
+	sendSuccess,
+	requireAuth,
+	requireRole,
+	validate,
+	buildUpdateSet,
+	writeAuditLog,
+	paginationSchema,
+	adminUserUpdateSchema,
+	adminStoreUpdateSchema,
+	adminOrderStatusSchema,
+	adminProductUpdateSchema,
+	adminDisputeUpdateSchema,
+	getProductWithParsedFields,
+} from '../lib/shared.cts';
+
+export const adminRouter = Router();
+
+// All admin routes require an authenticated admin. The middleware
+// chain below mirrors the role gate used in the original index.ts
+// inline routes.
+const adminAuth = [requireAuth, requireRole('admin')];
+
+// ═══════════════════════════════════════════════════════════
+// READ-ONLY (GET)
+// ═══════════════════════════════════════════════════════════
+
+/** GET /api/admin/users
+ *  Query: ?role=&is_active=&limit=&offset=
+ *  Returns: { users, total, limit, offset }
+ */
+adminRouter.get('/users', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				role: z.enum(['customer', 'merchant', 'admin']).optional(),
+				is_active: z.enum(['active', 'suspended', 'banned']).optional(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.role) {
+			params.push(v.data.role);
+			where.push(`role = $${params.length}`);
+		}
+		if (v.data.is_active) {
+			params.push(v.data.is_active);
+			where.push(`status = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM users ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const users = (await db
+			.prepare(
+				`SELECT id, email, full_name, phone, role, status, is_verified,
+				        email_verified, phone_verified, two_factor_enabled,
+				        preferred_language, gender, last_login, created_at, updated_at
+				 FROM users ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { users, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/stores
+ *  Query: ?is_active=&is_verified=&limit=&offset=
+ */
+adminRouter.get('/stores', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				is_active: z
+					.enum(['true', 'false'])
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+				is_verified: z
+					.enum(['true', 'false'])
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.is_active !== undefined) {
+			params.push(v.data.is_active);
+			where.push(`is_active = $${params.length}`);
+		}
+		if (v.data.is_verified !== undefined) {
+			params.push(v.data.is_verified);
+			where.push(`is_verified = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM stores ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const stores = (await db
+			.prepare(
+				`SELECT * FROM stores ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { stores, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/products
+ *  Query: ?is_active=&is_featured=&store_id=&category_id=&limit=&offset=
+ */
+adminRouter.get('/products', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				is_active: z
+					.enum(['true', 'false'])
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+				is_featured: z
+					.enum(['true', 'false'])
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+				store_id: z.coerce.number().int().positive().optional(),
+				category_id: z.coerce.number().int().positive().optional(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.is_active !== undefined) {
+			params.push(v.data.is_active);
+			where.push(`is_active = $${params.length}`);
+		}
+		if (v.data.is_featured !== undefined) {
+			params.push(v.data.is_featured);
+			where.push(`is_featured = $${params.length}`);
+		}
+		if (v.data.store_id !== undefined) {
+			params.push(v.data.store_id);
+			where.push(`store_id = $${params.length}`);
+		}
+		if (v.data.category_id !== undefined) {
+			params.push(v.data.category_id);
+			where.push(`category_id = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM products ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const products = (await db
+			.prepare(
+				`SELECT * FROM products ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, {
+			products: products.map(getProductWithParsedFields),
+			total,
+			limit: v.data.limit,
+			offset: v.data.offset,
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/orders
+ *  Query: ?status=&payment_status=&limit=&offset=
+ */
+adminRouter.get('/orders', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				status: z
+					.enum([
+						'pending',
+						'confirmed',
+						'processing',
+						'shipped',
+						'delivered',
+						'cancelled',
+						'refunded',
+					])
+					.optional(),
+				payment_status: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.status) {
+			params.push(v.data.status);
+			where.push(`status = $${params.length}`);
+		}
+		if (v.data.payment_status) {
+			params.push(v.data.payment_status);
+			where.push(`payment_status = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM orders ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const orders = (await db
+			.prepare(
+				`SELECT * FROM orders ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { orders, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/disputes
+ *  Query: ?status=&priority=&limit=&offset=
+ */
+adminRouter.get('/disputes', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				status: z.enum(['open', 'in_review', 'resolved', 'rejected']).optional(),
+				priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.status) {
+			params.push(v.data.status);
+			where.push(`status = $${params.length}`);
+		}
+		if (v.data.priority) {
+			params.push(v.data.priority);
+			where.push(`priority = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM disputes ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const disputes = (await db
+			.prepare(
+				`SELECT * FROM disputes ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { disputes, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/audit-log
+ *  Query: ?entity_type=&action=&user_id=&limit=&offset=
+ */
+adminRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				entity_type: z.string().trim().min(1).max(50).optional(),
+				action: z.string().trim().min(1).max(50).optional(),
+				user_id: z.coerce.number().int().positive().optional(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.entity_type) {
+			params.push(v.data.entity_type);
+			where.push(`entity_type = $${params.length}`);
+		}
+		if (v.data.action) {
+			params.push(v.data.action);
+			where.push(`action = $${params.length}`);
+		}
+		if (v.data.user_id !== undefined) {
+			params.push(v.data.user_id);
+			where.push(`user_id = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM admin_audit_log ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const log = (await db
+			.prepare(
+				`SELECT id, user_id, action, entity_type, entity_id, old_values,
+					        new_values, ip_address, user_agent, created_at
+					 FROM admin_audit_log ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { log, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/stats
+ *  Returns a compact dashboard summary for the admin home page.
+ *  Single round-trip per metric; cheap because every count uses
+ *  the primary-key index.
+ */
+adminRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => {
+	try {
+		const users = (await db.prepare('SELECT COUNT(*)::int AS c FROM users').get()) as {
+			c: number;
+		};
+		const stores = (await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get()) as {
+			c: number;
+		};
+		const products = (await db.prepare('SELECT COUNT(*)::int AS c FROM products').get()) as {
+			c: number;
+		};
+		const orders = (await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get()) as {
+			c: number;
+		};
+		const reviews = (await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get()) as {
+			c: number;
+		};
+		const disputes = (await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get()) as {
+			c: number;
+		};
+		const openDisputes = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`)
+			.get()) as { c: number };
+		const pendingOrders = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`)
+			.get()) as { c: number };
+		const paidOrders = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`)
+			.get()) as { c: number };
+		const suspendedUsers = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`)
+			.get()) as { c: number };
+		const inactiveStores = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`)
+			.get()) as { c: number };
+		const recentOrders = (await db
+			.prepare(
+				`SELECT COUNT(*)::int AS c FROM orders
+					 WHERE created_at > NOW() - INTERVAL '7 days'`
+			)
+			.get()) as { c: number };
+		const recentUsers = (await db
+			.prepare(
+				`SELECT COUNT(*)::int AS c FROM users
+					 WHERE created_at > NOW() - INTERVAL '7 days'`
+			)
+			.get()) as { c: number };
+		const revenueYer = (await db
+			.prepare(
+				`SELECT COALESCE(SUM(total), 0)::numeric AS s
+					 FROM orders WHERE payment_status = 'paid'`
+			)
+			.get()) as { s: string };
+
+		return sendSuccess(res, {
+			counts: {
+				users: users.c,
+				stores: stores.c,
+				products: products.c,
+				orders: orders.c,
+				reviews: reviews.c,
+				disputes: disputes.c,
+			},
+			flags: {
+				openDisputes: openDisputes.c,
+				pendingOrders: pendingOrders.c,
+				paidOrders: paidOrders.c,
+				suspendedUsers: suspendedUsers.c,
+				inactiveStores: inactiveStores.c,
+			},
+			recent7d: {
+				orders: recentOrders.c,
+				users: recentUsers.c,
+			},
+			revenueYer: Number(revenueYer.s),
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+// ═══════════════════════════════════════════════════════════
+// MUTATING (PATCH) — every successful mutation is recorded into
+// admin_audit_log via writeAuditLog().
+// ═══════════════════════════════════════════════════════════
+
+/** PATCH /api/admin/users/:id
+ *  Body: { status?, role?, is_verified?, email_verified?, phone_verified? }
+ *  Suspend/ban/change role from the admin panel. The password_hash
+ *  is never updated through this endpoint.
+ */
+adminRouter.patch('/users/:id', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(adminUserUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+		const userId = Number(req.params.id);
+		if (!Number.isInteger(userId) || userId <= 0) {
+			return sendError(res, 'Invalid user id', 400);
+		}
+
+		// Self-protection: an admin cannot ban or demote themselves.
+		if (req.user!.id === userId) {
+			if (v.data.status === 'banned') {
+				return sendError(res, 'You cannot ban your own account.', 400, 'SELF_BAN');
+			}
+			if (v.data.role && v.data.role !== 'admin') {
+				return sendError(res, 'You cannot remove your own admin role.', 400, 'SELF_DEMOTE');
+			}
+		}
+
+		const current = (await db
+			.prepare(
+				'SELECT id, email, role, status, is_verified, email_verified, phone_verified FROM users WHERE id = $1'
+			)
+			.get(userId)) as Record<string, unknown> | undefined;
+		if (!current) return sendError(res, 'User not found', 404);
+
+		const { sql: setSql, params } = buildUpdateSet(v.data);
+		params.push(userId);
+		const updated = (await db
+			.prepare(
+				`UPDATE users SET ${setSql} WHERE id = $${params.length} RETURNING id, email, role, status, is_verified, email_verified, phone_verified`
+			)
+			.get(...params)) as Record<string, unknown>;
+
+		await writeAuditLog(req, 'update_user', 'user', userId, current, updated);
+		return sendSuccess(res, updated, 'User updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** PATCH /api/admin/stores/:id
+ *  Body: { is_active?, is_verified?, trust_level? }
+ */
+adminRouter.patch('/stores/:id', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(adminStoreUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+		const storeId = Number(req.params.id);
+		if (!Number.isInteger(storeId) || storeId <= 0) {
+			return sendError(res, 'Invalid store id', 400);
+		}
+
+		const current = (await db
+			.prepare(
+				'SELECT id, owner_id, store_name, is_active, is_verified, trust_level FROM stores WHERE id = $1'
+			)
+			.get(storeId)) as Record<string, unknown> | undefined;
+		if (!current) return sendError(res, 'Store not found', 404);
+
+		const { sql: setSql, params } = buildUpdateSet(v.data);
+		params.push(storeId);
+		const updated = (await db
+			.prepare(
+				`UPDATE stores SET ${setSql} WHERE id = $${params.length} RETURNING id, store_name, is_active, is_verified, trust_level`
+			)
+			.get(...params)) as Record<string, unknown>;
+
+		await writeAuditLog(req, 'update_store', 'store', storeId, current, updated);
+		return sendSuccess(res, updated, 'Store updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** PATCH /api/admin/orders/:id/status
+ *  Body: { status, note? }
+ *  Force an order into a specific state. The trg_orders_state_machine
+ *  trigger still enforces the legal state machine.
+ */
+adminRouter.patch('/orders/:id/status', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(adminOrderStatusSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+		const orderId = Number(req.params.id);
+		if (!Number.isInteger(orderId) || orderId <= 0) {
+			return sendError(res, 'Invalid order id', 400);
+		}
+
+		const current = (await db
+			.prepare('SELECT id, status, payment_status, total FROM orders WHERE id = $1')
+			.get(orderId)) as Record<string, unknown> | undefined;
+		if (!current) return sendError(res, 'Order not found', 404);
+
+		const updated = (await db
+			.prepare('UPDATE orders SET status = $1 WHERE id = $2 RETURNING id, status')
+			.get(v.data.status, orderId)) as Record<string, unknown> | undefined;
+		if (!updated) return sendError(res, 'Order update failed', 500);
+
+		await writeAuditLog(req, 'force_status', 'order', orderId, current, {
+			...updated,
+			note: v.data.note ?? null,
+		});
+		return sendSuccess(res, updated, 'Order status updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** PATCH /api/admin/products/:id
+ *  Body: { is_active?, is_featured? }
+ *  Toggle product visibility / featured status from the admin panel.
+ */
+adminRouter.patch('/products/:id', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(adminProductUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+		const productId = Number(req.params.id);
+		if (!Number.isInteger(productId) || productId <= 0) {
+			return sendError(res, 'Invalid product id', 400);
+		}
+
+		const current = (await db
+			.prepare(
+				'SELECT id, name_en, name_ar, is_active, is_featured, deal_discount FROM products WHERE id = $1'
+			)
+			.get(productId)) as Record<string, unknown> | undefined;
+		if (!current) return sendError(res, 'Product not found', 404);
+
+		const { sql: setSql, params } = buildUpdateSet(v.data);
+		params.push(productId);
+		const updated = (await db
+			.prepare(
+				`UPDATE products SET ${setSql} WHERE id = $${params.length}
+					 RETURNING id, name_en, name_ar, is_active, is_featured, deal_discount, updated_at`
+			)
+			.get(...params)) as Record<string, unknown>;
+
+		await writeAuditLog(req, 'update_product', 'product', productId, current, updated);
+		return sendSuccess(res, updated, 'Product updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** PATCH /api/admin/disputes/:id
+ *  Body: { status, resolution?, refund_amount? }
+ */
+adminRouter.patch('/disputes/:id', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(adminDisputeUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+		const disputeId = Number(req.params.id);
+		if (!Number.isInteger(disputeId) || disputeId <= 0) {
+			return sendError(res, 'Invalid dispute id', 400);
+		}
+
+		const current = (await db
+			.prepare(
+				'SELECT id, status, priority, resolution, refund_amount, resolved_by, resolved_at FROM disputes WHERE id = $1'
+			)
+			.get(disputeId)) as Record<string, unknown> | undefined;
+		if (!current) return sendError(res, 'Dispute not found', 404);
+
+		// Stamp resolved_by + resolved_at when moving into a terminal state.
+		const TERMINAL_STATUSES = new Set(['resolved_buyer', 'resolved_seller', 'closed', 'rejected']);
+		const patch: Record<string, unknown> = { status: v.data.status };
+		if (v.data.resolution !== undefined) patch.resolution = v.data.resolution;
+		if (v.data.refund_amount !== undefined) patch.refund_amount = v.data.refund_amount;
+		if (TERMINAL_STATUSES.has(v.data.status)) {
+			patch.resolved_by = req.user!.id;
+			patch.resolved_at = new Date().toISOString();
+		}
+		const { sql: setSql, params } = buildUpdateSet(patch);
+		params.push(disputeId);
+		const updated = (await db
+			.prepare(
+				`UPDATE disputes SET ${setSql} WHERE id = $${params.length}
+					 RETURNING id, status, priority, resolution, refund_amount, resolved_by, resolved_at`
+			)
+			.get(...params)) as Record<string, unknown>;
+
+		await writeAuditLog(req, 'update_dispute', 'dispute', disputeId, current, updated);
+		return sendSuccess(res, updated, 'Dispute updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});

@@ -1924,105 +1924,115 @@ const paginationSchema = z.object({
  *  Query: ?role=&is_active=&limit=&offset=
  *  Returns: { users, total, limit, offset }
  */
-app.get('/api/admin/users', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
-	try {
-		const v = validate(
-			paginationSchema.extend({
-				role: z.enum(['customer', 'merchant', 'admin']).optional(),
-				is_active: z.enum(['active', 'suspended', 'banned']).optional(),
-			}),
-			req.query
-		);
-		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+app.get(
+	'/api/admin/users',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				paginationSchema.extend({
+					role: z.enum(['customer', 'merchant', 'admin']).optional(),
+					is_active: z.enum(['active', 'suspended', 'banned']).optional(),
+				}),
+				req.query
+			);
+			if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
-		const where: string[] = [];
-		const params: unknown[] = [];
-		if (v.data.role) {
-			params.push(v.data.role);
-			where.push(`role = $${params.length}`);
-		}
-		if (v.data.is_active) {
-			params.push(v.data.is_active);
-			where.push(`status = $${params.length}`);
-		}
-		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+			const where: string[] = [];
+			const params: unknown[] = [];
+			if (v.data.role) {
+				params.push(v.data.role);
+				where.push(`role = $${params.length}`);
+			}
+			if (v.data.is_active) {
+				params.push(v.data.is_active);
+				where.push(`status = $${params.length}`);
+			}
+			const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-		const countRow = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM users ${whereSql}`)
-			.get(...params)) as { c: number };
-		const total = countRow.c;
+			const countRow = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM users ${whereSql}`)
+				.get(...params)) as { c: number };
+			const total = countRow.c;
 
-		params.push(v.data.limit, v.data.offset);
-		const users = (await db
-			.prepare(
-				`SELECT id, email, full_name, phone, role, status, is_verified,
+			params.push(v.data.limit, v.data.offset);
+			const users = (await db
+				.prepare(
+					`SELECT id, email, full_name, phone, role, status, is_verified,
 				        email_verified, phone_verified, two_factor_enabled,
 				        preferred_language, gender, last_login, created_at, updated_at
 				 FROM users ${whereSql}
 				 ORDER BY created_at DESC
 				 LIMIT $${params.length - 1} OFFSET $${params.length}`
-			)
-			.all(...params)) as Record<string, unknown>[];
+				)
+				.all(...params)) as Record<string, unknown>[];
 
-		return sendSuccess(res, { users, total, limit: v.data.limit, offset: v.data.offset });
-	} catch (err) {
-		return sendError(res, err);
+			return sendSuccess(res, { users, total, limit: v.data.limit, offset: v.data.offset });
+		} catch (err) {
+			return sendError(res, err);
+		}
 	}
-});
+);
 
 /** GET /api/admin/stores
  *  Query: ?is_active=&is_verified=&limit=&offset=
  */
-app.get('/api/admin/stores', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
-	try {
-		const v = validate(
-			paginationSchema.extend({
-				is_active: z
-					.enum(['true', 'false'])
-					.or(z.literal(''))
-					.optional()
-					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
-				is_verified: z
-					.enum(['true', 'false'])
-					.or(z.literal(''))
-					.optional()
-					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
-			}),
-			req.query
-		);
-		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+app.get(
+	'/api/admin/stores',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				paginationSchema.extend({
+					is_active: z
+						.enum(['true', 'false'])
+						.or(z.literal(''))
+						.optional()
+						.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+					is_verified: z
+						.enum(['true', 'false'])
+						.or(z.literal(''))
+						.optional()
+						.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+				}),
+				req.query
+			);
+			if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
-		const where: string[] = [];
-		const params: unknown[] = [];
-		if (v.data.is_active !== undefined) {
-			params.push(v.data.is_active);
-			where.push(`is_active = $${params.length}`);
-		}
-		if (v.data.is_verified !== undefined) {
-			params.push(v.data.is_verified);
-			where.push(`is_verified = $${params.length}`);
-		}
-		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+			const where: string[] = [];
+			const params: unknown[] = [];
+			if (v.data.is_active !== undefined) {
+				params.push(v.data.is_active);
+				where.push(`is_active = $${params.length}`);
+			}
+			if (v.data.is_verified !== undefined) {
+				params.push(v.data.is_verified);
+				where.push(`is_verified = $${params.length}`);
+			}
+			const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-		const countRow = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM stores ${whereSql}`)
-			.get(...params)) as { c: number };
-		const total = countRow.c;
+			const countRow = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM stores ${whereSql}`)
+				.get(...params)) as { c: number };
+			const total = countRow.c;
 
-		params.push(v.data.limit, v.data.offset);
-		const stores = (await db
-			.prepare(
-				`SELECT * FROM stores ${whereSql}
+			params.push(v.data.limit, v.data.offset);
+			const stores = (await db
+				.prepare(
+					`SELECT * FROM stores ${whereSql}
 				 ORDER BY created_at DESC
 				 LIMIT $${params.length - 1} OFFSET $${params.length}`
-			)
-			.all(...params)) as Record<string, unknown>[];
+				)
+				.all(...params)) as Record<string, unknown>[];
 
-		return sendSuccess(res, { stores, total, limit: v.data.limit, offset: v.data.offset });
-	} catch (err) {
-		return sendError(res, err);
+			return sendSuccess(res, { stores, total, limit: v.data.limit, offset: v.data.offset });
+		} catch (err) {
+			return sendError(res, err);
+		}
 	}
-});
+);
 
 /** GET /api/admin/products
  *  Query: ?is_active=&is_featured=&store_id=&category_id=&limit=&offset=
@@ -2279,12 +2289,24 @@ app.get(
 	requireRole('admin'),
 	async (_req: Request, res: Response) => {
 		try {
-			const users = (await db.prepare('SELECT COUNT(*)::int AS c FROM users').get()) as { c: number };
-			const stores = (await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get()) as { c: number };
-			const products = (await db.prepare('SELECT COUNT(*)::int AS c FROM products').get()) as { c: number };
-			const orders = (await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get()) as { c: number };
-			const reviews = (await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get()) as { c: number };
-			const disputes = (await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get()) as { c: number };
+			const users = (await db.prepare('SELECT COUNT(*)::int AS c FROM users').get()) as {
+				c: number;
+			};
+			const stores = (await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get()) as {
+				c: number;
+			};
+			const products = (await db.prepare('SELECT COUNT(*)::int AS c FROM products').get()) as {
+				c: number;
+			};
+			const orders = (await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get()) as {
+				c: number;
+			};
+			const reviews = (await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get()) as {
+				c: number;
+			};
+			const disputes = (await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get()) as {
+				c: number;
+			};
 			const openDisputes = (await db
 				.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`)
 				.get()) as { c: number };
@@ -2348,6 +2370,317 @@ app.get(
 );
 
 // ═══════════════════════════════════════════════════════════
+// MUTATING ADMIN ENDPOINTS  (writes — all require role='admin')
+// Every successful mutation is recorded into admin_audit_log via
+// writeAuditLog() so admins can audit who changed what and when.
+// ═══════════════════════════════════════════════════════════
+
+/** Persist a single admin action into the audit log. Failures here
+ *  must NOT block the actual mutation — the user has already
+ *  successfully changed state, so the worst case is a missing audit
+ *  row (which the structured logger also captures as a warning). */
+async function writeAuditLog(
+	req: Request,
+	action: string,
+	entityType: string,
+	entityId: number | string,
+	oldValues: Record<string, unknown> | null,
+	newValues: Record<string, unknown> | null
+): Promise<void> {
+	try {
+		await db
+			.prepare(
+				`INSERT INTO admin_audit_log
+				 (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+				 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`
+			)
+			.run(
+				req.user!.id,
+				action,
+				entityType,
+				String(entityId),
+				oldValues ? JSON.stringify(oldValues) : null,
+				newValues ? JSON.stringify(newValues) : null,
+				req.ip,
+				req.header('user-agent') ?? null
+			);
+	} catch (err) {
+		log.warn({ msg: 'audit_log_failed', entity: entityType, error: (err as Error).message });
+	}
+}
+
+/** Builds a dynamic `SET col = $N` list from a partial object. Returns
+ *  the assembled SQL fragment and the parameter list. Throws when
+ *  no updateable fields are present so callers don't fire
+ *  no-op UPDATEs. */
+function buildUpdateSet(fields: Record<string, unknown>): { sql: string; params: unknown[] } {
+	const sets: string[] = [];
+	const params: unknown[] = [];
+	for (const [k, v] of Object.entries(fields)) {
+		params.push(v);
+		sets.push(`${k} = $${params.length}`);
+	}
+	if (sets.length === 0) {
+		throw new Error('At least one updateable field must be provided.');
+	}
+	return { sql: sets.join(', '), params };
+}
+
+/** PATCH /api/admin/users/:id
+ *  Body: { status?, role?, is_verified?, email_verified?, phone_verified? }
+ *  Suspend/ban/change role from the admin panel. The password_hash
+ *  is never updated through this endpoint (use a separate /reset-password
+ *  flow with email confirmation if you need that).
+ */
+const adminUserUpdateSchema = z
+	.object({
+		status: z.enum(['active', 'suspended', 'banned']).optional(),
+		role: z.enum(['customer', 'merchant', 'admin']).optional(),
+		is_verified: z.boolean().optional(),
+		email_verified: z.boolean().optional(),
+		phone_verified: z.boolean().optional(),
+	})
+	.strict();
+
+app.patch(
+	'/api/admin/users/:id',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(adminUserUpdateSchema, req.body);
+			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+			const userId = Number(req.params.id);
+			if (!Number.isInteger(userId) || userId <= 0) {
+				return sendError(res, 'Invalid user id', 400);
+			}
+
+			// Self-protection: an admin cannot ban or demote themselves —
+			// otherwise a misclick could lock the only admin out of the
+			// dashboard. They can still change other admins' status.
+			if (req.user!.id === userId) {
+				if (v.data.status === 'banned') {
+					return sendError(res, 'You cannot ban your own account.', 400, 'SELF_BAN');
+				}
+				if (v.data.role && v.data.role !== 'admin') {
+					return sendError(res, 'You cannot remove your own admin role.', 400, 'SELF_DEMOTE');
+				}
+			}
+
+			const current = (await db
+				.prepare(
+					'SELECT id, email, role, status, is_verified, email_verified, phone_verified FROM users WHERE id = $1'
+				)
+				.get(userId)) as Record<string, unknown> | undefined;
+			if (!current) return sendError(res, 'User not found', 404);
+
+			const { sql: setSql, params } = buildUpdateSet(v.data);
+			params.push(userId);
+			const updated = (await db
+				.prepare(
+					`UPDATE users SET ${setSql} WHERE id = $${params.length} RETURNING id, email, role, status, is_verified, email_verified, phone_verified`
+				)
+				.get(...params)) as Record<string, unknown>;
+
+			await writeAuditLog(req, 'update_user', 'user', userId, current, updated);
+			return sendSuccess(res, updated, 'User updated');
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** PATCH /api/admin/stores/:id
+ *  Body: { is_active?, is_verified?, trust_level? }
+ *  Approve, suspend, or change a store's trust badge.
+ */
+const adminStoreUpdateSchema = z
+	.object({
+		is_active: z.boolean().optional(),
+		is_verified: z.boolean().optional(),
+		trust_level: z.enum(['verified', 'gold', 'premium']).optional(),
+	})
+	.strict();
+
+app.patch(
+	'/api/admin/stores/:id',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(adminStoreUpdateSchema, req.body);
+			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+			const storeId = Number(req.params.id);
+			if (!Number.isInteger(storeId) || storeId <= 0) {
+				return sendError(res, 'Invalid store id', 400);
+			}
+
+			const current = (await db
+				.prepare(
+					'SELECT id, owner_id, store_name, is_active, is_verified, trust_level FROM stores WHERE id = $1'
+				)
+				.get(storeId)) as Record<string, unknown> | undefined;
+			if (!current) return sendError(res, 'Store not found', 404);
+
+			const { sql: setSql, params } = buildUpdateSet(v.data);
+			params.push(storeId);
+			const updated = (await db
+				.prepare(
+					`UPDATE stores SET ${setSql} WHERE id = $${params.length} RETURNING id, store_name, is_active, is_verified, trust_level`
+				)
+				.get(...params)) as Record<string, unknown>;
+
+			await writeAuditLog(req, 'update_store', 'store', storeId, current, updated);
+			return sendSuccess(res, updated, 'Store updated');
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** PATCH /api/admin/orders/:id/status
+ *  Body: { status, note? }
+ *  Force an order into a specific state. Use sparingly — the
+ *  trg_orders_state_machine trigger will still enforce the legal
+ *  state machine, so this endpoint is most useful for
+ *  correcting stuck rows, not jumping states.
+ */
+const adminOrderStatusSchema = z
+	.object({
+		status: z.enum([
+			'pending',
+			'confirmed',
+			'processing',
+			'shipped',
+			'delivered',
+			'cancelled',
+			'refunded',
+		]),
+		note: z.string().trim().max(500).optional(),
+	})
+	.strict();
+
+app.patch(
+	'/api/admin/orders/:id/status',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(adminOrderStatusSchema, req.body);
+			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+			const orderId = Number(req.params.id);
+			if (!Number.isInteger(orderId) || orderId <= 0) {
+				return sendError(res, 'Invalid order id', 400);
+			}
+
+			const current = (await db
+				.prepare('SELECT id, status, payment_status, total FROM orders WHERE id = $1')
+				.get(orderId)) as Record<string, unknown> | undefined;
+			if (!current) return sendError(res, 'Order not found', 404);
+
+			// Update + return new state. The state-machine trigger raises
+			// an exception for illegal transitions; we let it propagate
+			// to the global error handler so the 400 message is meaningful.
+			const updated = (await db
+				.prepare('UPDATE orders SET status = $1 WHERE id = $2 RETURNING id, status')
+				.get(v.data.status, orderId)) as Record<string, unknown> | undefined;
+			if (!updated) return sendError(res, 'Order update failed', 500);
+
+			await writeAuditLog(req, 'force_status', 'order', orderId, current, {
+				...updated,
+				note: v.data.note ?? null,
+			});
+			return sendSuccess(res, updated, 'Order status updated');
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** PATCH /api/admin/disputes/:id
+ *  Body: { status, resolution?, refund_amount? }
+ *  Resolve or reject a dispute from the admin panel. If
+ *  status='resolved' and refund_amount is set, the existing
+ *  trg_refunds_resolve_payments trigger will keep the linked
+ *  payment's status in sync. We do NOT auto-create a refund
+ *  row here — that's a separate workflow.
+ */
+const adminDisputeUpdateSchema = z
+	.object({
+		// Matches the disputes_status_check constraint in schema-extra.sql:
+		// 'open' → 'investigating' → {resolved_buyer, resolved_seller, closed, rejected}
+		status: z.enum([
+			'open',
+			'investigating',
+			'resolved_buyer',
+			'resolved_seller',
+			'closed',
+			'rejected',
+		]),
+		resolution: z.string().trim().min(3).max(2000).optional(),
+		refund_amount: z.number().nonnegative().optional(),
+	})
+	.strict();
+
+app.patch(
+	'/api/admin/disputes/:id',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(adminDisputeUpdateSchema, req.body);
+			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+			const disputeId = Number(req.params.id);
+			if (!Number.isInteger(disputeId) || disputeId <= 0) {
+				return sendError(res, 'Invalid dispute id', 400);
+			}
+
+			const current = (await db
+				.prepare(
+					'SELECT id, status, priority, resolution, refund_amount, resolved_by, resolved_at FROM disputes WHERE id = $1'
+				)
+				.get(disputeId)) as Record<string, unknown> | undefined;
+			if (!current) return sendError(res, 'Dispute not found', 404);
+
+			// Build the SET clause. If we're moving into one of the
+			// terminal states (resolved_buyer, resolved_seller, closed,
+			// rejected), also stamp resolved_by + resolved_at so the row
+			// matches the schema's intent (admin who closed the case + when).
+			const TERMINAL_STATUSES = new Set([
+				'resolved_buyer',
+				'resolved_seller',
+				'closed',
+				'rejected',
+			]);
+			const patch: Record<string, unknown> = { status: v.data.status };
+			if (v.data.resolution !== undefined) patch.resolution = v.data.resolution;
+			if (v.data.refund_amount !== undefined) patch.refund_amount = v.data.refund_amount;
+			if (TERMINAL_STATUSES.has(v.data.status)) {
+				patch.resolved_by = req.user!.id;
+				patch.resolved_at = new Date().toISOString();
+			}
+			const { sql: setSql, params } = buildUpdateSet(patch);
+			params.push(disputeId);
+			const updated = (await db
+				.prepare(
+					`UPDATE disputes SET ${setSql} WHERE id = $${params.length}
+					 RETURNING id, status, priority, resolution, refund_amount, resolved_by, resolved_at`
+				)
+				.get(...params)) as Record<string, unknown>;
+
+			await writeAuditLog(req, 'update_dispute', 'dispute', disputeId, current, updated);
+			return sendSuccess(res, updated, 'Dispute updated');
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+// ═══════════════════════════════════════════════════════════
 // HELPER ENDPOINTS (read-only shortcuts the frontend polls often)
 // ═══════════════════════════════════════════════════════════
 
@@ -2388,7 +2721,9 @@ app.get(
 				return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
 			}
 			const row = (await db
-				.prepare('SELECT COUNT(*)::int AS c FROM notifications WHERE user_id = $1 AND is_read = FALSE')
+				.prepare(
+					'SELECT COUNT(*)::int AS c FROM notifications WHERE user_id = $1 AND is_read = FALSE'
+				)
 				.get(userId)) as { c: number };
 			return sendSuccess(res, { user_id: userId, unread: row.c });
 		} catch (err) {
@@ -2440,7 +2775,7 @@ app.get('/api/store-followers/check', requireAuth, async (req: Request, res: Res
 						notify_new_products: row.notify_new_products,
 						notify_offers: row.notify_offers,
 						since: row.created_at,
-				  }
+					}
 				: null,
 		});
 	} catch (err) {

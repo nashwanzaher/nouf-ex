@@ -1906,6 +1906,549 @@ app.post('/api/refunds/:id/resolve', requireRole('admin'), async (req: Request, 
 });
 
 // ═══════════════════════════════════════════════════════════
+// ADMIN ENDPOINTS
+// All require a valid bearer token AND role='admin'. The query
+// surface is intentionally read-only here — mutating admin actions
+// (ban user, approve store, refund order, etc.) live behind the
+// dedicated /api/admin/* POST/PUT/DELETE routes that follow.
+// ═══════════════════════════════════════════════════════════
+
+/** Zod schema for the common `limit/offset` pair used by every
+ *  list endpoint below. Limit is clamped to [1, 100]. */
+const paginationSchema = z.object({
+	limit: z.coerce.number().int().min(1).max(100).default(20),
+	offset: z.coerce.number().int().min(0).default(0),
+});
+
+/** GET /api/admin/users
+ *  Query: ?role=&is_active=&limit=&offset=
+ *  Returns: { users, total, limit, offset }
+ */
+app.get('/api/admin/users', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				role: z.enum(['customer', 'merchant', 'admin']).optional(),
+				is_active: z.enum(['active', 'suspended', 'banned']).optional(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.role) {
+			params.push(v.data.role);
+			where.push(`role = $${params.length}`);
+		}
+		if (v.data.is_active) {
+			params.push(v.data.is_active);
+			where.push(`status = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM users ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const users = (await db
+			.prepare(
+				`SELECT id, email, full_name, phone, role, status, is_verified,
+				        email_verified, phone_verified, two_factor_enabled,
+				        preferred_language, gender, last_login, created_at, updated_at
+				 FROM users ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { users, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/stores
+ *  Query: ?is_active=&is_verified=&limit=&offset=
+ */
+app.get('/api/admin/stores', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			paginationSchema.extend({
+				is_active: z
+					.enum(['true', 'false'])
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+				is_verified: z
+					.enum(['true', 'false'])
+					.or(z.literal(''))
+					.optional()
+					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const where: string[] = [];
+		const params: unknown[] = [];
+		if (v.data.is_active !== undefined) {
+			params.push(v.data.is_active);
+			where.push(`is_active = $${params.length}`);
+		}
+		if (v.data.is_verified !== undefined) {
+			params.push(v.data.is_verified);
+			where.push(`is_verified = $${params.length}`);
+		}
+		const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+		const countRow = (await db
+			.prepare(`SELECT COUNT(*)::int AS c FROM stores ${whereSql}`)
+			.get(...params)) as { c: number };
+		const total = countRow.c;
+
+		params.push(v.data.limit, v.data.offset);
+		const stores = (await db
+			.prepare(
+				`SELECT * FROM stores ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+			)
+			.all(...params)) as Record<string, unknown>[];
+
+		return sendSuccess(res, { stores, total, limit: v.data.limit, offset: v.data.offset });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/admin/products
+ *  Query: ?is_active=&is_featured=&store_id=&category_id=&limit=&offset=
+ */
+app.get(
+	'/api/admin/products',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				paginationSchema.extend({
+					is_active: z
+						.enum(['true', 'false'])
+						.or(z.literal(''))
+						.optional()
+						.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+					is_featured: z
+						.enum(['true', 'false'])
+						.or(z.literal(''))
+						.optional()
+						.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
+					store_id: z.coerce.number().int().positive().optional(),
+					category_id: z.coerce.number().int().positive().optional(),
+				}),
+				req.query
+			);
+			if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+			const where: string[] = [];
+			const params: unknown[] = [];
+			if (v.data.is_active !== undefined) {
+				params.push(v.data.is_active);
+				where.push(`is_active = $${params.length}`);
+			}
+			if (v.data.is_featured !== undefined) {
+				params.push(v.data.is_featured);
+				where.push(`is_featured = $${params.length}`);
+			}
+			if (v.data.store_id !== undefined) {
+				params.push(v.data.store_id);
+				where.push(`store_id = $${params.length}`);
+			}
+			if (v.data.category_id !== undefined) {
+				params.push(v.data.category_id);
+				where.push(`category_id = $${params.length}`);
+			}
+			const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+			const countRow = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM products ${whereSql}`)
+				.get(...params)) as { c: number };
+			const total = countRow.c;
+
+			params.push(v.data.limit, v.data.offset);
+			const products = (await db
+				.prepare(
+					`SELECT * FROM products ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				)
+				.all(...params)) as Record<string, unknown>[];
+
+			return sendSuccess(res, {
+				products: products.map(getProductWithParsedFields),
+				total,
+				limit: v.data.limit,
+				offset: v.data.offset,
+			});
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** GET /api/admin/orders
+ *  Query: ?status=&payment_status=&limit=&offset=
+ */
+app.get(
+	'/api/admin/orders',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				paginationSchema.extend({
+					status: z
+						.enum([
+							'pending',
+							'confirmed',
+							'processing',
+							'shipped',
+							'delivered',
+							'cancelled',
+							'refunded',
+						])
+						.optional(),
+					payment_status: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
+				}),
+				req.query
+			);
+			if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+			const where: string[] = [];
+			const params: unknown[] = [];
+			if (v.data.status) {
+				params.push(v.data.status);
+				where.push(`status = $${params.length}`);
+			}
+			if (v.data.payment_status) {
+				params.push(v.data.payment_status);
+				where.push(`payment_status = $${params.length}`);
+			}
+			const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+			const countRow = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM orders ${whereSql}`)
+				.get(...params)) as { c: number };
+			const total = countRow.c;
+
+			params.push(v.data.limit, v.data.offset);
+			const orders = (await db
+				.prepare(
+					`SELECT * FROM orders ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				)
+				.all(...params)) as Record<string, unknown>[];
+
+			return sendSuccess(res, { orders, total, limit: v.data.limit, offset: v.data.offset });
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** GET /api/admin/disputes
+ *  Query: ?status=&priority=&limit=&offset=
+ */
+app.get(
+	'/api/admin/disputes',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				paginationSchema.extend({
+					status: z.enum(['open', 'in_review', 'resolved', 'rejected']).optional(),
+					priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+				}),
+				req.query
+			);
+			if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+			const where: string[] = [];
+			const params: unknown[] = [];
+			if (v.data.status) {
+				params.push(v.data.status);
+				where.push(`status = $${params.length}`);
+			}
+			if (v.data.priority) {
+				params.push(v.data.priority);
+				where.push(`priority = $${params.length}`);
+			}
+			const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+			const countRow = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM disputes ${whereSql}`)
+				.get(...params)) as { c: number };
+			const total = countRow.c;
+
+			params.push(v.data.limit, v.data.offset);
+			const disputes = (await db
+				.prepare(
+					`SELECT * FROM disputes ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				)
+				.all(...params)) as Record<string, unknown>[];
+
+			return sendSuccess(res, { disputes, total, limit: v.data.limit, offset: v.data.offset });
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** GET /api/admin/audit-log
+ *  Query: ?entity_type=&action=&user_id=&limit=&offset=
+ */
+app.get(
+	'/api/admin/audit-log',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				paginationSchema.extend({
+					entity_type: z.string().trim().min(1).max(50).optional(),
+					action: z.string().trim().min(1).max(50).optional(),
+					user_id: z.coerce.number().int().positive().optional(),
+				}),
+				req.query
+			);
+			if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+			const where: string[] = [];
+			const params: unknown[] = [];
+			if (v.data.entity_type) {
+				params.push(v.data.entity_type);
+				where.push(`entity_type = $${params.length}`);
+			}
+			if (v.data.action) {
+				params.push(v.data.action);
+				where.push(`action = $${params.length}`);
+			}
+			if (v.data.user_id !== undefined) {
+				params.push(v.data.user_id);
+				where.push(`user_id = $${params.length}`);
+			}
+			const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+			const countRow = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM admin_audit_log ${whereSql}`)
+				.get(...params)) as { c: number };
+			const total = countRow.c;
+
+			params.push(v.data.limit, v.data.offset);
+			const log = (await db
+				.prepare(
+					`SELECT id, user_id, action, entity_type, entity_id, old_values,
+					        new_values, ip_address, user_agent, created_at
+					 FROM admin_audit_log ${whereSql}
+					 ORDER BY created_at DESC
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				)
+				.all(...params)) as Record<string, unknown>[];
+
+			return sendSuccess(res, { log, total, limit: v.data.limit, offset: v.data.offset });
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** GET /api/admin/stats
+ *  Returns a compact dashboard summary for the admin home page.
+ *  Single round-trip per metric; cheap because every count uses the
+ *  primary-key index.
+ */
+app.get(
+	'/api/admin/stats',
+	requireAuth,
+	requireRole('admin'),
+	async (_req: Request, res: Response) => {
+		try {
+			const users = (await db.prepare('SELECT COUNT(*)::int AS c FROM users').get()) as { c: number };
+			const stores = (await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get()) as { c: number };
+			const products = (await db.prepare('SELECT COUNT(*)::int AS c FROM products').get()) as { c: number };
+			const orders = (await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get()) as { c: number };
+			const reviews = (await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get()) as { c: number };
+			const disputes = (await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get()) as { c: number };
+			const openDisputes = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`)
+				.get()) as { c: number };
+			const pendingOrders = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`)
+				.get()) as { c: number };
+			const paidOrders = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`)
+				.get()) as { c: number };
+			const suspendedUsers = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`)
+				.get()) as { c: number };
+			const inactiveStores = (await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`)
+				.get()) as { c: number };
+			const recentOrders = (await db
+				.prepare(
+					`SELECT COUNT(*)::int AS c FROM orders
+					 WHERE created_at > NOW() - INTERVAL '7 days'`
+				)
+				.get()) as { c: number };
+			const recentUsers = (await db
+				.prepare(
+					`SELECT COUNT(*)::int AS c FROM users
+					 WHERE created_at > NOW() - INTERVAL '7 days'`
+				)
+				.get()) as { c: number };
+			const revenueYer = (await db
+				.prepare(
+					`SELECT COALESCE(SUM(total), 0)::numeric AS s
+					 FROM orders WHERE payment_status = 'paid'`
+				)
+				.get()) as { s: string };
+
+			return sendSuccess(res, {
+				counts: {
+					users: users.c,
+					stores: stores.c,
+					products: products.c,
+					orders: orders.c,
+					reviews: reviews.c,
+					disputes: disputes.c,
+				},
+				flags: {
+					openDisputes: openDisputes.c,
+					pendingOrders: pendingOrders.c,
+					paidOrders: paidOrders.c,
+					suspendedUsers: suspendedUsers.c,
+					inactiveStores: inactiveStores.c,
+				},
+				recent7d: {
+					orders: recentOrders.c,
+					users: recentUsers.c,
+				},
+				revenueYer: Number(revenueYer.s),
+			});
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+// ═══════════════════════════════════════════════════════════
+// HELPER ENDPOINTS (read-only shortcuts the frontend polls often)
+// ═══════════════════════════════════════════════════════════
+
+/** GET /api/cart/count/:userId
+ *  Returns the number of items (sum of quantities) in the user's cart.
+ */
+app.get('/api/cart/count/:userId', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const userId = Number(req.params.userId);
+		if (!Number.isInteger(userId) || userId <= 0) {
+			return sendError(res, 'Invalid user id', 400);
+		}
+		if (req.user!.id !== userId && req.user!.role !== 'admin') {
+			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
+		}
+		const row = (await db
+			.prepare('SELECT COALESCE(SUM(quantity), 0)::int AS c FROM cart_items WHERE user_id = $1')
+			.get(userId)) as { c: number };
+		return sendSuccess(res, { user_id: userId, count: row.c });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** GET /api/notifications/unread-count/:userId
+ *  Returns how many of the user's notifications are still unread.
+ */
+app.get(
+	'/api/notifications/unread-count/:userId',
+	requireAuth,
+	async (req: Request, res: Response) => {
+		try {
+			const userId = Number(req.params.userId);
+			if (!Number.isInteger(userId) || userId <= 0) {
+				return sendError(res, 'Invalid user id', 400);
+			}
+			if (req.user!.id !== userId && req.user!.role !== 'admin') {
+				return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
+			}
+			const row = (await db
+				.prepare('SELECT COUNT(*)::int AS c FROM notifications WHERE user_id = $1 AND is_read = FALSE')
+				.get(userId)) as { c: number };
+			return sendSuccess(res, { user_id: userId, unread: row.c });
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** GET /api/store-followers/check?store_id=&user_id=
+ *  Tells the storefront whether the user already follows a given
+ *  store so the Follow button can render its current state.
+ */
+app.get('/api/store-followers/check', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({
+				store_id: z.coerce.number().int().positive(),
+				user_id: z.coerce.number().int().positive(),
+			}),
+			req.query
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+		// Users can only check their own follow state; admins can check
+		// anyone's. This prevents leaking the existence of user
+		// accounts by enumerating follow records.
+		if (req.user!.id !== v.data.user_id && req.user!.role !== 'admin') {
+			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
+		}
+		const row = (await db
+			.prepare(
+				`SELECT id, notify_new_products, notify_offers, created_at
+				 FROM store_followers
+				 WHERE store_id = $1 AND user_id = $2`
+			)
+			.get(v.data.store_id, v.data.user_id)) as
+			| {
+					id: number;
+					notify_new_products: boolean;
+					notify_offers: boolean;
+					created_at: string;
+			  }
+			| undefined;
+		return sendSuccess(res, {
+			store_id: v.data.store_id,
+			user_id: v.data.user_id,
+			following: row !== undefined,
+			preferences: row
+				? {
+						notify_new_products: row.notify_new_products,
+						notify_offers: row.notify_offers,
+						since: row.created_at,
+				  }
+				: null,
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+// ═══════════════════════════════════════════════════════════
 // STATIC FILES (Production SPA fallback)
 // ═══════════════════════════════════════════════════════════
 

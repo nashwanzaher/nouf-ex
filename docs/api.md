@@ -4,48 +4,49 @@ All endpoints are served by [`app/server/index.ts`](../app/server/index.ts) on
 the same origin as the SPA (default `http://localhost:3000`). The frontend
 talks to relative paths (`/api/...`).
 
-| Verb     | Path                                | Auth   | Purpose                                    |
-| -------- | ----------------------------------- | ------ | ------------------------------------------ |
-| `GET`    | `/api/stats/home`                   | —      | Homepage counters (used by healthcheck).   |
-| `GET`    | `/api/products`                     | —      | List / search products.                   |
-| `GET`    | `/api/products/featured`            | —      | Curated featured products.                 |
-| `GET`    | `/api/products/deals`               | —      | Products with an active deal.              |
-| `GET`    | `/api/products/:id`                 | —      | Product detail + store + reviews + images. |
-| `GET`    | `/api/stores`                       | —      | List of stores.                            |
-| `GET`    | `/api/stores/:id`                   | —      | Store detail + its products.               |
-| `GET`    | `/api/stores/:id/reviews`           | —      | Reviews for a specific store.              |
-| `GET`    | `/api/categories`                   | —      | Full category tree.                        |
-| `GET`    | `/api/categories/:slug`             | —      | One category + its products.               |
-| `GET`    | `/api/reviews`                      | —      | Reviews with optional filters.             |
-| `POST`   | `/api/reviews`                      | —      | Submit a new review.                       |
-| `GET`    | `/api/orders`                       | —      | List orders (filterable by query).         |
-| `GET`    | `/api/orders/:id`                   | —      | One order with its items.                  |
-| `POST`   | `/api/orders`                       | —      | Create an order from a cart snapshot.      |
-| `GET`    | `/api/cart/:userId`                 | —      | Cart contents for a user.                  |
-| `POST`   | `/api/cart`                         | —      | Add an item to a user's cart.              |
-| `DELETE` | `/api/cart/:id`                     | —      | Remove one cart item.                      |
-| `DELETE` | `/api/cart/clear/:userId`           | —      | Clear an entire cart.                      |
-| `GET`    | `/api/wishlist/:userId`             | —      | Wishlist contents.                         |
-| `POST`   | `/api/wishlist`                     | —      | Add an item to the wishlist.               |
-| `DELETE` | `/api/wishlist/:id`                 | —      | Remove one wishlist item.                  |
-| `GET`    | `/api/notifications/:userId`        | —      | List notifications for a user.             |
-| `PUT`    | `/api/notifications/:id/read`       | —      | Mark one notification as read.             |
-| `POST`   | `/api/auth/register`                | rate-limited | Create an account.                   |
-| `POST`   | `/api/auth/login`                   | rate-limited | Exchange credentials for a session.  |
-| `GET`    | `/api/auth/me`                      | auth   | Return the currently authenticated user.   |
-| `POST`   | `/api/payments`                     | rate-limited | Create a payment for an order.         |
-| `GET`    | `/api/payments/order/:orderId`      | —      | Payments for one order.                    |
+| Verb     | Path                                | Auth         | Purpose                                    |
+| -------- | ----------------------------------- | ------------ | ------------------------------------------ |
+| `GET`    | `/api/stats/home`                   | —            | Homepage counters (used by healthcheck).   |
+| `GET`    | `/api/products`                     | —            | List / search products.                    |
+| `GET`    | `/api/products/featured`            | —            | Curated featured products.                 |
+| `GET`    | `/api/products/deals`               | —            | Products with an active deal.              |
+| `GET`    | `/api/products/:id`                 | —            | Product detail + store + reviews + images. |
+| `GET`    | `/api/stores`                       | —            | List of stores.                            |
+| `GET`    | `/api/stores/:id`                   | —            | Store detail + its products.               |
+| `GET`    | `/api/stores/:id/reviews`           | —            | Reviews for a specific store.              |
+| `GET`    | `/api/categories`                   | —            | Full category tree.                        |
+| `GET`    | `/api/categories/:slug`             | —            | One category + its products.               |
+| `GET`    | `/api/reviews`                      | —            | Reviews with optional filters.             |
+| `POST`   | `/api/reviews`                      | —            | Submit a new review.                       |
+| `GET`    | `/api/orders`                       | —            | List orders (filterable by query).         |
+| `GET`    | `/api/orders/:id`                   | —            | One order with its items.                  |
+| `POST`   | `/api/orders`                       | —            | Create an order from a cart snapshot.      |
+| `GET`    | `/api/cart/:userId`                 | —            | Cart contents for a user.                  |
+| `POST`   | `/api/cart`                         | —            | Add an item to a user's cart.              |
+| `DELETE` | `/api/cart/:id`                     | —            | Remove one cart item.                      |
+| `DELETE` | `/api/cart/clear/:userId`           | —            | Clear an entire cart.                      |
+| `GET`    | `/api/wishlist/:userId`             | —            | Wishlist contents.                         |
+| `POST`   | `/api/wishlist`                     | —            | Add an item to the wishlist.               |
+| `DELETE` | `/api/wishlist/:id`                 | —            | Remove one wishlist item.                  |
+| `GET`    | `/api/notifications/:userId`        | —            | List notifications for a user.             |
+| `PUT`    | `/api/notifications/:id/read`       | —            | Mark one notification as read.             |
+| `POST`   | `/api/auth/register`                | rate-limited | Create an account.                         |
+| `POST`   | `/api/auth/login`                   | rate-limited | Exchange credentials for a session.        |
+| `GET`    | `/api/auth/me`                      | auth         | Return the currently authenticated user.   |
+| `POST`   | `/api/payments`                     | rate-limited | Create a payment for an order.             |
+| `GET`    | `/api/payments/order/:orderId`      | —            | Payments for one order.                    |
 | `POST`   | `/api/payments/:id/confirm`         | auth (admin) | Confirm a payment (e.g. on COD receipt).   |
-| `GET`    | `/api/addresses`                    | —      | List a user's saved addresses.             |
-| `POST`   | `/api/addresses`                    | —      | Create a new address.                      |
-| `DELETE` | `/api/addresses/:id`                | —      | Remove a saved address.                    |
-| `GET`    | `/api/shipping/methods?weight_kg=N` | —      | Shipping options for a given cart weight.  |
-| `POST`   | `/api/coupons/validate`             | auth   | Validate a coupon against a cart total.    |
-| `POST`   | `/api/coupons/redeem`               | auth   | Redeem (persist) a coupon redemption.      |
-| `POST`   | `/api/refunds`                      | —      | Open a refund / dispute.                   |
-| `POST`   | `/api/refunds/:id/resolve`          | —      | Admin: resolve a refund.                   |
+| `GET`    | `/api/addresses`                    | —            | List a user's saved addresses.             |
+| `POST`   | `/api/addresses`                    | —            | Create a new address.                      |
+| `DELETE` | `/api/addresses/:id`                | —            | Remove a saved address.                    |
+| `GET`    | `/api/shipping/methods?weight_kg=N` | —            | Shipping options for a given cart weight.  |
+| `POST`   | `/api/coupons/validate`             | auth         | Validate a coupon against a cart total.    |
+| `POST`   | `/api/coupons/redeem`               | auth         | Redeem (persist) a coupon redemption.      |
+| `POST`   | `/api/refunds`                      | —            | Open a refund / dispute.                   |
+| `POST`   | `/api/refunds/:id/resolve`          | —            | Admin: resolve a refund.                   |
 
 > "Auth" column = who can call this endpoint:
+>
 > - `—` — public, no credentials.
 > - `auth` — requires a valid bearer token in `Authorization: Bearer ...`.
 > - `auth (admin)` — requires a bearer token whose `role` is `admin`.
@@ -62,7 +63,7 @@ talks to relative paths (`/api/...`).
   `request_id` is echoed back from the `x-request-id` request header (auto-generated
   if absent) so a single support ticket can correlate client + server logs.
 - **Error envelope** is `{ "success": false, "error": "<human readable>",
-  "code"?: "<machine code>", "details"?: <zod issues>, "request_id": "<uuid>" }`
+"code"?: "<machine code>", "details"?: <zod issues>, "request_id": "<uuid>" }`
   with the appropriate 4xx/5xx status. Production never leaks raw
   `err.message` for unhandled errors — the global error handler
   translates PG error codes (`23505` / `23503` / `40001` / ...) to a

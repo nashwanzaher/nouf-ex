@@ -88,14 +88,14 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 						<div key={step.key} className="flex flex-col items-center relative z-10 gap-2">
 							<div
 								className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors ${
-									isActive ? 'bg-[#D4A853] border-[#D4A853] text-white' : 'bg-white border-[#AAAAAA] text-[#AAAAAA]'
-								}`}
-							>
+									isActive
+										? 'bg-[#D4A853] border-[#D4A853] text-white'
+										: 'bg-white border-[#AAAAAA] text-[#AAAAAA]'
+								}`}>
 								<StepIcon className="w-4 h-4" strokeWidth={1.5} />
 							</div>
 							<span
-								className={`text-[10px] font-cairo font-medium ${isActive ? 'text-[#111111]' : 'text-[#AAAAAA]'}`}
-							>
+								className={`text-[10px] font-cairo font-medium ${isActive ? 'text-[#111111]' : 'text-[#AAAAAA]'}`}>
 								{step.label}
 							</span>
 						</div>
@@ -187,8 +187,7 @@ export default function CustomerOrders() {
 						</p>
 						<Button
 							asChild
-							className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
-						>
+							className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl">
 							<Link to="/auth/login?next=/customer/orders">تسجيل الدخول</Link>
 						</Button>
 					</div>
@@ -214,8 +213,7 @@ export default function CustomerOrders() {
 							onClick={() => {
 								searchParams.delete('just');
 								setSearchParams(searchParams, { replace: true });
-							}}
-						>
+							}}>
 							تم استلام الطلب الجديد
 						</button>
 					)}
@@ -232,8 +230,7 @@ export default function CustomerOrders() {
 									activeFilter === f.key
 										? 'bg-[#D4A853] text-[#1A1612]'
 										: 'bg-white text-[#6B6B6B] hover:bg-[#F3EDE4]'
-								}`}
-							>
+								}`}>
 								{f.label}
 							</button>
 						))}
@@ -255,8 +252,7 @@ export default function CustomerOrders() {
 							<p className="text-sm text-[#6B6B6B] font-cairo mb-4">{error}</p>
 							<Button
 								onClick={() => refetch()}
-								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
-							>
+								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl">
 								حاول مرة أخرى
 							</Button>
 						</div>
@@ -266,16 +262,13 @@ export default function CustomerOrders() {
 							<div className="w-20 h-20 bg-[#F8F8F8] rounded-full flex items-center justify-center mx-auto mb-4">
 								<Package className="w-10 h-10 text-[#AAAAAA]" strokeWidth={1.5} />
 							</div>
-							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-								لا توجد طلبات
-							</h3>
+							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">لا توجد طلبات</h3>
 							<p className="text-[#6B6B6B] font-cairo text-sm mb-4">
 								لا توجد طلبات في هذه الحالة حالياً
 							</p>
 							<Button
 								asChild
-								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
-							>
+								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl">
 								<Link to="/">تصفح المنتجات</Link>
 							</Button>
 						</div>
@@ -292,17 +285,13 @@ export default function CustomerOrders() {
 								return (
 									<div
 										key={order.id}
-										className="bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow hover:shadow-md"
-									>
+										className="bg-white rounded-2xl shadow-sm overflow-hidden transition-shadow hover:shadow-md">
 										{/* Order header */}
 										<div className="p-5">
 											<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 												<div className="flex items-center gap-3">
 													<div className="w-12 h-12 rounded-xl bg-[#F3EDE4] flex items-center justify-center shrink-0">
-														<Package
-															className="w-6 h-6 text-[#D4A853]"
-															strokeWidth={1.5}
-														/>
+														<Package className="w-6 h-6 text-[#D4A853]" strokeWidth={1.5} />
 													</div>
 													<div>
 														<div className="flex items-center gap-2 flex-wrap">
@@ -312,8 +301,7 @@ export default function CustomerOrders() {
 															<span
 																className={`text-[11px] font-cairo font-medium px-2.5 py-0.5 rounded-full ${
 																	statusColors[status]
-																}`}
-															>
+																}`}>
 																{statusLabels[status]}
 															</span>
 														</div>
@@ -328,21 +316,12 @@ export default function CustomerOrders() {
 													</p>
 													<button
 														type="button"
-														onClick={() =>
-															setExpandedId(expanded ? null : String(order.id))
-														}
-														className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F8F8F8] transition-colors"
-													>
+														onClick={() => setExpandedId(expanded ? null : String(order.id))}
+														className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F8F8F8] transition-colors">
 														{expanded ? (
-															<ChevronUp
-																className="w-5 h-5 text-[#6B6B6B]"
-																strokeWidth={1.5}
-															/>
+															<ChevronUp className="w-5 h-5 text-[#6B6B6B]" strokeWidth={1.5} />
 														) : (
-															<ChevronDown
-																className="w-5 h-5 text-[#6B6B6B]"
-																strokeWidth={1.5}
-															/>
+															<ChevronDown className="w-5 h-5 text-[#6B6B6B]" strokeWidth={1.5} />
 														)}
 													</button>
 												</div>
@@ -354,8 +333,7 @@ export default function CustomerOrders() {
 													{items.slice(0, 3).map((it, idx) => (
 														<div
 															key={idx}
-															className="flex items-center gap-2 bg-[#F8F8F8] rounded-lg px-3 py-2 shrink-0"
-														>
+															className="flex items-center gap-2 bg-[#F8F8F8] rounded-lg px-3 py-2 shrink-0">
 															{it.product_image ? (
 																<img
 																	src={it.product_image}
@@ -363,10 +341,7 @@ export default function CustomerOrders() {
 																	className="w-6 h-6 object-cover rounded"
 																/>
 															) : (
-																<Package
-																	className="w-4 h-4 text-[#AAAAAA]"
-																	strokeWidth={1.5}
-																/>
+																<Package className="w-4 h-4 text-[#AAAAAA]" strokeWidth={1.5} />
 															)}
 															<span className="text-xs font-cairo text-[#111111] truncate max-w-[180px]">
 																{it.product_name ?? `#${it.product_id}`} × {it.quantity}
@@ -388,9 +363,7 @@ export default function CustomerOrders() {
 												<OrderTimeline status={status} />
 												<div className="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
 													<div>
-														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-															طريقة الدفع
-														</p>
+														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">طريقة الدفع</p>
 														<p className="font-cairo text-[#111111]">
 															{order.payment_method === 'cod'
 																? 'الدفع عند الاستلام'
@@ -398,18 +371,14 @@ export default function CustomerOrders() {
 														</p>
 													</div>
 													<div>
-														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-															حالة الدفع
-														</p>
+														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">حالة الدفع</p>
 														<p className="font-cairo text-[#111111]">
 															{order.payment_status === 'paid' ? 'مدفوع' : 'قيد السداد'}
 														</p>
 													</div>
 													{order.shipping_address && (
 														<div className="sm:col-span-2">
-															<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-																عنوان الشحن
-															</p>
+															<p className="text-xs text-[#6B6B6B] font-cairo mb-1">عنوان الشحن</p>
 															<p className="font-cairo text-[#111111]">
 																{typeof order.shipping_address === 'string'
 																	? order.shipping_address
@@ -423,8 +392,7 @@ export default function CustomerOrders() {
 														variant="outline"
 														size="sm"
 														className="font-cairo"
-														onClick={() => refetch()}
-													>
+														onClick={() => refetch()}>
 														<RotateCcw className="w-4 h-4 me-1" />
 														تحديث الحالة
 													</Button>

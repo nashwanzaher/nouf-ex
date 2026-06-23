@@ -668,10 +668,7 @@ export async function confirmPayment(id: number): Promise<{ order_id: number }> 
 
 // ─── Addresses API  (P1-3) ──────────────────────────────────
 
-export async function getAddresses(
-	userId: number,
-	options?: RequestOptions
-): Promise<Address[]> {
+export async function getAddresses(userId: number, options?: RequestOptions): Promise<Address[]> {
 	return apiRequest(`/addresses?user_id=${userId}`, { signal: options?.signal });
 }
 

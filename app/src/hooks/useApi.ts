@@ -157,14 +157,14 @@ export function useOrders(): HookResult<Order[]> {
 }
 
 export function useOrder(id: number | null): HookResult<OrderWithItems | null> {
-	return useDataHook(
-		async (signal) => (id ? ((await getOrder(id, { signal })) as OrderWithItems) : null)
+	return useDataHook(async (signal) =>
+		id ? ((await getOrder(id, { signal })) as OrderWithItems) : null
 	);
 }
 
 export function useUserAddresses(userId: number | null): HookResult<Address[]> {
-	return useDataHook(
-		async (signal) => (userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[]))
+	return useDataHook(async (signal) =>
+		userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[])
 	);
 }
 
@@ -178,15 +178,14 @@ export function useShippingMethods(weightKg = 1): HookResult<ShippingMethod[]> {
 // the local CartContext state in CartContext.tsx.
 
 export function useServerCart(userId: number | null): HookResult<CartItem[]> {
-	return useDataHook(
-		async (signal) => (userId ? getCart(userId, { signal }) : Promise.resolve([] as CartItem[]))
+	return useDataHook(async (signal) =>
+		userId ? getCart(userId, { signal }) : Promise.resolve([] as CartItem[])
 	);
 }
 
 export function useServerWishlist(userId: number | null): HookResult<WishlistItem[]> {
-	return useDataHook(
-		async (signal) =>
-			userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[])
+	return useDataHook(async (signal) =>
+		userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[])
 	);
 }
 
@@ -199,24 +198,19 @@ export function useCouponValidation() {
 		error: string | null;
 	}>({ validating: false, result: null, error: null });
 
-	const validate = useCallback(
-		async (code: string, order_subtotal: number, user_id: number) => {
-			setState({ validating: true, result: null, error: null });
-			try {
-				const result = await validateCoupon({ code, order_subtotal, user_id });
-				setState({ validating: false, result, error: null });
-				return result;
-			} catch (err) {
-				const message =
-					err instanceof ApiError
-						? err.message
-						: 'Could not validate coupon. Please try again.';
-				setState({ validating: false, result: null, error: message });
-				return null;
-			}
-		},
-		[]
-	);
+	const validate = useCallback(async (code: string, order_subtotal: number, user_id: number) => {
+		setState({ validating: true, result: null, error: null });
+		try {
+			const result = await validateCoupon({ code, order_subtotal, user_id });
+			setState({ validating: false, result, error: null });
+			return result;
+		} catch (err) {
+			const message =
+				err instanceof ApiError ? err.message : 'Could not validate coupon. Please try again.';
+			setState({ validating: false, result: null, error: message });
+			return null;
+		}
+	}, []);
 
 	const reset = useCallback(() => {
 		setState({ validating: false, result: null, error: null });
@@ -248,9 +242,7 @@ export function usePlaceOrder() {
 				return result;
 			} catch (err) {
 				const message =
-					err instanceof ApiError
-						? err.message
-						: 'Could not place your order. Please try again.';
+					err instanceof ApiError ? err.message : 'Could not place your order. Please try again.';
 				setError(message);
 				setSubmitting(false);
 				return null;

@@ -347,10 +347,7 @@ export const handlers = [
 				},
 			});
 		}
-		return HttpResponse.json(
-			{ success: false, error: 'Invalid credentials' },
-			{ status: 401 }
-		);
+		return HttpResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
 	}),
 	http.post('*/api/auth/register', async () => {
 		return HttpResponse.json({ success: false, error: 'Email already in use' }, { status: 409 });
@@ -360,15 +357,35 @@ export const handlers = [
 	http.get('*/api/cart/:userId', async () => {
 		return HttpResponse.json({ success: true, data: [] });
 	}),
+	http.post('*/api/cart', async ({ request }) => {
+		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
+	}),
+	http.delete('*/api/cart/:id', async ({ params }) => {
+		return HttpResponse.json({ success: true, data: { id: Number(params.id) } });
+	}),
+	http.delete('*/api/cart/clear/:userId', async ({ params }) => {
+		return HttpResponse.json({ success: true, data: { user_id: Number(params.userId) } });
+	}),
 
 	// Wishlist
 	http.get('*/api/wishlist/:userId', async () => {
 		return HttpResponse.json({ success: true, data: [] });
 	}),
+	http.post('*/api/wishlist', async ({ request }) => {
+		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
+	}),
+	http.delete('*/api/wishlist/:id', async ({ params }) => {
+		return HttpResponse.json({ success: true, data: { id: Number(params.id) } });
+	}),
 
 	// Notifications
 	http.get('*/api/notifications/:userId', async () => {
 		return HttpResponse.json({ success: true, data: [] });
+	}),
+	http.put('*/api/notifications/:id/read', async ({ params }) => {
+		return HttpResponse.json({ success: true, data: { id: Number(params.id) } });
 	}),
 
 	// Orders (P0-1: cart-to-order pipeline)
@@ -381,10 +398,7 @@ export const handlers = [
 		const id = m ? parseInt(m[1], 10) : NaN;
 		const order = ordersFixture.find((o) => o.id === id);
 		if (!order) {
-			return HttpResponse.json(
-				{ success: false, error: 'Order not found' },
-				{ status: 404 }
-			);
+			return HttpResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
 		}
 		return HttpResponse.json({
 			success: true,
@@ -456,6 +470,22 @@ export const handlers = [
 			},
 		});
 	}),
+	http.post('*/api/coupons/redeem', async () => {
+		return HttpResponse.json({ success: true, data: { id: 1 } });
+	}),
+
+	// Auth — /me
+	http.get('*/api/auth/me', async () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				id: 5,
+				email: 'ahmed@gmail.com',
+				full_name: 'Ahmed',
+				role: 'customer',
+			},
+		});
+	}),
 
 	// Shipping
 	http.get('*/api/shipping/methods', async () => {
@@ -489,10 +519,22 @@ export const handlers = [
 		const body = (await request.json()) as Record<string, unknown>;
 		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
 	}),
+	http.post('*/api/refunds/:id/resolve', async ({ params }) => {
+		return HttpResponse.json({
+			success: true,
+			data: { id: Number(params.id), status: 'approved' },
+		});
+	}),
 
 	// Payments
 	http.post('*/api/payments', async ({ request }) => {
 		const body = (await request.json()) as Record<string, unknown>;
 		return HttpResponse.json({ success: true, data: { id: 1, status: 'pending', ...body } });
+	}),
+	http.get('*/api/payments/order/:orderId', async () => {
+		return HttpResponse.json({ success: true, data: [] });
+	}),
+	http.post('*/api/payments/:id/confirm', async ({ params }) => {
+		return HttpResponse.json({ success: true, data: { order_id: 1, id: Number(params.id) } });
 	}),
 ];

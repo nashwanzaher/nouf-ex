@@ -17,3 +17,8 @@ __pycache__/
 coverage/
 .env.local
 app/server/index.js
+
+# MCP server (TypeScript → JS)
+mcp-server/dist/
+mcp-server/node_modules/
+mcp-server/.tmp*

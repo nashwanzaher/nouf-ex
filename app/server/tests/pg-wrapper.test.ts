@@ -20,9 +20,7 @@ const { pgify, normalizeSql } = require('../db/pg-wrapper.cjs');
 
 describe('pgify() — SQL placeholder rewriter', () => {
 	it('rewrites a single placeholder', () => {
-		expect(pgify('SELECT * FROM users WHERE id = ?')).toBe(
-			'SELECT * FROM users WHERE id = $1'
-		);
+		expect(pgify('SELECT * FROM users WHERE id = ?')).toBe('SELECT * FROM users WHERE id = $1');
 	});
 
 	it('rewrites multiple placeholders in order', () => {
@@ -32,9 +30,7 @@ describe('pgify() — SQL placeholder rewriter', () => {
 	});
 
 	it('does NOT rewrite `?` inside a single-quoted literal', () => {
-		expect(pgify("SELECT 'a ? b' FROM t WHERE id = ?")).toBe(
-			"SELECT 'a ? b' FROM t WHERE id = $1"
-		);
+		expect(pgify("SELECT 'a ? b' FROM t WHERE id = ?")).toBe("SELECT 'a ? b' FROM t WHERE id = $1");
 	});
 
 	it('handles doubled single quotes (PG escape) inside a literal', () => {
@@ -137,7 +133,7 @@ describe('pgify() — SQL placeholder rewriter', () => {
 });
 
 describe('normalizeSql() — SQLite-flavoured fragment normalizer', () => {
-	it('replaces datetime(\'now\') with CURRENT_TIMESTAMP', () => {
+	it("replaces datetime('now') with CURRENT_TIMESTAMP", () => {
 		expect(normalizeSql("UPDATE t SET x = datetime('now')")).toBe(
 			'UPDATE t SET x = CURRENT_TIMESTAMP'
 		);

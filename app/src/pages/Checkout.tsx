@@ -67,21 +67,16 @@ export default function Checkout() {
 	const [newAddress, setNewAddress] = useState<Partial<Address>>({});
 
 	// ── Data ─────────────────────────────────────────────────
-	const {
-		data: addressesResp,
-		refetch: refetchAddresses,
-	} = useUserAddresses(user ? Number(user.id) : null);
+	const { data: addressesResp, refetch: refetchAddresses } = useUserAddresses(
+		user ? Number(user.id) : null
+	);
 	const { data: shippingResp } = useShippingMethods(estimateWeight(cartState.items));
 	const { submitting, error, placeOrder } = usePlaceOrder();
 	// `result` is unused: we read the validated coupon straight from
 	// `validateCoupon()`'s return value in `handleApplyCoupon`. We
 	// still destructure it so the hook can clear the previous error
 	// on a fresh attempt.
-	const {
-		validating,
-		error: couponError,
-		validate: validateCoupon,
-	} = useCouponValidation();
+	const { validating, error: couponError, validate: validateCoupon } = useCouponValidation();
 
 	const addresses = useMemo<Address[]>(() => addressesResp ?? [], [addressesResp]);
 	const shippingMethods = useMemo<ShippingMethod[]>(
@@ -160,7 +155,7 @@ export default function Checkout() {
 				street: String(newAddress.street),
 				building: newAddress.building ? String(newAddress.building) : undefined,
 				notes: newAddress.notes ? String(newAddress.notes) : undefined,
-is_default: Boolean(newAddress.is_default),
+				is_default: Boolean(newAddress.is_default),
 			});
 			setSelectedAddressId(created.id);
 			setNewAddressOpen(false);
@@ -217,7 +212,8 @@ is_default: Boolean(newAddress.is_default),
 				building: address.building ?? undefined,
 				notes: address.notes ?? undefined,
 			},
-			paymentMethod: paymentMethod === 'wallet' ? 'wallet' : paymentMethod === 'card' ? 'card' : 'cod',
+			paymentMethod:
+				paymentMethod === 'wallet' ? 'wallet' : paymentMethod === 'card' ? 'card' : 'cod',
 			notes: notes || undefined,
 			subtotal,
 			shippingCost: shipping,
@@ -240,7 +236,9 @@ is_default: Boolean(newAddress.is_default),
 	// ── Render ──────────────────────────────────────────────
 	if (!isAuthenticated) {
 		return (
-			<div className="min-h-[100dvh] flex items-center justify-center px-4" dir={isRTL ? 'rtl' : 'ltr'}>
+			<div
+				className="min-h-[100dvh] flex items-center justify-center px-4"
+				dir={isRTL ? 'rtl' : 'ltr'}>
 				<div className="max-w-md w-full bg-white border border-aliBorder rounded-2xl p-8 text-center">
 					<ShoppingBag className="w-12 h-12 mx-auto text-aliOrange" strokeWidth={1.5} />
 					<h1 className="mt-4 text-xl font-bold text-aliText">
@@ -253,9 +251,7 @@ is_default: Boolean(newAddress.is_default),
 					</p>
 					<div className="mt-6 flex flex-col gap-2">
 						<Button asChild>
-							<Link to="/auth/login?next=/checkout">
-								{isRTL ? 'تسجيل الدخول' : 'Sign in'}
-							</Link>
+							<Link to="/auth/login?next=/checkout">{isRTL ? 'تسجيل الدخول' : 'Sign in'}</Link>
 						</Button>
 						<Button variant="outline" asChild>
 							<Link to="/auth/register">{isRTL ? 'إنشاء حساب' : 'Create account'}</Link>
@@ -294,9 +290,7 @@ is_default: Boolean(newAddress.is_default),
 										<Label>{isRTL ? 'ملصق' : 'Label'}</Label>
 										<Input
 											value={newAddress.label ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, label: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, label: e.target.value }))}
 											placeholder={isRTL ? 'المنزل / العمل' : 'Home / Work'}
 										/>
 									</div>
@@ -304,18 +298,14 @@ is_default: Boolean(newAddress.is_default),
 										<Label>{isRTL ? 'الاسم الكامل' : 'Full name'}</Label>
 										<Input
 											value={newAddress.full_name ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, full_name: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, full_name: e.target.value }))}
 										/>
 									</div>
 									<div>
 										<Label>{isRTL ? 'الهاتف' : 'Phone'}</Label>
 										<Input
 											value={newAddress.phone ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, phone: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, phone: e.target.value }))}
 											placeholder="+9677..."
 										/>
 									</div>
@@ -335,36 +325,28 @@ is_default: Boolean(newAddress.is_default),
 										<Label>{isRTL ? 'المدينة' : 'City'}</Label>
 										<Input
 											value={newAddress.city ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, city: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, city: e.target.value }))}
 										/>
 									</div>
 									<div>
 										<Label>{isRTL ? 'الحي' : 'District'}</Label>
 										<Input
 											value={newAddress.district ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, district: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, district: e.target.value }))}
 										/>
 									</div>
 									<div className="col-span-2">
 										<Label>{isRTL ? 'الشارع' : 'Street'}</Label>
 										<Input
 											value={newAddress.street ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, street: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, street: e.target.value }))}
 										/>
 									</div>
 									<div className="col-span-2">
 										<Label>{isRTL ? 'ملاحظات' : 'Notes'}</Label>
 										<Textarea
 											value={newAddress.notes ?? ''}
-											onChange={(e) =>
-												setNewAddress((a) => ({ ...a, notes: e.target.value }))
-											}
+											onChange={(e) => setNewAddress((a) => ({ ...a, notes: e.target.value }))}
 										/>
 									</div>
 									<label className="col-span-2 flex items-center gap-2 text-sm">
@@ -385,9 +367,7 @@ is_default: Boolean(newAddress.is_default),
 									<Button variant="ghost" onClick={() => setNewAddressOpen(false)}>
 										{isRTL ? 'إلغاء' : 'Cancel'}
 									</Button>
-									<Button onClick={handleNewAddress}>
-										{isRTL ? 'حفظ' : 'Save'}
-									</Button>
+									<Button onClick={handleNewAddress}>{isRTL ? 'حفظ' : 'Save'}</Button>
 								</div>
 							</div>
 						)}
@@ -508,9 +488,7 @@ is_default: Boolean(newAddress.is_default),
 						) : (
 							<ul className="divide-y divide-aliBorder">
 								{cartState.items.map((i) => (
-									<li
-										key={i.productId}
-										className="py-3 flex items-center gap-3 text-sm">
+									<li key={i.productId} className="py-3 flex items-center gap-3 text-sm">
 										{i.image ? (
 											<img
 												src={i.image}
@@ -523,7 +501,8 @@ is_default: Boolean(newAddress.is_default),
 										<div className="flex-1 min-w-0">
 											<div className="font-semibold text-aliText truncate">{i.name}</div>
 											<div className="text-aliTextMute text-xs">
-												{i.quantity} × {i.price.toLocaleString()} {COUNTRY_DEFAULT === 'YE' ? 'YER' : ''}
+												{i.quantity} × {i.price.toLocaleString()}{' '}
+												{COUNTRY_DEFAULT === 'YE' ? 'YER' : ''}
 											</div>
 										</div>
 										<button
@@ -547,9 +526,7 @@ is_default: Boolean(newAddress.is_default),
 							</h2>
 							{couponApplied ? (
 								<div className="flex items-center justify-between p-3 rounded bg-aliOrange/10 text-sm">
-									<span className="font-mono font-bold text-aliOrange">
-										{couponApplied.code}
-									</span>
+									<span className="font-mono font-bold text-aliOrange">{couponApplied.code}</span>
 									<div className="flex items-center gap-2">
 										<span className="text-aliText">
 											− {couponApplied.discount.toLocaleString()}
@@ -575,8 +552,10 @@ is_default: Boolean(newAddress.is_default),
 										onClick={handleApplyCoupon}>
 										{validating ? (
 											<Loader2 className="w-4 h-4 animate-spin" />
+										) : isRTL ? (
+											'تطبيق'
 										) : (
-											isRTL ? 'تطبيق' : 'Apply'
+											'Apply'
 										)}
 									</Button>
 								</div>
@@ -593,15 +572,11 @@ is_default: Boolean(newAddress.is_default),
 					<section className="bg-white border border-aliBorder rounded-2xl p-5 space-y-2 text-sm">
 						<div className="flex justify-between">
 							<span className="text-aliTextMute">{isRTL ? 'المجموع الفرعي' : 'Subtotal'}</span>
-							<span className="font-semibold text-aliText">
-								{subtotal.toLocaleString()} YER
-							</span>
+							<span className="font-semibold text-aliText">{subtotal.toLocaleString()} YER</span>
 						</div>
 						<div className="flex justify-between">
 							<span className="text-aliTextMute">{isRTL ? 'الشحن' : 'Shipping'}</span>
-							<span className="font-semibold text-aliText">
-								{shipping.toLocaleString()} YER
-							</span>
+							<span className="font-semibold text-aliText">{shipping.toLocaleString()} YER</span>
 						</div>
 						{discount > 0 && (
 							<div className="flex justify-between text-aliOrange">
@@ -610,12 +585,8 @@ is_default: Boolean(newAddress.is_default),
 							</div>
 						)}
 						<div className="flex justify-between pt-2 border-t border-aliBorder text-base">
-							<span className="font-bold text-aliText">
-								{isRTL ? 'الإجمالي' : 'Total'}
-							</span>
-							<span className="font-bold text-aliOrange">
-								{total.toLocaleString()} YER
-							</span>
+							<span className="font-bold text-aliText">{isRTL ? 'الإجمالي' : 'Total'}</span>
+							<span className="font-bold text-aliOrange">{total.toLocaleString()} YER</span>
 						</div>
 						{error && (
 							<p className="mt-2 text-xs text-red-500 flex items-center gap-1">
@@ -625,11 +596,7 @@ is_default: Boolean(newAddress.is_default),
 						<Button
 							type="button"
 							className="w-full mt-3"
-							disabled={
-								submitting ||
-								cartState.items.length === 0 ||
-								selectedAddressId == null
-							}
+							disabled={submitting || cartState.items.length === 0 || selectedAddressId == null}
 							onClick={handlePlaceOrder}>
 							{submitting ? (
 								<Loader2 className="w-4 h-4 animate-spin me-2" />

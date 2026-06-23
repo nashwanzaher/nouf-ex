@@ -9,7 +9,7 @@
  *   - The error is logged to the console
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErrorBoundary } from '../ErrorBoundary';
 
@@ -25,6 +25,10 @@ describe('ErrorBoundary', () => {
 	});
 	afterEach(() => {
 		errorSpy.mockRestore();
+		// RTL doesn't always auto-cleanup in Vitest 4 — clear the DOM so the
+		// previous test's `<div role="alert">` from the error fallback doesn't
+		// collide with `getByRole('alert')` in the next test.
+		cleanup();
 	});
 
 	it('renders children when no error is thrown', () => {
@@ -65,7 +69,7 @@ describe('ErrorBoundary', () => {
 		// React 19 sometimes passes a printf-style format string as the
 		// first arg, so we check the whole call's joined args.
 		const firstCall = errorSpy.mock.calls[0];
-		const allArgs = (firstCall ?? []).map((a) => String(a)).join(' | ');
+		const allArgs = (firstCall ?? []).map((a: unknown) => String(a)).join(' | ');
 		expect(allArgs).toMatch(/ErrorBoundary/);
 	});
 

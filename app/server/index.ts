@@ -874,11 +874,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		const resolvedCouponCode: string | null = couponCode ? String(couponCode) : null;
 		if (resolvedCouponCode) {
 			if (resolvedSubtotal <= 0) {
-				return sendError(
-					res,
-					'Cannot apply a coupon without a positive subtotal.',
-					400
-				);
+				return sendError(res, 'Cannot apply a coupon without a positive subtotal.', 400);
 			}
 		}
 
@@ -886,7 +882,12 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		// INSERTed into the row) and return it in the response. The
 		// previous implementation returned a fake `ORD-...${last4id}`
 		// string which silently broke the audit trail and the UI.
-		const { id: orderId, orderNumber, finalDiscount, finalTotal } = await db.tx(
+		const {
+			id: orderId,
+			orderNumber,
+			finalDiscount,
+			finalTotal,
+		} = await db.tx(
 			async (txDb: {
 				prepare: (sql: string) => {
 					run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>;
@@ -916,16 +917,10 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 					if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
 						throw new Error('Coupon is not yet active.');
 					}
-					if (
-						coupon.usage_limit != null &&
-						coupon.usage_count >= coupon.usage_limit
-					) {
+					if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
 						throw new Error('Coupon usage limit reached.');
 					}
-					if (
-						coupon.min_order != null &&
-						resolvedSubtotal < coupon.min_order
-					) {
+					if (coupon.min_order != null && resolvedSubtotal < coupon.min_order) {
 						throw new Error(
 							`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`
 						);
@@ -935,9 +930,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 				const finalDiscount = Math.round(resolvedDiscount * 100) / 100;
 				const finalTotal = Math.max(
 					0,
-					Math.round(
-						(resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100
-					) / 100
+					Math.round((resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100) / 100
 				);
 
 				const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -1677,16 +1670,9 @@ const COUPON_COLUMNS =
  *  to [0, subtotal]). Shared by /api/coupons/validate and the
  *  in-transaction coupon resolver used by POST /api/orders. */
 function computeCouponDiscount(coupon: CouponRow, orderSubtotal: number): number {
-	const raw =
-		coupon.type === 'percentage'
-			? (orderSubtotal * coupon.value) / 100
-			: coupon.value;
-	const capped =
-		coupon.max_discount != null ? Math.min(raw, coupon.max_discount) : raw;
-	return Math.max(
-		0,
-		Math.min(orderSubtotal, Math.round(capped * 100) / 100)
-	);
+	const raw = coupon.type === 'percentage' ? (orderSubtotal * coupon.value) / 100 : coupon.value;
+	const capped = coupon.max_discount != null ? Math.min(raw, coupon.max_discount) : raw;
+	return Math.max(0, Math.min(orderSubtotal, Math.round(capped * 100) / 100));
 }
 
 app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Response) => {
@@ -1700,9 +1686,7 @@ app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Respons
 		const { code, order_subtotal } = v.data;
 
 		const coupon = (await db
-			.prepare(
-				`SELECT ${COUPON_COLUMNS} FROM coupons WHERE code = ? AND is_active = TRUE`
-			)
+			.prepare(`SELECT ${COUPON_COLUMNS} FROM coupons WHERE code = ? AND is_active = TRUE`)
 			.get(code)) as CouponRow | undefined;
 
 		if (!coupon) return sendError(res, 'Coupon not found or inactive', 404);

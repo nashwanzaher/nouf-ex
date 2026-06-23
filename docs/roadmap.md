@@ -11,33 +11,33 @@ This document consolidates the original plans, reviews, and audit reports
 
 ## 1. Current State — Snapshot (2026-06-21)
 
-| Layer                 | State                                                                                  | Reference                                    |
-| --------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **TypeScript**        | ✅ 0 errors                                                                            | `tsc -b` (app + node + server projects)      |
-| **ESLint**            | ✅ 0 errors / 0 warnings                                                               | 67 → 0 in audit pass                         |
-| **Database**          | ✅ One external PostgreSQL 17 server, database `noufex_db`. **27 tables** + 60+ indexes + 9 triggers + 4 views + 3 roles. App connects as `noufex_app` (least privilege). | [`docs/database.md`](database.md)            |
-| **DB setup**          | ✅ One-time CLI: `npm run db:setup` applies schema + seed                              | `scripts/db-setup.cjs`                   |
-| **API server**        | ✅ Express 5 + `pg`. Scrypt hashing, zod validation, CORS allow-list, in-memory rate-limiter, SPA fallback. | `app/server/index.ts`                          |
-| **Frontend**          | ✅ React 19 + TS strict + Vite 7 + Tailwind + shadcn/ui. 23 routes. AR/EN/ZH i18n.     | `app/src/App.tsx`                            |
-| **Tests**             | ✅ Vitest + supertest. PgDb is mocked; no live DB required to run tests.               | [`docs/testing.md`](testing.md)              |
-| **Docker**            | ✅ One container runs the API only. Postgres is external.                              | [`docs/docker.md`](docker.md)                |
-| **VS Code workspace** | ✅ 13 recommended + 19 unwanted extensions; `launch.json`, `tasks.json`                | `.vscode/`                                   |
+| Layer                 | State                                                                                                                                                                     | Reference                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **TypeScript**        | ✅ 0 errors                                                                                                                                                               | `tsc -b` (app + node + server projects) |
+| **ESLint**            | ✅ 0 errors / 0 warnings                                                                                                                                                  | 67 → 0 in audit pass                    |
+| **Database**          | ✅ One external PostgreSQL 17 server, database `noufex_db`. **27 tables** + 60+ indexes + 9 triggers + 4 views + 3 roles. App connects as `noufex_app` (least privilege). | [`docs/database.md`](database.md)       |
+| **DB setup**          | ✅ One-time CLI: `npm run db:setup` applies schema + seed                                                                                                                 | `scripts/db-setup.cjs`                  |
+| **API server**        | ✅ Express 5 + `pg`. Scrypt hashing, zod validation, CORS allow-list, in-memory rate-limiter, SPA fallback.                                                               | `app/server/index.ts`                   |
+| **Frontend**          | ✅ React 19 + TS strict + Vite 7 + Tailwind + shadcn/ui. 23 routes. AR/EN/ZH i18n.                                                                                        | `app/src/App.tsx`                       |
+| **Tests**             | ✅ Vitest + supertest. PgDb is mocked; no live DB required to run tests.                                                                                                  | [`docs/testing.md`](testing.md)         |
+| **Docker**            | ✅ One container runs the API only. Postgres is external.                                                                                                                 | [`docs/docker.md`](docker.md)           |
+| **VS Code workspace** | ✅ 13 recommended + 19 unwanted extensions; `launch.json`, `tasks.json`                                                                                                   | `.vscode/`                              |
 
 ---
 
 ## 2. Completed in the 2026-06-21 Passes
 
-| Domain              | Outcome                                                                                                                                  |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **Database**        | Switched from SQLite → PostgreSQL. Removed SQLite file and ~18 one-shot migration scripts. Single `db-setup.cjs` is the only DB entrypoint. |
-| **Docker**          | Removed the in-container Postgres. Container now runs the API only and connects to the external server via `host.docker.internal`.      |
-| **Code quality**    | All 67 ESLint errors fixed in source (no suppression). 0 errors / 0 warnings.                                                            |
-| **Security**        | scrypt password hashing; role hardcoded to `customer` on registration; `sendSafeUser()` returns a minimal user payload.                  |
-| **Networking**      | CORS allow-list via `ALLOWED_ORIGINS`. Per-route in-memory rate limiter on `/api/auth/*`.                                                |
-| **Frontend**        | `useSyncExternalStore` for `useIsMobile`. `useDataHook` refactored to a stable `fetcherRef`. Side effects moved out of reducers.        |
-| **Routing**         | `ProtectedRoute` enforces roles for `/admin/*`, `/seller/*`, `/customer/*`. NotFound page covers unknown routes.                        |
-| **Documentation**   | All `.md` files consolidated under `docs/`. SQL files live under `database/` (schema/extra/views/functions/triggers/roles/seed + migrations/).                            |
-| **VS Code**         | 34 → 13 recommended extensions, debug configurations, test runner, lint task, Vitest tasks.                                             |
+| Domain            | Outcome                                                                                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**      | Switched from SQLite → PostgreSQL. Removed SQLite file and ~18 one-shot migration scripts. Single `db-setup.cjs` is the only DB entrypoint.    |
+| **Docker**        | Removed the in-container Postgres. Container now runs the API only and connects to the external server via `host.docker.internal`.             |
+| **Code quality**  | All 67 ESLint errors fixed in source (no suppression). 0 errors / 0 warnings.                                                                  |
+| **Security**      | scrypt password hashing; role hardcoded to `customer` on registration; `sendSafeUser()` returns a minimal user payload.                        |
+| **Networking**    | CORS allow-list via `ALLOWED_ORIGINS`. Per-route in-memory rate limiter on `/api/auth/*`.                                                      |
+| **Frontend**      | `useSyncExternalStore` for `useIsMobile`. `useDataHook` refactored to a stable `fetcherRef`. Side effects moved out of reducers.               |
+| **Routing**       | `ProtectedRoute` enforces roles for `/admin/*`, `/seller/*`, `/customer/*`. NotFound page covers unknown routes.                               |
+| **Documentation** | All `.md` files consolidated under `docs/`. SQL files live under `database/` (schema/extra/views/functions/triggers/roles/seed + migrations/). |
+| **VS Code**       | 34 → 13 recommended extensions, debug configurations, test runner, lint task, Vitest tasks.                                                    |
 
 For the full audit of code-quality fixes, see
 [`docs/audit/code-audit-2026-06-21.md`](audit/code-audit-2026-06-21.md).
@@ -48,51 +48,51 @@ For the full audit of code-quality fixes, see
 
 ### 3.1 P0 — Launch-blockers
 
-| #    | Item                                                                                                                                        | Source                                | Effort | Status |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------ | ------ |
-| P0-1 | **Cart→Order pipeline E2E**: convert `useCartItems` to a real hook that POSTs to `/api/orders`; persist carts in DB for authenticated users. | [`audit/review-features.md`](audit/review-features.md) §3.1 | XL | 🔴 TODO |
-| P0-2 | **Payment integration**: at minimum a `cod` (Cash on Delivery) flow that creates a `payments` row + transitions `orders.status`.            | same                                  | L      | ✅ DONE — `POST /api/payments`, `GET /api/payments/order/:id`, `POST /api/payments/:id/confirm`. |
-| P0-3 | **Image pipeline**: enforce non-null `main_image` + populate `product_images` for the demo products. The placeholder rate is the #1 UX issue. | [`audit/review-ux.md`](audit/review-ux.md) §2 C1 | L | 🔴 TODO (per-product real photography / generation). |
-| P0-4 | **Order totals reconciliation**: recompute `orders.total` from `order_items.total_price` for the demo orders.                              | [`audit/review-database.md`](audit/review-database.md) §1.3 | S | ✅ DONE — backfilled; ongoing via `coupons.usage_count` triggers. |
+| #    | Item                                                                                                                                          | Source                                                      | Effort | Status                                                                                           |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| P0-1 | **Cart→Order pipeline E2E**: convert `useCartItems` to a real hook that POSTs to `/api/orders`; persist carts in DB for authenticated users.  | [`audit/review-features.md`](audit/review-features.md) §3.1 | XL     | 🔴 TODO                                                                                          |
+| P0-2 | **Payment integration**: at minimum a `cod` (Cash on Delivery) flow that creates a `payments` row + transitions `orders.status`.              | same                                                        | L      | ✅ DONE — `POST /api/payments`, `GET /api/payments/order/:id`, `POST /api/payments/:id/confirm`. |
+| P0-3 | **Image pipeline**: enforce non-null `main_image` + populate `product_images` for the demo products. The placeholder rate is the #1 UX issue. | [`audit/review-ux.md`](audit/review-ux.md) §2 C1            | L      | 🔴 TODO (per-product real photography / generation).                                             |
+| P0-4 | **Order totals reconciliation**: recompute `orders.total` from `order_items.total_price` for the demo orders.                                 | [`audit/review-database.md`](audit/review-database.md) §1.3 | S      | ✅ DONE — backfilled; ongoing via `coupons.usage_count` triggers.                                |
 
 ### 3.2 P1 — Critical features
 
-| #    | Item                                                                                                                       | Effort | Status |
-| ---- | -------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| P1-1 | **Search backend**: FTS index on `products(name_ar/name_en/name_zh/description)`, plus `search_logs` for analytics.        | M      | 🔴 TODO |
-| P1-2 | **Wishlist API**: CRUD endpoints + UI wiring.                                                                              | S      | ✅ API DONE — `GET/POST/DELETE /api/wishlist`. UI TODO. |
-| P1-3 | **Address book API + UI**: customer multi-address.                                                                         | M      | ✅ API DONE — `GET/POST/DELETE /api/addresses` with `is_default` semantics. UI TODO. |
-| P1-4 | **Shipping methods API + UI**: dynamic shipping-method picker on checkout.                                                 | M      | ✅ API DONE — `GET /api/shipping/methods?weight_kg=N`. UI TODO. |
-| P1-5 | **Coupons end-to-end**: apply-on-checkout, `coupon_usage` insert, decrement `coupons.usage_count`.                         | M      | ✅ API DONE — `POST /api/coupons/validate|redeem`. UI TODO. |
-| P1-6 | **Refunds workflow**: customer opens dispute → admin reviews → `store_balance` decremented.                                | L      | ✅ API DONE — `POST /api/refunds` + `POST /api/refunds/:id/resolve`. UI TODO. |
-| P1-7 | **Real notifications** (in-app + email opt-in).                                                                            | L      | 🔴 TODO |
-| P1-8 | **Translation completion**: extract every hard-coded `lang === 'ar' ? 'X' : 'Y'` ternary into i18next keys.                | M      | 🔴 TODO |
+| #    | Item                                                                                                                | Effort | Status                                                                               |
+| ---- | ------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------ | ----------------- |
+| P1-1 | **Search backend**: FTS index on `products(name_ar/name_en/name_zh/description)`, plus `search_logs` for analytics. | M      | 🔴 TODO                                                                              |
+| P1-2 | **Wishlist API**: CRUD endpoints + UI wiring.                                                                       | S      | ✅ API DONE — `GET/POST/DELETE /api/wishlist`. UI TODO.                              |
+| P1-3 | **Address book API + UI**: customer multi-address.                                                                  | M      | ✅ API DONE — `GET/POST/DELETE /api/addresses` with `is_default` semantics. UI TODO. |
+| P1-4 | **Shipping methods API + UI**: dynamic shipping-method picker on checkout.                                          | M      | ✅ API DONE — `GET /api/shipping/methods?weight_kg=N`. UI TODO.                      |
+| P1-5 | **Coupons end-to-end**: apply-on-checkout, `coupon_usage` insert, decrement `coupons.usage_count`.                  | M      | ✅ API DONE — `POST /api/coupons/validate                                            | redeem`. UI TODO. |
+| P1-6 | **Refunds workflow**: customer opens dispute → admin reviews → `store_balance` decremented.                         | L      | ✅ API DONE — `POST /api/refunds` + `POST /api/refunds/:id/resolve`. UI TODO.        |
+| P1-7 | **Real notifications** (in-app + email opt-in).                                                                     | L      | 🔴 TODO                                                                              |
+| P1-8 | **Translation completion**: extract every hard-coded `lang === 'ar' ? 'X' : 'Y'` ternary into i18next keys.         | M      | 🔴 TODO                                                                              |
 
 ### 3.3 P2 — Quality & UX
 
-| #    | Item                                                                                                              | Source                                                                  | Effort |
-| ---- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------ |
-| P2-1 | **Image dimensions**: add `width`/`height` (or `aspect-ratio`) to every `<img>` to prevent CLS.                   | [`audit/review-code.md`](audit/review-code.md) M18                     | M      |
-| P2-2 | **AbortController**: cancel in-flight fetches in `useDataHook` on unmount / dependency change.                    | same · L12                                                              | S      | ✅ DONE — `useDataHook` owns one `AbortController` per fetch cycle and forwards `signal` to the api helpers. |
-| P2-3 | **Helmet.js**: add security headers (CSP, HSTS, X-Frame-Options).                                                 | same · L10                                                              | S      | ✅ DONE — `securityHeaders` middleware inlines the OWASP Secure Headers Project baseline + a strict CSP. |
-| P2-4 | **Structured logger**: replace `console.log` with a real logger.                                                  | same · L11                                                              | S      | ✅ DONE — `log.info/warn/error` in `app/server/middleware.ts` writes one-line JSON to stdout for log-shipper pickup. |
-| P2-3 | **Helmet.js**: add security headers (CSP, HSTS, X-Frame-Options).                                                 | same · L10                                                              | S      |
-| P2-4 | **Structured logger**: replace `console.log` with a real logger.                                                  | same · L11                                                              | S      |
-| P2-5 | **Merchant verification badges**: render `trust_level` + `is_verified` consistently.                              | [`audit/review-ux.md`](audit/review-ux.md) §2 C6                        | M      |
-| P2-6 | **Trade Assurance copy**: replace placeholder with real escrow-fee disclosure.                                    | same                                                                    | S      |
-| P2-7 | **RFQ form**: backend handler + customer UI + merchant inbox.                                                     | [`audit/review-features.md`](audit/review-features.md) §3.2 #12         | L      |
-| P2-8 | **Subscription tiers**: implement the visible SubscriptionTiers section (real plan management).                   | same · §3.2 #22                                                         | L      |
-| P2-9 | **Analytics dashboard**: real data behind `ReportsAnalytics.tsx`.                                                  | same · §3.2 #23                                                         | L      |
+| #    | Item                                                                                            | Source                                                          | Effort |
+| ---- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| P2-1 | **Image dimensions**: add `width`/`height` (or `aspect-ratio`) to every `<img>` to prevent CLS. | [`audit/review-code.md`](audit/review-code.md) M18              | M      |
+| P2-2 | **AbortController**: cancel in-flight fetches in `useDataHook` on unmount / dependency change.  | same · L12                                                      | S      | ✅ DONE — `useDataHook` owns one `AbortController` per fetch cycle and forwards `signal` to the api helpers.         |
+| P2-3 | **Helmet.js**: add security headers (CSP, HSTS, X-Frame-Options).                               | same · L10                                                      | S      | ✅ DONE — `securityHeaders` middleware inlines the OWASP Secure Headers Project baseline + a strict CSP.             |
+| P2-4 | **Structured logger**: replace `console.log` with a real logger.                                | same · L11                                                      | S      | ✅ DONE — `log.info/warn/error` in `app/server/middleware.ts` writes one-line JSON to stdout for log-shipper pickup. |
+| P2-3 | **Helmet.js**: add security headers (CSP, HSTS, X-Frame-Options).                               | same · L10                                                      | S      |
+| P2-4 | **Structured logger**: replace `console.log` with a real logger.                                | same · L11                                                      | S      |
+| P2-5 | **Merchant verification badges**: render `trust_level` + `is_verified` consistently.            | [`audit/review-ux.md`](audit/review-ux.md) §2 C6                | M      |
+| P2-6 | **Trade Assurance copy**: replace placeholder with real escrow-fee disclosure.                  | same                                                            | S      |
+| P2-7 | **RFQ form**: backend handler + customer UI + merchant inbox.                                   | [`audit/review-features.md`](audit/review-features.md) §3.2 #12 | L      |
+| P2-8 | **Subscription tiers**: implement the visible SubscriptionTiers section (real plan management). | same · §3.2 #22                                                 | L      |
+| P2-9 | **Analytics dashboard**: real data behind `ReportsAnalytics.tsx`.                               | same · §3.2 #23                                                 | L      |
 
 ### 3.4 P3 — Polish & Growth
 
-| #    | Item                                                       | Source                                              | Effort |
-| ---- | ---------------------------------------------------------- | --------------------------------------------------- | ------ |
-| P3-1 | **Image search** (multimodal LLM).                         | [`audit/review-features.md`](audit/review-features.md) §3.4 #30 | XL |
-| P3-2 | **AI Mode for search** (LLM reranker).                     | same · §3.4 #29                                     | L      |
-| P3-3 | **Live commerce**: integration with a streaming service.   | same · §3.4 #32                                     | XL     |
-| P3-4 | **Mobile app**: PWA shell first, native later.             | same · §3.4 #32                                     | XL     |
-| P3-5 | **Loyalty program**: points + VIP tiers.                   | same · §3.3 #28                                     | M      |
+| #    | Item                                                       | Source                                                           | Effort |
+| ---- | ---------------------------------------------------------- | ---------------------------------------------------------------- | ------ |
+| P3-1 | **Image search** (multimodal LLM).                         | [`audit/review-features.md`](audit/review-features.md) §3.4 #30  | XL     |
+| P3-2 | **AI Mode for search** (LLM reranker).                     | same · §3.4 #29                                                  | L      |
+| P3-3 | **Live commerce**: integration with a streaming service.   | same · §3.4 #32                                                  | XL     |
+| P3-4 | **Mobile app**: PWA shell first, native later.             | same · §3.4 #32                                                  | XL     |
+| P3-5 | **Loyalty program**: points + VIP tiers.                   | same · §3.3 #28                                                  | M      |
 | P3-6 | **Banners + promotions** tables wired into the storefront. | [`audit/review-database.md`](audit/review-database.md) §2 #14-15 | M      |
 
 ---

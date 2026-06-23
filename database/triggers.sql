@@ -6,16 +6,21 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1) updated_at maintainer — every table with an updated_at column
+-- 1) updated_at maintainer — every *base table* with an updated_at column
+--    (information_schema.columns also returns views; PostgreSQL does not
+--     allow triggers on views, so we must filter to relkind = 'r'.)
 -- ---------------------------------------------------------------------
 DO $$
 DECLARE r record;
 BEGIN
     FOR r IN
-        SELECT c.table_schema, c.table_name
-          FROM information_schema.columns c
-         WHERE c.column_name = 'updated_at'
-           AND c.table_schema = 'public'
+        SELECT n.nspname AS table_schema, c.relname AS table_name
+          FROM pg_attribute a
+          JOIN pg_class     c ON c.oid = a.attrelid
+          JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE a.attname = 'updated_at'
+           AND n.nspname = 'public'
+           AND c.relkind = 'r'    -- 'r' = ordinary table only
     LOOP
         EXECUTE format(
             'DROP TRIGGER IF EXISTS trg_%I_set_updated_at ON %I.%I;

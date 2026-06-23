@@ -75,6 +75,7 @@ export function installFetchSpy(): void {
 		//    against `/api/stats/home`. We then invoke run() and fall
 		//    back to resolver() when run() returns null (which can
 		//    happen when invoked outside the MSW interceptor context).
+		const triedHandlers: string[] = [];
 		for (const h of handlers) {
 			const mswHandler = h as unknown as {
 				info?: { method?: string; path?: string | RegExp };
@@ -83,18 +84,44 @@ export function installFetchSpy(): void {
 			};
 			const methodOk = !mswHandler.info?.method || mswHandler.info.method === req.method;
 			if (!methodOk) continue;
-			if (!matchesPath(mswHandler.info?.path, url)) continue;
+			if (!matchesPath(mswHandler.info?.path, url)) {
+				triedHandlers.push(`${mswHandler.info?.method ?? 'ANY'} ${String(mswHandler.info?.path)}`);
+				continue;
+			}
 
 			try {
 				// Calling handler.run() outside the MSW interceptor
 				// returns a parsedResult object (not a Response), so we
 				// call the resolver directly. The MSW resolvers return
 				// `HttpResponse.json(...)` which is a Response.
+				//
+				// MSW v2 handlers receive a context object with `request`
+				// AND `params` (the URL params extracted from the
+				// pattern). We extract the params from the URL by
+				// matching against the pattern, then pass both to the
+				// resolver.
+				const params = extractParams(mswHandler.info?.path, url);
 				let result: unknown;
 				if (typeof mswHandler.resolver === 'function') {
-					result = await mswHandler.resolver({ request: req });
+					result = await (
+						mswHandler.resolver as (ctx: {
+							request: Request;
+							params?: Record<string, string | undefined>;
+						}) => Promise<unknown>
+					)({
+						request: req,
+						params,
+					});
 				} else if (typeof mswHandler.run === 'function') {
-					result = await mswHandler.run({ request: req });
+					result = await (
+						mswHandler.run as (ctx: {
+							request: Request;
+							params?: Record<string, string | undefined>;
+						}) => Promise<unknown>
+					)({
+						request: req,
+						params,
+					});
 				}
 				return await toResponse(result);
 			} catch (err) {
@@ -106,7 +133,9 @@ export function installFetchSpy(): void {
 		}
 
 		// Unhandled request — fail loudly so we do not get silent fall-throughs.
-		throw new Error(`[fetch-spy] Unhandled ${req.method} ${req.url}`);
+		throw new Error(
+			`[fetch-spy] Unhandled ${req.method} ${req.url} (tried: ${triedHandlers.join(', ')})`
+		);
 	};
 }
 
@@ -118,6 +147,12 @@ export function installFetchSpy(): void {
 // `/api/stats/home`) and require the path segments to match exactly,
 // so `*/api/products` does NOT match `/api/products/1` (which should
 // be handled by the `*/api/products/:id` pattern).
+//
+// `*` segments are also flexible: `*/api/cart` (4 segments after the
+// leading "") matches both `/api/cart` (3 segments) and `/x/api/cart`
+// (4 segments) — the leading `*` is consumed greedily. We match by
+// anchoring the tail of the path to the non-wildcard suffix of the
+// pattern.
 function matchesPath(pattern: string | RegExp | undefined, url: string): boolean {
 	if (!pattern) return false;
 	if (pattern instanceof RegExp) return pattern.test(url);
@@ -132,20 +167,85 @@ function matchesPath(pattern: string | RegExp | undefined, url: string): boolean
 	const qIdx = pathname.indexOf('?');
 	if (qIdx >= 0) pathname = pathname.slice(0, qIdx);
 
-	// Split pattern and pathname into segments and match segment by
-	// segment. `*` matches zero-or-more characters within a single
-	// segment (does not cross `/`).
 	const patternSegments = pattern.split('/');
 	const pathSegments = pathname.split('/');
-	if (patternSegments.length !== pathSegments.length) return false;
-	for (let i = 0; i < patternSegments.length; i++) {
-		const ps = patternSegments[i];
-		const ts = pathSegments[i];
-		if (ps === '*') continue; // matches any single segment
-		if (ps.startsWith(':')) continue; // matches any single segment
+
+	// Walk from the end of both arrays, matching each segment literally
+	// or against a `*`/`:param` placeholder. Any remaining leading `*`
+	// segments in the pattern match any prefix on the path side.
+	let pi = patternSegments.length - 1;
+	let ti = pathSegments.length - 1;
+	while (pi >= 0 && ti >= 0) {
+		const ps = patternSegments[pi]!;
+		const ts = pathSegments[ti]!;
+		if (ps === '*' || ps.startsWith(':')) {
+			// Both pi and ti decrement — a `*`/`:param` matches exactly
+			// one segment.
+			pi--;
+			ti--;
+			continue;
+		}
 		if (ps !== ts) return false;
+		pi--;
+		ti--;
+	}
+	// If we exhausted the path but pattern still has segments, the only
+	// acceptable ones are leading `*` segments.
+	while (pi >= 0 && patternSegments[pi] === '*') pi--;
+	// The pattern must be exhausted. The path may have trailing empty
+	// segments (e.g. "/api/cart/") that we treat as already matched.
+	if (pi >= 0) return false;
+	// Any remaining path segments must be empty (trailing slash).
+	for (let i = ti; i >= 0; i--) {
+		if (pathSegments[i] !== '') return false;
 	}
 	return true;
+}
+
+// Extract URL params from a pattern like `*/api/products/:id`. Returns
+// a plain object mapping `:name` segments to the corresponding path
+// segment from the URL. `*` segments are ignored.
+function extractParams(
+	pattern: string | RegExp | undefined,
+	url: string
+): Record<string, string | undefined> {
+	const params: Record<string, string | undefined> = {};
+	if (!pattern || pattern instanceof RegExp) return params;
+	let pathname: string;
+	try {
+		pathname = new URL(url).pathname;
+	} catch {
+		pathname = url;
+	}
+	const qIdx = pathname.indexOf('?');
+	if (qIdx >= 0) pathname = pathname.slice(0, qIdx);
+
+	const patternSegments = pattern.split('/');
+	const pathSegments = pathname.split('/');
+
+	// Walk from the end, matching literal/`*` segments, and capturing
+	// `:param` segments into the params object.
+	let pi = patternSegments.length - 1;
+	let ti = pathSegments.length - 1;
+	while (pi >= 0 && ti >= 0) {
+		const ps = patternSegments[pi]!;
+		const ts = pathSegments[ti]!;
+		if (ps === '*') {
+			pi--;
+			ti--;
+			continue;
+		}
+		if (ps.startsWith(':')) {
+			params[ps.slice(1)] = ts;
+			pi--;
+			ti--;
+			continue;
+		}
+		if (ps !== ts) break;
+		pi--;
+		ti--;
+	}
+	return params;
 }
 
 // Coerce whatever the MSW resolver produced into a Response. The MSW

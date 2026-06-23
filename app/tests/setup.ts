@@ -12,8 +12,16 @@
 import { config as loadDotenv } from 'dotenv';
 import { vi } from 'vitest';
 
-loadDotenv({ path: '.env.test', quiet: true });
-loadDotenv({ path: '.env', quiet: true });
+console.log('[setup.ts] running, cwd=', process.cwd());
+
+// Load .env from the project ROOT (one level up from app/), not the cwd,
+// because tests run with app/ as cwd but .env lives in the repo root.
+loadDotenv({ path: '../.env', quiet: true });
+
+console.log(
+  '[setup.ts] after dotenv: DATABASE_URL=',
+  process.env.DATABASE_URL ? 'set' : 'MISSING',
+);
 
 // Test-wide defaults
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
@@ -24,11 +32,18 @@ process.env.PORT = process.env.PORT ?? '0';
 process.env.DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgresql://postgres:test@localhost:5432/test';
 
-// jest-dom matchers are DOM-only. They augment expect() globally; if we
-// load them in node env the matchers themselves are no-ops so it's safe.
-if (typeof document !== 'undefined') {
-	await import('@testing-library/jest-dom/vitest');
-}
+console.log(
+  '[setup.ts] final: DATABASE_URL=',
+  process.env.DATABASE_URL ? 'set' : 'MISSING',
+);
+
+// jest-dom matchers are DOM-only but safe to load in any environment —
+// they extend `expect()` globally and the matchers themselves are no-ops
+// when DOM globals are absent (e.g. in the `server` project). Loading them
+// unconditionally avoids the brittle `typeof document` check (which would
+// fail in the DOM project too, because setup.ts runs before happy-dom
+// installs the `document` global).
+await import('@testing-library/jest-dom/vitest');
 
 // ── Global `pg` mock ──────────────────────────────────────────────────────────
 // The factory runs only when `pg` (or a module that imports it) is first

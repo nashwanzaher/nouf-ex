@@ -1,16 +1,26 @@
 /// <reference types="vitest" />
-// Vitest configuration for the Nouf-ex app.
+// Vitest root configuration for the Nouf-ex app.
 //
-// Three environments, switched by path glob:
-//   - happy-dom: files under src/**/__tests__/ (components + hooks + context)
-//   - node:      files under app/server/tests/  (API + schema)
-//   - node:      files under app/tests/mocks/   (MSW handlers + fixtures)
+// Two projects (declared inline so Vitest 4 picks them up reliably):
+//   - `server`: tests run in `node` (no DOM globals).
+//   - `dom`:    tests run in `happy-dom` (for components / hooks / context).
 //
-// The single global setup file (`tests/setup.ts`) loads .env and stubs the
-// `pg` driver so neither side needs a live database.
+// Shared options live at the top level. Each project overrides the bits
+// it needs (include pattern, environment).
+//
+// Note: Vitest 4 deprecated the standalone `vitest.workspace.ts` file
+// mechanism in favor of inline `projects` here. The projects array is the
+// supported, recommended approach.
 
 import { defineConfig } from 'vitest/config';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Vitest 4 + Vite 7 run vitest.config.ts in ESM mode, where `__dirname`
+// is undefined. We derive the directory of THIS file from `import.meta.url`
+// so the alias resolves to a stable absolute path under all module systems.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig({
 	resolve: {
@@ -20,17 +30,6 @@ export default defineConfig({
 	},
 	test: {
 		globals: true,
-		environment: 'node',
-		include: [
-			'tests/**/*.test.{js,ts,tsx,cjs,mjs}',
-			'src/**/__tests__/**/*.test.{ts,tsx}',
-			'server/tests/**/*.test.{js,ts,tsx,cjs,mjs}',
-		],
-		environmentMatchGlobs: [
-			// Component / hook / context tests need DOM globals.
-			['src/**/__tests__/**/*.test.{ts,tsx}', 'happy-dom'],
-		],
-		setupFiles: ['./tests/setup.ts'],
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'html', 'json-summary'],
@@ -52,5 +51,36 @@ export default defineConfig({
 		},
 		testTimeout: 20_000,
 		hookTimeout: 20_000,
+		projects: [
+			{
+				resolve: {
+					alias: {
+						'@': path.resolve(__dirname, './src'),
+					},
+				},
+				test: {
+					name: 'server',
+					environment: 'node',
+					setupFiles: [path.resolve(__dirname, 'tests/setup.ts')],
+					include: [
+						'tests/**/*.test.{js,ts,tsx,cjs,mjs}',
+						'server/tests/**/*.test.{js,ts,tsx,cjs,mjs}',
+					],
+				},
+			},
+			{
+				resolve: {
+					alias: {
+						'@': path.resolve(__dirname, './src'),
+					},
+				},
+				test: {
+					name: 'dom',
+					environment: 'happy-dom',
+					setupFiles: [path.resolve(__dirname, 'tests/setup.ts')],
+					include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
+				},
+			},
+		],
 	},
 });

@@ -6,13 +6,19 @@
  * dismiss handler.
  */
 
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import ToastContainer, { type Toast } from '../Toast';
 
 const sampleToast: Toast = { id: '1', message: 'Saved!', type: 'success' };
 
 describe('ToastContainer', () => {
+	// RTL doesn't auto-cleanup between tests in Vitest 4 — clean manually so
+	// prior toasts (which render multiple buttons) don't collide with
+	// subsequent `getByRole('button')` lookups.
+	afterEach(() => {
+		cleanup();
+	});
 	it('renders the wrapper but no toast children when the list is empty', () => {
 		const { container } = render(<ToastContainer toasts={[]} onRemove={() => undefined} />);
 		// The outer wrapper div is always mounted (positions toasts via fixed

@@ -34,32 +34,171 @@ function normalizeSql(sql) {
 		.replace(/\b(is_\w+)\s*=\s*0\b/gi, '$1 = FALSE');
 }
 
-/** Convert `?` placeholders to `$1, $2, ...` for pg. Escape `?` inside string literals is left as-is (best-effort). */
+/**
+ * Rewrite `?` placeholders to `$1, $2, ...` for pg. The previous
+ * implementation used a single `inString` flag and treated
+ * backslash-escaped quotes as the terminator — that broke for the
+ * common PostgreSQL convention of doubling a quote to escape it
+ * inside a string literal (`'it''s'`), at which point the rewriter
+ * would fall out of the string and turn the rest of the literal
+ * into SQL (including any `?` inside it).
+ *
+ * P1-8 fix: a small state machine that recognises
+ *   - single-quoted strings with `''` escapes,
+ *   - E-strings (E'...') with backslash escapes,
+ *   - double-quoted identifiers with `""` escapes,
+ *   - dollar-quoted strings ($$ ... $$ or $tag$ ... $tag$),
+ *   - line comments (-- ... \n) and nested block comments (/* ... *\/).
+ *
+ * Anything that is not a `?` outside a quoted region is copied
+ * verbatim, so the only place placeholders are rewritten is inside
+ * actual SQL.
+ */
 function pgify(sql) {
-	let i = 0;
 	let out = '';
-	let inString = false;
-	let stringChar = '';
-	for (let k = 0; k < sql.length; k++) {
+	let i = 0;
+	let k = 0;
+	const len = sql.length;
+
+	const startsWith = (s) => sql.startsWith(s, k);
+
+	const copyVerbatim = (end) => {
+		out += sql.slice(k, end);
+		k = end;
+	};
+
+	while (k < len) {
 		const ch = sql[k];
-		if (inString) {
-			out += ch;
-			// naive string terminator: same quote, not preceded by backslash.
-			if (ch === stringChar && sql[k - 1] !== '\\') inString = false;
+
+		// ── Line comment: -- to end of line or end of input ──
+		if (ch === '-' && sql[k + 1] === '-') {
+			const eol = sql.indexOf('\n', k + 2);
+			copyVerbatim(eol === -1 ? len : eol);
 			continue;
 		}
-		if (ch === "'" || ch === '"') {
-			inString = true;
-			stringChar = ch;
-			out += ch;
+
+		// ── Block comment: /* ... */ (nesting allowed by pg) ──
+		if (ch === '/' && sql[k + 1] === '*') {
+			let depth = 1;
+			let cursor = k + 2;
+			while (cursor < len && depth > 0) {
+				if (sql[cursor] === '/' && sql[cursor + 1] === '*') {
+					depth++;
+					cursor += 2;
+				} else if (sql[cursor] === '*' && sql[cursor + 1] === '/') {
+					depth--;
+					cursor += 2;
+				} else {
+					cursor++;
+				}
+			}
+			copyVerbatim(cursor);
 			continue;
 		}
+
+		// ── E-string: E'...' with backslash escapes and '' doubling ──
+		if ((ch === 'E' || ch === 'e') && sql[k + 1] === "'") {
+			out += ch + "'";
+			k += 2;
+			while (k < len) {
+				const c = sql[k];
+				if (c === '\\' && k + 1 < len) {
+					out += c + sql[k + 1];
+					k += 2;
+					continue;
+				}
+				if (c === "'" && sql[k + 1] === "'") {
+					out += "''";
+					k += 2;
+					continue;
+				}
+				if (c === "'") {
+					out += c;
+					k++;
+					break;
+				}
+				out += c;
+				k++;
+			}
+			continue;
+		}
+
+		// ── Single-quoted string: '...' with '' doubling ──
+		if (ch === "'") {
+			out += ch;
+			k++;
+			while (k < len) {
+				const c = sql[k];
+				if (c === "'" && sql[k + 1] === "'") {
+					out += "''";
+					k += 2;
+					continue;
+				}
+				if (c === "'") {
+					out += c;
+					k++;
+					break;
+				}
+				out += c;
+				k++;
+			}
+			continue;
+		}
+
+		// ── Double-quoted identifier: "..." with "" doubling ──
+		if (ch === '"') {
+			out += ch;
+			k++;
+			while (k < len) {
+				const c = sql[k];
+				if (c === '"' && sql[k + 1] === '"') {
+					out += '""';
+					k += 2;
+					continue;
+				}
+				if (c === '"') {
+					out += c;
+					k++;
+					break;
+				}
+				out += c;
+				k++;
+			}
+			continue;
+		}
+
+		// ── Dollar-quoted string: $$ ... $$ or $tag$ ... $tag$ ──
+		// Used by PL/pgSQL function bodies, DO blocks, etc.
+		if (ch === '$') {
+			const tagMatch = sql.slice(k).match(/^\$([A-Za-z_][A-Za-z0-9_]*)?\$/);
+			if (tagMatch) {
+				const tag = tagMatch[0];
+				out += tag;
+				k += tag.length;
+				const endIdx = sql.indexOf(tag, k);
+				if (endIdx === -1) {
+					// Unterminated dollar quote — copy to end of input.
+					copyVerbatim(len);
+				} else {
+					copyVerbatim(endIdx);
+					out += tag;
+					k = endIdx + tag.length;
+				}
+				continue;
+			}
+		}
+
+		// ── Placeholder ──
 		if (ch === '?') {
 			i++;
 			out += '$' + i;
+			k++;
 			continue;
 		}
+
+		// ── Everything else: copy through ──
 		out += ch;
+		k++;
 	}
 	return out;
 }
@@ -160,4 +299,4 @@ class PgDb {
 	}
 }
 
-module.exports = { PgDb };
+module.exports = { PgDb, pgify, normalizeSql };

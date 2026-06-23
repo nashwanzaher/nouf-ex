@@ -1,20 +1,52 @@
+# ============================================================================
 # Anything not needed to build or run the API image.
-node_modules/
+# ----------------------------------------------------------------------------
+# The Dockerfile only COPYs `app/`, so everything outside it is excluded
+# from the build context. This keeps the context < 10 MB instead of 300+.
+# ============================================================================
+
+# Dependencies
+**/node_modules/
+**/node_modules
+
+# Build output
 dist/
+build/
+out/
+
+# Environment & secrets
 .env
 .env.local
+.env.*.local
+
+# Logs and caches
 *.log
+.npm
+.eslintcache
+*.tsbuildinfo
 .DS_Store
+Thumbs.db
+
+# VCS / editor
 .git/
+.gitignore
+.gitattributes
 .vs/
 .vscode/
+.idea/
 
-# Database provisioning files — `npm run db:setup` runs on the HOST,
-# not inside the container, so the SQL is not needed in the image.
+# Test artifacts
+.coverage/
+app/coverage/
+coverage/
+
+# Provisioning / scripts not needed at runtime
 database/
-
-# Project-level helper scripts — same reasoning; not needed at runtime.
 scripts/
+app/scripts/
 
-# Legacy / archived research docs.
+# MCP server (separate process, runs on host, not in this image)
+mcp-server/
+
+# Legacy / archived research docs
 docs/research/

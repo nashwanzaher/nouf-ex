@@ -36,12 +36,17 @@ services:
       # Set DB_SSL=true in production when Postgres requires TLS.
       DB_SSL: 'false'
       SERVE_STATIC: 'true'
+      # HMAC signing key for the auth bearer tokens. Required in production
+      # (≥32 chars). Value is read from the host's .env file (which is
+      # gitignored). Generate one with:
+      #   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+      AUTH_SECRET: ${AUTH_SECRET}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     healthcheck:
       test:
         - 'CMD-SHELL'
-        - "node -e \"require('http').get('http://localhost:3000/api/health', (r) => { if (r.statusCode !== 200) process.exit(1) })\""
+        - 'node -e "require(''http'').get(''http://localhost:3000/api/health'', (r) => { if (r.statusCode !== 200) process.exit(1) })"'
       interval: 30s
       timeout: 10s
       start_period: 20s

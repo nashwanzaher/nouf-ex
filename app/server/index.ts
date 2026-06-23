@@ -141,10 +141,10 @@ function rateLimit(windowMs: number, max: number, bucket = 'global') {
 		const key = `${bucket}:${req.method}:${route}:${ip}`;
 		try {
 			const row = (await db
-				.prepare(
-					'SELECT allowed, retry_after_ms FROM consume_rate_limit($1, $2, $3, $4)'
-				)
-				.get(bucket, key, windowMs, max)) as { allowed: boolean; retry_after_ms: number } | undefined;
+				.prepare('SELECT allowed, retry_after_ms FROM consume_rate_limit($1, $2, $3, $4)')
+				.get(bucket, key, windowMs, max)) as
+				| { allowed: boolean; retry_after_ms: number }
+				| undefined;
 			if (!row) return next();
 			if (!row.allowed) {
 				res.setHeader('Retry-After', Math.ceil(row.retry_after_ms / 1000));
@@ -154,7 +154,8 @@ function rateLimit(windowMs: number, max: number, bucket = 'global') {
 			// Don't block traffic on a transient DB error — fail open.
 			log.warn({
 				msg: 'rate_limit_db_error',
-				bucket, route,
+				bucket,
+				route,
 				error: (err as Error).message,
 			});
 		}
@@ -165,7 +166,9 @@ function rateLimit(windowMs: number, max: number, bucket = 'global') {
 // so the rate_limit_buckets table stays small.
 setInterval(async () => {
 	try {
-		const r = (await db.prepare('SELECT cleanup_rate_limits() AS n').get()) as { n: number } | undefined;
+		const r = (await db.prepare('SELECT cleanup_rate_limits() AS n').get()) as
+			| { n: number }
+			| undefined;
 		if (r && r.n > 0) log.debug({ msg: 'rate_limit_cleanup', deleted: r.n });
 	} catch {
 		/* ignore — next tick will retry */
@@ -1714,10 +1717,10 @@ async function computeCouponDiscount(
 	orderSubtotal: number
 ): Promise<number> {
 	const row = (await db
-		.prepare(
-			'SELECT coupon_discount_amount($1, $2::numeric, $3::numeric, $4::numeric) AS discount'
-		)
-		.get(coupon.type, coupon.value, coupon.max_discount, orderSubtotal)) as { discount: string } | undefined;
+		.prepare('SELECT coupon_discount_amount($1, $2::numeric, $3::numeric, $4::numeric) AS discount')
+		.get(coupon.type, coupon.value, coupon.max_discount, orderSubtotal)) as
+		| { discount: string }
+		| undefined;
 	return row ? Number(row.discount) : 0;
 }
 

@@ -399,6 +399,96 @@ export const requireRole = (...allowed: AuthRole[]): RequestHandler => {
 };
 
 // =========================================================================
+// 6b. Health-endpoint rate limiter (in-memory, no DB dependency)
+//
+// Why a separate, simpler limiter?
+//   The /api/health and /api/ready endpoints are intentionally
+//   cheap (liveness/readiness probes for k8s, Docker, and load
+//   balancers). The DB-backed `rateLimit()` in server/index.ts
+//   depends on a working Postgres — using it on these endpoints
+//   would mean a DB outage also knocks out our liveness probe,
+//   making the outage harder to diagnose (the pod gets killed for
+//   failing healthchecks, restarting against a DB it still can't
+//   reach).
+//
+//   This in-memory limiter is the right tool:
+//     - zero dependencies (no DB round-trip),
+//     - per-process state (resets on restart — acceptable for a
+//       probe-defence limiter, not for user-facing rate limits),
+//     - simple sliding-window counter, O(1) per request,
+//     - background sweeper evicts stale entries to bound memory.
+//
+// Default budget: 30 req / 1s / IP. Generous enough to cover
+// 3-5 replicas all probing the same pod every 2-3 seconds,
+// tight enough to make a DOS loop visible.
+// =========================================================================
+interface HealthBucket {
+	count: number;
+	resetAt: number;
+}
+const HEALTH_BUCKETS = new Map<string, HealthBucket>();
+// Background sweeper — every 30s, drop entries that have aged out.
+setInterval(() => {
+	const now = Date.now();
+	for (const [k, v] of HEALTH_BUCKETS) {
+		if (v.resetAt <= now) HEALTH_BUCKETS.delete(k);
+	}
+}, 30_000).unref();
+
+export interface HealthRateLimitOptions {
+	/** Window length in ms (default 1000). */
+	windowMs?: number;
+	/** Max requests per window per IP (default 30). */
+	max?: number;
+	/** Optional name for the bucket (used in 429 messages). */
+	bucket?: string;
+}
+
+/**
+ * Build a middleware that caps per-IP request rate for the health
+ * endpoints. Returns 429 with a `Retry-After` header on overflow.
+ * Never throws — a limiter bug must not crash a probe.
+ */
+export function healthRateLimit(opts: HealthRateLimitOptions = {}): RequestHandler {
+	const windowMs = opts.windowMs ?? 1000;
+	const max = opts.max ?? 30;
+	const bucket = opts.bucket ?? 'health';
+	return (req, res, next) => {
+		try {
+			// Resolve the IP defensively — `req.socket` can be undefined in
+			// synthetic/test environments and during the very first request
+			// before Express wires it up.
+			const ip =
+				req.ip ||
+				(req.socket && req.socket.remoteAddress) ||
+				'anon';
+			const key = `${bucket}:${ip}`;
+			const now = Date.now();
+			let entry = HEALTH_BUCKETS.get(key);
+			if (!entry || entry.resetAt <= now) {
+				entry = { count: 0, resetAt: now + windowMs };
+				HEALTH_BUCKETS.set(key, entry);
+			}
+			entry.count += 1;
+			if (entry.count > max) {
+				const retryAfterSec = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+				res.setHeader('Retry-After', retryAfterSec);
+				res.status(429).json({
+					success: false,
+					error: 'Too many requests. Try again later.',
+					code: 'RATE_LIMITED',
+					request_id: req.id,
+				});
+				return;
+			}
+		} catch {
+			// Never let a limiter bug break a probe — fail open.
+		}
+		next();
+	};
+}
+
+// =========================================================================
 // 7. Response helpers — strict envelope, automatic request_id
 // =========================================================================
 // 3rd arg is overloaded: if it's a number, treat as HTTP status; if string,

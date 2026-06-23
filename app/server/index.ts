@@ -1075,17 +1075,24 @@ app.get('/api/cart/:userId', requireAuth, async (req: Request, res: Response) =>
 
 /**
  * POST /api/cart
- * Add to cart
+ * Add to cart. Zod-validated; quantity is clamped to [1, 100] to
+ * keep a single user from accidentally filling the table.
  */
+const cartAddSchema = z
+	.object({
+		productId: z.number().int().positive(),
+		quantity: z.number().int().min(1).max(100).default(1),
+		variant: z.record(z.string(), z.unknown()).optional(),
+	})
+	.strict();
+
 app.post('/api/cart', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { productId, quantity, variant } = req.body;
+		const v = validate(cartAddSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		const { productId, quantity, variant } = v.data;
 		// Source of truth = authenticated user. Ignore any userId in body.
 		const userId = req.user!.id;
-
-		if (!productId || !quantity) {
-			return sendError(res, 'productId and quantity are required', 400);
-		}
 
 		// Check if already in cart
 		const existing = (await db
@@ -1096,22 +1103,21 @@ app.post('/api/cart', requireAuth, async (req: Request, res: Response) => {
 			await db
 				.prepare('UPDATE cart_items SET quantity = quantity + ? WHERE id = ?')
 				.run(quantity, existing.id);
-			sendSuccess(res, { id: existing.id }, 'Cart updated successfully');
-		} else {
-			const result = (await db
-				.prepare(
-					`INSERT INTO cart_items (user_id, product_id, quantity, variant, created_at)
-           VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-           RETURNING id`
-				)
-				.run(userId, productId, quantity, variant ? JSON.stringify(variant) : null)) as {
-				lastInsertRowid: number | null;
-			};
-			if (result.lastInsertRowid == null) {
-				return sendError(res, 'Failed to add item to cart', 500, 'INSERT_FAILED');
-			}
-			sendSuccess(res, { id: result.lastInsertRowid }, 'Item added to cart');
+			return sendSuccess(res, { id: existing.id }, 'Cart updated successfully');
 		}
+		const result = (await db
+			.prepare(
+				`INSERT INTO cart_items (user_id, product_id, quantity, variant, created_at)
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+         RETURNING id`
+			)
+			.run(userId, productId, quantity, variant ? JSON.stringify(variant) : null)) as {
+			lastInsertRowid: number | null;
+		};
+		if (result.lastInsertRowid == null) {
+			return sendError(res, 'Failed to add item to cart', 500, 'INSERT_FAILED');
+		}
+		return sendSuccess(res, { id: result.lastInsertRowid }, 'Item added to cart');
 	} catch (err) {
 		return sendError(res, err);
 	}
@@ -1119,30 +1125,44 @@ app.post('/api/cart', requireAuth, async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/cart/:id
- * Remove from cart (must belong to authenticated user)
+ * Remove from cart (must belong to authenticated user). Path
+ * parameter is validated as a positive integer.
  */
+const cartItemIdParamSchema = z.object({ id: z.coerce.number().int().positive() });
+
 app.delete('/api/cart/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const cartItemId = Number(req.params.id);
+		const v = validate(cartItemIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid cart item id: ' + v.error, 400);
+		const cartItemId = v.data.id;
 		const userId = req.user!.id;
 		// Guard: only delete items belonging to the authenticated user.
-		await db.prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ?').run(cartItemId, userId);
-		sendSuccess(res, null, 'Item removed from cart');
+		const result = (await db
+			.prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ? RETURNING id')
+			.get(cartItemId, userId)) as { id: number } | undefined;
+		if (!result) return sendError(res, 'Cart item not found', 404);
+		return sendSuccess(res, { id: result.id }, 'Item removed from cart');
 	} catch (err) {
 		return sendError(res, err);
 	}
 });
 
 /**
- * DELETE /api/cart/clear/:userId
- * Clear user's cart
+ * DELETE /api/cart/clear
+ * Clear the authenticated user's cart. Note: the :userId in the
+ * path is intentionally ignored (we always use req.user.id) so a
+ * logged-in user can never wipe somebody else's cart.
  */
 app.delete('/api/cart/clear/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
 		// Source of truth = authenticated user.
 		const userId = req.user!.id;
-		await db.prepare('DELETE FROM cart_items WHERE user_id = ?').run(userId);
-		sendSuccess(res, null, 'Cart cleared');
+		const result = await db
+			.prepare('DELETE FROM cart_items WHERE user_id = ? RETURNING id')
+			.run(userId);
+		// pg-wrapper returns changes; cast for type-safety.
+		const removed = Number((result as unknown as { changes: number }).changes ?? 0);
+		return sendSuccess(res, { removed }, 'Cart cleared');
 	} catch (err) {
 		return sendError(res, err);
 	}
@@ -1176,16 +1196,20 @@ app.get('/api/wishlist/:userId', requireAuth, async (req: Request, res: Response
 
 /**
  * POST /api/wishlist
- * Add to wishlist
+ * Add to wishlist. Zod-validated.
  */
+const wishlistAddSchema = z
+	.object({
+		productId: z.number().int().positive(),
+	})
+	.strict();
+
 app.post('/api/wishlist', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const { productId } = req.body;
+		const v = validate(wishlistAddSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		const { productId } = v.data;
 		const userId = req.user!.id;
-
-		if (!productId) {
-			return sendError(res, 'productId is required', 400);
-		}
 
 		// Check if already in wishlist
 		const existing = (await db
@@ -1205,7 +1229,7 @@ app.post('/api/wishlist', requireAuth, async (req: Request, res: Response) => {
 			return sendError(res, 'Failed to add to wishlist', 500, 'INSERT_FAILED');
 		}
 
-		sendSuccess(res, { id: result.lastInsertRowid }, 'Added to wishlist');
+		return sendSuccess(res, { id: result.lastInsertRowid }, 'Added to wishlist');
 	} catch (err) {
 		return sendError(res, err);
 	}
@@ -1213,17 +1237,24 @@ app.post('/api/wishlist', requireAuth, async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/wishlist/:id
- * Remove from wishlist (must belong to authenticated user)
+ * Remove from wishlist (must belong to authenticated user).
+ * Path parameter is validated as a positive integer; the row is
+ * only deleted if it belongs to the calling user.
  */
+const wishlistItemIdParamSchema = z.object({ id: z.coerce.number().int().positive() });
+
 app.delete('/api/wishlist/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const wishlistItemId = Number(req.params.id);
+		const v = validate(wishlistItemIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid wishlist item id: ' + v.error, 400);
+		const wishlistItemId = v.data.id;
 		const userId = req.user!.id;
 		// Guard: only delete items belonging to the authenticated user.
-		await db
-			.prepare('DELETE FROM wishlist WHERE id = ? AND user_id = ?')
-			.run(wishlistItemId, userId);
-		sendSuccess(res, null, 'Removed from wishlist');
+		const result = (await db
+			.prepare('DELETE FROM wishlist WHERE id = ? AND user_id = ? RETURNING id')
+			.get(wishlistItemId, userId)) as { id: number } | undefined;
+		if (!result) return sendError(res, 'Wishlist item not found', 404);
+		return sendSuccess(res, { id: result.id }, 'Removed from wishlist');
 	} catch (err) {
 		return sendError(res, err);
 	}

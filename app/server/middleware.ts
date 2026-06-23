@@ -11,7 +11,7 @@
 
 import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import type { Response, RequestHandler, ErrorRequestHandler } from 'express';
-import { PgDb } from './db/pg-wrapper.cjs';
+import { PgDb } from './db/pg-wrapper.cts';
 
 // =========================================================================
 // 1. Request ID — generated per request, exposed in response + logs

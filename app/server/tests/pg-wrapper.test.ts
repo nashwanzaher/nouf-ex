@@ -1,5 +1,5 @@
 /**
- * Unit tests for the pgify SQL placeholder rewriter in pg-wrapper.cjs.
+ * Unit tests for the pgify SQL placeholder rewriter in pg-wrapper.cts.
  *
  * The rewriter is the only thing standing between the SQLite-style
  * `?` placeholders used throughout the route handlers and the
@@ -13,10 +13,7 @@
  * block comments, and dollar-quoted PL/pgSQL bodies.
  */
 import { describe, expect, it } from 'vitest';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const { pgify, normalizeSql } = require('../db/pg-wrapper.cjs');
+import { pgify, normalizeSql } from '../db/pg-wrapper.cts';
 
 describe('pgify() — SQL placeholder rewriter', () => {
 	it('rewrites a single placeholder', () => {

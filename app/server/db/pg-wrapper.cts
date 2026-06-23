@@ -16,10 +16,12 @@
  *   - `db.tx(fn)` runs `fn` inside a BEGIN/COMMIT (or ROLLBACK on throw).
  *   - JSON columns: pg returns already-parsed JS values for JSONB.
  *   - Booleans: pg returns real booleans (no 0/1 normalization needed).
+ *
+ * Module type: this file is `.cts` (CommonJS TypeScript) so the dev
+ * runtime (`tsx`) can find it when `server/index.ts` imports the
+ * wrapper. esbuild compiles it to CJS for the production bundle.
  */
-'use strict';
-
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 /** Normalize SQL fragments that are SQLite-flavored but still legal / convenient in pg.
  *  - `datetime('now')`             → `CURRENT_TIMESTAMP`
@@ -27,7 +29,7 @@ const { Pool } = require('pg');
  *    (PostgreSQL accepts the integer form via implicit cast but the boolean form is
  *     clearer and silences type-mismatch warnings.)
  */
-function normalizeSql(sql) {
+export function normalizeSql(sql: string): string {
 	return sql
 		.replace(/datetime\('now'\)/gi, 'CURRENT_TIMESTAMP')
 		.replace(/\b(is_\w+)\s*=\s*1\b/gi, '$1 = TRUE')
@@ -54,15 +56,13 @@ function normalizeSql(sql) {
  * verbatim, so the only place placeholders are rewritten is inside
  * actual SQL.
  */
-function pgify(sql) {
+export function pgify(sql: string): string {
 	let out = '';
 	let i = 0;
 	let k = 0;
 	const len = sql.length;
 
-	const startsWith = (s) => sql.startsWith(s, k);
-
-	const copyVerbatim = (end) => {
+	const copyVerbatim = (end: number) => {
 		out += sql.slice(k, end);
 		k = end;
 	};
@@ -203,52 +203,85 @@ function pgify(sql) {
 	return out;
 }
 
+/** Minimal interface for a pg-compatible query executor. */
+interface QueryExecutor {
+	query: (
+		sql: string,
+		params: unknown[]
+	) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
+}
+
+interface RunResult {
+	lastInsertRowid: number | string | null;
+	changes: number;
+}
+
 class PgStatement {
-	constructor(pool, sql) {
+	private readonly pool: QueryExecutor;
+	private readonly pgSql: string;
+
+	constructor(pool: QueryExecutor, sql: string) {
 		this.pool = pool;
-		this.sql = sql;
 		this.pgSql = pgify(normalizeSql(sql));
 	}
 
-	async _query(params) {
+	private async _query(
+		params: unknown[]
+	): Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }> {
 		const args = params && params.length ? Array.from(params) : [];
 		const res = await this.pool.query(this.pgSql, args);
 		return res;
 	}
 
 	/** Return all rows. */
-	async all(...params) {
+	async all(...params: unknown[]): Promise<Record<string, unknown>[]> {
 		const res = await this._query(params);
 		return res.rows;
 	}
 
 	/** Return the first row or undefined. */
-	async get(...params) {
+	async get(...params: unknown[]): Promise<Record<string, unknown> | undefined> {
 		const res = await this._query(params);
 		return res.rows[0];
 	}
 
 	/** Execute a non-SELECT (INSERT/UPDATE/DELETE). Returns { lastInsertRowid, changes }. */
-	async run(...params) {
+	async run(...params: unknown[]): Promise<RunResult> {
 		const res = await this._query(params);
 		const lastInsertRowid =
-			res.rows && res.rows[0] && res.rows[0].id !== undefined ? res.rows[0].id : null;
+			res.rows && res.rows[0] && res.rows[0].id !== undefined
+				? (res.rows[0].id as string | number)
+				: null;
 		return { lastInsertRowid, changes: res.rowCount || 0 };
 	}
 }
 
 class PgTxDb {
-	constructor(client) {
+	private readonly client: {
+		query: (
+			sql: string,
+			params: unknown[]
+		) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
+	};
+
+	constructor(client: {
+		query: (
+			sql: string,
+			params: unknown[]
+		) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
+	}) {
 		this.client = client;
 	}
-	prepare(sql) {
+	prepare(sql: string): PgStatement {
 		const stmt = new PgStatement({ query: (s, p) => this.client.query(s, p) }, sql);
 		return stmt;
 	}
 }
 
-class PgDb {
-	constructor(connectionString) {
+export class PgDb {
+	private readonly pool: Pool;
+
+	constructor(connectionString: string) {
 		const config = {
 			connectionString,
 			max: 10,
@@ -259,32 +292,34 @@ class PgDb {
 		// the connection string. Production should set DB_SSL=true (or pass
 		// sslmode=require in DATABASE_URL).
 		if (process.env.DB_SSL === 'true' || /sslmode=require/.test(connectionString)) {
-			config.ssl = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+			(config as { ssl?: unknown }).ssl = {
+				rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+			};
 		}
 		this.pool = new Pool(config);
 	}
 
 	/** Redact password from a postgres:// URL — safe to log. */
-	static redactUrl(url) {
+	static redactUrl(url: string): string {
 		return url.replace(/:[^:@/]+@/, ':***@');
 	}
 
-	prepare(sql) {
+	prepare(sql: string): PgStatement {
 		return new PgStatement(this.pool, sql);
 	}
 
 	/** Execute `fn` inside a transaction. The callback receives a tx-scoped PgDb-like object. */
-	async tx(fn) {
+	async tx<T>(fn: (txDb: PgTxDb) => Promise<T>): Promise<T> {
 		const client = await this.pool.connect();
 		try {
-			await client.query('BEGIN');
+			await client.query('BEGIN', []);
 			const txDb = new PgTxDb(client);
 			const out = await fn(txDb);
-			await client.query('COMMIT');
+			await client.query('COMMIT', []);
 			return out;
 		} catch (err) {
 			try {
-				await client.query('ROLLBACK');
+				await client.query('ROLLBACK', []);
 			} catch (_) {
 				/* ignore */
 			}
@@ -294,9 +329,7 @@ class PgDb {
 		}
 	}
 
-	async close() {
+	async close(): Promise<void> {
 		await this.pool.end();
 	}
 }
-
-module.exports = { PgDb, pgify, normalizeSql };

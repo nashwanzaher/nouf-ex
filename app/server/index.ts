@@ -6,7 +6,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import fs from 'fs';
-import { PgDb } from './db/pg-wrapper.cjs';
+import { PgDb } from './db/pg-wrapper.cts';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 import dotenv from 'dotenv';
@@ -27,7 +27,9 @@ import {
 	loadEnv,
 	resolveDatabaseUrl,
 	signAuthToken,
+	configureTrustProxy,
 	HttpError,
+	log,
 	type AuthRole,
 } from './middleware';
 
@@ -63,7 +65,6 @@ const STATIC_PATH = env.STATIC_PATH || path.resolve(__dirname, 'dist');
 const db = new PgDb(DATABASE_URL);
 
 // --- Middleware stack (order matters) ---
-import { configureTrustProxy } from './middleware';
 configureTrustProxy(app);
 app.use(requestId);
 app.use(securityHeaders);
@@ -74,11 +75,10 @@ const ALLOWED_ORIGINS = env.ALLOWED_ORIGINS.split(',')
 	.filter(Boolean);
 app.use(
 	cors({
-		origin: (origin, callback) => {
-			// Allow same-origin requests (no Origin header) and configured origins.
-			if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-			callback(new Error('CORS: origin not allowed: ' + origin));
-		},
+		// cors accepts an array of allowed origins; it returns 403 with a
+		// safe message for any other Origin header, and still allows
+		// same-origin / curl (no Origin) requests.
+		origin: ALLOWED_ORIGINS,
 		credentials: true,
 	})
 );
@@ -104,15 +104,19 @@ const READY_STARTED_AT = Date.now();
 app.get('/api/ready', async (_req: Request, res: Response) => {
 	const checks: Record<string, { ok: boolean; ms: number; detail?: string }> = {};
 	const startedAt = Date.now();
+	let timeoutId: NodeJS.Timeout | undefined;
 	try {
 		// Use a 2 s timeout so a slow DB doesn't make /api/ready hang and
-		// get flagged as unhealthy.
-		const result = await Promise.race([
-			db.prepare('SELECT 1 AS ok').get(),
-			new Promise<never>((_, reject) => setTimeout(() => reject(new Error('db timeout')), 2000)),
-		]);
+		// get flagged as unhealthy. The timer is cleared on success so it
+		// doesn't fire after the response is sent.
+		const timeout = new Promise<never>((_, reject) => {
+			timeoutId = setTimeout(() => reject(new Error('db timeout')), 2000);
+		});
+		const result = await Promise.race([db.prepare('SELECT 1 AS ok').get(), timeout]);
+		if (timeoutId) clearTimeout(timeoutId);
 		checks.db = { ok: !!result, ms: Date.now() - startedAt };
 	} catch (e) {
+		if (timeoutId) clearTimeout(timeoutId);
 		checks.db = { ok: false, ms: Date.now() - startedAt, detail: (e as Error).message };
 	}
 	const allOk = Object.values(checks).every((c) => c.ok);
@@ -154,7 +158,7 @@ setInterval(() => {
 	for (const [k, v] of RATE_BUCKETS) {
 		if (now > v.resetAt) RATE_BUCKETS.delete(k);
 	}
-}, 60 * 1000).unref?.();
+}, 60 * 1000).unref();
 
 const authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth'); // 20 req / 15min / IP / route
 
@@ -225,9 +229,15 @@ const scrypt = promisify(scryptCb) as (
 ) => Promise<Buffer>;
 const SCRYPT_KEYLEN = 64;
 
+// IMPORTANT: both `hashPassword` and `verifyPassword` must pass the salt to
+// scrypt the same way. The seed file `scripts/gen-seed-hashes.cjs` uses the
+// raw Buffer as the salt argument to scrypt, so we do the same here. (The
+// previous implementation used `salt.toString('base64')` on the write path
+// and the raw base64 string on the read path, which silently broke every
+// seeded account.)
 async function hashPassword(password: string): Promise<string> {
 	const salt = randomBytes(16);
-	const derivedKey = await scrypt(password, salt.toString('base64'), SCRYPT_KEYLEN);
+	const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN);
 	return `scrypt$${salt.toString('base64')}$${derivedKey.toString('base64')}`;
 }
 
@@ -240,7 +250,8 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 	if (!stored.startsWith('scrypt$')) return false;
 	const parts = stored.split('$');
 	if (parts.length !== 3) return false;
-	const [, salt, keyB64] = parts;
+	const [, saltB64, keyB64] = parts;
+	const salt = Buffer.from(saltB64, 'base64');
 	const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN);
 	const storedKey = Buffer.from(keyB64, 'base64');
 	if (derivedKey.length !== storedKey.length) return false;
@@ -393,7 +404,7 @@ app.get('/api/products', async (req: Request, res: Response) => {
 			offset: numOffset,
 		});
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -422,7 +433,7 @@ app.get('/api/products/featured', async (_req: Request, res: Response) => {
 		const products = rows.map(getProductWithParsedFields);
 		sendSuccess(res, products);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -439,7 +450,7 @@ app.get('/api/products/deals', async (_req: Request, res: Response) => {
 		const products = rows.map(getProductWithParsedFields);
 		sendSuccess(res, products);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -488,7 +499,7 @@ app.get('/api/products/:id', async (req: Request, res: Response) => {
 			images,
 		});
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -504,7 +515,7 @@ app.get('/api/stores', async (_req: Request, res: Response) => {
 		const stores = await db.prepare('SELECT * FROM stores ORDER BY rating DESC').all();
 		sendSuccess(res, stores);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -532,8 +543,8 @@ app.get('/api/stores/:id', async (req: Request, res: Response) => {
 			products: products.map(getProductWithParsedFields),
 		});
 	} catch (err) {
-		console.error('[stores/:id]', (err as Error).message);
-		sendError(res, err);
+		log.error({ msg: 'stores/:id', request_id: req.id, error: (err as Error).message });
+		return sendError(res, err);
 	}
 });
 
@@ -561,7 +572,7 @@ app.get('/api/stores/:id/reviews', async (req: Request, res: Response) => {
 			.all(Number(id));
 		sendSuccess(res, reviews);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -586,7 +597,7 @@ app.get('/api/categories', async (_req: Request, res: Response) => {
 			.all();
 		sendSuccess(res, categories);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -614,7 +625,7 @@ app.get('/api/categories/:slug', async (req: Request, res: Response) => {
 			products: products.map(getProductWithParsedFields),
 		});
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -657,7 +668,7 @@ app.get('/api/reviews', async (req: Request, res: Response) => {
 		const reviews = await db.prepare(sql).all(...params);
 		sendSuccess(res, reviews);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -679,12 +690,12 @@ app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
 		// and influence the average rating.
 		const purchased = (await db
 			.prepare(
-				`SELECT 1 FROM order_items oi
+				`SELECT 1 AS found FROM order_items oi
              JOIN orders o ON oi.order_id = o.id
             WHERE o.customer_id = ? AND oi.product_id = ?
             LIMIT 1`
 			)
-			.get(customerId, productId)) as { '?column?': number } | undefined;
+			.get(customerId, productId)) as { found: 1 } | undefined;
 		const isVerified = Boolean(purchased);
 
 		const result = (await db
@@ -702,8 +713,11 @@ app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
 				comment ?? null,
 				isVerified ? 1 : 0
 			)) as {
-			lastInsertRowid: number;
+			lastInsertRowid: number | null;
 		};
+		if (result.lastInsertRowid == null) {
+			return sendError(res, 'Failed to create review', 500, 'INSERT_FAILED');
+		}
 
 		// Update product rating. P0-3 fix: hidden reviews (spam, moderation
 		// queue) must NOT count toward the average. The DB trigger
@@ -722,7 +736,7 @@ app.post('/api/reviews', requireAuth, async (req: Request, res: Response) => {
 
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Review submitted successfully');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -760,7 +774,7 @@ app.get('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		const orders = await db.prepare(sql).all(...params);
 		sendSuccess(res, orders);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -802,7 +816,7 @@ app.get('/api/orders/:id', requireAuth, async (req: Request, res: Response) => {
 
 		sendSuccess(res, { ...order, items });
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -959,7 +973,10 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 						finalTotal,
 						JSON.stringify(shippingAddress),
 						notes || null
-					)) as { lastInsertRowid: number };
+					)) as { lastInsertRowid: number | null };
+				if (result.lastInsertRowid == null) {
+					throw new HttpError(500, 'Failed to create order', { code: 'INSERT_FAILED' });
+				}
 				const newOrderId: number = result.lastInsertRowid;
 
 				// Look up product name for the snapshot column.
@@ -1007,7 +1024,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 			'Order created successfully'
 		);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1035,7 +1052,7 @@ app.get('/api/cart/:userId', requireAuth, async (req: Request, res: Response) =>
 			.all(userId);
 		sendSuccess(res, cartItems);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1071,12 +1088,15 @@ app.post('/api/cart', requireAuth, async (req: Request, res: Response) => {
            RETURNING id`
 				)
 				.run(userId, productId, quantity, variant ? JSON.stringify(variant) : null)) as {
-				lastInsertRowid: number;
+				lastInsertRowid: number | null;
 			};
+			if (result.lastInsertRowid == null) {
+				return sendError(res, 'Failed to add item to cart', 500, 'INSERT_FAILED');
+			}
 			sendSuccess(res, { id: result.lastInsertRowid }, 'Item added to cart');
 		}
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1092,7 +1112,7 @@ app.delete('/api/cart/:id', requireAuth, async (req: Request, res: Response) => 
 		await db.prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ?').run(cartItemId, userId);
 		sendSuccess(res, null, 'Item removed from cart');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1107,7 +1127,7 @@ app.delete('/api/cart/clear/:userId', requireAuth, async (req: Request, res: Res
 		await db.prepare('DELETE FROM cart_items WHERE user_id = ?').run(userId);
 		sendSuccess(res, null, 'Cart cleared');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1121,7 +1141,7 @@ app.delete('/api/cart/clear/:userId', requireAuth, async (req: Request, res: Res
 app.get('/api/wishlist/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const userId = req.user!.id;
-		const items = db
+		const items = await db
 			.prepare(
 				`SELECT w.*, p.name_en, p.name_ar, p.name_zh, p.price, p.original_price, p.main_image, p.rating, p.review_count, s.store_name
          FROM wishlist w
@@ -1131,9 +1151,9 @@ app.get('/api/wishlist/:userId', requireAuth, async (req: Request, res: Response
          ORDER BY w.created_at DESC`
 			)
 			.all(userId);
-		sendSuccess(res, items);
+		return sendSuccess(res, items);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1163,11 +1183,14 @@ app.post('/api/wishlist', requireAuth, async (req: Request, res: Response) => {
 			.prepare(
 				'INSERT INTO wishlist (user_id, product_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP) RETURNING id'
 			)
-			.run(userId, productId)) as { lastInsertRowid: number };
+			.run(userId, productId)) as { lastInsertRowid: number | null };
+		if (result.lastInsertRowid == null) {
+			return sendError(res, 'Failed to add to wishlist', 500, 'INSERT_FAILED');
+		}
 
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Added to wishlist');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1185,7 +1208,7 @@ app.delete('/api/wishlist/:id', requireAuth, async (req: Request, res: Response)
 			.run(wishlistItemId, userId);
 		sendSuccess(res, null, 'Removed from wishlist');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1204,7 +1227,7 @@ app.get('/api/notifications/:userId', requireAuth, async (req: Request, res: Res
 			.all(userId);
 		sendSuccess(res, items);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1221,7 +1244,7 @@ app.put('/api/notifications/:id/read', requireAuth, async (req: Request, res: Re
 			.run(notificationId, userId);
 		sendSuccess(res, null, 'Notification marked as read');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1255,7 +1278,10 @@ app.post('/api/auth/register', authLimiter, async (req: Request, res: Response) 
            VALUES (?, ?, ?, ?, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
            RETURNING id`
 				)
-				.run(email, passwordHash, name, role)) as { lastInsertRowid: number };
+				.run(email, passwordHash, name, role)) as { lastInsertRowid: number | null };
+			if (result.lastInsertRowid == null) {
+				throw new HttpError(500, 'Failed to create user', { code: 'INSERT_FAILED' });
+			}
 			userId = result.lastInsertRowid;
 		} catch (err) {
 			const pg = err as { code?: string };
@@ -1381,7 +1407,7 @@ app.get('/api/stats/home', async (_req: Request, res: Response) => {
 			deals: dealsProducts.map(getProductWithParsedFields),
 		});
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1450,7 +1476,7 @@ app.post('/api/payments', authLimiter, requireAuth, async (req: Request, res: Re
 
 		sendSuccess(res, { id: result.lastInsertRowid, status: initialStatus }, 'Payment recorded');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1477,7 +1503,7 @@ app.get('/api/payments/order/:orderId', requireAuth, async (req: Request, res: R
 			.all(orderId);
 		sendSuccess(res, payments);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1518,7 +1544,7 @@ app.post('/api/payments/:id/confirm', requireAuth, async (req: Request, res: Res
 			.run(result!.order_id);
 		sendSuccess(res, { order_id: result!.order_id }, 'Payment confirmed');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1548,7 +1574,7 @@ app.get('/api/addresses', requireAuth, async (req: Request, res: Response) => {
 			.all(userId);
 		sendSuccess(res, rows);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1585,7 +1611,7 @@ app.post('/api/addresses', requireAuth, async (req: Request, res: Response) => {
 			);
 		sendSuccess(res, result, 'Address created');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1601,7 +1627,7 @@ app.delete('/api/addresses/:id', requireAuth, async (req: Request, res: Response
 		if (!result) return sendError(res, 'Address not found', 404);
 		sendSuccess(res, { id: result.id }, 'Address deleted');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1630,7 +1656,7 @@ app.get('/api/shipping/methods', async (req: Request, res: Response) => {
 		}));
 		sendSuccess(res, enriched);
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1663,7 +1689,7 @@ type CouponRow = {
 /** Pick the columns we read from the coupons table. Centralised so
  *  the validate and orders paths stay in sync if we add columns. */
 const COUPON_COLUMNS =
-	'id, code, type, value, min_order, max_discount, usage_limit, usage_count, starts_at, expires_at';
+	'id, code, type, value, min_order_amount AS min_order, max_discount, usage_limit, usage_count, starts_at, expires_at';
 
 /** Pure function: given a coupon row and a subtotal, return the
  *  discount amount in the same units (rounded to 2 decimals, clamped
@@ -1717,7 +1743,7 @@ app.post('/api/coupons/validate', requireAuth, async (req: Request, res: Respons
 			final_total: Math.round((order_subtotal - discount) * 100) / 100,
 		});
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1763,7 +1789,7 @@ app.post('/api/coupons/redeem', requireAuth, async (req: Request, res: Response)
 			.run(coupon.id);
 		sendSuccess(res, result, 'Coupon redeemed');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1807,7 +1833,7 @@ app.post('/api/refunds', requireAuth, async (req: Request, res: Response) => {
 			.get(order_id, userId, amount, reason)) as { id: number };
 		sendSuccess(res, result, 'Refund requested');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1852,7 +1878,7 @@ app.post('/api/refunds/:id/resolve', requireRole('admin'), async (req: Request, 
 		}
 		sendSuccess(res, { id, status: finalStatus }, 'Refund resolved');
 	} catch (err) {
-		sendError(res, err);
+		return sendError(res, err);
 	}
 });
 
@@ -1916,12 +1942,13 @@ const __isMainModule = (() => {
 })();
 if (__isMainModule) {
 	app.listen(PORT, () => {
-		console.log(`═══════════════════════════════════════════`);
-		console.log(`  Nouf-ex API Server running on port ${PORT}`);
-		console.log(`  Database: ${PgDb.redactUrl(DATABASE_URL)}`);
-		console.log(`  Static:   ${STATIC_PATH}`);
-		console.log(`  Env:      ${process.env.NODE_ENV || 'development'}`);
-		console.log(`═══════════════════════════════════════════`);
+		log.info({
+			msg: 'server_started',
+			port: PORT,
+			database: PgDb.redactUrl(DATABASE_URL),
+			static_path: STATIC_PATH,
+			env: process.env.NODE_ENV || 'development',
+		});
 	});
 }
 

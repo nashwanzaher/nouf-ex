@@ -1,18 +1,8 @@
 /**
  * tests/mocks/handlers.ts — MSW request handlers for the API.
- *
- * Tests start the MSW server via `server.listen()` in their setup, and the
- * frontend's fetch() calls hit these handlers instead of the real Express
- * server. This gives us deterministic, isolated integration tests that
- * don't need Docker/Postgres.
- *
- * Adding a new endpoint to test? Add a handler here. The default behavior
- * for unhandled requests is to return a 404 with a clear message.
  */
 
 import { http, HttpResponse, delay } from 'msw';
-
-// ─── Tiny in-memory fixtures ────────────────────────────────────────────────
 
 const productsFixture = [
 	{
@@ -145,7 +135,94 @@ const homeStats = {
 	deals_products: productsFixture.filter((p) => p.deal_discount > 0),
 };
 
-// ─── Handlers ───────────────────────────────────────────────────────────────
+const ordersFixture = [
+	{
+		id: 1,
+		order_number: 'ORD-1A2B3C4D',
+		customer_id: 5,
+		store_id: 1,
+		status: 'pending',
+		payment_method: 'cod',
+		payment_status: 'pending',
+		subtotal: 50000,
+		shipping_cost: 700,
+		discount: 5000,
+		coupon_code: 'SAVE10',
+		discount_amount: 5000,
+		total: 45700,
+		currency: 'YER',
+		shipping_address: {
+			label: 'Home',
+			full_name: 'Ahmed Al-Maqtari',
+			phone: '+967712345671',
+			governorate: 'Sanaa',
+			city: 'Sanaa',
+			street: 'Hadda St',
+		},
+		notes: null,
+		store_name: 'Test Store',
+		store_logo: '/noufex-logo.svg',
+		created_at: '2026-06-20T10:00:00Z',
+		updated_at: '2026-06-20T10:00:00Z',
+	},
+	{
+		id: 2,
+		order_number: 'ORD-9Z8Y7X6W',
+		customer_id: 5,
+		store_id: 1,
+		status: 'delivered',
+		payment_method: 'cod',
+		payment_status: 'paid',
+		subtotal: 25000,
+		shipping_cost: 700,
+		discount: 0,
+		coupon_code: null,
+		discount_amount: 0,
+		total: 25700,
+		currency: 'YER',
+		shipping_address: null,
+		notes: null,
+		store_name: 'Test Store',
+		store_logo: '/noufex-logo.svg',
+		created_at: '2026-05-15T08:00:00Z',
+		updated_at: '2026-05-18T14:00:00Z',
+	},
+];
+
+const addressesFixture = [
+	{
+		id: 1,
+		user_id: 5,
+		label: 'Home',
+		full_name: 'Ahmed Al-Maqtari',
+		phone: '+967712345671',
+		governorate: 'Sanaa',
+		city: 'Sanaa',
+		district: 'Hadda',
+		street: 'Hadda Main St',
+		building: 'Al-Orwas Building, Floor 3',
+		notes: 'Near Nahdi pharmacy',
+		is_default: 1,
+		created_at: '2026-01-15T10:00:00Z',
+		updated_at: '2026-01-15T10:00:00Z',
+	},
+	{
+		id: 2,
+		user_id: 5,
+		label: 'Office',
+		full_name: 'Ahmed Al-Maqtari',
+		phone: '+967712345671',
+		governorate: 'Aden',
+		city: 'Al-Mansoura',
+		district: 'Al-Mansoura',
+		street: 'Al-Jumhuriya St',
+		building: 'Al-Saeed Building',
+		notes: null,
+		is_default: 0,
+		created_at: '2026-02-01T08:00:00Z',
+		updated_at: '2026-02-01T08:00:00Z',
+	},
+];
 
 export const handlers = [
 	// Categories
@@ -188,12 +265,7 @@ export const handlers = [
 	http.get('*/api/products/deals', async () => {
 		return HttpResponse.json({ success: true, data: homeStats.deals_products });
 	}),
-	// NOTE: keep `*/api/products/:id` AFTER the literal `featured` and
-	// `deals` handlers so the loop matches the most specific pattern
-	// first (otherwise `id` would be parsed as the string "featured").
 	http.get('*/api/products/:id', async (info) => {
-		// When invoked outside the MSW interceptor (via fetch-spy),
-		// `params` is not populated; we fall back to parsing the URL.
 		const url = (info.request as Request).url;
 		const m = url.match(/\/api\/products\/([^/?#]+)/);
 		const idStr = String(info.params?.id ?? (m ? decodeURIComponent(m[1]) : ''));
@@ -255,9 +327,30 @@ export const handlers = [
 		});
 	}),
 
-	// Auth
-	http.post('*/api/auth/login', async () => {
-		return HttpResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+	// Auth — supports both success and failure on the same path
+	http.post('*/api/auth/login', async ({ request }) => {
+		const body = (await request.json().catch(() => ({}))) as {
+			email?: string;
+			password?: string;
+		};
+		if (body.email === 'ahmed@gmail.com' && body.password === 'customer123') {
+			return HttpResponse.json({
+				success: true,
+				data: {
+					user: {
+						id: 5,
+						email: 'ahmed@gmail.com',
+						full_name: 'Ahmed',
+						role: 'customer',
+					},
+					token: 'test-jwt-token-1234',
+				},
+			});
+		}
+		return HttpResponse.json(
+			{ success: false, error: 'Invalid credentials' },
+			{ status: 401 }
+		);
 	}),
 	http.post('*/api/auth/register', async () => {
 		return HttpResponse.json({ success: false, error: 'Email already in use' }, { status: 409 });
@@ -276,6 +369,70 @@ export const handlers = [
 	// Notifications
 	http.get('*/api/notifications/:userId', async () => {
 		return HttpResponse.json({ success: true, data: [] });
+	}),
+
+	// Orders (P0-1: cart-to-order pipeline)
+	http.get('*/api/orders', async () => {
+		return HttpResponse.json({ success: true, data: ordersFixture });
+	}),
+	http.get('*/api/orders/:id', async (info) => {
+		const url = (info.request as Request).url;
+		const m = url.match(/\/api\/orders\/(\d+)/);
+		const id = m ? parseInt(m[1], 10) : NaN;
+		const order = ordersFixture.find((o) => o.id === id);
+		if (!order) {
+			return HttpResponse.json(
+				{ success: false, error: 'Order not found' },
+				{ status: 404 }
+			);
+		}
+		return HttpResponse.json({
+			success: true,
+			data: {
+				...order,
+				items: [
+					{
+						id: 1,
+						order_id: order.id,
+						product_id: 1,
+						variant_id: null,
+						product_name: 'Premium Wireless Headphones',
+						product_name_ar: 'سماعات لاسلكية فاخرة',
+						product_image: '/category-electronics.jpg',
+						quantity: 1,
+						unit_price: 25000,
+						total_price: 25000,
+					},
+				],
+			},
+		});
+	}),
+	http.post('*/api/orders', async ({ request }) => {
+		const body = (await request.json()) as Record<string, unknown>;
+		const newId = ordersFixture.length + 1;
+		const total = Number(body.total ?? 0);
+		const discount = Number(body.discount ?? 0);
+		return HttpResponse.json({
+			success: true,
+			data: {
+				id: newId,
+				orderNumber: `ORD-${newId.toString(16).toUpperCase().padStart(8, '0')}`,
+				discount,
+				total,
+			},
+		});
+	}),
+
+	// Addresses
+	http.get('*/api/addresses', async () => {
+		return HttpResponse.json({ success: true, data: addressesFixture });
+	}),
+	http.post('*/api/addresses', async ({ request }) => {
+		const body = (await request.json()) as Record<string, unknown>;
+		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
+	}),
+	http.delete('*/api/addresses/:id', async () => {
+		return HttpResponse.json({ success: true, data: { id: 1 } });
 	}),
 
 	// Coupons
@@ -325,12 +482,6 @@ export const handlers = [
 				},
 			],
 		});
-	}),
-
-	// Addresses
-	http.post('*/api/addresses', async ({ request }) => {
-		const body = (await request.json()) as Record<string, unknown>;
-		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
 	}),
 
 	// Refunds

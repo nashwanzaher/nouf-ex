@@ -22,3 +22,7 @@ app/server/index.js
 mcp-server/dist/
 mcp-server/node_modules/
 mcp-server/.tmp*
+
+# Local logs (e.g. logs/autostart.log from scripts/autostart.ps1)
+logs/
+*.log.*

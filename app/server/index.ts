@@ -1281,16 +1281,50 @@ app.get('/api/notifications/:userId', requireAuth, async (req: Request, res: Res
 
 /**
  * PUT /api/notifications/:id/read
+ * Mark a single notification as read. Idempotent: re-marking an
+ * already-read notification still returns 200 with the row (the
+ * read_at timestamp is NOT bumped, so a second call doesn't
+ * clobber the original "first read" time).
+ *
+ * Path id is validated as a positive integer; missing rows return
+ * 404 instead of silently succeeding.
  */
+const notificationIdParamSchema = z.object({ id: z.coerce.number().int().positive() });
+
 app.put('/api/notifications/:id/read', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const notificationId = Number(req.params.id);
+		const v = validate(notificationIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid notification id: ' + v.error, 400);
+		const notificationId = v.data.id;
 		const userId = req.user!.id;
-		// Guard: only mark notifications owned by the authenticated user.
-		await db
-			.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?')
-			.run(notificationId, userId);
-		sendSuccess(res, null, 'Notification marked as read');
+
+		// Idempotent mark-as-read: only stamp read_at on the FIRST
+		// read. If the row is already is_read, we just return it
+		// without bumping read_at so the audit trail reflects when
+		// the user actually first read it.
+		const updated = (await db
+			.prepare(
+				`UPDATE notifications
+            SET is_read = TRUE,
+                read_at  = COALESCE(read_at, NOW())
+          WHERE id = $1 AND user_id = $2
+          RETURNING id, user_id, type, title, body, data, is_read, read_at, created_at`
+			)
+			.get(notificationId, userId)) as
+			| {
+					id: number;
+					user_id: number;
+					type: string;
+					title: string;
+					body: string | null;
+					data: unknown;
+					is_read: boolean;
+					read_at: string;
+					created_at: string;
+			  }
+			| undefined;
+		if (!updated) return sendError(res, 'Notification not found', 404);
+		return sendSuccess(res, updated, 'Notification marked as read');
 	} catch (err) {
 		return sendError(res, err);
 	}
@@ -2441,9 +2475,10 @@ async function writeAuditLog(
 }
 
 /** Builds a dynamic `SET col = $N` list from a partial object. Returns
- *  the assembled SQL fragment and the parameter list. Throws when
- *  no updateable fields are present so callers don't fire
- *  no-op UPDATEs. */
+ *  the assembled SQL fragment and the parameter list. Throws an
+ *  HttpError(400) when no updateable fields are present so callers
+ *  don't fire no-op UPDATEs and the global error handler surfaces
+ *  a clean 400 with a structured code (instead of leaking a 500). */
 function buildUpdateSet(fields: Record<string, unknown>): { sql: string; params: unknown[] } {
 	const sets: string[] = [];
 	const params: unknown[] = [];
@@ -2452,7 +2487,9 @@ function buildUpdateSet(fields: Record<string, unknown>): { sql: string; params:
 		sets.push(`${k} = $${params.length}`);
 	}
 	if (sets.length === 0) {
-		throw new Error('At least one updateable field must be provided.');
+		throw new HttpError(400, 'At least one updateable field must be provided.', {
+			code: 'EMPTY_UPDATE',
+		});
 	}
 	return { sql: sets.join(', '), params };
 }
@@ -2625,6 +2662,59 @@ app.patch(
 				note: v.data.note ?? null,
 			});
 			return sendSuccess(res, updated, 'Order status updated');
+		} catch (err) {
+			return sendError(res, err);
+		}
+	}
+);
+
+/** PATCH /api/admin/products/:id
+ *  Body: { is_active?, is_featured? }
+ *  Toggle product visibility / featured status from the admin
+ *  panel. Used for moderation (unpublish bad listings) and for
+ *  curating the homepage featured row. The stock, price, and
+ *  product_name live behind a separate /api/admin/products/:id
+ *  write path if/when needed.
+ */
+const adminProductUpdateSchema = z
+	.object({
+		is_active: z.boolean().optional(),
+		is_featured: z.boolean().optional(),
+	})
+	.strict();
+
+app.patch(
+	'/api/admin/products/:id',
+	requireAuth,
+	requireRole('admin'),
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(adminProductUpdateSchema, req.body);
+			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+
+			const productId = Number(req.params.id);
+			if (!Number.isInteger(productId) || productId <= 0) {
+				return sendError(res, 'Invalid product id', 400);
+			}
+
+			const current = (await db
+				.prepare(
+					'SELECT id, name_en, name_ar, is_active, is_featured, deal_discount FROM products WHERE id = $1'
+				)
+				.get(productId)) as Record<string, unknown> | undefined;
+			if (!current) return sendError(res, 'Product not found', 404);
+
+			const { sql: setSql, params } = buildUpdateSet(v.data);
+			params.push(productId);
+			const updated = (await db
+				.prepare(
+					`UPDATE products SET ${setSql} WHERE id = $${params.length}
+					 RETURNING id, name_en, name_ar, is_active, is_featured, deal_discount, updated_at`
+				)
+				.get(...params)) as Record<string, unknown>;
+
+			await writeAuditLog(req, 'update_product', 'product', productId, current, updated);
+			return sendSuccess(res, updated, 'Product updated');
 		} catch (err) {
 			return sendError(res, err);
 		}

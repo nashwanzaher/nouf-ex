@@ -12,7 +12,6 @@
 		"api:prod": "NODE_ENV=production tsx server/index.ts",
 		"api:build": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=server/index.js --packages=external",
 		"db:setup": "node ../scripts/db-setup.cjs",
-		"agent:setup": "node ../agent_db/db-setup.cjs",
 		"test": "vitest run",
 		"test:unit": "vitest run --exclude 'server/tests/api-server.test.ts'",
 		"test:watch": "vitest",

@@ -58,6 +58,15 @@ export default defineConfig({
 						'@': path.resolve(__dirname, './src'),
 					},
 				},
+				// Treat `.cts` (CommonJS TypeScript) as TS so the
+				// server-only pg-wrapper is parseable by the test
+				// bundler. Without this, vitest's rollup plugin
+				// passes the file to a JS parser and chokes on
+				// the `function foo(): T` return-type annotation.
+				esbuild: {
+					loader: 'tsx',
+					include: [/server\/.*\.[mc]?[jt]sx?$/],
+				},
 				test: {
 					name: 'server',
 					environment: 'node',

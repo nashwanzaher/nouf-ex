@@ -224,7 +224,7 @@ function validate<T>(
 // verification too. Both sides now agree on base64.
 const scrypt = promisify(scryptCb) as (
 	password: string,
-	salt: string,
+	salt: string | Buffer,
 	keylen: number
 ) => Promise<Buffer>;
 const SCRYPT_KEYLEN = 64;
@@ -904,7 +904,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		} = await db.tx(
 			async (txDb: {
 				prepare: (sql: string) => {
-					run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | null; changes: number }>;
+					run: (...args: unknown[]) => Promise<{ lastInsertRowid: number | string | null; changes: number }>;
 					get: (...args: unknown[]) => Promise<unknown>;
 				};
 			}) => {

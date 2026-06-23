@@ -22,7 +22,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;      -- gen_random_uuid()
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS users (
     id                    INTEGER     GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    email                 CITEXT      NOT NULL,
+    email                 CITEXT      NOT NULL UNIQUE,
     password_hash         TEXT        NOT NULL,
     full_name             TEXT        NOT NULL,
     phone                 VARCHAR(20),
@@ -287,6 +287,11 @@ CREATE TABLE IF NOT EXISTS cart_items (
     user_id    INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     product_id INTEGER     NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     variant_id INTEGER     REFERENCES product_variants(id) ON DELETE SET NULL,
+    -- JSON blob of the picked product variant (color/size/custom fields).
+    -- Server-side cart handlers INSERT this as a JSON string from the API
+    -- body and the API client reads it back. Distinct from `variant_id`
+    -- which is the FK to product_variants for pre-defined SKUs.
+    variant    JSONB,
     quantity   INTEGER     NOT NULL DEFAULT 1 CHECK (quantity > 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

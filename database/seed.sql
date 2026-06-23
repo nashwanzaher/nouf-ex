@@ -583,7 +583,7 @@ VALUES
 (1, 2, 3,  2, now() - interval '1 day', now() - interval '1 day'),
 (2, 3, 14, 1, now() - interval '2 days', now() - interval '2 days'),
 (3, 4, 8,  1, now() - interval '3 hours', now() - interval '3 hours')
-ON CONFLICT (user_id, product_id, variant_id) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('cart_items','id'), GREATEST((SELECT MAX(id) FROM cart_items), 1));
 
 -- ---------------------------------------------------------------------

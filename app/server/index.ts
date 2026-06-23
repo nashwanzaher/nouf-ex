@@ -35,6 +35,8 @@ import {
 } from './middleware';
 import { adminRouter } from './routes/admin.cts';
 import { catalogRouter } from './routes/catalog.cts';
+import { auth2faRouter } from './routes/auth-2fa.cts';
+import { signPartialToken } from './lib/partial-token.cts';
 import { getProductWithParsedFields } from './lib/shared.cts';
 
 dotenv.config();
@@ -1078,9 +1080,29 @@ app.post('/api/auth/login', authLimiter, async (req: Request, res: Response) => 
 
 	// Strip password_hash from response.
 	const { password_hash: _omit, ...userWithoutPassword } = user;
+	// P0-5: 2FA gate. If the account has 2FA enabled, the password
+	// check alone is not enough — the user must also pass a TOTP
+	// code (or a backup code). We return a short-lived partial
+	// token that the client exchanges via POST /api/auth/2fa/verify.
+	if ((user as { two_factor_enabled?: boolean }).two_factor_enabled) {
+		const partial_token = signPartialToken(user.id);
+		return sendSuccess(
+			res,
+			{
+				requires_2fa: true,
+				partial_token,
+				user_id: user.id,
+			},
+			200,
+			'Password OK. 2FA required — call /api/auth/2fa/verify with the code.'
+		);
+	}
 	const token = signAuthToken({ sub: user.id, role: user.role });
 	sendSuccess(res, { user: userWithoutPassword, token }, 200, 'Login successful');
 });
+
+// Mount the 2FA router. All endpoints are under /api/auth/2fa.
+app.use('/api/auth/2fa', auth2faRouter);
 
 /**
  * GET /api/auth/me

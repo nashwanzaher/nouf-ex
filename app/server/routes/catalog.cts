@@ -18,6 +18,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { db, sendSuccess, sendError, log, getProductWithParsedFields } from '../lib/shared.cts';
+import { runSearch, logSearch, normalizeQuery } from '../lib/search.cts';
 
 export const catalogRouter = Router();
 
@@ -334,6 +335,96 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
 		return sendSuccess(res, categories);
 	} catch (err) {
 		return sendError(res, err);
+	}
+});
+
+// ═══════════════════════════════════════════════════════════
+// SEARCH — P1-1: full-text search backend
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * GET /api/search
+ * Bilingual (AR/EN/ZH) full-text search over products. Built on
+ * the GIN index `idx_products_search_tsv` (see migration 0009).
+ *
+ * Query params
+ *   q         (required)  the user's search string, e.g. "honey"
+ *                          or "عسل". Pass via `websearch_to_tsquery`,
+ *                          which supports AND/OR/quoted phrases.
+ *   category   (optional)  filter by category slug
+ *   store     (optional)  filter by store id
+ *   minPrice  (optional)  numeric, inclusive
+ *   maxPrice  (optional)  numeric, inclusive
+ *   sort      (optional)  'relevance' (default) | 'price_asc' |
+ *                          'price_desc' | 'newest'
+ *   limit     (optional)  1..100, default 20
+ *   offset    (optional)  >= 0, default 0
+ *
+ * Response shape
+ *   { query, total, limit, offset, duration_ms, products: [...] }
+ *
+ * Side effects
+ *   Writes a row to `search_logs` with the query, result count, and
+ *   the duration. The log is best-effort — a failure to insert must
+ *   never break the user-facing search.
+ *
+ * Implementation notes
+ *   - Weights: A=name_ar, B=name_en, C=name_zh, D=description*
+ *     so a hit on the Arabic name outranks a hit on the description.
+ *     The `ts_rank_cd` (cover density) variant is used instead of
+ *     plain `ts_rank` because it gives a better relevance spread on
+ *     short queries like "honey" vs long queries like "spice".
+ *   - The full-text match is the hard gate. A result MUST hit the
+ *     FTS — category/price filters narrow the set further, but
+ *     they don't broaden it. This is the right behaviour for a
+ *     search engine: returning "everything in this category" when
+ *     the user typed a query is the classic relevance bug.
+ */
+catalogRouter.get('/search', async (req: Request, res: Response) => {
+	try {
+		const q = String(req.query.q ?? '').trim();
+		if (!q) {
+			return sendError(res, 'Missing required query parameter: q', 400, 'VALIDATION_ERROR');
+		}
+		// The query logic — FTS ranking, filters, pagination, store
+		// join — lives in lib/search.cts so it can be unit-tested
+		// without spinning up an Express app. The router is the thin
+		// HTTP wrapper: parse → call → log → respond.
+		const result = await runSearch(q, {
+			category: req.query.category ? String(req.query.category) : undefined,
+			storeId: req.query.store ? Number(req.query.store) : undefined,
+			minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+			maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+			sort: (req.query.sort as 'relevance' | 'price_asc' | 'price_desc' | 'newest' | undefined) ?? 'relevance',
+			limit: req.query.limit !== undefined ? Number(req.query.limit) : undefined,
+			offset: req.query.offset !== undefined ? Number(req.query.offset) : undefined,
+		});
+
+		// Best-effort analytics log (see logSearch() — failures never
+		// break the user-facing search).
+		const userId = (req as { user?: { id: number } }).user?.id ?? null;
+		const requestId = (req as { id?: string }).id ?? null;
+		await logSearch(q, normalizeQuery(q), result.total, result.took_ms, userId, requestId);
+
+		// Strip the bookkeeping columns (rank) before serializing.
+		const products = result.hits.map((r) => {
+			const { rank: _r, ...rest } = r;
+			void _r;
+			return getProductWithParsedFields(rest as unknown as Record<string, unknown>);
+		});
+
+		sendSuccess(res, {
+			query: q,
+			total: result.total,
+			limit: Number.isFinite(Number(req.query.limit))
+				? Math.max(1, Math.min(100, Number(req.query.limit)))
+				: 20,
+			offset: Math.max(0, Number(req.query.offset) || 0),
+			duration_ms: result.took_ms,
+			products,
+		});
+	} catch (err) {
+		sendError(res, err);
 	}
 });
 

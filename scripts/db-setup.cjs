@@ -92,7 +92,15 @@ async function applyPendingMigrations(client) {
         .sort();
 
     for (const file of files) {
-        const version = file.split('_')[0];
+        // Use the full filename minus the .sql extension as the
+        // version key. The PK on schema_migrations.version is a
+        // VARCHAR(20) so a 4-digit number AND a longer descriptive
+        // string both fit. The descriptive form (`0007_pi_unique_pair`
+        // rather than just `0007`) is what the live DB currently
+        // holds; using the short form here would create a 13th
+        // row on every `npm run db:setup` run because the PK
+        // wouldn't conflict.
+        const version = file.replace(/\.sql$/, '');
         const { rows } = await client.query(
             'SELECT 1 FROM schema_migrations WHERE version = $1',
             [version],
@@ -106,9 +114,14 @@ async function applyPendingMigrations(client) {
         await client.query('BEGIN');
         try {
             await client.query(sql);
+            // Description matches the format the live DB uses:
+            // `Migration 0007_pi_unique_pair`. The ON CONFLICT
+            // clause is defensive: if a future re-derivation of
+            // `version` collides with an existing row, the second
+            // INSERT is silently dropped instead of erroring.
             await client.query(
-                'INSERT INTO schema_migrations (version, description) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                [version, file.replace(/^\d{4}_/, '').replace(/\.sql$/, '').replace(/_/g, ' ')],
+                'INSERT INTO schema_migrations (version, description) VALUES ($1, $2) ON CONFLICT (version) DO NOTHING',
+                [version, `Migration ${version}`],
             );
             await client.query('COMMIT');
             console.log(`[db:setup]   ✓ migration ${file} applied`);

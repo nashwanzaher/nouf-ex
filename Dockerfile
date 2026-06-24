@@ -15,11 +15,22 @@
 # ----------------------------------------------------------------------------
 FROM node:20-alpine AS deps
 
-ENV npm_config_loglevel=error
+ENV npm_config_loglevel=error \
+    # PATCH (noufex): bump the per-request fetch / idle timeout for
+    # `npm ci` against registry.npmjs.org. The default 5-minute idle
+    # window is too tight for a fresh `npm ci` of 877 packages on
+    # slower links — we observed `EIDLETIMEOUT` after ~20 min of
+    # cumulative work, which aborts the entire build stage. 30 min
+    # per request is generous and well under the next failure mode
+    # (container OOM from holding half-fetched tarballs).
+    npm_config_fetch_timeout=1800000 \
+    npm_config_fetch_retries=3 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000
 WORKDIR /build
 
 COPY app/package.json app/package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --no-audit --no-fund --fetch-timeout=1800000 --fetch-retries=3
 
 # ----------------------------------------------------------------------------
 # Stage 2: build the API server bundle with esbuild.

@@ -11,7 +11,7 @@
 		"preview": "vite preview",
 		"api": "tsx server/index.ts",
 		"api:prod": "NODE_ENV=production tsx server/index.ts",
-		"api:build": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=server/index.js --packages=external",
+		"api:build": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=server/index.js --packages=external",
 		"db:setup": "node ../scripts/db-setup.cjs",
 		"images:populate": "node scripts/populate-product-images.cjs",
 		"test": "vitest run",

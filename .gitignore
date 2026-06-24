@@ -26,3 +26,12 @@ mcp-server/.tmp*
 # Local logs (e.g. logs/autostart.log from scripts/autostart.ps1)
 logs/
 *.log.*
+
+# Playwright (e2e tests)
+# test-results/ holds the per-test JSON Playwright writes after every
+# run. The HTML report (playwright-report/) is in the project root and
+# not gitignored because some teams commit the latest known-good report.
+app/e2e/test-results/
+app/playwright-report/
+app/blob-report/
+app/playwright/.cache/

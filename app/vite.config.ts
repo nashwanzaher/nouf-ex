@@ -101,6 +101,19 @@ export default defineConfig({
 	],
 	server: {
 		port: 3000,
+		// Proxy /api requests to the running Nouf-ex container (port 3000).
+		// The container is the canonical API host in dev too: it has the
+		// real `noufex_db` connection and the real seed data, so dev work
+		// hits the same data the production app sees. Vite's own port
+		// (3000) auto-increments to 3001/5173/... when 3000 is in use.
+		// When the container is stopped, set `API_PORT` to 3000 and run
+		// `npm run api` to use tsx directly — this proxy will still work.
+		proxy: {
+			'/api': {
+				target: 'http://localhost:3000',
+				changeOrigin: false,
+			},
+		},
 	},
 	resolve: {
 		alias: {

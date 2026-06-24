@@ -24,6 +24,7 @@ import ToastContainer from '../components/Toast';
 import { useCart } from '../context/CartContext';
 import type { Product, Review, Store as StoreType } from '../hooks/useApi';
 import { useProduct, useProducts, useReviews } from '../hooks/useApi';
+import styles from './ProductDetail.module.css';
 
 export default function ProductDetail() {
 	const { id } = useParams<{ id: string }>();
@@ -651,8 +652,8 @@ export default function ProductDetail() {
 											<Star size={10} className="text-[#FF6A00]" />
 											<div className="flex-1 h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
 												<div
-													className="h-full bg-[#FF6A00] rounded-full"
-													style={{ width: `${pct}%` }}
+													className={`h-full bg-[#FF6A00] rounded-full ${styles.ratingBar}`}
+													style={{ '--rating-pct': `${pct}%` } as React.CSSProperties}
 												/>
 											</div>
 											<span className="w-8 text-right text-[#999]">{pct}%</span>

@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useApi';
 import type { Product } from '../hooks/useApi';
 import { ShoppingCart, Clock, Zap, Flame, Star, BadgeCheck } from 'lucide-react';
+import styles from './Deals.module.css';
 
 interface TimeLeft {
 	hours: number;
@@ -277,10 +278,12 @@ function DealCard({
 				{/* Progress bar */}
 				<div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/10">
 					<div
-						className={`h-full ${hot ? 'bg-red-500' : 'bg-aliOrange'} transition-all`}
-						style={{
-							width: `${Math.max(10, 100 - (product.sold_count / (product.sold_count + product.stock)) * 100)}%`,
-						}}
+						className={`h-full ${hot ? 'bg-red-500' : 'bg-aliOrange'} transition-all ${styles.stockBar}`}
+						style={
+							{
+								'--deals-pct': `${Math.max(10, 100 - (product.sold_count / (product.sold_count + product.stock)) * 100)}%`,
+							} as React.CSSProperties
+						}
 					/>
 				</div>
 			</Link>

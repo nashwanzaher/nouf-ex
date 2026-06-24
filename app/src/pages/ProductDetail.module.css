@@ -1,0 +1,8 @@
+/* ProductDetail.module.css — width-driven progress bar.
+ *
+ * `--rating-pct` is set inline (0–100); the rule lives here so the
+ * color, height, and radius are not duplicated in JSX.
+ */
+.ratingBar {
+	width: var(--rating-pct, 0%);
+}

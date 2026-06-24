@@ -1,0 +1,12 @@
+/* Deals.module.css — progress-bar fill driven by a CSS custom property.
+ *
+ * The Deals card renders a horizontal stock-remaining bar whose width
+ * is computed from `product.sold_count` and `product.stock`. The numeric
+ * value can't live in a stylesheet (it changes per row), so we set a
+ * single CSS variable `--deals-pct` via inline `style` and consume it
+ * here. This is the canonical bridge for dynamic values into CSS and
+ * keeps the visual rule (color, height, transition) in the stylesheet.
+ */
+.stockBar {
+	width: var(--deals-pct, 10%);
+}

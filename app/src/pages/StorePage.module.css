@@ -1,0 +1,4 @@
+/* StorePage.module.css — country-export-share bar driven by --export-pct. */
+.exportBar {
+	width: var(--export-pct, 0%);
+}

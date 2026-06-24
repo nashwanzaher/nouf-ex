@@ -17,6 +17,7 @@ import {
 	Share2,
 	Search,
 } from 'lucide-react';
+import styles from './StorePage.module.css';
 
 /**
  * Deterministic pseudo-random phone suffix derived from a store ID.
@@ -511,8 +512,8 @@ export default function StorePage() {
 										</div>
 										<div className="h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
 											<div
-												className="h-full bg-[#FF6A00] rounded-full transition-all"
-												style={{ width: `${m.pct}%` }}
+												className={`h-full bg-[#FF6A00] rounded-full transition-all ${styles.exportBar}`}
+												style={{ '--export-pct': `${m.pct}%` } as React.CSSProperties}
 											/>
 										</div>
 										<span className="text-xs text-[#999] mt-1">{m.pct}%</span>

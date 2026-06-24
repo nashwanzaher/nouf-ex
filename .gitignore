@@ -35,3 +35,19 @@ app/e2e/test-results/
 app/playwright-report/
 app/blob-report/
 app/playwright/.cache/
+
+# Playwright MCP tooling (in-editor browser navigation, console logs,
+# screenshots). These are regenerated every time Copilot Chat uses the
+# browser tool and have no value in version control.
+.playwright-mcp/
+
+# Vite dev-server cache (regenerated on every `vite` start; nothing to
+# review). Lives next to vite.config.ts and is harmless to leave on
+# disk, but should not be in version control.
+.vite/
+
+# Standalone screenshots captured during interactive debugging.
+admin-dashboard.png
+login-page-fixed.png
+.playwright-mcp/
+

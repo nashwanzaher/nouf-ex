@@ -28,7 +28,17 @@ describe('partial-token', () => {
 
 	it('returns null on bad signature (tampered body)', () => {
 		const token = signPartialToken(1);
-		const tampered = token.slice(0, -1) + (token.endsWith('A') ? 'B' : 'A');
+		// Tamper a non-last byte of the signature. Flipping the LAST
+		// character is unreliable because Node's Buffer.from('base64url')
+		// silently ignores the 2 padding bits in the trailing char
+		// (it is lenient about non-zero padding), so a 0→1 swap on a
+		// last char that already encodes 0 padding leaves the decoded
+		// byte unchanged and the signature still matches. Flipping a
+		// middle byte is unambiguous: every 6-bit group has 6 data bits.
+		const dot = token.lastIndexOf('.');
+		const mid = dot + 1 + 5; // well inside the signature, past any padding
+		const swapTo = token[mid] === 'A' ? 'B' : 'A';
+		const tampered = token.slice(0, mid) + swapTo + token.slice(mid + 1);
 		expect(verifyPartialToken(tampered)).toBeNull();
 	});
 

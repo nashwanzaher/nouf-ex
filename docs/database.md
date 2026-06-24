@@ -88,7 +88,7 @@ DB_SSL: 'false'
 
 ---
 
-## 4. Schema overview (27 tables)
+## 4. Schema overview (29 tables: 26 application + 3 system)
 
 | Layer            | Tables / files                                                                                            |
 | ---------------- | --------------------------------------------------------------------------------------------------------- |
@@ -97,7 +97,17 @@ DB_SSL: 'false'
 | **Commerce**     | `orders`, `order_items`, `cart_items`, `wishlist`, `payments`, `coupons`, `coupon_usage`, `refunds`      |
 | **Engagement**   | `reviews`, `addresses`, `notifications`, `messages`, `disputes`                                           |
 | **Operations**   | `shipping_methods`, `inventory_log`, `transactions`, `store_balance`, `store_followers`, `admin_audit_log` |
+| **Rate limiting** | `rate_limit_buckets` (DB-backed sliding-window counters for the API; see `migrations/0004`)              |
+| **Analytics**    | `search_logs` (append-only; every `/api/search` hit; see `migrations/0009`)                              |
 | **Meta**         | `schema_migrations` (tracks applied migrations)                                                          |
+
+The 26 application tables are the user-facing domain. The 3 system
+tables (`rate_limit_buckets`, `search_logs`, `schema_migrations`) are
+infrastructure that the API manages on the user's behalf — they are
+not part of the public data model and should not appear in any
+storefront query. `schema_migrations` is created by the bootstrap
+migration `0001_baseline.sql`; the other two are added by
+`migrations/0004` and `migrations/0009` respectively.
 
 PG 17 conventions applied across the schema:
 

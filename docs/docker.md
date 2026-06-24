@@ -59,6 +59,10 @@ docker compose down
 
 ## Healthcheck
 
-`HEALTHCHECK` hits `GET /api/stats/home` every 30 seconds. The container is
-considered healthy only after the API responds with HTTP 200, which in turn
-requires the database to be reachable and seeded.
+`HEALTHCHECK` hits `GET /api/health` every 30 seconds (the same endpoint
+the `healthRateLimit` middleware in `app/server/middleware.ts` is wired
+to). The container is considered healthy only after the API responds
+with HTTP 200, which in turn requires the Node process to be alive.
+`/api/ready` is a stricter check (it also pings the DB) and is the
+right endpoint for a Kubernetes readinessProbe — see
+`docker-compose.yml` for the current `HEALTHCHECK` line.

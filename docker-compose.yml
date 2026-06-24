@@ -8,9 +8,10 @@
 # `postgres` superuser is only used to run `npm run db:setup` once on the
 # host (creates the role + schema + seed).
 #
-# On Docker Desktop for Windows / Mac, `host.docker.internal` maps to the
-# host machine's loopback. On Linux, the `extra_hosts` block below maps
-# the same hostname to the host gateway.
+# All secrets come from the host's .env file (gitignored) so the placeholder
+# `CHANGE_ME_APP` never ships to a running stack. The defaults below match
+# Docker Desktop; on Linux the host gateway maps to `host.docker.internal`
+# via the `extra_hosts` block at the bottom.
 # ============================================================================
 services:
   noufex:
@@ -22,19 +23,24 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       API_PORT: '3000'
       HOST: 0.0.0.0
-      # App connects as the dedicated least-privilege role.
-      DB_HOST: host.docker.internal
-      DB_PORT: '5432'
-      DB_NAME: noufex_db
-      DB_USER: noufex_app
-      DB_PASSWORD: 'CHANGE_ME_APP'
-      DATABASE_URL: postgresql://noufex_app:CHANGE_ME_APP@host.docker.internal:5432/noufex_db
+      # App connects as the dedicated least-privilege role. Values are
+      # sourced from .env (see env_file above); defaults match Docker
+      # Desktop. On Linux, host.docker.internal maps to the host
+      # gateway via extra_hosts below.
+      DB_HOST: ${DB_HOST:-host.docker.internal}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-noufex_db}
+      DB_USER: ${DB_USER:-noufex_app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DATABASE_URL: ${DATABASE_URL}
       # Set DB_SSL=true in production when Postgres requires TLS.
-      DB_SSL: 'false'
+      DB_SSL: ${DB_SSL:-false}
       SERVE_STATIC: 'true'
       # SPA bundle is copied to /app/dist in the build stage. The
       # server's __dirname inside the esbuild bundle is /app/server
@@ -42,11 +48,17 @@ services:
       # resolve to /app/server/dist which is wrong. Pin it to the
       # copy target explicitly.
       STATIC_PATH: /app/dist
-      # HMAC signing key for the auth bearer tokens. Required in production
-      # (≥32 chars). Value is read from the host's .env file (which is
-      # gitignored). Generate one with:
+      # HMAC signing key for the auth bearer tokens. Required in
+      # production (≥32 chars). Generate one with:
       #   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
       AUTH_SECRET: ${AUTH_SECRET}
+      # Comma-separated list of allowed CORS origins. The server
+      # default works for local dev; override here for production.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Set TRUST_PROXY to 'true' / '1' / 'loopback' / CIDR list when
+      # running behind nginx, k8s ingress, or a load balancer.
+      TRUST_PROXY: ${TRUST_PROXY:-}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     healthcheck:

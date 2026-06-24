@@ -49,4 +49,10 @@ function attempt() {
 
 echo "[entrypoint] Starting Nouf-ex API server on port ${API_PORT:-3000}..."
 cd /app
-exec npx tsx server/index.ts
+# We use `node --import tsx` instead of `npx tsx` because the latter
+# fails to register the CJS loader hooks that `.cts` route files need.
+# Symptom: `TypeError: Cannot read properties of undefined (reading 'exports')`
+# at /app/server/lib/shared.cts when the file tries to `require('../middleware')`.
+# Symptom was reproducible with `npx tsx` against the published `noufex:latest`
+# image but not when the API was started via `node --import tsx server/index.ts`.
+exec node --import tsx server/index.ts

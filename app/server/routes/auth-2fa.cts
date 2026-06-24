@@ -27,7 +27,7 @@
  * `../lib/backup-codes.cts`. The single-use "partial token" that
  * bridges login → 2fa verify lives in `../lib/partial-token.cts`.
  */
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type RequestHandler } from 'express';
 import { z } from 'zod';
 import { db, sendError, sendSuccess, requireAuth, log, HttpError } from '../lib/shared.cts';
 import { signAuthToken } from '../middleware';
@@ -56,23 +56,136 @@ const verifySchema = z.object({
 	code: z.string().trim().min(6).max(20),
 });
 
-// In-memory rate limiter for /verify (3 attempts / min / IP).
-// Per-process state is fine — verification is the ONLY TOTP entry
-// point and is per-user anyway, so a global cap is enough to block
-// a brute-force loop. (Production should swap to a shared store.)
-const verifyAttempts = new Map<string, { count: number; resetAt: number }>();
-const VERIFY_WINDOW_MS = 60_000;
-const VERIFY_MAX = 5;
-function checkVerifyRate(ip: string): boolean {
+// ── Rate limiter (N2) ────────────────────────────────────────────────
+//
+// Per-process sliding-window counter. Each 2FA endpoint has its own
+// bucket so a stuck /setup loop cannot lock the user out of /verify,
+// and the limits can be tuned to the threat model of each route.
+//
+// Buckets
+//   2fa_verify        5 / min / IP   TOTP brute-force on login
+//   2fa_setup        10 / hour / IP  one-time enrollment, cap mis-use
+//   2fa_enable       10 / min / IP   TOTP code check on enrollment
+//   2fa_disable       5 / min / IP   password check (matches /auth/login)
+//   2fa_backup_codes  5 / min / IP   rotation cap, abuse prevention
+//
+// A multi-instance deployment should move these to the DB-backed
+// consume_rate_limit() function (database/migrations/0004) so the
+// budget is shared across replicas — left as a follow-up because
+// the current single-process deploy is fine for the threat model
+// (2FA is per-user; the limit only needs to bound per-IP attempts).
+interface RateLimitEntry {
+	count: number;
+	resetAt: number;
+}
+const rateLimiters = new Map<string, Map<string, RateLimitEntry>>();
+
+/** Increment-and-check. Returns false when the caller has exhausted
+ *  the budget in the current window. */
+function checkRate(bucket: string, ip: string, windowMs: number, max: number): boolean {
+	let map = rateLimiters.get(bucket);
+	if (!map) {
+		map = new Map();
+		rateLimiters.set(bucket, map);
+	}
 	const now = Date.now();
-	const e = verifyAttempts.get(ip);
+	const e = map.get(ip);
 	if (!e || e.resetAt <= now) {
-		verifyAttempts.set(ip, { count: 1, resetAt: now + VERIFY_WINDOW_MS });
+		map.set(ip, { count: 1, resetAt: now + windowMs });
 		return true;
 	}
-	if (e.count >= VERIFY_MAX) return false;
+	if (e.count >= max) return false;
 	e.count += 1;
 	return true;
+}
+
+/** Resolve the client IP for rate-limiting. Mirrors the precedence
+ *  in middleware.ts: req.ip first, then socket, then 'anon'. */
+function clientIp(req: Request): string {
+	return req.ip || req.socket?.remoteAddress || 'anon';
+}
+
+const RATE_LIMITS = {
+	verify: { bucket: '2fa_verify', windowMs: 60_000, max: 5, message: 'Too many 2FA attempts. Try again in a minute.' },
+	setup: { bucket: '2fa_setup', windowMs: 60 * 60 * 1000, max: 10, message: 'Too many 2FA setup requests. Try again in an hour.' },
+	enable: { bucket: '2fa_enable', windowMs: 60_000, max: 10, message: 'Too many 2FA enable attempts. Try again in a minute.' },
+	disable: { bucket: '2fa_disable', windowMs: 60_000, max: 5, message: 'Too many 2FA disable attempts. Try again in a minute.' },
+	backupCodes: { bucket: '2fa_backup_codes', windowMs: 60_000, max: 5, message: 'Too many backup-code regenerations. Try again in a minute.' },
+} as const;
+
+/** Build an Express middleware that enforces a per-IP rate limit
+ *  using the shared `checkRate` counter. The middleware runs
+ *  BEFORE requireAuth on each protected route so an attacker
+ *  without a valid token still burns the bucket — the goal of
+ *  the limiter is to bound *attempts*, not successful calls. */
+function rateLimitMiddleware(
+	bucket: string,
+	windowMs: number,
+	max: number,
+	message: string
+): RequestHandler {
+	return (req, res, next) => {
+		if (!checkRate(bucket, clientIp(req), windowMs, max)) {
+			return sendError(res, message, 429, 'RATE_LIMITED');
+		}
+		next();
+	};
+}
+
+const limitVerify = rateLimitMiddleware(
+	RATE_LIMITS.verify.bucket,
+	RATE_LIMITS.verify.windowMs,
+	RATE_LIMITS.verify.max,
+	RATE_LIMITS.verify.message
+);
+const limitSetup = rateLimitMiddleware(
+	RATE_LIMITS.setup.bucket,
+	RATE_LIMITS.setup.windowMs,
+	RATE_LIMITS.setup.max,
+	RATE_LIMITS.setup.message
+);
+const limitEnable = rateLimitMiddleware(
+	RATE_LIMITS.enable.bucket,
+	RATE_LIMITS.enable.windowMs,
+	RATE_LIMITS.enable.max,
+	RATE_LIMITS.enable.message
+);
+const limitDisable = rateLimitMiddleware(
+	RATE_LIMITS.disable.bucket,
+	RATE_LIMITS.disable.windowMs,
+	RATE_LIMITS.disable.max,
+	RATE_LIMITS.disable.message
+);
+const limitBackupCodes = rateLimitMiddleware(
+	RATE_LIMITS.backupCodes.bucket,
+	RATE_LIMITS.backupCodes.windowMs,
+	RATE_LIMITS.backupCodes.max,
+	RATE_LIMITS.backupCodes.message
+);
+
+// Background sweeper — drops entries whose window has expired so the
+// maps don't grow without bound when many distinct IPs make one-off
+// requests. 60s cadence is safe: the smallest window we use is 1
+// minute, so we never evict an entry that's still in its current
+// window. unref() keeps the timer from keeping the event loop alive
+// in test runners.
+const _sweepTimer = setInterval(() => {
+	const now = Date.now();
+	for (const [bucket, map] of rateLimiters) {
+		for (const [ip, e] of map) {
+			if (e.resetAt <= now) map.delete(ip);
+		}
+		if (map.size === 0) rateLimiters.delete(bucket);
+	}
+}, 60_000);
+if (typeof _sweepTimer.unref === 'function') _sweepTimer.unref();
+
+/** Test-only: clear every per-bucket counter. Exposed so the test
+ *  suite can isolate rate-limit assertions without leaking state
+ *  between cases. Not part of the public API. */
+export function __reset2faRateLimitsForTests(): void {
+	for (const map of rateLimiters.values()) map.clear();
+	rateLimiters.clear();
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -114,7 +227,7 @@ function publicUser(u: UserRow): Record<string, unknown> {
 //    NOT yet active: the secret is saved on the row but
 //    two_factor_enabled is still false until /enable is called.
 // ═══════════════════════════════════════════════════════════
-auth2faRouter.post('/setup', requireAuth, async (req: Request, res: Response) => {
+auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const user = await loadUser(req.user!.id);
 		if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
@@ -167,7 +280,7 @@ auth2faRouter.post('/setup', requireAuth, async (req: Request, res: Response) =>
 // 2) enable — confirm enrollment with a TOTP code.
 //    The secret must already be on the row (via /setup).
 // ═══════════════════════════════════════════════════════════
-auth2faRouter.post('/enable', requireAuth, async (req: Request, res: Response) => {
+auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = enableSchema.safeParse(req.body);
 		if (!v.success) {
@@ -218,17 +331,11 @@ auth2faRouter.post('/enable', requireAuth, async (req: Request, res: Response) =
 //    a real bearer token. Used by the login page when 2FA is
 //    enabled on the account.
 // ═══════════════════════════════════════════════════════════
-auth2faRouter.post('/verify', async (req: Request, res: Response) => {
+auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) => {
 	try {
 		const v = verifySchema.safeParse(req.body);
 		if (!v.success) {
 			return sendError(res, 'Invalid input: ' + v.error.message, 400, 'VALIDATION_ERROR');
-		}
-		// Rate limit per IP. 5 attempts / minute is plenty for
-		// legitimate users and small enough to block brute force.
-		const ip = req.ip || req.socket.remoteAddress || 'anon';
-		if (!checkVerifyRate(ip)) {
-			return sendError(res, 'Too many 2FA attempts. Try again in a minute.', 429, 'RATE_LIMITED');
 		}
 		const partial = verifyPartialToken(v.data.partial_token);
 		if (!partial) {
@@ -284,7 +391,7 @@ auth2faRouter.post('/verify', async (req: Request, res: Response) => {
 // 4) disable — turn 2FA off. Requires the user's PASSWORD so
 //    a stolen session token alone cannot disable 2FA.
 // ═══════════════════════════════════════════════════════════
-auth2faRouter.post('/disable', requireAuth, async (req: Request, res: Response) => {
+auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = disableSchema.safeParse(req.body);
 		if (!v.success) {
@@ -354,13 +461,17 @@ auth2faRouter.post('/disable', requireAuth, async (req: Request, res: Response) 
 //    which is acceptable; rotating codes does NOT weaken
 //    authentication because the TOTP secret is unchanged).
 // ═══════════════════════════════════════════════════════════
-auth2faRouter.post('/backup-codes/regenerate', requireAuth, async (req: Request, res: Response) => {
-	try {
-		const user = await loadUser(req.user!.id);
-		if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
-		if (!user.two_factor_enabled) {
-			return sendError(res, '2FA is not enabled. Enable it first.', 400, 'NOT_ENABLED');
-		}
+auth2faRouter.post(
+	'/backup-codes/regenerate',
+	limitBackupCodes,
+	requireAuth,
+	async (req: Request, res: Response) => {
+		try {
+			const user = await loadUser(req.user!.id);
+			if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+			if (!user.two_factor_enabled) {
+				return sendError(res, '2FA is not enabled. Enable it first.', 400, 'NOT_ENABLED');
+			}
 		const newCodes = generateBackupCodes();
 		const hashed = await Promise.all(newCodes.map(hashBackupCode));
 		await db

@@ -1,0 +1,181 @@
+/* Auth.module.css — shared styles for the auth pages (Login, Register,
+ * ForgotPassword, ResetPassword). Extracted from inline `style={{...}}`
+ * props in the original auth components so design tokens live in one
+ * place and can be themed globally without touching JSX.
+ *
+ * Pattern convention:
+ *   - `.hero`, `.heroCircle`, `.brandTile`, ... → static visual rules.
+ *   - `.interactive` → stateful classes that read from a `data-*`
+ *     attribute on the element (e.g. `data-selected="true"`).
+ *
+ * All colors are CSS custom properties on the parent selector so the
+ * right column (`.formPanel`) and the left column (`.hero`) get the
+ * same palette without depending on a common ancestor.
+ */
+
+.hero {
+	background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 40%, #ffd4b3 100%);
+	--login-primary: #ff6a00;
+	--login-link: #1688c9;
+	--login-success: #4caf50;
+	--login-error: #f44336;
+	--login-error-bg: #fdecea;
+	--login-error-text: #b71c1c;
+	--login-text: #333;
+	--login-text-muted: #666;
+	--login-icon: #999;
+	--login-border: #e5e5e5;
+	--login-surface-soft: #f0f2f5;
+	--login-card-glass: rgba(255, 255, 255, 0.7);
+}
+
+.heroCircle {
+	background: var(--login-primary);
+}
+
+.brandTile {
+	background: var(--login-primary);
+}
+
+.heroTitle {
+	color: var(--login-text);
+}
+
+.heroSubtitle {
+	color: var(--login-text-muted);
+}
+
+.statCard {
+	background: var(--login-card-glass);
+}
+
+.statLabel {
+	color: var(--login-text);
+}
+
+.statIconOrange {
+	color: var(--login-primary);
+}
+
+.statIconBlue {
+	color: var(--login-link);
+}
+
+.statIconGreen {
+	color: var(--login-success);
+}
+
+.cta {
+	background: var(--login-primary);
+}
+
+.formPanel {
+	background: var(--login-surface-soft);
+	--login-primary: #ff6a00;
+	--login-link: #1688c9;
+	--login-error: #f44336;
+	--login-error-bg: #fdecea;
+	--login-error-text: #b71c1c;
+	--login-text: #333;
+	--login-text-muted: #666;
+	--login-icon: #999;
+	--login-border: #e5e5e5;
+}
+
+.formTitle {
+	color: var(--login-text);
+}
+
+.formSubtitle {
+	color: var(--login-text-muted);
+}
+
+.formAlert {
+	background: var(--login-error-bg);
+	color: var(--login-error-text);
+}
+
+.formLabel {
+	color: var(--login-text);
+}
+
+.inputIcon {
+	color: var(--login-icon);
+}
+
+.input {
+	border-color: var(--login-border);
+}
+
+.inputError {
+	border-color: var(--login-error);
+}
+
+.fieldError {
+	color: var(--login-error);
+}
+
+.link {
+	color: var(--login-link);
+}
+
+.ctaLink {
+	color: var(--login-primary);
+}
+
+.submit {
+	background: var(--login-primary);
+	border-color: var(--login-primary);
+}
+
+.divider {
+	background: var(--login-border);
+}
+
+.dividerLabel {
+	color: var(--login-icon);
+}
+
+.socialButton {
+	border-color: var(--login-border);
+	color: var(--login-text);
+}
+
+/* ----------------------------------------------------------------
+ * Interactive selectors driven by `data-*` attributes (Register
+ * page account-type selector and terms checkbox).
+ *
+ * Using `data-*` keeps the dynamic state out of inline `style={}` and
+ * lets the JSX stay declarative — only the attribute changes between
+ * selected / unselected.
+ * ---------------------------------------------------------------- */
+
+.accountTypeBtn {
+	border-color: var(--login-border);
+	background: #ffffff;
+	transition: all 200ms;
+}
+
+.accountTypeBtn[data-selected='true'] {
+	border-color: var(--login-primary);
+	background: #fff5eb;
+}
+
+.accountTypeBtn .icon {
+	color: var(--login-icon);
+}
+
+.accountTypeBtn[data-selected='true'] .icon {
+	color: var(--login-primary);
+}
+
+.termsBox {
+	border-color: var(--login-border);
+	background: transparent;
+	transition: border-color 150ms, background 150ms;
+}
+
+.termsBox[data-checked='true'] {
+	border-color: var(--login-primary);
+	background: var(--login-primary);
+}

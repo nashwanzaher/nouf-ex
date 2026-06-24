@@ -21,5 +21,9 @@
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true
 	},
-	"include": ["server/**/*.ts", "server/**/*.cjs"]
+	"include": [
+		"server/**/*.ts",
+		"server/**/*.cts",
+		"server/**/*.cjs"
+	]
 }

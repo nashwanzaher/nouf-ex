@@ -8,6 +8,7 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 export default defineConfig([
 	globalIgnores(['dist', 'node_modules', 'coverage', '**/*.cjs']),
 	{
+		// Frontend + scripts: TS/TSX (React) + JS/CJS (Node tooling).
 		files: ['**/*.{ts,tsx}'],
 		extends: [
 			js.configs.recommended,
@@ -18,6 +19,33 @@ export default defineConfig([
 		languageOptions: {
 			ecmaVersion: 2020,
 			globals: globals.browser,
+		},
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_',
+					ignoreRestSiblings: true,
+				},
+			],
+		},
+	},
+	// ── Server (.cts) ────────────────────────────────────────────────────────
+	// Same TS rules as the frontend block, but NO react-refresh (Express code
+	// is never a React component) and Node globals instead of browser globals.
+	// Without this block, every server file is silently skipped by `eslint .`
+	// (ESLint's default extension list does not include `.cts`), so a
+	// broken import or unused var in `server/lib/*.cts` would slip past CI.
+	{
+		files: ['server/**/*.{ts,cts}'],
+		extends: [js.configs.recommended, tseslint.configs.recommended],
+		languageOptions: {
+			ecmaVersion: 2022,
+			globals: { ...globals.node, ...globals.browser },
+			sourceType: 'module',
 		},
 		rules: {
 			'@typescript-eslint/no-unused-vars': [

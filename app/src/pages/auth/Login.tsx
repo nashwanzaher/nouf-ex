@@ -81,13 +81,20 @@ export default function Login() {
 			<div
 				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}>
 				{/* Decorative circles */}
-				<div className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`} />
-				<div className={`absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 ${styles.heroCircle}`} />
-				<div className={`absolute top-1/3 left-1/4 w-32 h-32 rounded-full opacity-10 ${styles.heroCircle}`} />
+				<div
+					className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`}
+				/>
+				<div
+					className={`absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 ${styles.heroCircle}`}
+				/>
+				<div
+					className={`absolute top-1/3 left-1/4 w-32 h-32 rounded-full opacity-10 ${styles.heroCircle}`}
+				/>
 
 				<div className="relative z-10 text-center max-w-md mx-auto">
 					<div className="mb-8">
-						<div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}>
+						<div
+							className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}>
 							<Globe className="w-10 h-10 text-white" strokeWidth={1.5} />
 						</div>
 					</div>
@@ -104,21 +111,27 @@ export default function Login() {
 					{/* Hero stats */}
 					<div className="grid grid-cols-3 gap-4 mb-8">
 						{[
-							{ icon: Users, label: isRTL ? '10K+ تاجر' : '10K+ Sellers', iconClass: styles.statIconOrange },
+							{
+								icon: Users,
+								label: isRTL ? '10K+ تاجر' : '10K+ Sellers',
+								iconClass: styles.statIconOrange,
+							},
 							{
 								icon: TrendingUp,
 								label: isRTL ? '500K+ منتج' : '500K+ Products',
 								iconClass: styles.statIconBlue,
 							},
-							{ icon: Shield, label: isRTL ? 'دفع آمن' : 'Secure Payment', iconClass: styles.statIconGreen },
+							{
+								icon: Shield,
+								label: isRTL ? 'دفع آمن' : 'Secure Payment',
+								iconClass: styles.statIconGreen,
+							},
 						].map((stat, i) => (
 							<div
 								key={i}
 								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}>
 								<stat.icon className={`w-6 h-6 ${stat.iconClass}`} strokeWidth={1.5} />
-								<span className={`text-xs font-semibold ${styles.statLabel}`}>
-									{stat.label}
-								</span>
+								<span className={`text-xs font-semibold ${styles.statLabel}`}>{stat.label}</span>
 							</div>
 						))}
 					</div>
@@ -150,9 +163,7 @@ export default function Login() {
 
 							<form onSubmit={handleSubmit} className="space-y-4">
 								{errors.form && (
-									<div
-										role="alert"
-										className={`text-sm p-3 rounded ${styles.formAlert}`}>
+									<div role="alert" className={`text-sm p-3 rounded ${styles.formAlert}`}>
 										{errors.form}
 									</div>
 								)}
@@ -180,9 +191,7 @@ export default function Login() {
 										/>
 									</div>
 									{errors.email && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.email}
-										</p>
+										<p className={`text-xs mt-1 ${styles.fieldError}`}>{errors.email}</p>
 									)}
 								</div>
 
@@ -218,9 +227,7 @@ export default function Login() {
 										</button>
 									</div>
 									{errors.password && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.password}
-										</p>
+										<p className={`text-xs mt-1 ${styles.fieldError}`}>{errors.password}</p>
 									)}
 								</div>
 
@@ -248,9 +255,7 @@ export default function Login() {
 
 							{/* Mobile sign in link */}
 							<div className="mt-4 text-center">
-								<button
-									type="button"
-									className={`text-sm hover:underline ${styles.link}`}>
+								<button type="button" className={`text-sm hover:underline ${styles.link}`}>
 									{isRTL ? 'تسجيل الدخول برقم الجوال' : 'Mobile number sign in'}
 								</button>
 							</div>

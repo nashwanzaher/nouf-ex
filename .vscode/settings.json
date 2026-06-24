@@ -50,6 +50,19 @@
 	"typescript.tsdk": "app/node_modules/typescript/lib",
 	"typescript.enablePromptUse": true,
 	"typescript.preferences.importModuleSpecifier": "non-relative",
+	// Stop the TS language server from typechecking any file under
+	// node_modules — those JS files (e.g. rollup/dist/native.js) trip
+	// strict checks like `Property 'excludeNetwork' does not exist on
+	// type 'ProcessReport'` even though the build (`tsc -b --noEmit`)
+	// does not include node_modules in any tsconfig and passes cleanly.
+	// The .gitignored PATCH (noufex) inside native.js survives this
+	// because the file is still discovered at runtime by require(), not
+	// by the TS server.
+	"typescript.tsserver.exclude": [
+		"**/node_modules/**",
+		"app/dist/**",
+		"app/coverage/**"
+	],
 	"javascript.preferences.importModuleSpecifier": "non-relative",
 	"tailwindCSS.experimental.classRegex": [
 		["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],

@@ -16,5 +16,20 @@
 			"@/*": ["./src/*"]
 		},
 		"ignoreDeprecations": "5.0"
-	}
+	},
+	// Belt-and-suspenders: the root tsconfig must not attempt to
+	// typecheck node_modules. Without this, VS Code's TS language
+	// server picks up the server tsconfig (allowJs:true) via
+	// project references and runs strict checks on every JS file
+	// it can find — including node_modules/rollup/dist/native.js
+	// which has nothing to do with our build. This `exclude` is
+	// only used by VS Code's TS server for analysis; the project
+	// build (`tsc -b --noEmit`) does not include node_modules in
+	// any sub-tsconfig either.
+	"exclude": [
+		"node_modules",
+		"dist",
+		"coverage",
+		"**/node_modules/**"
+	]
 }

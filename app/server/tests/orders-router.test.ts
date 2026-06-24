@@ -53,9 +53,7 @@ describe('ordersRouter — auth gate', () => {
 
 	it('POST / → 401 without token', async () => {
 		const app = buildApp();
-		const res = await request(app)
-			.post('/api/orders')
-			.send({ items: [], total: 0 });
+		const res = await request(app).post('/api/orders').send({ items: [], total: 0 });
 		expect(res.status).toBe(401);
 	});
 });

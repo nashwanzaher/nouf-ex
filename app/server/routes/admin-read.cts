@@ -183,7 +183,15 @@ adminReadRouter.get('/orders', ...adminAuth, async (req: Request, res: Response)
 		const v = validate(
 			paginationSchema.extend({
 				status: z
-					.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])
+					.enum([
+						'pending',
+						'confirmed',
+						'processing',
+						'shipped',
+						'delivered',
+						'cancelled',
+						'refunded',
+					])
 					.optional(),
 				payment_status: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
 			}),
@@ -321,46 +329,27 @@ adminReadRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response)
 		// `get()` returns undefined when no row matches. Guard every
 		// count so a fresh / empty database (or the test mock) does
 		// not throw a TypeError.
-		const count = (row: unknown): number =>
-			(row as { c?: number } | undefined)?.c ?? 0;
+		const count = (row: unknown): number => (row as { c?: number } | undefined)?.c ?? 0;
 		const users = count(await db.prepare('SELECT COUNT(*)::int AS c FROM users').get());
 		const stores = count(await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get());
-		const products = count(
-			await db.prepare('SELECT COUNT(*)::int AS c FROM products').get()
-		);
+		const products = count(await db.prepare('SELECT COUNT(*)::int AS c FROM products').get());
 		const orders = count(await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get());
-		const reviews = count(
-			await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get()
-		);
-		const disputes = count(
-			await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get()
-		);
+		const reviews = count(await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get());
+		const disputes = count(await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get());
 		const openDisputes = count(
-			await db
-				.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`)
-				.get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`).get()
 		);
 		const pendingOrders = count(
-			await db
-				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`)
-				.get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`).get()
 		);
 		const paidOrders = count(
-			await db
-				.prepare(
-					`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`
-				)
-				.get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`).get()
 		);
 		const suspendedUsers = count(
-			await db
-				.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`)
-				.get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`).get()
 		);
 		const inactiveStores = count(
-			await db
-				.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`)
-				.get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`).get()
 		);
 		const recentOrders = count(
 			await db

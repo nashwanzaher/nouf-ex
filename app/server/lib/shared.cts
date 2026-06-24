@@ -17,9 +17,11 @@
  * this file as CommonJS-by-default and skips the .ts→.cts extension
  * map that bit us earlier with `pg-wrapper.cts`.
  */
-import { Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { PgDb } from '../db/pg-wrapper.cts';
+import { scrypt as scryptCb, randomBytes, timingSafeEqual } from 'crypto';
+import { promisify } from 'util';
 import {
 	requireAuth,
 	requireRole,
@@ -41,6 +43,67 @@ export const db = new PgDb(
 // so a future refactor of the middleware module doesn't break them.
 export { requireAuth, requireRole, sendSuccess, sendError, HttpError, log };
 export type { AuthRole };
+
+// ═══════════════════════════════════════════════════════════
+// Password hashing (scrypt, Node built-in)
+// ═══════════════════════════════════════════════════════════
+const scrypt = promisify(scryptCb) as (
+	password: string,
+	salt: string | Buffer,
+	keylen: number
+) => Promise<Buffer>;
+const SCRYPT_KEYLEN = 64;
+
+export async function hashPassword(password: string): Promise<string> {
+	const salt = randomBytes(16);
+	const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN);
+	return `scrypt$${salt.toString('base64')}$${derivedKey.toString('base64')}`;
+}
+
+export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+	if (!stored.startsWith('scrypt$')) return false;
+	const parts = stored.split('$');
+	if (parts.length !== 3) return false;
+	const [, saltB64, keyB64] = parts;
+	const salt = Buffer.from(saltB64, 'base64');
+	const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN);
+	const storedKey = Buffer.from(keyB64, 'base64');
+	if (derivedKey.length !== storedKey.length) return false;
+	return timingSafeEqual(derivedKey, storedKey);
+}
+
+// ═══════════════════════════════════════════════════════════
+// Rate limiter (DB-backed, used by auth + payment routes)
+// ═══════════════════════════════════════════════════════════
+export function rateLimit(windowMs: number, max: number, bucket = 'global') {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		const route = (req.route?.path as string | undefined) || req.path.split('?')[0];
+		const ip = req.ip || req.socket.remoteAddress || 'anon';
+		const key = `${bucket}:${req.method}:${route}:${ip}`;
+		try {
+			const row = (await db
+				.prepare('SELECT allowed, retry_after_ms FROM consume_rate_limit($1, $2, $3, $4)')
+				.get(bucket, key, windowMs, max)) as
+				| { allowed: boolean; retry_after_ms: number }
+				| undefined;
+			if (!row) return next();
+			if (!row.allowed) {
+				res.setHeader('Retry-After', Math.ceil(row.retry_after_ms / 1000));
+				return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
+			}
+		} catch (err) {
+			log.warn({
+				msg: 'rate_limit_db_error',
+				bucket,
+				route,
+				error: (err as Error).message,
+			});
+		}
+		next();
+	};
+}
+
+export const authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth');
 
 // ═══════════════════════════════════════════════════════════
 // Generic helpers

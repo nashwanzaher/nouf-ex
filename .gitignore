@@ -26,6 +26,10 @@ mcp-server/.tmp*
 # Continue (agent state caches, regenerated on every editor session)
 .continue/
 
+# PowerShell wrapper script outputs (regenerated on every run via `> $file`)
+scripts/_*.out
+scripts/_*.txt
+
 # Local logs (e.g. logs/autostart.log from scripts/autostart.ps1)
 logs/
 *.log.*

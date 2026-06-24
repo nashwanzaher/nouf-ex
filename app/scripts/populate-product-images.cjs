@@ -278,7 +278,10 @@ function placeholderFor(slug) {
 async function main() {
 	const databaseUrl =
 		process.env.DATABASE_URL ||
-		(process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME && process.env.DB_PASSWORD
+		(process.env.DB_HOST &&
+		process.env.DB_USER &&
+		process.env.DB_NAME &&
+		process.env.DB_PASSWORD
 			? `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME}`
 			: null);
 	if (!databaseUrl) {
@@ -327,7 +330,7 @@ async function main() {
 		const placeholderPath = path.join(PUBLIC_DIR, placeholderFile);
 		if (!fs.existsSync(placeholderPath)) {
 			console.warn(
-				`  ⚠ p${p.id}: no placeholder for category "${p.cat_slug}" (tried ${placeholderFile})`
+				`  ⚠ p${p.id}: no placeholder for category "${p.cat_slug}" (tried ${placeholderFile})`,
 			);
 			stats.placeholderMissing.push(p.cat_slug);
 			continue;
@@ -344,7 +347,7 @@ async function main() {
 				name_ar: p.name_ar,
 				category_slug: p.cat_slug,
 			}),
-			'utf8'
+			'utf8',
 		);
 		stats.svgWritten += 1;
 
@@ -375,7 +378,7 @@ async function main() {
 				 VALUES ($1, $2, $3, $4, $5)
 				 ON CONFLICT (product_id, image_url) DO NOTHING
 				 RETURNING id`,
-				[p.id, row.image_url, row.alt_text, row.sort_order, row.is_primary]
+				[p.id, row.image_url, row.alt_text, row.sort_order, row.is_primary],
 			);
 			if (result.rows.length > 0) stats.productImagesInserted += 1;
 			else stats.productImagesSkipped += 1;
@@ -391,7 +394,9 @@ async function main() {
 	console.log(`  product_images inserted:  ${stats.productImagesInserted}`);
 	console.log(`  product_images skipped:   ${stats.productImagesSkipped}  (already present)`);
 	if (stats.placeholderMissing.length > 0) {
-		console.log(`  placeholders missing:     ${[...new Set(stats.placeholderMissing)].join(', ')}`);
+		console.log(
+			`  placeholders missing:     ${[...new Set(stats.placeholderMissing)].join(', ')}`,
+		);
 	}
 }
 

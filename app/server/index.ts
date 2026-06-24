@@ -37,7 +37,7 @@ import { adminRouter } from './routes/admin.cts';
 import { catalogRouter } from './routes/catalog.cts';
 import { auth2faRouter } from './routes/auth-2fa.cts';
 import { signPartialToken } from './lib/partial-token.cts';
-import { getProductWithParsedFields } from './lib/shared.cts';
+import { getProductWithParsedFields, resolveOrderStoreId } from './lib/shared.cts';
 
 dotenv.config();
 
@@ -516,7 +516,10 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		const v = validate(orderSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
 		const {
-			storeId,
+			// storeId: kept in the schema for backward-compat with old
+			// clients, but ignored. The server derives the real value
+			// from the items below.
+			storeId: _ignoredStoreId,
 			items,
 			shippingAddress,
 			paymentMethod,
@@ -526,7 +529,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 			total,
 			couponCode,
 		} = v.data as {
-			storeId: number;
+			storeId?: number;
 			items: Array<{
 				productId: number;
 				variantId?: number | null;
@@ -544,6 +547,55 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 		};
 		// Source of truth = authenticated user. Ignore any customerId in body.
 		const customerId = req.user!.id;
+
+		// P0-1: source of truth = products table. We do NOT trust the
+		// client's `storeId` — derive it from the items' products
+		// and validate that every line item belongs to the SAME store.
+		// (One order == one store, by schema constraint. A mixed-store
+		// cart is a 400 because we'd otherwise have to split the order
+		// into multiple rows, which the API contract doesn't promise.)
+		//
+		// We also reject any product the user passed that doesn't
+		// exist / is inactive / is soft-deleted — same condition the
+		// stock-decrement trigger checks later, so a fail here is
+		// friendlier than waiting for the INSERT to RAISE EXCEPTION.
+		const productIds = items.map((i) => i.productId);
+		const productRows = (await db
+			.prepare(
+				`SELECT id, store_id, is_active, deleted_at
+				   FROM products
+				  WHERE id = ANY(?)
+				  ORDER BY id`
+			)
+			.all(productIds)) as Array<{
+			id: number;
+			store_id: number;
+			is_active: boolean;
+			deleted_at: string | null;
+		}>;
+		const storeResult = resolveOrderStoreId(productIds, productRows);
+		if (!storeResult.ok) {
+			if (storeResult.code === 'PRODUCT_UNAVAILABLE') {
+				return sendError(
+					res,
+					`Product ${storeResult.productId} is unavailable`,
+					400,
+					'PRODUCT_UNAVAILABLE'
+				);
+			}
+			if (storeResult.code === 'MIXED_STORES') {
+				return sendError(
+					res,
+					'All items in an order must come from a single store. Split the cart and try again.',
+					400,
+					'MIXED_STORES'
+				);
+			}
+			// EMPTY_CART — the schema's .min(1) already rejected this,
+			// but keep a defensive response.
+			return sendError(res, 'No products to order.', 400, 'EMPTY_CART');
+		}
+		const resolvedStoreId = storeResult.storeId;
 
 		// Normalise payment method: legacy client may send 'cash' → map to 'cod'.
 		const normalisedPaymentMethod =
@@ -637,7 +689,7 @@ app.post('/api/orders', requireAuth, async (req: Request, res: Response) => {
 					)
 					.run(
 						customerId,
-						storeId,
+						resolvedStoreId,
 						orderNumber,
 						normalisedPaymentMethod,
 						resolvedSubtotal,

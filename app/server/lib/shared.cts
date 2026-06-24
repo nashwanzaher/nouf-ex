@@ -189,6 +189,66 @@ export const orderSchema = z.object({
 	total: z.number().nonnegative(),
 });
 
+/** Lightweight product row shape used by resolveOrderStoreId. The
+ *  caller passes whatever columns the `SELECT ... FROM products`
+ *  query returned — we only read `id`, `store_id`, `is_active`,
+ *  and `deleted_at`. Keeping the shape minimal lets the same helper
+ *  work in tests (where we construct the rows by hand) and at
+ *  runtime (where PgDb returns generic Record<string, unknown>). */
+export interface OrderProductRow {
+	id: number;
+	store_id: number;
+	is_active: boolean;
+	deleted_at: string | null;
+}
+
+/** Resolve the store_id for a new order, server-side, from the
+ *  items' products. P0-1: the API no longer trusts the client's
+ *  `storeId` field — the server derives it from the products table
+ *  and rejects mixed-store carts.
+ *
+ *  Returns:
+ *    { ok: true, storeId }            — every item is from one store
+ *    { ok: false, code: 'EMPTY_CART' }          — no products requested
+ *    { ok: false, code: 'PRODUCT_UNAVAILABLE', productId } — product
+ *            missing, inactive, or soft-deleted
+ *    { ok: false, code: 'MIXED_STORES' }        — items span >1 store
+ */
+export type ResolveStoreIdResult =
+	| { ok: true; storeId: number }
+	| { ok: false; code: 'EMPTY_CART' }
+	| { ok: false; code: 'PRODUCT_UNAVAILABLE'; productId: number }
+	| { ok: false; code: 'MIXED_STORES' };
+
+export function resolveOrderStoreId(
+	requestedProductIds: number[],
+	productRows: OrderProductRow[]
+): ResolveStoreIdResult {
+	if (requestedProductIds.length === 0) {
+		return { ok: false, code: 'EMPTY_CART' };
+	}
+	const byId = new Map<number, OrderProductRow>();
+	for (const p of productRows) byId.set(p.id, p);
+	for (const pid of requestedProductIds) {
+		const row = byId.get(pid);
+		if (!row || !row.is_active || row.deleted_at) {
+			return { ok: false, code: 'PRODUCT_UNAVAILABLE', productId: pid };
+		}
+	}
+	const storeIds = new Set(productRows.map((p) => p.store_id));
+	if (storeIds.size > 1) {
+		return { ok: false, code: 'MIXED_STORES' };
+	}
+	const first = productRows[0];
+	if (!first) {
+		// Defensive: requestedProductIds was non-empty but no rows
+		// were provided. Treat as empty (shouldn't happen because the
+		// caller would have returned PRODUCT_UNAVAILABLE above).
+		return { ok: false, code: 'EMPTY_CART' };
+	}
+	return { ok: true, storeId: first.store_id };
+}
+
 // ── Reviews ──────────────────────────────────────────────
 export const reviewSchema = z.object({
 	productId: z.number().int().positive(),

@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
+import { resolveOrderStoreId, type OrderProductRow } from '../lib/shared.cts';
 
 // Mirror of cartAddSchema in server/index.ts
 const cartAddSchema = z
@@ -190,5 +191,90 @@ describe('user-id source-of-truth rule', () => {
 		const target = pickUserId(authenticated);
 		expect(target).toBe(authenticated);
 		expect(target).not.toBe(pathParam);
+	});
+});
+
+// ═══════════════════════════════════════════════════════════
+// P0-1: resolveOrderStoreId — server-side store derivation
+// ═══════════════════════════════════════════════════════════
+//
+// One order == one store. The helper is the source of truth for
+// which store an order belongs to: it looks up each requested
+// product, rejects unavailable ones, and asserts the unique set
+// of store_ids has size 1.
+describe('resolveOrderStoreId', () => {
+	function row(
+		id: number,
+		store_id: number,
+		overrides: Partial<OrderProductRow> = {}
+	): OrderProductRow {
+		return {
+			id,
+			store_id,
+			is_active: true,
+			deleted_at: null,
+			...overrides,
+		};
+	}
+
+	it('returns the single storeId when all items come from one store', () => {
+		const r = resolveOrderStoreId([1, 2, 3], [row(1, 7), row(2, 7), row(3, 7)]);
+		expect(r).toEqual({ ok: true, storeId: 7 });
+	});
+
+	it('returns MIXED_STORES when items span more than one store', () => {
+		const r = resolveOrderStoreId(
+			[1, 2],
+			[row(1, 7), row(2, 9)]
+		);
+		expect(r.ok).toBe(false);
+		if (!r.ok) expect(r.code).toBe('MIXED_STORES');
+	});
+
+	it('returns PRODUCT_UNAVAILABLE for an unknown product id', () => {
+		// 1 exists, 999 does not.
+		const r = resolveOrderStoreId([1, 999], [row(1, 7)]);
+		expect(r.ok).toBe(false);
+		if (!r.ok) {
+			expect(r.code).toBe('PRODUCT_UNAVAILABLE');
+			if (r.code === 'PRODUCT_UNAVAILABLE') {
+				expect(r.productId).toBe(999);
+			}
+		}
+	});
+
+	it('returns PRODUCT_UNAVAILABLE for an inactive product (is_active=false)', () => {
+		const r = resolveOrderStoreId(
+			[1, 2],
+			[row(1, 7), row(2, 7, { is_active: false })]
+		);
+		expect(r.ok).toBe(false);
+		if (!r.ok) expect(r.code).toBe('PRODUCT_UNAVAILABLE');
+	});
+
+	it('returns PRODUCT_UNAVAILABLE for a soft-deleted product (deleted_at != null)', () => {
+		const r = resolveOrderStoreId(
+			[1, 2],
+			[row(1, 7), row(2, 7, { deleted_at: '2026-06-01T00:00:00Z' })]
+		);
+		expect(r.ok).toBe(false);
+		if (!r.ok) expect(r.code).toBe('PRODUCT_UNAVAILABLE');
+	});
+
+	it('returns EMPTY_CART when no products are requested', () => {
+		const r = resolveOrderStoreId([], []);
+		expect(r.ok).toBe(false);
+		if (!r.ok) expect(r.code).toBe('EMPTY_CART');
+	});
+
+	it('tolerates duplicate product ids in the request (single store, single result)', () => {
+		// A user could legitimately request the same product twice
+		// (e.g. duplicate line items). The storeId resolution is
+		// based on the unique set of stores, not the line count.
+		const r = resolveOrderStoreId(
+			[1, 1, 1],
+			[row(1, 7)]
+		);
+		expect(r).toEqual({ ok: true, storeId: 7 });
 	});
 });

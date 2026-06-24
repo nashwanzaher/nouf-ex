@@ -40,7 +40,7 @@ import {
 	usePlaceOrder,
 	useCouponValidation,
 } from '@/hooks/useApi';
-import { createAddress } from '@/lib/api';
+import { createAddress, clearCart } from '@/lib/api';
 import type { Address, CouponValidation, ShippingMethod } from '@/hooks/useApi';
 
 const COUNTRY_DEFAULT = 'YE';
@@ -192,10 +192,13 @@ export default function Checkout() {
 		const address = addresses.find((a) => a.id === selectedAddressId);
 		if (!address) return;
 
-		// Build the order payload. The server recomputes discount +
-		// total (P0-5), so the values we send are hints only.
+		// Build the order payload. The server is the source of truth
+		// for the storeId (P0-1): it derives it from the items'
+		// products and rejects mixed-store carts. The server also
+		// recomputes discount + total (P0-5), so the values we send
+		// are hints only.
 		const orderBody = {
-			storeId: Number(cartState.items[0]?.productId) || 0, // backend falls back to first item's store
+			// storeId intentionally omitted — the server derives it.
 			items: cartState.items.map((i) => ({
 				productId: Number(i.productId),
 				quantity: i.quantity,
@@ -224,7 +227,15 @@ export default function Checkout() {
 
 		const result = await placeOrder(orderBody as Parameters<typeof placeOrder>[0]);
 		if (result) {
+			// Clear the local cart (UI) and the server cart (DB) in
+			// parallel. Either failing is non-fatal — the user has
+			// already paid and the worst case is a stale row on the
+			// server that the next syncOnLogin will overwrite.
 			dispatch({ type: 'CLEAR' });
+			void clearCart(Number(user.id)).catch((err) => {
+				// Best-effort. Log so we can spot persistent failures.
+				console.warn('[Checkout] server cart clear failed', err);
+			});
 			addAppToast({
 				message: isRTL ? `تم الطلب ${result.orderNumber}` : `Order ${result.orderNumber} placed`,
 				type: 'success',

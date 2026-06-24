@@ -58,11 +58,7 @@
 	// The .gitignored PATCH (noufex) inside native.js survives this
 	// because the file is still discovered at runtime by require(), not
 	// by the TS server.
-	"typescript.tsserver.exclude": [
-		"**/node_modules/**",
-		"app/dist/**",
-		"app/coverage/**"
-	],
+	"typescript.tsserver.exclude": ["**/node_modules/**", "app/dist/**", "app/coverage/**"],
 	"javascript.preferences.importModuleSpecifier": "non-relative",
 	"tailwindCSS.experimental.classRegex": [
 		["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],

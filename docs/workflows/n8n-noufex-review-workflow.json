@@ -1,0 +1,489 @@
+{
+  "name": "Nouf-ex — Technical Review Workflow (A to Z)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "trigger_cron",
+      "name": "Weekly Trigger (Monday 09:00)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        200
+      ],
+      "notes": "Runs every Monday at 09:00. Can also be triggered manually via Execute Workflow button."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "var_project_root",
+              "name": "PROJECT_ROOT",
+              "value": "D:\\source\\Nouf-ex",
+              "type": "string"
+            },
+            {
+              "id": "var_container_name",
+              "name": "CONTAINER_NAME",
+              "value": "Nouf-ex",
+              "type": "string"
+            },
+            {
+              "id": "var_db_name",
+              "name": "DB_NAME",
+              "value": "noufex_db",
+              "type": "string"
+            },
+            {
+              "id": "var_api_base",
+              "name": "API_BASE",
+              "value": "http://localhost:3000",
+              "type": "string"
+            },
+            {
+              "id": "var_app_dir",
+              "name": "APP_DIR",
+              "value": "D:\\source\\Nouf-ex\\app",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set_vars",
+      "name": "Set Workflow Variables",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        420,
+        200
+      ],
+      "notes": "Centralizes all paths and identifiers so the workflow is portable."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.PROJECT_ROOT }} && git status --porcelain && git log -1 --oneline && git branch --show-current"
+      },
+      "id": "step_git_status",
+      "name": "1. Git Status (read-only)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        640,
+        100
+      ],
+      "notes": "Capture current branch, HEAD, and working tree state. No commits made."
+    },
+    {
+      "parameters": {
+        "command": "docker ps -a --filter name={{ $json.CONTAINER_NAME }} --format \"table {{.Names}}\\t{{.Status}}\\t{{.Ports}}\\t{{.Image}}\" && echo --- && docker images --filter reference=noufex --format \"table {{.Repository}}\\t{{.Tag}}\\t{{.Size}}\""
+      },
+      "id": "step_docker_state",
+      "name": "2. Docker + Nouf-ex Container",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        640,
+        240
+      ],
+      "notes": "Lists ONLY the Nouf-ex container. Other projects' containers (codepilot-db, postgres_agent, registry explorer) are NEVER inspected or modified."
+    },
+    {
+      "parameters": {
+        "command": "set PGPASSWORD=<redacted-from-env>& \"C:\\Program Files\\PostgreSQL\\17\\bin\\psql.exe\" -h localhost -p 5432 -U noufex_app -d {{ $json.DB_NAME }} -t -c \"SELECT current_user, current_database(), version();\" -c \"\\dt public.*\" -c \"SELECT count(*) AS n_users FROM users; SELECT count(*) AS n_products FROM products;\" -c \"SELECT version, description FROM schema_migrations ORDER BY version;\""
+      },
+      "id": "step_db_audit",
+      "name": "3. noufex_db Audit (read-only)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        640,
+        380
+      ],
+      "notes": "Connects ONLY to noufex_db via the noufex_app least-privilege role. All queries are read-only (SELECT, \\dt). No other database on the host is touched."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.APP_DIR }} && npx tsc -b --noEmit"
+      },
+      "id": "step_typecheck",
+      "name": "4. TypeScript Typecheck",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        860,
+        100
+      ],
+      "notes": "Runs `tsc -b --noEmit` over all 3 projects (app/server/node). Exit 0 = PASS."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.APP_DIR }} && npx eslint . --max-warnings=0"
+      },
+      "id": "step_lint",
+      "name": "5. ESLint",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        860,
+        240
+      ],
+      "notes": "Full repo lint with zero-warning threshold."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.APP_DIR }} && npm test -- --reporter=default 2>&1 | tee {{ $json.PROJECT_ROOT }}\\scripts\\_test_results.json | Select-String -Pattern \"Test Files|Tests +\\d+\" | Select-Object -Last 5"
+      },
+      "id": "step_tests",
+      "name": "6. Vitest",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        860,
+        380
+      ],
+      "notes": "Captures pass/fail count for both |server| (Node) and |dom| (happy-dom) projects."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.PROJECT_ROOT }} && powershell -NoProfile -ExecutionPolicy Bypass -File .\\build.ps1"
+      },
+      "id": "step_build",
+      "name": "7. Build (Vite + esbuild)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        860,
+        520
+      ],
+      "notes": "Builds frontend SPA and bundles API server/index.js via esbuild. 3-stage Dockerfile build is a separate step (8b)."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.PROJECT_ROOT }} && docker build -t noufex:latest . 2>&1 | Tee-Object -FilePath scripts\\_build_docker.out | Select-Object -Last 5"
+      },
+      "id": "step_docker_build",
+      "name": "8. Docker Image Build",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        520
+      ],
+      "notes": "3-stage build (deps -> build -> runtime). May take 5-15 min on first run (npm ci of 877 packages)."
+    },
+    {
+      "parameters": {
+        "command": "cd /d {{ $json.PROJECT_ROOT }} && docker compose up -d Nouf-ex 2>&1"
+      },
+      "id": "step_container_start",
+      "name": "9. Start Nouf-ex Container",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        380
+      ],
+      "notes": "If DB_HOST in .env is 'localhost' (Windows host scenario), use the override env file at scripts/n8n-env-override.env which sets DB_HOST=host.docker.internal. NEVER modifies the original .env."
+    },
+    {
+      "parameters": {
+        "command": "$status = docker inspect --format='{{.State.Health.Status}}' {{ $json.CONTAINER_NAME }}; Write-Host \"health=$status\"; if ($status -ne 'healthy') { Write-Host 'Container not healthy yet — waiting up to 90s'; for ($i=1; $i -le 18; $i++) { Start-Sleep -Seconds 5; $status = docker inspect --format='{{.State.Health.Status}}' {{ $json.CONTAINER_NAME }}; if ($status -eq 'healthy') { break } }; docker logs {{ $json.CONTAINER_NAME }} --tail 30 }"
+      },
+      "id": "step_wait_healthy",
+      "name": "9b. Wait for Healthy",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        520
+      ],
+      "notes": "Polls docker inspect State.Health.Status up to 90s. Shows last 30 log lines on failure."
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.API_BASE }}/api/health",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "step_health",
+      "name": "10a. GET /api/health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        380
+      ],
+      "notes": "Liveness probe. Expect HTTP 200 + status='ok'."
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.API_BASE }}/api/ready",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "step_ready",
+      "name": "10b. GET /api/ready",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        520
+      ],
+      "notes": "Readiness probe (verifies DB connectivity). Expect HTTP 200 + status='ready' + checks.db.ok=true."
+    },
+    {
+      "parameters": {
+        "command": "echo \"If and only if ALL of: typecheck=0, lint=0, tests pass, /api/health=200, /api/ready=200, AND human approves, then:\"; echo \"  cd /d {{ $json.PROJECT_ROOT }} && git add -A && git status --short && echo 'AWAITING HUMAN APPROVAL — DO NOT COMMIT AUTOMATICALLY'\""
+      },
+      "id": "step_manual_approval",
+      "name": "11. Manual Approval Gate (NO auto-commit)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1740,
+        380
+      ],
+      "notes": "WORKFLOW STOPS HERE. Human must run the displayed git command manually. NO push, NO commit, NO force operation is performed by the workflow itself."
+    },
+    {
+      "parameters": {
+        "agent": "openAiAssistant",
+        "prompt": "You are a senior DevOps reviewer. Synthesize the JSON outputs from the 10 preceding steps (git status, docker state, db audit, typecheck, lint, tests, build, container start, /api/health, /api/ready) into a single Markdown report.\n\nREQUIRED SECTIONS:\n1. Executive summary (one paragraph: overall PASS/FAIL + key blockers)\n2. Per-step results table (step | status | duration | key metric)\n3. Critical findings (anything blocking production)\n4. Warnings (non-blocking issues)\n5. Recommendations (prioritized)\n\nCONSTRAINTS:\n- If any step is FAIL, the overall verdict is FAIL.\n- Never suggest auto-committing or pushing. Always end with: 'Awaiting human approval for git operations.'\n- Cite exact file paths, line numbers, and HTTP status codes.\n- Do not invent data; use only what the steps produced.\n\nOutput: pure Markdown only. No JSON wrapper."
+      },
+      "id": "agent_report",
+      "name": "AI Agent — Final Report",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [
+        1960,
+        380
+      ],
+      "notes": "The 'AI Agent' in this workflow. It only READS step outputs and synthesizes them. It does not execute any commands."
+    }
+  ],
+  "connections": {
+    "trigger_cron": {
+      "main": [
+        [
+          {
+            "node": "set_vars",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_vars": {
+      "main": [
+        [
+          {
+            "node": "step_git_status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "step_docker_state",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "step_db_audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_git_status": {
+      "main": [
+        [
+          {
+            "node": "step_typecheck",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_docker_state": {
+      "main": [
+        [
+          {
+            "node": "step_lint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_db_audit": {
+      "main": [
+        [
+          {
+            "node": "step_tests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_typecheck": {
+      "main": [
+        [
+          {
+            "node": "step_build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_lint": {
+      "main": [
+        [
+          {
+            "node": "step_docker_build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_tests": {
+      "main": [
+        [
+          {
+            "node": "step_container_start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_build": {
+      "main": [
+        [
+          {
+            "node": "step_container_start",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "step_docker_build": {
+      "main": [
+        [
+          {
+            "node": "step_container_start",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "step_container_start": {
+      "main": [
+        [
+          {
+            "node": "step_wait_healthy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_wait_healthy": {
+      "main": [
+        [
+          {
+            "node": "step_health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "step_ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_health": {
+      "main": [
+        [
+          {
+            "node": "step_manual_approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "step_ready": {
+      "main": [
+        [
+          {
+            "node": "step_manual_approval",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "step_manual_approval": {
+      "main": [
+        [
+          {
+            "node": "agent_report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "noufex"
+    },
+    {
+      "name": "devops"
+    },
+    {
+      "name": "weekly-review"
+    },
+    {
+      "name": "read-only"
+    }
+  ],
+  "meta": {
+    "instanceId": "noufex-review-2026-06-25",
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 1,
+  "description": "Read-only weekly review of the Nouf-ex stack: git state, Docker, noufex_db, typecheck, lint, tests, build, container start, /api/health, /api/ready. Halts before any git commit/push and requires human approval. Does not touch other projects' databases or containers."
+}

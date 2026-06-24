@@ -13,7 +13,15 @@ import { inspectAttr } from 'plugin-inspect-react-code';
 // - The manifest ships inline; the icons live in /public and are
 //   referenced by relative URL.
 export default defineConfig({
-	base: './',
+	// base '/' (absolute) is required for deep-link SPA routes like
+	// /auth/login to work after a full-page reload. With the previous
+	// base: './' the served index.html referenced `./assets/index-...js`,
+	// which the browser resolved to `/auth/assets/...` when the entry
+	// URL was /auth/login — the static middleware then returned the SPA
+	// fallback HTML with `text/html` MIME, causing every JS module to
+	// fail to load. Absolute paths fix this without changing the
+	// production bundle's byte size.
+	base: '/',
 	plugins: [
 		inspectAttr(),
 		react(),

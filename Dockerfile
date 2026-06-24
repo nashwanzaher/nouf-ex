@@ -22,7 +22,41 @@ COPY app/package.json app/package-lock.json* ./
 RUN npm ci --no-audit --no-fund
 
 # ----------------------------------------------------------------------------
-# Stage 2: runtime image — Node.js 20 + the Nouf-ex API server.
+# Stage 2: build the API server bundle with esbuild.
+# ----------------------------------------------------------------------------
+# The source mix (.ts ESM + .cts CJS) trips the Node 20 CJS↔ESM
+# bridge when loaded with tsx at runtime — the CJS-from-ESM
+# translator can't resolve `../middleware.js` because the file is
+# actually `../middleware.ts` and tsx's CJS loader hook doesn't
+# register for the ESM-side require chain. Symptom on a fresh
+# build of this image (before the bundle step was added):
+#
+#   TypeError: Cannot read properties of undefined (reading 'exports')
+#     at <anonymous> (/app/server/lib/shared.cts:31:8)
+#     at loadCJSModule (node:internal/modules/esm/translators:205:3)
+#
+# esbuild resolves every relative import at build time, so the
+# runtime image only needs to execute a single CJS file. External
+# packages (`pg`, `express`, `cors`, etc.) stay in node_modules.
+# ----------------------------------------------------------------------------
+FROM node:20-alpine AS build
+
+ENV npm_config_loglevel=error
+WORKDIR /build
+
+COPY --from=deps /build/node_modules ./node_modules
+COPY app/ ./app/
+
+RUN cd /build/app && npx esbuild server/index.ts \
+        --bundle \
+        --platform=node \
+        --target=node20 \
+        --format=esm \
+        --outfile=/build/app/server/index.js \
+        --packages=external
+
+# ----------------------------------------------------------------------------
+# Stage 3: runtime image — Node.js 20 + the bundled Nouf-ex API server.
 # ----------------------------------------------------------------------------
 FROM node:20-alpine
 
@@ -30,8 +64,17 @@ RUN apk add --no-cache tini
 
 WORKDIR /app
 
+# node_modules carries every external dep the bundle requires at
+# runtime (pg, express, cors, zod, scrypt via crypto, etc.).
 COPY --from=deps /build/node_modules ./node_modules
-COPY app/ ./
+
+# Copy the esbuild-bundled CJS, plus the SPA dist (built by
+# `npm run build` on the host before `docker compose build`). The
+# raw .ts/.cts sources are NOT copied — the bundle is self-contained
+# and we don't want the runtime to even consider loading them.
+COPY --from=build /build/app/server/index.js ./server/index.js
+COPY --from=build /build/app/package.json ./package.json
+COPY --from=build /build/app/dist ./dist
 
 # Copy the API entrypoint.
 COPY docker/entrypoint.sh /usr/local/bin/noufex-entrypoint.sh

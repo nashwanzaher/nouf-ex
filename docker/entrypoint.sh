@@ -49,10 +49,12 @@ function attempt() {
 
 echo "[entrypoint] Starting Nouf-ex API server on port ${API_PORT:-3000}..."
 cd /app
-# We use `node --import tsx` instead of `npx tsx` because the latter
-# fails to register the CJS loader hooks that `.cts` route files need.
-# Symptom: `TypeError: Cannot read properties of undefined (reading 'exports')`
-# at /app/server/lib/shared.cts when the file tries to `require('../middleware')`.
-# Symptom was reproducible with `npx tsx` against the published `noufex:latest`
-# image but not when the API was started via `node --import tsx server/index.ts`.
-exec node --import tsx server/index.ts
+# Run the esbuild-bundled CJS output (server/index.js) produced by
+# the build stage of the Dockerfile. The bundle resolves every
+# relative import at build time, so we don't need a tsx loader
+# hook at runtime. The source (.ts/.cts) files are intentionally
+# NOT shipped in the image — the bundle is self-contained and
+# shipping the source would just bloat the image and re-open the
+# CJS↔ESM interop problem if a future entrypoint called them
+# directly.
+exec node server/index.js

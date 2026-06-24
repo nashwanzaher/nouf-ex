@@ -91,10 +91,7 @@ function orderByFor(sort: SearchFilters['sort']): string {
  *  'simple' config (the only config that handles all three
  *  locales reasonably) and ranked per language. The final score is
  *  the MAX of the three per-language ranks. */
-export async function runSearch(
-	query: string,
-	filters: SearchFilters = {},
-): Promise<SearchResult> {
+export async function runSearch(query: string, filters: SearchFilters = {}): Promise<SearchResult> {
 	const start = Date.now();
 	const numLimit = Math.max(
 		1,
@@ -112,7 +109,9 @@ export async function runSearch(
 	// Optional filters — $2 onwards.
 	if (filters.category) {
 		params.push(filters.category);
-		where.push('p.category_id = (SELECT id FROM categories WHERE slug = $' + params.length + ')');
+		where.push(
+			'p.category_id = (SELECT id FROM categories WHERE slug = $' + params.length + ')',
+		);
 	}
 	if (filters.storeId !== undefined) {
 		params.push(filters.storeId);

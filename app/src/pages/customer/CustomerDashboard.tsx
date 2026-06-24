@@ -22,6 +22,7 @@ import {
 	Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import styles from './CustomerDashboard.module.css';
 
 /* ------------------------------------------------------------------ */
 /*  Sidebar items                                                      */
@@ -152,17 +153,21 @@ function OrderTimeline({ timeline }: { timeline: string[]; isRTL: boolean }) {
 				return (
 					<div key={step} className="flex items-center gap-1">
 						<div
-							className="w-6 h-6 rounded-full flex items-center justify-center"
-							style={{
-								background: completed ? '#FF6A00' : '#E5E5E5',
-								color: completed ? 'white' : '#999',
-							}}>
+							className={cn(
+								'w-6 h-6 rounded-full flex items-center justify-center',
+								completed ? styles.timelineStep : styles.timelineStepPending,
+							)}
+						>
 							{icons[step]}
 						</div>
 						{i < steps.length - 1 && (
 							<div
-								className="w-6 h-0.5"
-								style={{ background: i < currentIndex ? '#FF6A00' : '#E5E5E5' }}
+								className={cn(
+									'w-6 h-0.5',
+									i < currentIndex
+										? styles.timelineConnectorDone
+										: styles.timelineConnector,
+								)}
 							/>
 						)}
 					</div>
@@ -183,8 +188,9 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
 		<span
 			className={cn(
 				'px-2 py-0.5 rounded text-[11px] font-semibold',
-				colors[status] || 'bg-gray-400 text-white'
-			)}>
+				colors[status] || 'bg-gray-400 text-white',
+			)}
+		>
 			{label}
 		</span>
 	);
@@ -214,18 +220,20 @@ export default function CustomerDashboard() {
 			<div className="h-16 flex items-center px-4 border-b border-white/10">
 				{collapsed ? (
 					<div
-						className="mx-auto w-9 h-9 rounded flex items-center justify-center"
-						style={{ background: '#FF6A00' }}>
+						className={`mx-auto w-9 h-9 rounded flex items-center justify-center ${styles.brandTile}`}
+					>
 						<span className="text-white font-bold text-sm">ن</span>
 					</div>
 				) : (
 					<div className="flex items-center gap-3">
 						<div
-							className="w-9 h-9 rounded flex items-center justify-center"
-							style={{ background: '#FF6A00' }}>
+							className={`w-9 h-9 rounded flex items-center justify-center ${styles.brandTile}`}
+						>
 							<Globe className="w-5 h-5 text-white" strokeWidth={1.5} />
 						</div>
-						<span className="text-white font-bold text-sm">{isRTL ? 'نوف إكس' : 'Nouf-ex'}</span>
+						<span className="text-white font-bold text-sm">
+							{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+						</span>
 					</div>
 				)}
 			</div>
@@ -240,13 +248,14 @@ export default function CustomerDashboard() {
 							onClick={closeMobile}
 							className={cn(
 								'flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 relative',
-								active ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5'
+								active
+									? `text-white ${styles.navLinkActive}`
+									: 'text-white/50 hover:text-white hover:bg-white/5',
 							)}
-							style={active ? { background: 'rgba(255,106,0,0.15)' } : {}}>
+						>
 							{active && (
 								<span
-									className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-l-full"
-									style={{ background: '#FF6A00' }}
+									className={`absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-l-full ${styles.navIndicator}`}
 								/>
 							)}
 							<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
@@ -263,12 +272,15 @@ export default function CustomerDashboard() {
 			<div className="p-3 border-t border-white/10">
 				{!collapsed ? (
 					<button className="flex items-center gap-3 px-3 py-2 rounded hover:bg-white/5 transition-colors w-full text-left">
-						<LogOut className="w-4 h-4 text-[#F44336] shrink-0" strokeWidth={1.5} />
-						<span className="text-xs text-[#F44336]">{t('nav.logout')}</span>
+						<LogOut
+							className={`w-4 h-4 ${styles.iconDanger} shrink-0`}
+							strokeWidth={1.5}
+						/>
+						<span className={`text-xs ${styles.iconDanger}`}>{t('nav.logout')}</span>
 					</button>
 				) : (
 					<button className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto">
-						<LogOut className="w-4 h-4 text-[#F44336]" strokeWidth={1.5} />
+						<LogOut className={`w-4 h-4 ${styles.iconDanger}`} strokeWidth={1.5} />
 					</button>
 				)}
 			</div>
@@ -276,36 +288,38 @@ export default function CustomerDashboard() {
 	);
 
 	return (
-		<div
-			className="min-h-[100dvh] flex"
-			style={{ background: '#F0F2F5' }}
-			dir={isRTL ? 'rtl' : 'ltr'}>
+		<div className={`min-h-[100dvh] flex ${styles.page}`} dir={isRTL ? 'rtl' : 'ltr'}>
 			{/* Desktop Sidebar */}
 			<aside
 				className={cn(
 					'fixed top-0 bottom-0 z-40 hidden lg:flex flex-col transition-all duration-300',
 					isRTL ? 'right-0' : 'left-0',
-					sidebarW
+					sidebarW,
+					styles.sidebar,
 				)}
-				style={{ background: '#001529' }}>
+			>
 				{renderSidebarContent()}
 			</aside>
 
 			{/* Mobile Sidebar */}
 			{mobileOpen && (
 				<div className="fixed inset-0 z-[60] lg:hidden">
-					<div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+					<div
+						className="absolute inset-0 bg-black/60"
+						onClick={() => setMobileOpen(false)}
+					/>
 					<div
 						className={cn(
 							'absolute top-0 h-full w-[260px] flex flex-col',
-							isRTL ? 'right-0' : 'left-0'
+							isRTL ? 'right-0' : 'left-0',
+							styles.sidebar,
 						)}
-						style={{ background: '#001529' }}>
+					>
 						<div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
 							<div className="flex items-center gap-3">
 								<div
-									className="w-9 h-9 rounded flex items-center justify-center"
-									style={{ background: '#FF6A00' }}>
+									className={`w-9 h-9 rounded flex items-center justify-center ${styles.brandTile}`}
+								>
 									<Globe className="w-5 h-5 text-white" strokeWidth={1.5} />
 								</div>
 								<span className="text-white font-bold text-sm">
@@ -324,17 +338,19 @@ export default function CustomerDashboard() {
 										key={item.path}
 										to={item.path}
 										className={cn(
-											'flex items-center gap-3 px-3 py-3 rounded transition-all',
-											active ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5'
+											'flex items-center gap-3 px-3 py-3 rounded transition-all relative',
+											active
+												? `text-white ${styles.navLinkActive}`
+												: 'text-white/50 hover:text-white hover:bg-white/5',
 										)}
-										style={active ? { background: 'rgba(255,106,0,0.15)' } : {}}>
+									>
 										{active && (
 											<span
 												className={cn(
 													'absolute top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-l-full',
-													isRTL ? 'right-0' : 'left-0'
+													isRTL ? 'right-0' : 'left-0',
+													styles.navIndicator,
 												)}
-												style={{ background: '#FF6A00' }}
 											/>
 										)}
 										<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
@@ -354,53 +370,58 @@ export default function CustomerDashboard() {
 				className={cn(
 					'flex-1 min-h-[100dvh] flex flex-col transition-all duration-300',
 					isRTL ? 'lg:mr-[220px]' : 'lg:ml-[220px]',
-					collapsed && (isRTL ? 'lg:mr-[72px]' : 'lg:ml-[72px]')
-				)}>
+					collapsed && (isRTL ? 'lg:mr-[72px]' : 'lg:ml-[72px]'),
+				)}
+			>
 				{/* Top Bar */}
 				<header className="h-16 bg-white shadow-sm sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6">
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => setMobileOpen(true)}
-							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100">
-							<Menu className="w-5 h-5" style={{ color: '#333' }} strokeWidth={1.5} />
+							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
+						>
+							<Menu className={`w-5 h-5 ${styles.iconText}`} strokeWidth={1.5} />
 						</button>
 						<button
 							onClick={() => setCollapsed(!collapsed)}
-							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors">
+							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
+						>
 							{collapsed ? (
-								<ChevronRight className="w-4 h-4" style={{ color: '#666' }} />
+								<ChevronRight className={`w-4 h-4 ${styles.iconTextMuted}`} />
 							) : (
-								<ChevronLeft className="w-4 h-4" style={{ color: '#666' }} />
+								<ChevronLeft className={`w-4 h-4 ${styles.iconTextMuted}`} />
 							)}
 						</button>
-						<h2 className="font-bold text-base" style={{ color: '#333' }}>
+						<h2 className={`font-bold text-base ${styles.iconText}`}>
 							{isRTL ? 'لوحة العميل' : 'Customer Dashboard'}
 						</h2>
 					</div>
 
 					<div className="flex items-center gap-2">
 						<div
-							className="hidden md:flex items-center rounded px-3 py-2 w-48"
-							style={{ background: '#F0F2F5' }}>
-							<Search className="w-4 h-4" style={{ color: '#999' }} strokeWidth={1.5} />
+							className={`hidden md:flex items-center rounded px-3 py-2 w-48 ${styles.searchSurface}`}
+						>
+							<Search
+								className={`w-4 h-4 ${styles.iconTextFaint}`}
+								strokeWidth={1.5}
+							/>
 							<input
 								type="text"
 								placeholder={isRTL ? 'بحث...' : 'Search...'}
-								className="bg-transparent border-none outline-none text-sm w-full ml-2"
-								style={{ color: '#333' }}
+								className={`bg-transparent border-none outline-none text-sm w-full ml-2 ${styles.searchInput}`}
 							/>
 						</div>
 						<button className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
-							<Bell className="w-5 h-5" style={{ color: '#666' }} strokeWidth={1.5} />
+							<Bell className={`w-5 h-5 ${styles.iconTextMuted}`} strokeWidth={1.5} />
 							<span
-								className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-								style={{ background: '#FF6A00' }}>
+								className={`absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white ${styles.brandAvatar}`}
+							>
 								2
 							</span>
 						</button>
 						<div
-							className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-							style={{ background: '#FF6A00' }}>
+							className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold ${styles.brandAvatar}`}
+						>
 							أ
 						</div>
 					</div>
@@ -437,21 +458,23 @@ export default function CustomerDashboard() {
 									color: '#1688C9',
 								},
 							].map((stat, i) => (
-								<div key={i} className="bg-white rounded p-4 shadow-sm flex items-center gap-4">
+								<div
+									key={i}
+									className="bg-white rounded p-4 shadow-sm flex items-center gap-4"
+								>
 									<div
-										className="w-12 h-12 rounded flex items-center justify-center"
-										style={{ background: `${stat.color}15` }}>
-										<stat.icon
-											className="w-6 h-6"
-											style={{ color: stat.color }}
-											strokeWidth={1.5}
-										/>
+										className={`w-12 h-12 rounded flex items-center justify-center ${styles.tile}`}
+										style={
+											{ '--tile-color': stat.color } as React.CSSProperties
+										}
+									>
+										<stat.icon className="w-6 h-6" strokeWidth={1.5} />
 									</div>
 									<div>
-										<p className="text-xl font-bold" style={{ color: '#333' }}>
+										<p className={`text-xl font-bold ${styles.statValue}`}>
 											{stat.value}
 										</p>
-										<p className="text-xs" style={{ color: '#666' }}>
+										<p className={`text-xs ${styles.statLabel}`}>
 											{stat.label}
 										</p>
 									</div>
@@ -462,13 +485,13 @@ export default function CustomerDashboard() {
 						{/* Order Tracking */}
 						<div className="bg-white rounded p-5 shadow-sm">
 							<div className="flex items-center justify-between mb-4">
-								<h3 className="font-bold text-base" style={{ color: '#333' }}>
+								<h3 className={`font-bold text-base ${styles.sectionTitle}`}>
 									{isRTL ? 'تتبع الطلبات' : 'Order Tracking'}
 								</h3>
 								<Link
 									to="/customer/orders"
-									className="text-xs font-semibold hover:underline"
-									style={{ color: '#FF6A00' }}>
+									className={`text-xs font-semibold hover:underline ${styles.linkOrange}`}
+								>
 									{isRTL ? 'عرض الكل' : 'View All'}
 								</Link>
 							</div>
@@ -476,36 +499,45 @@ export default function CustomerDashboard() {
 								{recentOrders.map((order) => (
 									<div
 										key={order.id}
-										className="p-4 rounded border"
-										style={{ borderColor: '#F0F2F5' }}>
+										className={`p-4 rounded border ${styles.orderCard}`}
+									>
 										<div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
 											<div className="flex items-center gap-3">
 												<div
-													className="w-12 h-12 rounded flex items-center justify-center"
-													style={{ background: '#FFF5EB' }}>
+													className={`w-12 h-12 rounded flex items-center justify-center ${styles.iconTileSoft}`}
+												>
 													<Package
-														className="w-6 h-6"
-														style={{ color: '#FF6A00' }}
+														className={`w-6 h-6 ${styles.iconTileOrange}`}
 														strokeWidth={1.5}
 													/>
 												</div>
 												<div>
 													<div className="flex items-center gap-2">
-														<p className="text-sm font-semibold" style={{ color: '#333' }}>
+														<p
+															className={`text-sm font-semibold ${styles.iconText}`}
+														>
 															#{order.id}
 														</p>
 														<StatusBadge
 															status={order.status}
-															label={isRTL ? order.statusLabel : order.statusLabelEn}
+															label={
+																isRTL
+																	? order.statusLabel
+																	: order.statusLabelEn
+															}
 														/>
 													</div>
-													<p className="text-xs mt-0.5" style={{ color: '#666' }}>
-														{isRTL ? order.dateAr : order.date} · {order.items}{' '}
-														{isRTL ? 'منتجات' : 'items'}
+													<p
+														className={`text-xs mt-0.5 ${styles.mutedText}`}
+													>
+														{isRTL ? order.dateAr : order.date} ·{' '}
+														{order.items} {isRTL ? 'منتجات' : 'items'}
 													</p>
 												</div>
 											</div>
-											<p className="text-sm font-bold" style={{ color: '#FF6A00' }}>
+											<p
+												className={`text-sm font-bold ${styles.priceOrange}`}
+											>
 												{order.total}
 											</p>
 										</div>
@@ -518,13 +550,13 @@ export default function CustomerDashboard() {
 						{/* Wishlist Grid */}
 						<div className="bg-white rounded p-5 shadow-sm">
 							<div className="flex items-center justify-between mb-4">
-								<h3 className="font-bold text-base" style={{ color: '#333' }}>
+								<h3 className={`font-bold text-base ${styles.sectionTitle}`}>
 									{isRTL ? 'المفضلة' : 'Wishlist'}
 								</h3>
 								<Link
 									to="/customer/wishlist"
-									className="text-xs font-semibold hover:underline"
-									style={{ color: '#FF6A00' }}>
+									className={`text-xs font-semibold hover:underline ${styles.linkOrange}`}
+								>
 									{isRTL ? 'عرض الكل' : 'View All'}
 								</Link>
 							</div>
@@ -532,26 +564,36 @@ export default function CustomerDashboard() {
 								{wishlistItems.map((item) => (
 									<div
 										key={item.id}
-										className="border rounded p-4 hover:shadow-md transition-shadow"
-										style={{ borderColor: '#F0F2F5' }}>
+										className={`border rounded p-4 hover:shadow-md transition-shadow ${styles.wishlistCard}`}
+									>
 										<div
-											className="w-full h-28 rounded flex items-center justify-center mb-3"
-											style={{ background: '#F0F2F5' }}>
-											<Heart className="w-8 h-8" style={{ color: '#F44336' }} strokeWidth={1.5} />
+											className={`w-full h-28 rounded flex items-center justify-center mb-3 ${styles.wishlistImage}`}
+										>
+											<Heart
+												className={`w-8 h-8 ${styles.iconDanger}`}
+												strokeWidth={1.5}
+											/>
 										</div>
-										<p className="text-sm font-medium truncate" style={{ color: '#333' }}>
+										<p
+											className={`text-sm font-medium truncate ${styles.iconText}`}
+										>
 											{isRTL ? item.name : item.nameEn}
 										</p>
 										<div className="flex items-center gap-2 mt-1">
-											<Star className="w-3 h-3" style={{ color: '#FF9800' }} strokeWidth={1.5} />
-											<span className="text-xs" style={{ color: '#666' }}>
+											<Star
+												className={`w-3 h-3 ${styles.ratingStar}`}
+												strokeWidth={1.5}
+											/>
+											<span className={`text-xs ${styles.mutedText}`}>
 												{item.rating}
 											</span>
-											<span className="text-xs" style={{ color: '#999' }}>
+											<span className={`text-xs ${styles.mutedTextFaint}`}>
 												({item.sold} {isRTL ? 'مباع' : 'sold'})
 											</span>
 										</div>
-										<p className="text-sm font-bold mt-2" style={{ color: '#FF6A00' }}>
+										<p
+											className={`text-sm font-bold mt-2 ${styles.priceOrange}`}
+										>
 											{item.price}
 										</p>
 									</div>
@@ -561,24 +603,30 @@ export default function CustomerDashboard() {
 
 						{/* Notifications */}
 						<div className="bg-white rounded p-5 shadow-sm">
-							<h3 className="font-bold text-base mb-4" style={{ color: '#333' }}>
+							<h3 className={`font-bold text-base mb-4 ${styles.sectionTitle}`}>
 								{isRTL ? 'آخر الإشعارات' : 'Recent Notifications'}
 							</h3>
 							<div className="space-y-3">
 								{notifications.map((n, i) => (
 									<div
 										key={i}
-										className="flex items-start gap-3 p-3 rounded hover:bg-gray-50 transition-colors">
+										className="flex items-start gap-3 p-3 rounded hover:bg-gray-50 transition-colors"
+									>
 										<div
-											className="w-9 h-9 rounded flex items-center justify-center shrink-0"
-											style={{ background: `${n.color}15` }}>
-											<n.icon className="w-4 h-4" style={{ color: n.color }} strokeWidth={1.5} />
+											className={`w-9 h-9 rounded flex items-center justify-center shrink-0 ${styles.tile}`}
+											style={
+												{ '--tile-color': n.color } as React.CSSProperties
+											}
+										>
+											<n.icon className="w-4 h-4" strokeWidth={1.5} />
 										</div>
 										<div className="flex-1">
-											<p className="text-xs" style={{ color: '#333' }}>
+											<p className={`text-xs ${styles.iconText}`}>
 												{isRTL ? n.text : n.textEn}
 											</p>
-											<p className="text-[10px] mt-0.5" style={{ color: '#999' }}>
+											<p
+												className={`text-[10px] mt-0.5 ${styles.mutedTextFaint}`}
+											>
 												{n.time}
 											</p>
 										</div>

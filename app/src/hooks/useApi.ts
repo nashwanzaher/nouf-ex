@@ -158,13 +158,13 @@ export function useOrders(): HookResult<Order[]> {
 
 export function useOrder(id: number | null): HookResult<OrderWithItems | null> {
 	return useDataHook(async (signal) =>
-		id ? ((await getOrder(id, { signal })) as OrderWithItems) : null
+		id ? ((await getOrder(id, { signal })) as OrderWithItems) : null,
 	);
 }
 
 export function useUserAddresses(userId: number | null): HookResult<Address[]> {
 	return useDataHook(async (signal) =>
-		userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[])
+		userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[]),
 	);
 }
 
@@ -179,13 +179,13 @@ export function useShippingMethods(weightKg = 1): HookResult<ShippingMethod[]> {
 
 export function useServerCart(userId: number | null): HookResult<CartItem[]> {
 	return useDataHook(async (signal) =>
-		userId ? getCart(userId, { signal }) : Promise.resolve([] as CartItem[])
+		userId ? getCart(userId, { signal }) : Promise.resolve([] as CartItem[]),
 	);
 }
 
 export function useServerWishlist(userId: number | null): HookResult<WishlistItem[]> {
 	return useDataHook(async (signal) =>
-		userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[])
+		userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[]),
 	);
 }
 
@@ -206,7 +206,9 @@ export function useCouponValidation() {
 			return result;
 		} catch (err) {
 			const message =
-				err instanceof ApiError ? err.message : 'Could not validate coupon. Please try again.';
+				err instanceof ApiError
+					? err.message
+					: 'Could not validate coupon. Please try again.';
 			setState({ validating: false, result: null, error: message });
 			return null;
 		}
@@ -242,13 +244,15 @@ export function usePlaceOrder() {
 				return result;
 			} catch (err) {
 				const message =
-					err instanceof ApiError ? err.message : 'Could not place your order. Please try again.';
+					err instanceof ApiError
+						? err.message
+						: 'Could not place your order. Please try again.';
 				setError(message);
 				setSubmitting(false);
 				return null;
 			}
 		},
-		[]
+		[],
 	);
 
 	return { submitting, error, placeOrder };
@@ -313,7 +317,7 @@ export function useStore(id: number | null): HookResult<StoreWithProducts | null
 
 export function useStoreReviews(storeId: number | null): HookResult<Review[]> {
 	return useDataHook((signal) =>
-		storeId ? getReviews({ storeId }, { signal }) : Promise.resolve([] as Review[])
+		storeId ? getReviews({ storeId }, { signal }) : Promise.resolve([] as Review[]),
 	);
 }
 
@@ -364,7 +368,7 @@ export function useCartItems(): HookResult<CartItem[]> {
 
 export function useWishlistItems(): HookResult<WishlistItem[]> {
 	const [data, setData] = useState<WishlistItem[]>(() =>
-		readLocalStorage<WishlistItem[]>('noufex_wishlist')
+		readLocalStorage<WishlistItem[]>('noufex_wishlist'),
 	);
 	const loading = false;
 	const error: string | null = null;
@@ -380,7 +384,7 @@ export function useWishlistItems(): HookResult<WishlistItem[]> {
 
 export function useNotifications(): HookResult<Notification[]> {
 	const [data, setData] = useState<Notification[]>(() =>
-		readLocalStorage<Notification[]>('noufex_notifications')
+		readLocalStorage<Notification[]>('noufex_notifications'),
 	);
 	const loading = false;
 

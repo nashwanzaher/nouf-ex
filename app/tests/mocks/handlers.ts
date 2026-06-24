@@ -236,7 +236,10 @@ export const handlers = [
 		const slug = String(info.params?.slug ?? (m ? decodeURIComponent(m[1]) : ''));
 		const cat = categoriesFixture.find((c) => c.slug === slug);
 		if (!cat) {
-			return HttpResponse.json({ success: false, error: 'Category not found' }, { status: 404 });
+			return HttpResponse.json(
+				{ success: false, error: 'Category not found' },
+				{ status: 404 },
+			);
 		}
 		return HttpResponse.json({ success: true, data: { ...cat, products: productsFixture } });
 	}),
@@ -252,7 +255,9 @@ export const handlers = [
 			// fixtures all have category_id=1; OK for now
 		}
 		if (search) {
-			products = products.filter((p) => p.name_en.toLowerCase().includes(search.toLowerCase()));
+			products = products.filter((p) =>
+				p.name_en.toLowerCase().includes(search.toLowerCase()),
+			);
 		}
 		return HttpResponse.json({
 			success: true,
@@ -275,7 +280,10 @@ export const handlers = [
 		}
 		const product = productsFixture.find((p) => p.id === id);
 		if (!product) {
-			return HttpResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+			return HttpResponse.json(
+				{ success: false, error: 'Product not found' },
+				{ status: 404 },
+			);
 		}
 		return HttpResponse.json({
 			success: true,
@@ -350,7 +358,10 @@ export const handlers = [
 		return HttpResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
 	}),
 	http.post('*/api/auth/register', async () => {
-		return HttpResponse.json({ success: false, error: 'Email already in use' }, { status: 409 });
+		return HttpResponse.json(
+			{ success: false, error: 'Email already in use' },
+			{ status: 409 },
+		);
 	}),
 
 	// Cart
@@ -455,7 +466,7 @@ export const handlers = [
 		if (body.code !== 'SAVE10') {
 			return HttpResponse.json(
 				{ success: false, error: 'Coupon not found or inactive' },
-				{ status: 404 }
+				{ status: 404 },
 			);
 		}
 		const discount = Math.round(body.order_subtotal * 0.1 * 100) / 100;

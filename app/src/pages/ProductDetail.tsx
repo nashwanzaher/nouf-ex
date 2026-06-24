@@ -73,7 +73,7 @@ export default function ProductDetail() {
 	const reviews = useMemo<Review[]>(() => reviewsData ?? [], [reviewsData]);
 	const related = useMemo(
 		() => (relatedData?.products ?? []).filter((p) => p.id !== numericId).slice(0, 4),
-		[relatedData, numericId]
+		[relatedData, numericId],
 	);
 	const store = product?.store;
 
@@ -95,12 +95,14 @@ export default function ProductDetail() {
 				<div className="text-6xl font-bold text-aliOrange mb-4">404</div>
 				<h2 className="text-xl font-semibold text-aliText mb-2">Invalid product ID</h2>
 				<p className="text-aliTextSec mb-6">
-					The product ID <code className="bg-aliSurface px-1.5 py-0.5 rounded">{String(id)}</code>{' '}
-					is not valid.
+					The product ID{' '}
+					<code className="bg-aliSurface px-1.5 py-0.5 rounded">{String(id)}</code> is not
+					valid.
 				</p>
 				<Link
 					to="/"
-					className="px-5 py-2 bg-aliOrange text-white rounded-lg hover:bg-aliOrangeHover">
+					className="px-5 py-2 bg-aliOrange text-white rounded-lg hover:bg-aliOrangeHover"
+				>
 					Back to home
 				</Link>
 			</div>
@@ -115,7 +117,11 @@ export default function ProductDetail() {
 
 	const getName = (p: { name_ar: string; name_en: string; name_zh: string }) =>
 		lang === 'en' ? p.name_en : lang === 'zh' ? p.name_zh : p.name_ar;
-	const getDesc = (p: { description: string; description_en: string; description_zh: string }) => {
+	const getDesc = (p: {
+		description: string;
+		description_en: string;
+		description_zh: string;
+	}) => {
 		return lang === 'en' ? p.description_en : lang === 'zh' ? p.description_zh : p.description;
 	};
 	const getStoreName = (s?: {
@@ -157,7 +163,8 @@ export default function ProductDetail() {
 				</p>
 				<Link
 					to="/"
-					className="px-6 py-2 bg-[#FF6A00] text-white rounded font-semibold hover:bg-[#E55F00]">
+					className="px-6 py-2 bg-[#FF6A00] text-white rounded font-semibold hover:bg-[#E55F00]"
+				>
 					{t('common.back')}
 				</Link>
 			</div>
@@ -181,8 +188,12 @@ export default function ProductDetail() {
 		});
 		setAdded(true);
 		addToast(
-			lang === 'ar' ? 'تمت الإضافة للسلة!' : lang === 'zh' ? '已加入购物车！' : 'Added to cart!',
-			'success'
+			lang === 'ar'
+				? 'تمت الإضافة للسلة!'
+				: lang === 'zh'
+					? '已加入购物车！'
+					: 'Added to cart!',
+			'success',
 		);
 		setTimeout(() => setAdded(false), 2000);
 	};
@@ -214,7 +225,9 @@ export default function ProductDetail() {
 					{lang === 'ar' ? 'المنتجات' : 'Products'}
 				</Link>
 				<ChevronRight size={14} className={isRTL ? 'rotate-180' : ''} />
-				<span className="text-[#333] font-medium truncate max-w-[200px]">{getName(product)}</span>
+				<span className="text-[#333] font-medium truncate max-w-[200px]">
+					{getName(product)}
+				</span>
 			</nav>
 
 			{/* ─── Main Product Section ─── */}
@@ -224,7 +237,8 @@ export default function ProductDetail() {
 					<div className="bg-white rounded border border-[#E5E5E5] overflow-hidden relative group">
 						<div
 							className="aspect-square relative cursor-zoom-in"
-							onClick={() => setLightboxOpen(true)}>
+							onClick={() => setLightboxOpen(true)}
+						>
 							<img
 								src={allImages[selectedImage]}
 								alt={getName(product)}
@@ -261,7 +275,8 @@ export default function ProductDetail() {
 							<button
 								key={i}
 								onClick={() => setSelectedImage(i)}
-								className={`w-16 h-16 rounded border-2 flex-shrink-0 overflow-hidden transition-all ${selectedImage === i ? 'border-[#FF6A00] shadow' : 'border-[#E5E5E5] hover:border-[#FF6A00]/50'}`}>
+								className={`w-16 h-16 rounded border-2 flex-shrink-0 overflow-hidden transition-all ${selectedImage === i ? 'border-[#FF6A00] shadow' : 'border-[#E5E5E5] hover:border-[#FF6A00]/50'}`}
+							>
 								<img src={img} alt="" className="w-full h-full object-cover" />
 							</button>
 						))}
@@ -324,7 +339,8 @@ export default function ProductDetail() {
 									: `MOQ: ${product.moq || 10} pieces`}
 							</span>
 							<span className="text-xs bg-[#E8F5E9] text-[#4CAF50] px-2 py-0.5 rounded font-medium flex items-center gap-1">
-								<ShieldCheck size={10} /> {lang === 'ar' ? 'ضمان التجارة' : 'Trade Assurance'}
+								<ShieldCheck size={10} />{' '}
+								{lang === 'ar' ? 'ضمان التجارة' : 'Trade Assurance'}
 							</span>
 						</div>
 					</div>
@@ -339,7 +355,8 @@ export default function ProductDetail() {
 								<button
 									key={c}
 									onClick={() => setSelectedColor(c)}
-									className={`px-3 py-1.5 rounded border text-sm font-medium transition-all ${selectedColor === c ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}>
+									className={`px-3 py-1.5 rounded border text-sm font-medium transition-all ${selectedColor === c ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}
+								>
 									{c}
 								</button>
 							))}
@@ -356,7 +373,8 @@ export default function ProductDetail() {
 								<button
 									key={s}
 									onClick={() => setSelectedSize(s)}
-									className={`w-10 h-10 rounded border text-sm font-medium transition-all flex items-center justify-center ${selectedSize === s ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}>
+									className={`w-10 h-10 rounded border text-sm font-medium transition-all flex items-center justify-center ${selectedSize === s ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}
+								>
 									{s}
 								</button>
 							))}
@@ -365,11 +383,14 @@ export default function ProductDetail() {
 
 					{/* Quantity */}
 					<div className="flex items-center gap-4 mt-4">
-						<span className="text-sm font-medium text-[#333]">{t('cart.quantity')}:</span>
+						<span className="text-sm font-medium text-[#333]">
+							{t('cart.quantity')}:
+						</span>
 						<div className="flex items-center border border-[#E5E5E5] rounded bg-white">
 							<button
 								onClick={() => setQty(Math.max(1, qty - 1))}
-								className="w-9 h-9 flex items-center justify-center hover:bg-[#F7F8FA] rounded-l transition-colors">
+								className="w-9 h-9 flex items-center justify-center hover:bg-[#F7F8FA] rounded-l transition-colors"
+							>
 								<Minus size={14} />
 							</button>
 							<span className="w-10 h-9 flex items-center justify-center font-bold text-[#333] border-x border-[#E5E5E5] text-sm">
@@ -377,7 +398,8 @@ export default function ProductDetail() {
 							</span>
 							<button
 								onClick={() => setQty(Math.min(product.stock, qty + 1))}
-								className="w-9 h-9 flex items-center justify-center hover:bg-[#F7F8FA] rounded-r transition-colors">
+								className="w-9 h-9 flex items-center justify-center hover:bg-[#F7F8FA] rounded-r transition-colors"
+							>
 								<Plus size={14} />
 							</button>
 						</div>
@@ -391,7 +413,8 @@ export default function ProductDetail() {
 						<button
 							onClick={handleAddToCart}
 							disabled={product.stock === 0}
-							className={`h-11 rounded font-bold flex items-center justify-center gap-2 transition-all text-sm ${added ? 'bg-green-500 text-white' : product.stock === 0 ? 'bg-[#E5E5E5] text-[#999] cursor-not-allowed' : 'bg-[#FF6A00] text-white hover:bg-[#E55F00] shadow'}`}>
+							className={`h-11 rounded font-bold flex items-center justify-center gap-2 transition-all text-sm ${added ? 'bg-green-500 text-white' : product.stock === 0 ? 'bg-[#E5E5E5] text-[#999] cursor-not-allowed' : 'bg-[#FF6A00] text-white hover:bg-[#E55F00] shadow'}`}
+						>
 							<ShoppingCart size={16} />
 							{added
 								? lang === 'ar'
@@ -424,9 +447,15 @@ export default function ProductDetail() {
 						{store && (
 							<>
 								<div className="flex items-center gap-3 pb-4 border-b border-[#E5E5E5]">
-									<img src={store.logo} alt="" className="w-12 h-12 rounded-full object-cover" />
+									<img
+										src={store.logo}
+										alt=""
+										className="w-12 h-12 rounded-full object-cover"
+									/>
 									<div className="flex-1 min-w-0">
-										<p className="font-bold text-sm text-[#333] truncate">{getStoreName(store)}</p>
+										<p className="font-bold text-sm text-[#333] truncate">
+											{getStoreName(store)}
+										</p>
 										<div className="flex items-center gap-1 text-xs text-[#666]">
 											<MapPin size={10} />
 											<span>{store.location}</span>
@@ -436,16 +465,28 @@ export default function ProductDetail() {
 
 								<div className="py-3 space-y-2 border-b border-[#E5E5E5]">
 									<div className="flex items-center justify-between text-sm">
-										<span className="text-[#999]">{lang === 'ar' ? 'التقييم' : 'Rating'}</span>
+										<span className="text-[#999]">
+											{lang === 'ar' ? 'التقييم' : 'Rating'}
+										</span>
 										<div className="flex items-center gap-1">
-											<Star size={12} className="text-[#FF6A00] fill-[#FF6A00]" />
-											<span className="font-bold text-[#333]">{store.rating}</span>
+											<Star
+												size={12}
+												className="text-[#FF6A00] fill-[#FF6A00]"
+											/>
+											<span className="font-bold text-[#333]">
+												{store.rating}
+											</span>
 										</div>
 									</div>
 									<div className="flex items-center justify-between text-sm">
-										<span className="text-[#999]">{lang === 'ar' ? 'سنوات' : 'Years'}</span>
+										<span className="text-[#999]">
+											{lang === 'ar' ? 'سنوات' : 'Years'}
+										</span>
 										<span className="font-bold text-[#333]">
-											{store.since_year ? new Date().getFullYear() - parseInt(store.since_year) : 0}{' '}
+											{store.since_year
+												? new Date().getFullYear() -
+													parseInt(store.since_year)
+												: 0}{' '}
 											{lang === 'ar' ? 'سنة' : 'yrs'}
 										</span>
 									</div>
@@ -463,12 +504,14 @@ export default function ProductDetail() {
 								<div className="py-3 flex flex-wrap gap-1.5 border-b border-[#E5E5E5]">
 									{store.trust_level === 'gold' && (
 										<span className="flex items-center gap-1 text-xs bg-[#FFF8E1] text-[#FF8F00] px-2 py-0.5 rounded font-medium">
-											<Award size={12} /> {lang === 'ar' ? 'مورد ذهبي' : 'Gold Supplier'}
+											<Award size={12} />{' '}
+											{lang === 'ar' ? 'مورد ذهبي' : 'Gold Supplier'}
 										</span>
 									)}
 									{store.is_verified === 1 && (
 										<span className="flex items-center gap-1 text-xs bg-[#E3F2FD] text-[#1688C9] px-2 py-0.5 rounded font-medium">
-											<BadgeCheck size={12} /> {lang === 'ar' ? 'موثق' : 'Verified'}
+											<BadgeCheck size={12} />{' '}
+											{lang === 'ar' ? 'موثق' : 'Verified'}
 										</span>
 									)}
 								</div>
@@ -476,7 +519,8 @@ export default function ProductDetail() {
 								<div className="pt-3 flex flex-col gap-2">
 									<Link
 										to={`/store/${store.id}`}
-										className="h-9 rounded bg-[#FF6A00] text-white font-bold text-sm flex items-center justify-center hover:bg-[#E55F00] transition-colors">
+										className="h-9 rounded bg-[#FF6A00] text-white font-bold text-sm flex items-center justify-center hover:bg-[#E55F00] transition-colors"
+									>
 										{lang === 'ar' ? 'زيارة المتجر' : 'Visit Store'}
 									</Link>
 									<button className="h-9 rounded border border-[#E5E5E5] text-[#666] font-medium text-sm flex items-center justify-center hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors">
@@ -511,8 +555,14 @@ export default function ProductDetail() {
 				{/* Tab Headers */}
 				<div className="flex border-b border-[#E5E5E5] overflow-auto">
 					{[
-						{ key: 'details' as const, label: lang === 'ar' ? 'تفاصيل المنتج' : 'Product Details' },
-						{ key: 'company' as const, label: lang === 'ar' ? 'ملف الشركة' : 'Company Profile' },
+						{
+							key: 'details' as const,
+							label: lang === 'ar' ? 'تفاصيل المنتج' : 'Product Details',
+						},
+						{
+							key: 'company' as const,
+							label: lang === 'ar' ? 'ملف الشركة' : 'Company Profile',
+						},
 						{
 							key: 'reviews' as const,
 							label: `${lang === 'ar' ? 'المراجعات' : 'Reviews'} (${product.review_count})`,
@@ -521,7 +571,8 @@ export default function ProductDetail() {
 						<button
 							key={tab.key}
 							onClick={() => setActiveTab(tab.key)}
-							className={`px-6 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.key ? 'border-[#FF6A00] text-[#FF6A00]' : 'border-transparent text-[#666] hover:text-[#333]'}`}>
+							className={`px-6 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.key ? 'border-[#FF6A00] text-[#FF6A00]' : 'border-transparent text-[#666] hover:text-[#333]'}`}
+						>
 							{tab.label}
 						</button>
 					))}
@@ -535,10 +586,15 @@ export default function ProductDetail() {
 								<h3 className="text-base font-bold text-[#333] mb-3">
 									{lang === 'ar' ? 'وصف المنتج' : 'Product Description'}
 								</h3>
-								<p className="text-sm text-[#666] leading-relaxed">{getDesc(product)}</p>
+								<p className="text-sm text-[#666] leading-relaxed">
+									{getDesc(product)}
+								</p>
 								<div className="mt-4 space-y-2">
 									{product.features?.map((f, i) => (
-										<div key={i} className="flex items-center gap-2 text-sm text-[#666]">
+										<div
+											key={i}
+											className="flex items-center gap-2 text-sm text-[#666]"
+										>
 											<ChevronRight
 												size={14}
 												className={`text-[#FF6A00] ${isRTL ? 'rotate-180' : ''}`}
@@ -548,25 +604,31 @@ export default function ProductDetail() {
 									))}
 								</div>
 							</div>
-							{product.specifications && Object.keys(product.specifications).length > 0 && (
-								<div>
-									<h3 className="text-base font-bold text-[#333] mb-3">
-										{t('product.specifications')}
-									</h3>
-									<div className="border border-[#E5E5E5] rounded overflow-hidden">
-										{Object.entries(product.specifications).map(([k, v], i, arr) => (
-											<div
-												key={k}
-												className={`flex text-sm ${i !== arr.length - 1 ? 'border-b border-[#E5E5E5]' : ''}`}>
-												<span className="w-1/3 bg-[#F7F8FA] px-4 py-2.5 text-[#666] font-medium">
-													{k}
-												</span>
-												<span className="w-2/3 px-4 py-2.5 text-[#333]">{v}</span>
-											</div>
-										))}
+							{product.specifications &&
+								Object.keys(product.specifications).length > 0 && (
+									<div>
+										<h3 className="text-base font-bold text-[#333] mb-3">
+											{t('product.specifications')}
+										</h3>
+										<div className="border border-[#E5E5E5] rounded overflow-hidden">
+											{Object.entries(product.specifications).map(
+												([k, v], i, arr) => (
+													<div
+														key={k}
+														className={`flex text-sm ${i !== arr.length - 1 ? 'border-b border-[#E5E5E5]' : ''}`}
+													>
+														<span className="w-1/3 bg-[#F7F8FA] px-4 py-2.5 text-[#666] font-medium">
+															{k}
+														</span>
+														<span className="w-2/3 px-4 py-2.5 text-[#333]">
+															{v}
+														</span>
+													</div>
+												),
+											)}
+										</div>
 									</div>
-								</div>
-							)}
+								)}
 						</div>
 					)}
 
@@ -582,22 +644,36 @@ export default function ProductDetail() {
 										<span className="text-[#666]">
 											{lang === 'ar' ? 'اسم المتجر:' : 'Store Name:'}
 										</span>
-										<span className="text-[#333] font-medium">{getStoreName(store)}</span>
+										<span className="text-[#333] font-medium">
+											{getStoreName(store)}
+										</span>
 									</div>
 									<div className="flex items-center gap-3 text-sm">
 										<MapPin size={16} className="text-[#FF6A00]" />
-										<span className="text-[#666]">{lang === 'ar' ? 'الموقع:' : 'Location:'}</span>
-										<span className="text-[#333] font-medium">{store.location}</span>
+										<span className="text-[#666]">
+											{lang === 'ar' ? 'الموقع:' : 'Location:'}
+										</span>
+										<span className="text-[#333] font-medium">
+											{store.location}
+										</span>
 									</div>
 									<div className="flex items-center gap-3 text-sm">
 										<CalendarIcon size={16} className="text-[#FF6A00]" />
-										<span className="text-[#666]">{lang === 'ar' ? 'منذ:' : 'Established:'}</span>
-										<span className="text-[#333] font-medium">{store.since_year}</span>
+										<span className="text-[#666]">
+											{lang === 'ar' ? 'منذ:' : 'Established:'}
+										</span>
+										<span className="text-[#333] font-medium">
+											{store.since_year}
+										</span>
 									</div>
 									<div className="flex items-center gap-3 text-sm">
 										<PackageIcon size={16} className="text-[#FF6A00]" />
-										<span className="text-[#666]">{lang === 'ar' ? 'المنتجات:' : 'Products:'}</span>
-										<span className="text-[#333] font-medium">{store.products_count}</span>
+										<span className="text-[#666]">
+											{lang === 'ar' ? 'المنتجات:' : 'Products:'}
+										</span>
+										<span className="text-[#333] font-medium">
+											{store.products_count}
+										</span>
 									</div>
 								</div>
 							</div>
@@ -607,12 +683,23 @@ export default function ProductDetail() {
 								</h3>
 								<div className="space-y-2">
 									{[
-										lang === 'ar' ? 'شحن إلى أكثر من 50 دولة' : 'Shipping to 50+ countries',
-										lang === 'ar' ? 'تصنيع حسب الطلب متاح' : 'OEM/ODM Available',
-										lang === 'ar' ? 'دعم فني على مدار الساعة' : '24/7 Customer Support',
-										lang === 'ar' ? 'شهادات جودة دولية' : 'International Quality Certifications',
+										lang === 'ar'
+											? 'شحن إلى أكثر من 50 دولة'
+											: 'Shipping to 50+ countries',
+										lang === 'ar'
+											? 'تصنيع حسب الطلب متاح'
+											: 'OEM/ODM Available',
+										lang === 'ar'
+											? 'دعم فني على مدار الساعة'
+											: '24/7 Customer Support',
+										lang === 'ar'
+											? 'شهادات جودة دولية'
+											: 'International Quality Certifications',
 									].map((cap, i) => (
-										<div key={i} className="flex items-center gap-2 text-sm text-[#666]">
+										<div
+											key={i}
+											className="flex items-center gap-2 text-sm text-[#666]"
+										>
 											<BadgeCheck size={14} className="text-[#4CAF50]" />
 											<span>{cap}</span>
 										</div>
@@ -627,7 +714,9 @@ export default function ProductDetail() {
 							{/* Rating Summary */}
 							<div className="flex items-center gap-6 mb-6 p-4 bg-[#F7F8FA] rounded">
 								<div className="text-center">
-									<p className="text-3xl font-bold text-[#FF6A00]">{product.rating}</p>
+									<p className="text-3xl font-bold text-[#FF6A00]">
+										{product.rating}
+									</p>
 									<div className="flex gap-0.5 justify-center my-1">
 										{[1, 2, 3, 4, 5].map((s) => (
 											<Star
@@ -647,16 +736,25 @@ export default function ProductDetail() {
 								</div>
 								<div className="flex-1 space-y-1">
 									{ratingDistribution.map(({ stars, pct }) => (
-										<div key={stars} className="flex items-center gap-2 text-xs">
+										<div
+											key={stars}
+											className="flex items-center gap-2 text-xs"
+										>
 											<span className="w-3 text-[#666]">{stars}</span>
 											<Star size={10} className="text-[#FF6A00]" />
 											<div className="flex-1 h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
 												<div
 													className={`h-full bg-[#FF6A00] rounded-full ${styles.ratingBar}`}
-													style={{ '--rating-pct': `${pct}%` } as React.CSSProperties}
+													style={
+														{
+															'--rating-pct': `${pct}%`,
+														} as React.CSSProperties
+													}
 												/>
 											</div>
-											<span className="w-8 text-right text-[#999]">{pct}%</span>
+											<span className="w-8 text-right text-[#999]">
+												{pct}%
+											</span>
 										</div>
 									))}
 								</div>
@@ -666,62 +764,85 @@ export default function ProductDetail() {
 								<div className="text-center py-8">
 									<div className="w-8 h-8 border-3 border-[#FF6A00] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
 									<p className="text-sm text-[#999]">
-										{lang === 'ar' ? 'جاري تحميل المراجعات...' : 'Loading reviews...'}
+										{lang === 'ar'
+											? 'جاري تحميل المراجعات...'
+											: 'Loading reviews...'}
 									</p>
 								</div>
 							) : (
 								<div className="space-y-4">
 									{reviews.length === 0 && (
 										<div className="text-center py-8 text-[#999]">
-											{lang === 'ar' ? 'لا توجد مراجعات بعد' : 'No reviews yet'}
+											{lang === 'ar'
+												? 'لا توجد مراجعات بعد'
+												: 'No reviews yet'}
 										</div>
 									)}
 									{reviews.map((r) => (
 										<div key={r.id} className="border-b border-[#E5E5E5] pb-4">
 											<div className="flex items-center gap-2 mb-2">
 												<div className="w-8 h-8 rounded-full bg-[#F7F8FA] flex items-center justify-center text-xs font-bold text-[#666]">
-													{(r.customer_name || 'U').charAt(0).toUpperCase()}
+													{(r.customer_name || 'U')
+														.charAt(0)
+														.toUpperCase()}
 												</div>
 												<div>
 													<p className="text-sm font-bold text-[#333]">
 														{r.customer_name || 'User'}
 													</p>
-													<p className="text-xs text-[#999]">{r.created_at?.split('T')[0]}</p>
+													<p className="text-xs text-[#999]">
+														{r.created_at?.split('T')[0]}
+													</p>
 												</div>
-												<div className={`flex gap-0.5 ${isRTL ? 'mr-auto' : 'ml-auto'}`}>
+												<div
+													className={`flex gap-0.5 ${isRTL ? 'mr-auto' : 'ml-auto'}`}
+												>
 													{[1, 2, 3, 4, 5].map((s) => (
 														<Star
 															key={s}
 															size={12}
 															className={
-																s <= r.rating ? 'text-[#FF6A00] fill-[#FF6A00]' : 'text-[#DDD]'
+																s <= r.rating
+																	? 'text-[#FF6A00] fill-[#FF6A00]'
+																	: 'text-[#DDD]'
 															}
 														/>
 													))}
 												</div>
 											</div>
 											{r.title && (
-												<p className="text-sm font-semibold text-[#333] mb-1">{r.title}</p>
+												<p className="text-sm font-semibold text-[#333] mb-1">
+													{r.title}
+												</p>
 											)}
-											<p className="text-sm text-[#666] leading-relaxed">{r.comment}</p>
+											<p className="text-sm text-[#666] leading-relaxed">
+												{r.comment}
+											</p>
 											<div className="flex items-center gap-3 mt-2">
 												<button className="flex items-center gap-1 text-xs text-[#999] hover:text-[#FF6A00] transition-colors">
-													<ThumbsUp size={12} /> {lang === 'ar' ? 'مفيد' : 'Helpful'} (
+													<ThumbsUp size={12} />{' '}
+													{lang === 'ar' ? 'مفيد' : 'Helpful'} (
 													{r.helpful_count})
 												</button>
 												{r.is_verified === 1 && (
 													<span className="flex items-center gap-1 text-xs text-[#4CAF50]">
 														<BadgeCheck size={12} />{' '}
-														{lang === 'ar' ? 'مشتري موثق' : 'Verified Buyer'}
+														{lang === 'ar'
+															? 'مشتري موثق'
+															: 'Verified Buyer'}
 													</span>
 												)}
 											</div>
 											{r.merchant_reply && (
 												<div className="mt-2 p-3 bg-[#F7F8FA] rounded text-sm">
 													<span className="font-semibold text-[#333]">
-														{lang === 'ar' ? 'رد التاجر:' : 'Seller Reply:'}
+														{lang === 'ar'
+															? 'رد التاجر:'
+															: 'Seller Reply:'}
 													</span>
-													<p className="text-[#666] mt-0.5">{r.merchant_reply}</p>
+													<p className="text-[#666] mt-0.5">
+														{r.merchant_reply}
+													</p>
 												</div>
 											)}
 										</div>
@@ -744,7 +865,8 @@ export default function ProductDetail() {
 							<Link
 								key={p.id}
 								to={`/product/${p.id}`}
-								className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden">
+								className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden"
+							>
 								<div className="aspect-square bg-[#F7F8FA] overflow-hidden">
 									<img
 										src={p.main_image}
@@ -760,10 +882,14 @@ export default function ProductDetail() {
 										<span className="text-sm font-bold text-[#FF6A00]">
 											{p.price.toLocaleString()}
 										</span>
-										<span className="text-xs text-[#999]">{t('product.currency')}</span>
+										<span className="text-xs text-[#999]">
+											{t('product.currency')}
+										</span>
 									</div>
 									<div className="flex items-center gap-1 mt-1">
-										<span className="text-xs text-[#999]">MOQ: {p.moq || 10}</span>
+										<span className="text-xs text-[#999]">
+											MOQ: {p.moq || 10}
+										</span>
 										<span className="text-xs text-[#999]">|</span>
 										<span className="text-xs text-[#999]">
 											{p.sold_count} {lang === 'ar' ? 'مبيع' : 'sold'}
@@ -780,7 +906,8 @@ export default function ProductDetail() {
 			{lightboxOpen && (
 				<div
 					className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
-					onClick={() => setLightboxOpen(false)}>
+					onClick={() => setLightboxOpen(false)}
+				>
 					<button className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20">
 						<X size={24} />
 					</button>
@@ -807,7 +934,8 @@ function CalendarIcon({ size, className }: { size: number; className?: string })
 			stroke="currentColor"
 			strokeWidth="2"
 			strokeLinecap="round"
-			strokeLinejoin="round">
+			strokeLinejoin="round"
+		>
 			<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
 			<line x1="16" y1="2" x2="16" y2="6" />
 			<line x1="8" y1="2" x2="8" y2="6" />
@@ -827,7 +955,8 @@ function MapPin({ size, className }: { size: number; className?: string }) {
 			stroke="currentColor"
 			strokeWidth="2"
 			strokeLinecap="round"
-			strokeLinejoin="round">
+			strokeLinejoin="round"
+		>
 			<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
 			<circle cx="12" cy="10" r="3" />
 		</svg>
@@ -845,7 +974,8 @@ function PackageIcon({ size, className }: { size: number; className?: string }) 
 			stroke="currentColor"
 			strokeWidth="2"
 			strokeLinecap="round"
-			strokeLinejoin="round">
+			strokeLinejoin="round"
+		>
 			<line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
 			<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
 			<polyline points="3.27 6.96 12 12.01 20.73 6.96" />

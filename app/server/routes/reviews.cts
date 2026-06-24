@@ -61,7 +61,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				`SELECT 1 AS found FROM order_items oi
              JOIN orders o ON oi.order_id = o.id
             WHERE o.customer_id = ? AND oi.product_id = ?
-            LIMIT 1`
+            LIMIT 1`,
 			)
 			.get(customerId, productId)) as { found: 1 } | undefined;
 		const isVerified = Boolean(purchased);
@@ -70,7 +70,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.prepare(
 				`INSERT INTO reviews (product_id, store_id, customer_id, rating, title, comment, helpful_count, is_verified, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-         RETURNING id`
+         RETURNING id`,
 			)
 			.run(
 				productId,
@@ -79,7 +79,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				rating,
 				title ?? null,
 				comment ?? null,
-				isVerified ? 1 : 0
+				isVerified ? 1 : 0,
 			)) as {
 			lastInsertRowid: number | null;
 		};
@@ -90,7 +90,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Refresh product rating. Visible reviews only.
 		const ratingData = (await db
 			.prepare(
-				'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE product_id = ? AND is_visible = TRUE'
+				'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE product_id = ? AND is_visible = TRUE',
 			)
 			.get(productId)) as { avg_rating: number; count: number };
 

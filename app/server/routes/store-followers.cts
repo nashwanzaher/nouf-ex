@@ -32,7 +32,7 @@ storeFollowersRouter.get('/check', requireAuth, async (req: Request, res: Respon
 			.prepare(
 				`SELECT id, notify_new_products, notify_offers, created_at
 				 FROM store_followers
-				 WHERE store_id = $1 AND user_id = $2`
+				 WHERE store_id = $1 AND user_id = $2`,
 			)
 			.get(v.data.store_id, v.data.user_id)) as
 			| {

@@ -28,7 +28,7 @@ function renderBottomAt(path: string) {
 	return render(
 		<MemoryRouter initialEntries={[path]}>
 			<BottomNav />
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 
@@ -63,7 +63,7 @@ describe('BottomNav', () => {
 		render(
 			<MemoryRouter initialEntries={['/checkout']}>
 				<BottomNavReloaded />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		expect(screen.getByText('99+')).toBeInTheDocument();
 		vi.doUnmock('@/context/CartContext');

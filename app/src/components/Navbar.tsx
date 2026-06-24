@@ -36,7 +36,8 @@ export default function Navbar() {
 	useEffect(() => {
 		function handleClick(e: MouseEvent) {
 			if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
-			if (catRef.current && !catRef.current.contains(e.target as Node)) setCatDropdownOpen(false);
+			if (catRef.current && !catRef.current.contains(e.target as Node))
+				setCatDropdownOpen(false);
 		}
 		document.addEventListener('mousedown', handleClick);
 		return () => document.removeEventListener('mousedown', handleClick);
@@ -46,7 +47,7 @@ export default function Navbar() {
 		e.preventDefault();
 		if (searchQ.trim()) {
 			navigate(
-				`/search?q=${encodeURIComponent(searchQ.trim())}${searchCat !== 'all' ? `&cat=${searchCat}` : ''}`
+				`/search?q=${encodeURIComponent(searchQ.trim())}${searchCat !== 'all' ? `&cat=${searchCat}` : ''}`,
 			);
 			setSearchQ('');
 			setMobileOpen(false);
@@ -72,7 +73,8 @@ export default function Navbar() {
 					<div className="flex items-center gap-4">
 						<Link
 							to="/"
-							className="font-bold text-aliText hover:text-aliOrange transition-colors flex items-center gap-1">
+							className="font-bold text-aliText hover:text-aliOrange transition-colors flex items-center gap-1"
+						>
 							<span className="text-aliOrange font-extrabold text-sm">Nouf-ex</span>
 						</Link>
 						<span className="text-aliBorder hidden sm:inline">|</span>
@@ -84,7 +86,8 @@ export default function Navbar() {
 								<BadgeCheck size={12} /> {t('nav.verified', 'Verified')}
 							</button>
 							<button className="hover:text-aliOrange transition-colors flex items-center gap-1">
-								<ShieldCheck size={12} /> {t('nav.tradeAssurance', 'Trade Assurance')}
+								<ShieldCheck size={12} />{' '}
+								{t('nav.tradeAssurance', 'Trade Assurance')}
 							</button>
 						</div>
 					</div>
@@ -102,13 +105,16 @@ export default function Navbar() {
 					{/* Mobile menu */}
 					<button
 						onClick={() => setMobileOpen(!mobileOpen)}
-						className="lg:hidden p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText">
+						className="lg:hidden p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
+					>
 						{mobileOpen ? <X size={22} /> : <Menu size={22} />}
 					</button>
 
 					{/* Logo */}
 					<Link to="/" className="flex items-center shrink-0 gap-1">
-						<span className="text-2xl font-extrabold text-aliOrange tracking-tight">Nouf-ex</span>
+						<span className="text-2xl font-extrabold text-aliOrange tracking-tight">
+							Nouf-ex
+						</span>
 					</Link>
 
 					{/* Search Bar - Desktop */}
@@ -119,11 +125,16 @@ export default function Navbar() {
 								<button
 									type="button"
 									onClick={() => setCatDropdownOpen(!catDropdownOpen)}
-									className="h-full px-3 flex items-center gap-1 text-sm text-aliTextSec hover:bg-aliSurface border-r border-aliBorder transition-colors">
+									className="h-full px-3 flex items-center gap-1 text-sm text-aliTextSec hover:bg-aliSurface border-r border-aliBorder transition-colors"
+								>
 									<span className="truncate max-w-[80px]">
 										{searchCat === 'all'
 											? 'All Categories'
-											: getCatName(categories.find((c) => String(c.id) === searchCat)!)}
+											: getCatName(
+													categories.find(
+														(c) => String(c.id) === searchCat,
+													)!,
+												)}
 									</span>
 									<ChevronDown size={14} />
 								</button>
@@ -135,7 +146,8 @@ export default function Navbar() {
 												setSearchCat('all');
 												setCatDropdownOpen(false);
 											}}
-											className={`w-full text-left px-3 py-2 text-sm hover:bg-aliSurface transition-colors ${searchCat === 'all' ? 'text-aliOrange font-semibold' : 'text-aliText'}`}>
+											className={`w-full text-left px-3 py-2 text-sm hover:bg-aliSurface transition-colors ${searchCat === 'all' ? 'text-aliOrange font-semibold' : 'text-aliText'}`}
+										>
 											All Categories
 										</button>
 										{categories.map((cat) => (
@@ -146,7 +158,8 @@ export default function Navbar() {
 													setSearchCat(String(cat.id));
 													setCatDropdownOpen(false);
 												}}
-												className={`w-full text-left px-3 py-2 text-sm hover:bg-aliSurface transition-colors ${searchCat === String(cat.id) ? 'text-aliOrange font-semibold' : 'text-aliText'}`}>
+												className={`w-full text-left px-3 py-2 text-sm hover:bg-aliSurface transition-colors ${searchCat === String(cat.id) ? 'text-aliOrange font-semibold' : 'text-aliText'}`}
+											>
 												{getCatName(cat)}
 											</button>
 										))}
@@ -171,13 +184,15 @@ export default function Navbar() {
 							{/* Image search */}
 							<button
 								type="button"
-								className="h-full px-2 text-aliTextMute hover:text-aliOrange transition-colors">
+								className="h-full px-2 text-aliTextMute hover:text-aliOrange transition-colors"
+							>
 								<Camera size={18} />
 							</button>
 							{/* Search button */}
 							<button
 								type="submit"
-								className="h-full px-6 bg-aliOrange text-white font-semibold text-sm hover:bg-aliOrangeHover transition-colors flex items-center gap-1">
+								className="h-full px-6 bg-aliOrange text-white font-semibold text-sm hover:bg-aliOrangeHover transition-colors flex items-center gap-1"
+							>
 								<Search size={16} />
 								<span className="hidden lg:inline">{t('nav.search')}</span>
 							</button>
@@ -192,7 +207,8 @@ export default function Navbar() {
 								<button
 									key={code}
 									onClick={() => changeLang(code)}
-									className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${i18n.language === code ? 'bg-aliOrange text-white shadow' : 'text-aliTextMute hover:text-aliText'}`}>
+									className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${i18n.language === code ? 'bg-aliOrange text-white shadow' : 'text-aliTextMute hover:text-aliText'}`}
+								>
 									{code === 'ar' ? 'العربية' : code === 'en' ? 'EN' : '中文'}
 								</button>
 							))}
@@ -202,7 +218,8 @@ export default function Navbar() {
 						<Link
 							to="/checkout"
 							className="relative p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
-							aria-label={isRTL ? 'السلة' : 'Cart'}>
+							aria-label={isRTL ? 'السلة' : 'Cart'}
+						>
 							<ShoppingCart size={20} />
 							{cartCount > 0 && (
 								<span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-aliOrange text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
@@ -215,12 +232,16 @@ export default function Navbar() {
 						<div ref={userRef} className="relative">
 							<button
 								onClick={() => setUserOpen(!userOpen)}
-								className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-aliSurface transition-colors text-aliText">
+								className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
+							>
 								<User size={18} />
 								<span className="hidden lg:inline text-xs font-medium max-w-[80px] truncate">
 									{state.user ? state.user.name : t('nav.login')}
 								</span>
-								<ChevronDown size={14} className="hidden lg:block text-aliTextMute" />
+								<ChevronDown
+									size={14}
+									className="hidden lg:block text-aliTextMute"
+								/>
 							</button>
 							{userOpen && (
 								<div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-lg shadow-lg border border-aliBorder py-2 z-50">
@@ -229,26 +250,36 @@ export default function Navbar() {
 											<Link
 												to="/auth/login"
 												onClick={() => setUserOpen(false)}
-												className="flex items-center gap-2 px-4 py-2.5 text-sm text-aliText hover:bg-aliSurface transition-colors">
-												<User size={14} className="text-aliOrange" /> {t('nav.login')}
+												className="flex items-center gap-2 px-4 py-2.5 text-sm text-aliText hover:bg-aliSurface transition-colors"
+											>
+												<User size={14} className="text-aliOrange" />{' '}
+												{t('nav.login')}
 											</Link>
 											<Link
 												to="/auth/register"
 												onClick={() => setUserOpen(false)}
-												className="flex items-center gap-2 px-4 py-2.5 text-sm text-aliText hover:bg-aliSurface transition-colors">
-												<User size={14} className="text-aliOrange" /> {t('nav.register')}
+												className="flex items-center gap-2 px-4 py-2.5 text-sm text-aliText hover:bg-aliSurface transition-colors"
+											>
+												<User size={14} className="text-aliOrange" />{' '}
+												{t('nav.register')}
 											</Link>
 										</>
 									) : (
 										<>
 											<div className="px-4 py-2 border-b border-aliBorder">
-												<p className="font-bold text-sm text-aliText">{state.user.name}</p>
+												<p className="font-bold text-sm text-aliText">
+													{state.user.name}
+												</p>
 											</div>
 											<Link
 												to="/customer"
 												onClick={() => setUserOpen(false)}
-												className="flex items-center gap-2 px-4 py-2 text-sm text-aliText hover:bg-aliSurface">
-												<ShoppingCart size={14} className="text-aliOrange" />{' '}
+												className="flex items-center gap-2 px-4 py-2 text-sm text-aliText hover:bg-aliSurface"
+											>
+												<ShoppingCart
+													size={14}
+													className="text-aliOrange"
+												/>{' '}
 												{t('nav.customerDashboard')}
 											</Link>
 											<button
@@ -256,7 +287,8 @@ export default function Navbar() {
 													dispatch({ type: 'SET_USER', payload: null });
 													setUserOpen(false);
 												}}
-												className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left">
+												className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left"
+											>
 												<User size={14} /> {t('nav.logout')}
 											</button>
 										</>
@@ -274,7 +306,8 @@ export default function Navbar() {
 					<div ref={catRef} className="relative">
 						<button
 							onClick={() => setCatDropdownOpen(!catDropdownOpen)}
-							className="flex items-center gap-1.5 font-semibold text-aliText hover:text-aliOrange transition-colors h-full">
+							className="flex items-center gap-1.5 font-semibold text-aliText hover:text-aliOrange transition-colors h-full"
+						>
 							<Menu size={16} />
 							{t('nav.categories')}
 							<ChevronDown size={14} />
@@ -286,9 +319,13 @@ export default function Navbar() {
 										key={cat.id}
 										to="/categories"
 										onClick={() => setCatDropdownOpen(false)}
-										className="flex items-center justify-between px-4 py-2.5 text-sm text-aliText hover:bg-aliSurface hover:text-aliOrange transition-colors">
+										className="flex items-center justify-between px-4 py-2.5 text-sm text-aliText hover:bg-aliSurface hover:text-aliOrange transition-colors"
+									>
 										<span>{getCatName(cat)}</span>
-										<ChevronDown size={12} className="text-aliTextMute -rotate-90" />
+										<ChevronDown
+											size={12}
+											className="text-aliTextMute -rotate-90"
+										/>
 									</Link>
 								))}
 							</div>
@@ -297,17 +334,22 @@ export default function Navbar() {
 					<Link to="/" className="text-aliOrange font-semibold hover:underline">
 						AI Mode
 					</Link>
-					<Link to="/search" className="text-aliText hover:text-aliOrange transition-colors">
+					<Link
+						to="/search"
+						className="text-aliText hover:text-aliOrange transition-colors"
+					>
 						{t('nav.products')}
 					</Link>
 					<Link
 						to="/categories"
-						className="text-aliText hover:text-aliOrange transition-colors flex items-center gap-1">
+						className="text-aliText hover:text-aliOrange transition-colors flex items-center gap-1"
+					>
 						Manufacturers <BadgeCheck size={14} className="text-aliOrange" />
 					</Link>
 					<Link
 						to="/deals"
-						className="text-aliText hover:text-aliOrange transition-colors flex items-center gap-1">
+						className="text-aliText hover:text-aliOrange transition-colors flex items-center gap-1"
+					>
 						<Globe size={14} /> Global Supply
 					</Link>
 				</div>
@@ -334,7 +376,8 @@ export default function Navbar() {
 							</div>
 							<button
 								type="submit"
-								className="h-11 px-4 bg-aliOrange text-white rounded-xl font-semibold">
+								className="h-11 px-4 bg-aliOrange text-white rounded-xl font-semibold"
+							>
 								{t('nav.search')}
 							</button>
 						</form>
@@ -345,7 +388,8 @@ export default function Navbar() {
 									key={cat.id}
 									to="/categories"
 									onClick={() => setMobileOpen(false)}
-									className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-aliText hover:bg-aliSurface transition-colors">
+									className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-aliText hover:bg-aliSurface transition-colors"
+								>
 									<span className="text-sm font-medium">{getCatName(cat)}</span>
 								</Link>
 							))}
@@ -354,19 +398,22 @@ export default function Navbar() {
 							<Link
 								to="/"
 								onClick={() => setMobileOpen(false)}
-								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg">
+								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg"
+							>
 								<Globe size={16} /> AI Mode
 							</Link>
 							<Link
 								to="/search"
 								onClick={() => setMobileOpen(false)}
-								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg">
+								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg"
+							>
 								<Search size={16} /> {t('nav.products')}
 							</Link>
 							<Link
 								to="/deals"
 								onClick={() => setMobileOpen(false)}
-								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg">
+								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg"
+							>
 								<BadgeCheck size={16} /> {t('nav.deals')}
 							</Link>
 						</div>
@@ -378,7 +425,8 @@ export default function Navbar() {
 								<button
 									key={code}
 									onClick={() => changeLang(code)}
-									className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${i18n.language === code ? 'bg-aliOrange text-white' : 'bg-aliSurface text-aliTextMute'}`}>
+									className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${i18n.language === code ? 'bg-aliOrange text-white' : 'bg-aliSurface text-aliTextMute'}`}
+								>
 									{code === 'ar' ? 'العربية' : code === 'en' ? 'English' : '中文'}
 								</button>
 							))}

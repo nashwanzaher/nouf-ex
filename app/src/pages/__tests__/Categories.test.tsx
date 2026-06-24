@@ -36,7 +36,7 @@ describe('Categories page', () => {
 		render(
 			<MemoryRouter>
 				<Categories />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		// The fixtures list 'Electronics' and 'Fashion' as the two top
 		// categories — both show up in the sidebar AND in breadcrumbs /
@@ -49,7 +49,7 @@ describe('Categories page', () => {
 		render(
 			<MemoryRouter>
 				<Categories />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		// Wait for the data to load by finding a product name (the page
 		// only renders products after useProducts resolves).
@@ -60,7 +60,7 @@ describe('Categories page', () => {
 		render(
 			<MemoryRouter>
 				<Categories />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		expect(await screen.findByText(/Wireless Headphones/i)).toBeInTheDocument();
 		// Both top-level categories should be visible in the sidebar.

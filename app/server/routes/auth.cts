@@ -33,7 +33,7 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 				.prepare(
 					`INSERT INTO users (email, password_hash, full_name, role, status, is_verified, created_at, updated_at)
            VALUES (?, ?, ?, ?, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-           RETURNING id`
+           RETURNING id`,
 				)
 				.run(email, passwordHash, name, role)) as { lastInsertRowid: number | null };
 			if (result.lastInsertRowid == null) {
@@ -67,7 +67,7 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?'
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?',
 		)
 		.get(email)) as
 		| (Record<string, unknown> & { id: number; password_hash: string; role: AuthRole })
@@ -98,7 +98,7 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 				user_id: user.id,
 			},
 			200,
-			'Password OK. 2FA required — call /api/auth/2fa/verify with the code.'
+			'Password OK. 2FA required — call /api/auth/2fa/verify with the code.',
 		);
 	}
 	const token = signAuthToken({ sub: user.id, role: user.role });
@@ -109,7 +109,7 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
 	const userId = req.user!.id;
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?'
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?',
 		)
 		.get(userId)) as Record<string, unknown> | undefined;
 

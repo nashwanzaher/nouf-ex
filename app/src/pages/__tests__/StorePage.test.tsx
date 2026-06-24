@@ -35,7 +35,7 @@ function renderStore(id: string) {
 			<Routes>
 				<Route path="/store/:id" element={<StorePage />} />
 			</Routes>
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 

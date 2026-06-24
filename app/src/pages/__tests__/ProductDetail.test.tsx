@@ -44,7 +44,7 @@ function renderProduct(id: string | undefined) {
 				<Route path="/product" element={<ProductDetail />} />
 				<Route path="/product/:id" element={<ProductDetail />} />
 			</Routes>
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 

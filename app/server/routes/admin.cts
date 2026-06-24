@@ -50,7 +50,7 @@ adminRouter.get('/users', ...adminAuth, async (req: Request, res: Response) => {
 				role: z.enum(['customer', 'merchant', 'admin']).optional(),
 				is_active: z.enum(['active', 'suspended', 'banned']).optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -79,7 +79,7 @@ adminRouter.get('/users', ...adminAuth, async (req: Request, res: Response) => {
 				        preferred_language, gender, last_login, created_at, updated_at
 				 FROM users ${whereSql}
 				 ORDER BY created_at DESC
-				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -107,7 +107,7 @@ adminRouter.get('/stores', ...adminAuth, async (req: Request, res: Response) => 
 					.optional()
 					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -133,7 +133,7 @@ adminRouter.get('/stores', ...adminAuth, async (req: Request, res: Response) => 
 			.prepare(
 				`SELECT * FROM stores ${whereSql}
 				 ORDER BY created_at DESC
-				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -163,7 +163,7 @@ adminRouter.get('/products', ...adminAuth, async (req: Request, res: Response) =
 				store_id: z.coerce.number().int().positive().optional(),
 				category_id: z.coerce.number().int().positive().optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -197,7 +197,7 @@ adminRouter.get('/products', ...adminAuth, async (req: Request, res: Response) =
 			.prepare(
 				`SELECT * FROM products ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -232,7 +232,7 @@ adminRouter.get('/orders', ...adminAuth, async (req: Request, res: Response) => 
 					.optional(),
 				payment_status: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -258,7 +258,7 @@ adminRouter.get('/orders', ...adminAuth, async (req: Request, res: Response) => 
 			.prepare(
 				`SELECT * FROM orders ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -278,7 +278,7 @@ adminRouter.get('/disputes', ...adminAuth, async (req: Request, res: Response) =
 				status: z.enum(['open', 'in_review', 'resolved', 'rejected']).optional(),
 				priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -304,7 +304,7 @@ adminRouter.get('/disputes', ...adminAuth, async (req: Request, res: Response) =
 			.prepare(
 				`SELECT * FROM disputes ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -325,7 +325,7 @@ adminRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Response) 
 				action: z.string().trim().min(1).max(50).optional(),
 				user_id: z.coerce.number().int().positive().optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -357,7 +357,7 @@ adminRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Response) 
 					        new_values, ip_address, user_agent, created_at
 					 FROM admin_audit_log ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -410,19 +410,19 @@ adminRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => 
 		const recentOrders = (await db
 			.prepare(
 				`SELECT COUNT(*)::int AS c FROM orders
-					 WHERE created_at > NOW() - INTERVAL '7 days'`
+					 WHERE created_at > NOW() - INTERVAL '7 days'`,
 			)
 			.get()) as { c: number };
 		const recentUsers = (await db
 			.prepare(
 				`SELECT COUNT(*)::int AS c FROM users
-					 WHERE created_at > NOW() - INTERVAL '7 days'`
+					 WHERE created_at > NOW() - INTERVAL '7 days'`,
 			)
 			.get()) as { c: number };
 		const revenueYer = (await db
 			.prepare(
 				`SELECT COALESCE(SUM(total), 0)::numeric AS s
-					 FROM orders WHERE payment_status = 'paid'`
+					 FROM orders WHERE payment_status = 'paid'`,
 			)
 			.get()) as { s: string };
 
@@ -485,7 +485,7 @@ adminRouter.patch('/users/:id', ...adminAuth, async (req: Request, res: Response
 
 		const current = (await db
 			.prepare(
-				'SELECT id, email, role, status, is_verified, email_verified, phone_verified FROM users WHERE id = $1'
+				'SELECT id, email, role, status, is_verified, email_verified, phone_verified FROM users WHERE id = $1',
 			)
 			.get(userId)) as Record<string, unknown> | undefined;
 		if (!current) return sendError(res, 'User not found', 404);
@@ -494,7 +494,7 @@ adminRouter.patch('/users/:id', ...adminAuth, async (req: Request, res: Response
 		params.push(userId);
 		const updated = (await db
 			.prepare(
-				`UPDATE users SET ${setSql} WHERE id = $${params.length} RETURNING id, email, role, status, is_verified, email_verified, phone_verified`
+				`UPDATE users SET ${setSql} WHERE id = $${params.length} RETURNING id, email, role, status, is_verified, email_verified, phone_verified`,
 			)
 			.get(...params)) as Record<string, unknown>;
 
@@ -520,7 +520,7 @@ adminRouter.patch('/stores/:id', ...adminAuth, async (req: Request, res: Respons
 
 		const current = (await db
 			.prepare(
-				'SELECT id, owner_id, store_name, is_active, is_verified, trust_level FROM stores WHERE id = $1'
+				'SELECT id, owner_id, store_name, is_active, is_verified, trust_level FROM stores WHERE id = $1',
 			)
 			.get(storeId)) as Record<string, unknown> | undefined;
 		if (!current) return sendError(res, 'Store not found', 404);
@@ -529,7 +529,7 @@ adminRouter.patch('/stores/:id', ...adminAuth, async (req: Request, res: Respons
 		params.push(storeId);
 		const updated = (await db
 			.prepare(
-				`UPDATE stores SET ${setSql} WHERE id = $${params.length} RETURNING id, store_name, is_active, is_verified, trust_level`
+				`UPDATE stores SET ${setSql} WHERE id = $${params.length} RETURNING id, store_name, is_active, is_verified, trust_level`,
 			)
 			.get(...params)) as Record<string, unknown>;
 
@@ -591,7 +591,7 @@ adminRouter.patch('/products/:id', ...adminAuth, async (req: Request, res: Respo
 
 		const current = (await db
 			.prepare(
-				'SELECT id, name_en, name_ar, is_active, is_featured, deal_discount FROM products WHERE id = $1'
+				'SELECT id, name_en, name_ar, is_active, is_featured, deal_discount FROM products WHERE id = $1',
 			)
 			.get(productId)) as Record<string, unknown> | undefined;
 		if (!current) return sendError(res, 'Product not found', 404);
@@ -601,7 +601,7 @@ adminRouter.patch('/products/:id', ...adminAuth, async (req: Request, res: Respo
 		const updated = (await db
 			.prepare(
 				`UPDATE products SET ${setSql} WHERE id = $${params.length}
-					 RETURNING id, name_en, name_ar, is_active, is_featured, deal_discount, updated_at`
+					 RETURNING id, name_en, name_ar, is_active, is_featured, deal_discount, updated_at`,
 			)
 			.get(...params)) as Record<string, unknown>;
 
@@ -627,13 +627,18 @@ adminRouter.patch('/disputes/:id', ...adminAuth, async (req: Request, res: Respo
 
 		const current = (await db
 			.prepare(
-				'SELECT id, status, priority, resolution, refund_amount, resolved_by, resolved_at FROM disputes WHERE id = $1'
+				'SELECT id, status, priority, resolution, refund_amount, resolved_by, resolved_at FROM disputes WHERE id = $1',
 			)
 			.get(disputeId)) as Record<string, unknown> | undefined;
 		if (!current) return sendError(res, 'Dispute not found', 404);
 
 		// Stamp resolved_by + resolved_at when moving into a terminal state.
-		const TERMINAL_STATUSES = new Set(['resolved_buyer', 'resolved_seller', 'closed', 'rejected']);
+		const TERMINAL_STATUSES = new Set([
+			'resolved_buyer',
+			'resolved_seller',
+			'closed',
+			'rejected',
+		]);
 		const patch: Record<string, unknown> = { status: v.data.status };
 		if (v.data.resolution !== undefined) patch.resolution = v.data.resolution;
 		if (v.data.refund_amount !== undefined) patch.refund_amount = v.data.refund_amount;
@@ -646,7 +651,7 @@ adminRouter.patch('/disputes/:id', ...adminAuth, async (req: Request, res: Respo
 		const updated = (await db
 			.prepare(
 				`UPDATE disputes SET ${setSql} WHERE id = $${params.length}
-					 RETURNING id, status, priority, resolution, refund_amount, resolved_by, resolved_at`
+					 RETURNING id, status, priority, resolution, refund_amount, resolved_by, resolved_at`,
 			)
 			.get(...params)) as Record<string, unknown>;
 

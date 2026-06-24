@@ -16,7 +16,7 @@ shippingRouter.get('/methods', async (req: Request, res: Response) => {
 		const weight = Math.max(0, Number(req.query.weight_kg) || 1);
 		const rows = (await db
 			.prepare(
-				'SELECT id, name_ar, name_en, base_cost, per_kg_cost, estimated_days FROM shipping_methods WHERE is_active = TRUE ORDER BY base_cost ASC'
+				'SELECT id, name_ar, name_en, base_cost, per_kg_cost, estimated_days FROM shipping_methods WHERE is_active = TRUE ORDER BY base_cost ASC',
 			)
 			.all()) as Array<{
 			id: number;

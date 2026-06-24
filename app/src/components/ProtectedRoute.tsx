@@ -3,8 +3,8 @@ import { Navigate, useLocation } from 'react-router';
 import { useApp, type Role } from '../context/AppContext';
 
 interface Props {
-  children: ReactNode;
-  allowedRoles?: Role[];
+	children: ReactNode;
+	allowedRoles?: Role[];
 }
 
 /**
@@ -13,17 +13,19 @@ interface Props {
  *   - Authenticated users without the required role are sent back to /.
  */
 export default function ProtectedRoute({ children, allowedRoles }: Props) {
-  const { state } = useApp();
-  const location = useLocation();
+	const { state } = useApp();
+	const location = useLocation();
 
-  if (!state.user) {
-    const search = new URLSearchParams({ redirect: location.pathname + location.search }).toString();
-    return <Navigate to={`/auth/login?${search}`} replace />;
-  }
+	if (!state.user) {
+		const search = new URLSearchParams({
+			redirect: location.pathname + location.search,
+		}).toString();
+		return <Navigate to={`/auth/login?${search}`} replace />;
+	}
 
-  if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(state.user.role)) {
-    return <Navigate to="/" replace />;
-  }
+	if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(state.user.role)) {
+		return <Navigate to="/" replace />;
+	}
 
-  return <>{children}</>;
+	return <>{children}</>;
 }

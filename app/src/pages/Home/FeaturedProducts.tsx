@@ -153,7 +153,7 @@ export default function FeaturedProducts() {
 					duration: 0.5,
 					ease: 'expo.out',
 					scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' },
-				}
+				},
 			);
 		}, sectionRef);
 		return () => ctx.revert();
@@ -182,7 +182,8 @@ export default function FeaturedProducts() {
 									activeTab === i
 										? 'bg-[#D4A853] text-[#1A1612]'
 										: 'text-[#6B6B6B] hover:text-[#111111]'
-								}`}>
+								}`}
+							>
 								{tab}
 							</button>
 						))}
@@ -194,7 +195,10 @@ export default function FeaturedProducts() {
 					<div ref={emblaRef} className="overflow-hidden">
 						<div className="flex gap-4 md:gap-5">
 							{products.map((product) => (
-								<div key={product.id} className="flex-shrink-0 w-[260px] md:w-[300px]">
+								<div
+									key={product.id}
+									className="flex-shrink-0 w-[260px] md:w-[300px]"
+								>
 									<div className="bg-white rounded-2xl border border-[#F3EDE4] overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
 										{/* Image */}
 										<div className="relative aspect-square overflow-hidden bg-[#F8F8F8]">
@@ -209,7 +213,10 @@ export default function FeaturedProducts() {
 												</Badge>
 											)}
 											<button className="absolute top-3 left-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
-												<Heart className="w-4 h-4 text-[#6B6B6B]" strokeWidth={1.5} />
+												<Heart
+													className="w-4 h-4 text-[#6B6B6B]"
+													strokeWidth={1.5}
+												/>
 											</button>
 										</div>
 										{/* Content */}
@@ -222,13 +229,21 @@ export default function FeaturedProducts() {
 													{product.merchant}
 												</span>
 												{product.verified && (
-													<img src="/trust-badge-verified.svg" alt="موثق" className="w-3.5 h-3.5" />
+													<img
+														src="/trust-badge-verified.svg"
+														alt="موثق"
+														className="w-3.5 h-3.5"
+													/>
 												)}
 											</div>
 											<div className="flex items-center gap-1 mb-3">
 												<Star className="w-3.5 h-3.5 fill-[#D4A853] text-[#D4A853]" />
-												<span className="text-xs font-mono text-[#111111]">{product.rating}</span>
-												<span className="text-xs text-[#AAAAAA]">({product.reviews})</span>
+												<span className="text-xs font-mono text-[#111111]">
+													{product.rating}
+												</span>
+												<span className="text-xs text-[#AAAAAA]">
+													({product.reviews})
+												</span>
 											</div>
 											<div className="flex items-center justify-between">
 												<div className="flex items-center gap-2">
@@ -260,13 +275,15 @@ export default function FeaturedProducts() {
 						<button
 							onClick={scrollNext}
 							disabled={!canScrollNext}
-							className="w-10 h-10 rounded-full border-2 border-[#D4A853] flex items-center justify-center text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+							className="w-10 h-10 rounded-full border-2 border-[#D4A853] flex items-center justify-center text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+						>
 							<ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
 						</button>
 						<button
 							onClick={scrollPrev}
 							disabled={!canScrollPrev}
-							className="w-10 h-10 rounded-full border-2 border-[#D4A853] flex items-center justify-center text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+							className="w-10 h-10 rounded-full border-2 border-[#D4A853] flex items-center justify-center text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+						>
 							<ArrowRight className="w-5 h-5" strokeWidth={1.5} />
 						</button>
 					</div>
@@ -276,7 +293,8 @@ export default function FeaturedProducts() {
 				<div className="text-center mt-8">
 					<Link
 						to="/search"
-						className="inline-flex items-center gap-2 text-[#D4A853] font-cairo font-semibold text-sm hover:underline">
+						className="inline-flex items-center gap-2 text-[#D4A853] font-cairo font-semibold text-sm hover:underline"
+					>
 						عرض جميع المنتجات
 						<ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
 					</Link>

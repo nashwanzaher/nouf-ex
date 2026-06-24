@@ -99,7 +99,10 @@ describe('adminProductUpdateSchema', () => {
 // per-user action. The handler must scope the UPDATE to the
 // authenticated user, never trusting a path param or a body field.
 // ═══════════════════════════════════════════════════════════
-function buildMarkReadSql(userId: number, notificationId: number): {
+function buildMarkReadSql(
+	userId: number,
+	notificationId: number,
+): {
 	sql: string;
 	params: unknown[];
 } {

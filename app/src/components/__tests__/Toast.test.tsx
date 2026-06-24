@@ -47,7 +47,7 @@ describe('ToastContainer', () => {
 			<ToastContainer
 				toasts={variants.map((t, i) => ({ id: String(i), message: t, type: t }))}
 				onRemove={() => undefined}
-			/>
+			/>,
 		);
 		expect(container.firstElementChild?.children.length).toBe(4);
 	});

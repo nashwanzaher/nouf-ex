@@ -21,7 +21,7 @@ function renderNotFound() {
 	return render(
 		<MemoryRouter>
 			<NotFound />
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 

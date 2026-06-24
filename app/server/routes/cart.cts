@@ -21,7 +21,7 @@ cartRouter.get('/:userId', requireAuth, async (req: Request, res: Response) => {
          JOIN products p ON ci.product_id = p.id
          LEFT JOIN stores s ON p.store_id = s.id
          WHERE ci.user_id = ?
-         ORDER BY ci.created_at DESC`
+         ORDER BY ci.created_at DESC`,
 			)
 			.all(userId);
 		sendSuccess(res, cartItems);
@@ -51,7 +51,7 @@ cartRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.prepare(
 				`INSERT INTO cart_items (user_id, product_id, quantity, variant, created_at)
          VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-         RETURNING id`
+         RETURNING id`,
 			)
 			.run(userId, productId, quantity, variant ? JSON.stringify(variant) : null)) as {
 			lastInsertRowid: number | null;
@@ -104,7 +104,9 @@ cartRouter.get('/count/:userId', requireAuth, async (req: Request, res: Response
 			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
 		}
 		const row = (await db
-			.prepare('SELECT COALESCE(SUM(quantity), 0)::int AS c FROM cart_items WHERE user_id = $1')
+			.prepare(
+				'SELECT COALESCE(SUM(quantity), 0)::int AS c FROM cart_items WHERE user_id = $1',
+			)
 			.get(userId)) as { c: number } | undefined;
 		// `get()` returns undefined when no row matches; the COALESCE
 		// in the SQL means an empty cart should still produce 0, but

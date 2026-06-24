@@ -37,7 +37,7 @@ export async function getProductsJson(filters?: {
 				p.name_ar?.toLowerCase().includes(q) ||
 				p.name_en?.toLowerCase().includes(q) ||
 				p.name_zh?.includes(q) ||
-				p.description?.toLowerCase().includes(q)
+				p.description?.toLowerCase().includes(q),
 		);
 	}
 
@@ -84,7 +84,7 @@ export async function getProductJson(id: number): Promise<Product | null> {
 		(product as Product & { store: Store | null; reviews: Review[] }).store =
 			stores.find((s) => s.id === product.store_id) || null;
 		(product as Product & { store: Store | null; reviews: Review[] }).reviews = reviews.filter(
-			(r) => r.product_id === id
+			(r) => r.product_id === id,
 		);
 	}
 	return product;

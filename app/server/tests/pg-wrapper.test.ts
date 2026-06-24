@@ -22,12 +22,14 @@ describe('pgify() — SQL placeholder rewriter', () => {
 
 	it('rewrites multiple placeholders in order', () => {
 		expect(pgify('SELECT * FROM t WHERE a = ? AND b = ?')).toBe(
-			'SELECT * FROM t WHERE a = $1 AND b = $2'
+			'SELECT * FROM t WHERE a = $1 AND b = $2',
 		);
 	});
 
 	it('does NOT rewrite `?` inside a single-quoted literal', () => {
-		expect(pgify("SELECT 'a ? b' FROM t WHERE id = ?")).toBe("SELECT 'a ? b' FROM t WHERE id = $1");
+		expect(pgify("SELECT 'a ? b' FROM t WHERE id = ?")).toBe(
+			"SELECT 'a ? b' FROM t WHERE id = $1",
+		);
 	});
 
 	it('handles doubled single quotes (PG escape) inside a literal', () => {
@@ -35,45 +37,45 @@ describe('pgify() — SQL placeholder rewriter', () => {
 		// implementation saw the second `'` and dropped out of the
 		// string, then rewrote the trailing `s'?` as a placeholder.
 		expect(pgify("SELECT 'it''s a test' WHERE col = ?")).toBe(
-			"SELECT 'it''s a test' WHERE col = $1"
+			"SELECT 'it''s a test' WHERE col = $1",
 		);
 	});
 
 	it('handles E-strings with backslash escapes', () => {
 		expect(pgify("SELECT E'line1\\nline2' WHERE id = ?")).toBe(
-			"SELECT E'line1\\nline2' WHERE id = $1"
+			"SELECT E'line1\\nline2' WHERE id = $1",
 		);
 	});
 
 	it('handles E-strings with both backslash AND doubled-quote escapes', () => {
 		expect(pgify("SELECT E'it\\'s also ''quoted''' WHERE id = ?")).toBe(
-			"SELECT E'it\\'s also ''quoted''' WHERE id = $1"
+			"SELECT E'it\\'s also ''quoted''' WHERE id = $1",
 		);
 	});
 
 	it('does NOT rewrite `?` inside a double-quoted identifier', () => {
 		expect(pgify('SELECT "weird?col" FROM t WHERE id = ?')).toBe(
-			'SELECT "weird?col" FROM t WHERE id = $1'
+			'SELECT "weird?col" FROM t WHERE id = $1',
 		);
 	});
 
 	it('handles doubled double quotes (PG escape) in an identifier', () => {
 		expect(pgify('SELECT "odd""name" FROM t WHERE id = ?')).toBe(
-			'SELECT "odd""name" FROM t WHERE id = $1'
+			'SELECT "odd""name" FROM t WHERE id = $1',
 		);
 	});
 
 	it('skips line comments', () => {
 		expect(
 			pgify(`SELECT * FROM t -- a comment with ? here
-            WHERE id = ?`)
+            WHERE id = ?`),
 		).toBe(`SELECT * FROM t -- a comment with ? here
             WHERE id = $1`);
 	});
 
 	it('skips block comments', () => {
 		expect(pgify('SELECT /* ? */ * FROM t WHERE id = ?')).toBe(
-			'SELECT /* ? */ * FROM t WHERE id = $1'
+			'SELECT /* ? */ * FROM t WHERE id = $1',
 		);
 	});
 
@@ -83,19 +85,19 @@ describe('pgify() — SQL placeholder rewriter', () => {
 		// Neither should be rewritten -- the rewriter must hold the
 		// `inString`/`inComment` state until the outer `*/` is seen.
 		expect(pgify('SELECT /* outer /* inner ? still in */ ? */ FROM t')).toBe(
-			'SELECT /* outer /* inner ? still in */ ? */ FROM t'
+			'SELECT /* outer /* inner ? still in */ ? */ FROM t',
 		);
 	});
 
 	it('handles dollar-quoted strings ($$ ... $$)', () => {
 		expect(pgify(`SELECT $$ contains ? $$ AS body, ? AS id`)).toBe(
-			'SELECT $$ contains ? $$ AS body, $1 AS id'
+			'SELECT $$ contains ? $$ AS body, $1 AS id',
 		);
 	});
 
 	it('handles tagged dollar-quoted strings ($tag$ ... $tag$)', () => {
 		expect(pgify(`SELECT $func$ body with ? inside $func$ AS x, ? AS id`)).toBe(
-			'SELECT $func$ body with ? inside $func$ AS x, $1 AS id'
+			'SELECT $func$ body with ? inside $func$ AS x, $1 AS id',
 		);
 	});
 
@@ -132,16 +134,16 @@ describe('pgify() — SQL placeholder rewriter', () => {
 describe('normalizeSql() — SQLite-flavoured fragment normalizer', () => {
 	it("replaces datetime('now') with CURRENT_TIMESTAMP", () => {
 		expect(normalizeSql("UPDATE t SET x = datetime('now')")).toBe(
-			'UPDATE t SET x = CURRENT_TIMESTAMP'
+			'UPDATE t SET x = CURRENT_TIMESTAMP',
 		);
 	});
 
 	it('normalizes is_<col> = 1 / 0 to TRUE / FALSE', () => {
 		expect(normalizeSql('SELECT * FROM t WHERE is_active = 1')).toBe(
-			'SELECT * FROM t WHERE is_active = TRUE'
+			'SELECT * FROM t WHERE is_active = TRUE',
 		);
 		expect(normalizeSql('SELECT * FROM t WHERE is_active = 0')).toBe(
-			'SELECT * FROM t WHERE is_active = FALSE'
+			'SELECT * FROM t WHERE is_active = FALSE',
 		);
 	});
 });

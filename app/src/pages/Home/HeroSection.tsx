@@ -81,27 +81,47 @@ export default function HeroSection() {
 		const ctx = gsap.context(() => {
 			const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
 
-			tl.fromTo('.hero-overline', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, 0)
-				.fromTo('.hero-headline-1', { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.2)
-				.fromTo('.hero-headline-2', { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.4)
+			tl.fromTo(
+				'.hero-overline',
+				{ y: 20, opacity: 0 },
+				{ y: 0, opacity: 1, duration: 0.4 },
+				0,
+			)
+				.fromTo(
+					'.hero-headline-1',
+					{ y: 60, opacity: 0 },
+					{ y: 0, opacity: 1, duration: 0.6 },
+					0.2,
+				)
+				.fromTo(
+					'.hero-headline-2',
+					{ y: 60, opacity: 0 },
+					{ y: 0, opacity: 1, duration: 0.6 },
+					0.4,
+				)
 				.fromTo(
 					'.hero-subheadline',
 					{ y: 30, opacity: 0 },
 					{ y: 0, opacity: 1, duration: 0.4 },
-					0.6
+					0.6,
 				)
 				.fromTo(
 					'.hero-cta',
 					{ y: 20, opacity: 0 },
 					{ y: 0, opacity: 1, duration: 0.3, stagger: 0.1 },
-					0.8
+					0.8,
 				)
-				.fromTo('.hero-search', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, 1)
+				.fromTo(
+					'.hero-search',
+					{ y: 20, opacity: 0 },
+					{ y: 0, opacity: 1, duration: 0.4 },
+					1,
+				)
 				.fromTo(
 					'.floating-product',
 					{ scale: 0.8, opacity: 0 },
 					{ scale: 1, opacity: 1, duration: 0.5, stagger: 0.08 },
-					1.2
+					1.2,
 				);
 		}, sectionRef);
 
@@ -121,7 +141,12 @@ export default function HeroSection() {
 							const centerY = rect.height / 2;
 							const offsetX = (e.clientX - centerX) * product.speed;
 							const offsetY = (e.clientY - centerY) * product.speed;
-							gsap.to(children[i], { x: -offsetX, y: -offsetY, duration: 0.8, ease: 'power2.out' });
+							gsap.to(children[i], {
+								x: -offsetX,
+								y: -offsetY,
+								duration: 0.8,
+								ease: 'power2.out',
+							});
 						}
 					}
 				});
@@ -141,9 +166,13 @@ export default function HeroSection() {
 				backgroundSize: '400px',
 				backgroundRepeat: 'repeat',
 				backgroundPosition: 'center',
-			}}>
+			}}
+		>
 			{/* Floating Products */}
-			<div ref={productsRef} className="absolute inset-0 z-[1] pointer-events-none hidden lg:block">
+			<div
+				ref={productsRef}
+				className="absolute inset-0 z-[1] pointer-events-none hidden lg:block"
+			>
 				{floatingProducts.map((product, i) => (
 					<div
 						key={i}
@@ -153,7 +182,8 @@ export default function HeroSection() {
 							width: product.size,
 							height: product.size * 0.75,
 							transform: `rotate(${product.tilt}deg)`,
-						}}>
+						}}
+					>
 						<img src={product.src} alt="" className="w-full h-full object-cover" />
 					</div>
 				))}
@@ -162,7 +192,8 @@ export default function HeroSection() {
 			{/* Hero Content */}
 			<div
 				ref={contentRef}
-				className="relative z-10 max-w-3xl mx-auto container-pad text-center py-20">
+				className="relative z-10 max-w-3xl mx-auto container-pad text-center py-20"
+			>
 				{/* Overline Badge */}
 				<div className="hero-overline inline-flex items-center gap-2 glass-dark px-5 py-2 rounded-full mb-6">
 					<span className="w-2 h-2 bg-[#D4A853] rounded-full animate-pulse" />
@@ -197,7 +228,8 @@ export default function HeroSection() {
 					<Link to="/search" className="hero-cta w-full sm:w-auto">
 						<Button
 							variant="outline"
-							className="w-full sm:w-auto h-14 px-10 border-2 border-[#D4A853] text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] font-cairo font-bold text-base rounded-2xl transition-all active:scale-[0.98]">
+							className="w-full sm:w-auto h-14 px-10 border-2 border-[#D4A853] text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] font-cairo font-bold text-base rounded-2xl transition-all active:scale-[0.98]"
+						>
 							<ShoppingCart className="w-5 h-5 ml-2" strokeWidth={1.5} />
 							تسوق الآن
 						</Button>

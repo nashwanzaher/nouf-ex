@@ -85,7 +85,7 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 			"frame-ancestors 'none'",
 			"base-uri 'self'",
 			"form-action 'self'",
-		].join('; ')
+		].join('; '),
 	);
 	next();
 };
@@ -295,14 +295,17 @@ function getAuthSecret(): string {
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error(
 			'AUTH_SECRET env var is required in production (≥32 random chars). ' +
-				"Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\""
+				"Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
 		);
 	}
 	return 'dev-only-secret-' + 'x'.repeat(40);
 }
 
 export function signAuthToken(payload: { sub: number; role: AuthRole }): string {
-	const full: TokenPayload = { ...payload, exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS };
+	const full: TokenPayload = {
+		...payload,
+		exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
+	};
 	const body = base64url(Buffer.from(JSON.stringify(full)));
 	const sig = base64url(createHmac('sha256', getAuthSecret()).update(body).digest());
 	return `${body}.${sig}`;
@@ -458,10 +461,7 @@ export function healthRateLimit(opts: HealthRateLimitOptions = {}): RequestHandl
 			// Resolve the IP defensively — `req.socket` can be undefined in
 			// synthetic/test environments and during the very first request
 			// before Express wires it up.
-			const ip =
-				req.ip ||
-				(req.socket && req.socket.remoteAddress) ||
-				'anon';
+			const ip = req.ip || (req.socket && req.socket.remoteAddress) || 'anon';
 			const key = `${bucket}:${ip}`;
 			const now = Date.now();
 			let entry = HEALTH_BUCKETS.get(key);
@@ -498,7 +498,7 @@ export function sendSuccess<T>(
 	res: Response,
 	data?: T,
 	statusOrMessage: number | string = 200,
-	message?: string
+	message?: string,
 ): void {
 	const isNumeric = typeof statusOrMessage === 'number' && Number.isFinite(statusOrMessage);
 	const status = isNumeric ? (statusOrMessage as number) : 200;
@@ -515,7 +515,7 @@ export function sendError(
 	res: Response,
 	errorOrMessage: string | Error | unknown,
 	status = 500,
-	code?: string
+	code?: string,
 ): void {
 	// P1-6 fix: when called with an Error object (typically from a
 	// route handler's `catch`), translate the failure into a safe
@@ -585,7 +585,7 @@ export function sendError(
 // =========================================================================
 export function parsePagination(
 	raw: { limit?: unknown; offset?: unknown },
-	maxLimit = 100
+	maxLimit = 100,
 ): { limit: number; offset: number } {
 	const limitNum = Number(raw.limit);
 	const offsetNum = Number(raw.offset ?? 0);
@@ -641,7 +641,7 @@ export function resolveDatabaseUrl(env: Env): string {
 		return `postgresql://${env.DB_USER}:${env.DB_PASSWORD}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
 	}
 	throw new Error(
-		'DATABASE_URL is not set. Copy .env.example to .env and fill in DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).'
+		'DATABASE_URL is not set. Copy .env.example to .env and fill in DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).',
 	);
 }
 

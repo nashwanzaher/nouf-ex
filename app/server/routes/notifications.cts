@@ -14,7 +14,9 @@ notificationsRouter.get('/:userId', requireAuth, async (req: Request, res: Respo
 	try {
 		const userId = req.user!.id;
 		const items = await db
-			.prepare(`SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`)
+			.prepare(
+				`SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
+			)
 			.all(userId);
 		sendSuccess(res, items);
 	} catch (err) {
@@ -35,7 +37,7 @@ notificationsRouter.put('/:id/read', requireAuth, async (req: Request, res: Resp
             SET is_read = TRUE,
                 read_at  = COALESCE(read_at, NOW())
           WHERE id = $1 AND user_id = $2
-          RETURNING id, user_id, type, title, body, data, is_read, read_at, created_at`
+          RETURNING id, user_id, type, title, body, data, is_read, read_at, created_at`,
 			)
 			.get(notificationId, userId)) as
 			| {
@@ -71,7 +73,7 @@ notificationsRouter.get(
 			}
 			const row = (await db
 				.prepare(
-					'SELECT COUNT(*)::int AS c FROM notifications WHERE user_id = $1 AND is_read = FALSE'
+					'SELECT COUNT(*)::int AS c FROM notifications WHERE user_id = $1 AND is_read = FALSE',
 				)
 				.get(userId)) as { c: number } | undefined;
 			// `get()` returns undefined when no row matches; default to 0
@@ -81,5 +83,5 @@ notificationsRouter.get(
 		} catch (err) {
 			return sendError(res, err);
 		}
-	}
+	},
 );

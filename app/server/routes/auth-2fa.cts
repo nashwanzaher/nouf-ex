@@ -106,11 +106,36 @@ function clientIp(req: Request): string {
 }
 
 const RATE_LIMITS = {
-	verify: { bucket: '2fa_verify', windowMs: 60_000, max: 5, message: 'Too many 2FA attempts. Try again in a minute.' },
-	setup: { bucket: '2fa_setup', windowMs: 60 * 60 * 1000, max: 10, message: 'Too many 2FA setup requests. Try again in an hour.' },
-	enable: { bucket: '2fa_enable', windowMs: 60_000, max: 10, message: 'Too many 2FA enable attempts. Try again in a minute.' },
-	disable: { bucket: '2fa_disable', windowMs: 60_000, max: 5, message: 'Too many 2FA disable attempts. Try again in a minute.' },
-	backupCodes: { bucket: '2fa_backup_codes', windowMs: 60_000, max: 5, message: 'Too many backup-code regenerations. Try again in a minute.' },
+	verify: {
+		bucket: '2fa_verify',
+		windowMs: 60_000,
+		max: 5,
+		message: 'Too many 2FA attempts. Try again in a minute.',
+	},
+	setup: {
+		bucket: '2fa_setup',
+		windowMs: 60 * 60 * 1000,
+		max: 10,
+		message: 'Too many 2FA setup requests. Try again in an hour.',
+	},
+	enable: {
+		bucket: '2fa_enable',
+		windowMs: 60_000,
+		max: 10,
+		message: 'Too many 2FA enable attempts. Try again in a minute.',
+	},
+	disable: {
+		bucket: '2fa_disable',
+		windowMs: 60_000,
+		max: 5,
+		message: 'Too many 2FA disable attempts. Try again in a minute.',
+	},
+	backupCodes: {
+		bucket: '2fa_backup_codes',
+		windowMs: 60_000,
+		max: 5,
+		message: 'Too many backup-code regenerations. Try again in a minute.',
+	},
 } as const;
 
 /** Build an Express middleware that enforces a per-IP rate limit
@@ -122,7 +147,7 @@ function rateLimitMiddleware(
 	bucket: string,
 	windowMs: number,
 	max: number,
-	message: string
+	message: string,
 ): RequestHandler {
 	return (req, res, next) => {
 		if (!checkRate(bucket, clientIp(req), windowMs, max)) {
@@ -136,31 +161,31 @@ const limitVerify = rateLimitMiddleware(
 	RATE_LIMITS.verify.bucket,
 	RATE_LIMITS.verify.windowMs,
 	RATE_LIMITS.verify.max,
-	RATE_LIMITS.verify.message
+	RATE_LIMITS.verify.message,
 );
 const limitSetup = rateLimitMiddleware(
 	RATE_LIMITS.setup.bucket,
 	RATE_LIMITS.setup.windowMs,
 	RATE_LIMITS.setup.max,
-	RATE_LIMITS.setup.message
+	RATE_LIMITS.setup.message,
 );
 const limitEnable = rateLimitMiddleware(
 	RATE_LIMITS.enable.bucket,
 	RATE_LIMITS.enable.windowMs,
 	RATE_LIMITS.enable.max,
-	RATE_LIMITS.enable.message
+	RATE_LIMITS.enable.message,
 );
 const limitDisable = rateLimitMiddleware(
 	RATE_LIMITS.disable.bucket,
 	RATE_LIMITS.disable.windowMs,
 	RATE_LIMITS.disable.max,
-	RATE_LIMITS.disable.message
+	RATE_LIMITS.disable.message,
 );
 const limitBackupCodes = rateLimitMiddleware(
 	RATE_LIMITS.backupCodes.bucket,
 	RATE_LIMITS.backupCodes.windowMs,
 	RATE_LIMITS.backupCodes.max,
-	RATE_LIMITS.backupCodes.message
+	RATE_LIMITS.backupCodes.message,
 );
 
 // Background sweeper — drops entries whose window has expired so the
@@ -205,7 +230,7 @@ async function loadUser(id: number): Promise<UserRow | null> {
 			`SELECT id, email, full_name, role, two_factor_enabled,
 			        totp_secret, totp_backup_codes
 			   FROM users
-			  WHERE id = ? AND deleted_at IS NULL`
+			  WHERE id = ? AND deleted_at IS NULL`,
 		)
 		.get(id)) as UserRow | undefined;
 	return row ?? null;
@@ -236,7 +261,7 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 				res,
 				'2FA is already enabled. Disable it first to re-enroll.',
 				409,
-				'ALREADY_ENABLED'
+				'ALREADY_ENABLED',
 			);
 		}
 		const secret = generateSecret();
@@ -251,7 +276,7 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 				        totp_backup_codes = ?::text[],
 				        two_factor_enabled = FALSE,
 				        totp_enabled_at = NULL
-				  WHERE id = ?`
+				  WHERE id = ?`,
 			)
 			.run(secret, arrayLiteral(hashed), user.id);
 
@@ -269,7 +294,7 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 					'4. Save the backup codes in a safe place. They are shown only once.',
 			},
 			200,
-			'2FA setup ready. Confirm with /enable to activate.'
+			'2FA setup ready. Confirm with /enable to activate.',
 		);
 	} catch (err) {
 		sendError(res, err);
@@ -296,7 +321,7 @@ auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res
 				res,
 				'2FA setup was not started. Call POST /api/auth/2fa/setup first.',
 				400,
-				'NOT_SET_UP'
+				'NOT_SET_UP',
 			);
 		}
 		if (!verifyTotp(user.totp_secret, v.data.code)) {
@@ -308,7 +333,7 @@ auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res
 				`UPDATE users
 				    SET two_factor_enabled = TRUE,
 				        totp_enabled_at = CURRENT_TIMESTAMP
-				  WHERE id = ?`
+				  WHERE id = ?`,
 			)
 			.run(user.id);
 		log.info({
@@ -319,7 +344,7 @@ auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res
 			res,
 			{ user: publicUser({ ...user, two_factor_enabled: true }) },
 			200,
-			'2FA enabled. Save your backup codes — they are not shown again.'
+			'2FA enabled. Save your backup codes — they are not shown again.',
 		);
 	} catch (err) {
 		sendError(res, err);
@@ -380,7 +405,7 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 			res,
 			{ token, user: publicUser(user), method: totpOk ? 'totp' : 'backup_code' },
 			200,
-			'2FA verified'
+			'2FA verified',
 		);
 	} catch (err) {
 		sendError(res, err);
@@ -414,7 +439,7 @@ auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, r
 		const scryptAsync = promisify(scryptCb) as (
 			password: string,
 			salt: Buffer,
-			keylen: number
+			keylen: number,
 		) => Promise<Buffer>;
 		const parts = user.password_hash.split('$');
 		if (parts.length !== 3 || parts[0] !== 'scrypt') {
@@ -435,7 +460,7 @@ auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, r
 				        totp_secret = NULL,
 				        totp_backup_codes = '{}'::text[],
 				        totp_enabled_at = NULL
-				  WHERE id = ?`
+				  WHERE id = ?`,
 			)
 			.run(user.id);
 		log.info({
@@ -446,7 +471,7 @@ auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, r
 			res,
 			{ user: publicUser({ ...(await loadUser(user.id))!, two_factor_enabled: false }) },
 			200,
-			'2FA disabled'
+			'2FA disabled',
 		);
 	} catch (err) {
 		sendError(res, err);
@@ -472,23 +497,24 @@ auth2faRouter.post(
 			if (!user.two_factor_enabled) {
 				return sendError(res, '2FA is not enabled. Enable it first.', 400, 'NOT_ENABLED');
 			}
-		const newCodes = generateBackupCodes();
-		const hashed = await Promise.all(newCodes.map(hashBackupCode));
-		await db
-			.prepare('UPDATE users SET totp_backup_codes = ?::text[] WHERE id = ?')
-			.run(arrayLiteral(hashed), user.id);
-		log.info({
-			msg: 'backup_codes_regenerated',
-			user_id: user.id,
-			count: newCodes.length,
-		});
-		sendSuccess(
-			res,
-			{ backup_codes: newCodes },
-			200,
-			'New backup codes generated. Save them — they are not shown again.'
-		);
-	} catch (err) {
-		sendError(res, err);
-	}
-});
+			const newCodes = generateBackupCodes();
+			const hashed = await Promise.all(newCodes.map(hashBackupCode));
+			await db
+				.prepare('UPDATE users SET totp_backup_codes = ?::text[] WHERE id = ?')
+				.run(arrayLiteral(hashed), user.id);
+			log.info({
+				msg: 'backup_codes_regenerated',
+				user_id: user.id,
+				count: newCodes.length,
+			});
+			sendSuccess(
+				res,
+				{ backup_codes: newCodes },
+				200,
+				'New backup codes generated. Save them — they are not shown again.',
+			);
+		} catch (err) {
+			sendError(res, err);
+		}
+	},
+);

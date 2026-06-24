@@ -228,15 +228,13 @@ describe('catalogRouter — GET /api/search', () => {
 	});
 
 	it('accepts category / store / price filter params without error', async () => {
-		const res = await request(app)
-			.get('/api/search?q=honey')
-			.query({
-				category: 'food',
-				store: '1',
-				minPrice: '100',
-				maxPrice: '50000',
-				sort: 'price_asc',
-			});
+		const res = await request(app).get('/api/search?q=honey').query({
+			category: 'food',
+			store: '1',
+			minPrice: '100',
+			maxPrice: '50000',
+			sort: 'price_asc',
+		});
 		// Even with the mock returning empty rows, the envelope is
 		// well-formed and the limit/offset clamps apply.
 		expect(res.status).toBe(200);

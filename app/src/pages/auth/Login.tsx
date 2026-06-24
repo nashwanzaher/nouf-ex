@@ -46,7 +46,8 @@ export default function Login() {
 				id: String(result.user.id),
 				name: result.user.full_name,
 				email: result.user.email,
-				role: (result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
+				role:
+					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
 			// authLogin is async (P0-1: it syncs the local cart to the
@@ -79,7 +80,8 @@ export default function Login() {
 		<div className="min-h-[100dvh] flex" dir={isRTL ? 'rtl' : 'ltr'}>
 			{/* Left Panel — Hero */}
 			<div
-				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}>
+				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}
+			>
 				{/* Decorative circles */}
 				<div
 					className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`}
@@ -94,7 +96,8 @@ export default function Login() {
 				<div className="relative z-10 text-center max-w-md mx-auto">
 					<div className="mb-8">
 						<div
-							className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}>
+							className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}
+						>
 							<Globe className="w-10 h-10 text-white" strokeWidth={1.5} />
 						</div>
 					</div>
@@ -129,16 +132,23 @@ export default function Login() {
 						].map((stat, i) => (
 							<div
 								key={i}
-								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}>
-								<stat.icon className={`w-6 h-6 ${stat.iconClass}`} strokeWidth={1.5} />
-								<span className={`text-xs font-semibold ${styles.statLabel}`}>{stat.label}</span>
+								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}
+							>
+								<stat.icon
+									className={`w-6 h-6 ${stat.iconClass}`}
+									strokeWidth={1.5}
+								/>
+								<span className={`text-xs font-semibold ${styles.statLabel}`}>
+									{stat.label}
+								</span>
 							</div>
 						))}
 					</div>
 
 					<Link
 						to="/"
-						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}>
+						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}
+					>
 						{isRTL ? 'اكتشف المزيد' : 'View More'}
 						<TrendingUp className="w-4 h-4" strokeWidth={1.5} />
 					</Link>
@@ -157,19 +167,26 @@ export default function Login() {
 									{t('auth.loginTitle')}
 								</h1>
 								<p className={`text-sm ${styles.formSubtitle}`}>
-									{isRTL ? 'أهلاً بك مجدداً في نوف إكس' : 'Welcome back to Nouf-ex'}
+									{isRTL
+										? 'أهلاً بك مجدداً في نوف إكس'
+										: 'Welcome back to Nouf-ex'}
 								</p>
 							</div>
 
 							<form onSubmit={handleSubmit} className="space-y-4">
 								{errors.form && (
-									<div role="alert" className={`text-sm p-3 rounded ${styles.formAlert}`}>
+									<div
+										role="alert"
+										className={`text-sm p-3 rounded ${styles.formAlert}`}
+									>
 										{errors.form}
 									</div>
 								)}
 								{/* Account */}
 								<div>
-									<Label className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}>
+									<Label
+										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
+									>
 										{t('auth.email')}
 									</Label>
 									<div className="relative">
@@ -185,19 +202,25 @@ export default function Login() {
 												setErrors((p) => ({ ...p, email: '' }));
 											}}
 											placeholder={
-												isRTL ? 'بريدك الإلكتروني أو رقم الهاتف' : 'Your email or phone number'
+												isRTL
+													? 'بريدك الإلكتروني أو رقم الهاتف'
+													: 'Your email or phone number'
 											}
 											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
 										/>
 									</div>
 									{errors.email && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>{errors.email}</p>
+										<p className={`text-xs mt-1 ${styles.fieldError}`}>
+											{errors.email}
+										</p>
 									)}
 								</div>
 
 								{/* Password */}
 								<div>
-									<Label className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}>
+									<Label
+										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
+									>
 										{t('auth.password')}
 									</Label>
 									<div className="relative">
@@ -218,7 +241,8 @@ export default function Login() {
 										<button
 											type="button"
 											onClick={() => setShowPassword(!showPassword)}
-											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}>
+											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}
+										>
 											{showPassword ? (
 												<EyeOff className="w-5 h-5" strokeWidth={1.5} />
 											) : (
@@ -227,7 +251,9 @@ export default function Login() {
 										</button>
 									</div>
 									{errors.password && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>{errors.password}</p>
+										<p className={`text-xs mt-1 ${styles.fieldError}`}>
+											{errors.password}
+										</p>
 									)}
 								</div>
 
@@ -235,7 +261,8 @@ export default function Login() {
 								<div className="flex justify-end">
 									<Link
 										to="/auth/forgot-password"
-										className={`text-sm hover:underline ${styles.link}`}>
+										className={`text-sm hover:underline ${styles.link}`}
+									>
 										{t('auth.forgotPassword')}
 									</Link>
 								</div>
@@ -244,7 +271,8 @@ export default function Login() {
 								<Button
 									type="submit"
 									disabled={isLoading}
-									className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}>
+									className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}
+								>
 									{isLoading ? (
 										<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
 									) : (
@@ -255,7 +283,10 @@ export default function Login() {
 
 							{/* Mobile sign in link */}
 							<div className="mt-4 text-center">
-								<button type="button" className={`text-sm hover:underline ${styles.link}`}>
+								<button
+									type="button"
+									className={`text-sm hover:underline ${styles.link}`}
+								>
 									{isRTL ? 'تسجيل الدخول برقم الجوال' : 'Mobile number sign in'}
 								</button>
 							</div>
@@ -267,7 +298,9 @@ export default function Login() {
 										<Separator className={`w-full ${styles.divider}`} />
 									</div>
 									<div className="relative flex justify-center">
-										<span className={`bg-white px-4 text-xs ${styles.dividerLabel}`}>
+										<span
+											className={`bg-white px-4 text-xs ${styles.dividerLabel}`}
+										>
 											{isRTL ? 'أو سجل دخول باستخدام' : 'Sign in with'}
 										</span>
 									</div>
@@ -275,7 +308,8 @@ export default function Login() {
 
 								<div className="flex gap-3">
 									<button
-										className={`flex-1 h-11 flex items-center justify-center gap-2 rounded border hover:bg-gray-50 transition-colors text-sm ${styles.socialButton}`}>
+										className={`flex-1 h-11 flex items-center justify-center gap-2 rounded border hover:bg-gray-50 transition-colors text-sm ${styles.socialButton}`}
+									>
 										<svg className="w-5 h-5" viewBox="0 0 24 24">
 											<path
 												d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -297,7 +331,8 @@ export default function Login() {
 										Google
 									</button>
 									<button
-										className={`flex-1 h-11 flex items-center justify-center gap-2 rounded border hover:bg-gray-50 transition-colors text-sm ${styles.socialButton}`}>
+										className={`flex-1 h-11 flex items-center justify-center gap-2 rounded border hover:bg-gray-50 transition-colors text-sm ${styles.socialButton}`}
+									>
 										<svg className="w-5 h-5" viewBox="0 0 24 24" fill="#111111">
 											<path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.92.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
 										</svg>
@@ -311,7 +346,8 @@ export default function Login() {
 								{isRTL ? 'مستخدم جديد؟' : 'New user?'}{' '}
 								<Link
 									to="/auth/register"
-									className={`font-semibold hover:underline ${styles.ctaLink}`}>
+									className={`font-semibold hover:underline ${styles.ctaLink}`}
+								>
 									{t('auth.registerTitle')}
 								</Link>
 							</p>

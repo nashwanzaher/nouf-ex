@@ -96,7 +96,7 @@ describe('safeText()', () => {
 describe('escapeXml()', () => {
 	it('escapes the five XML metacharacters', () => {
 		expect(escapeXml(`<a href="b&c">'d'</a>`)).toBe(
-			'&lt;a href=&quot;b&amp;c&quot;&gt;&apos;d&apos;&lt;/a&gt;'
+			'&lt;a href=&quot;b&amp;c&quot;&gt;&apos;d&apos;&lt;/a&gt;',
 		);
 	});
 	it('handles empty input', () => {

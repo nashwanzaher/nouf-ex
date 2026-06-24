@@ -88,13 +88,13 @@ describe('AppContext', () => {
 			result.current.dispatch({
 				type: 'ADD_TOAST',
 				payload: { id: '1', message: 'first', type: 'info' },
-			})
+			}),
 		);
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD_TOAST',
 				payload: { id: '2', message: 'second', type: 'info' },
-			})
+			}),
 		);
 		expect(result.current.state.toasts).toHaveLength(2);
 		expect(result.current.state.toasts[0]?.id).toBe('1');

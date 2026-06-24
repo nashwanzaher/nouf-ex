@@ -166,7 +166,7 @@ export function otpauthUrl(
 	secret: string,
 	issuer: string,
 	period = TOTP_STEP_SECONDS,
-	digits = TOTP_DIGITS
+	digits = TOTP_DIGITS,
 ): string {
 	const label = encodeURIComponent(issuer + ':' + account);
 	const params = new URLSearchParams({

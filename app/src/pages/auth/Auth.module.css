@@ -172,7 +172,9 @@
 .termsBox {
 	border-color: var(--login-border);
 	background: transparent;
-	transition: border-color 150ms, background 150ms;
+	transition:
+		border-color 150ms,
+		background 150ms;
 }
 
 .termsBox[data-checked='true'] {

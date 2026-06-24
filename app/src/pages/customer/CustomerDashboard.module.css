@@ -1,0 +1,157 @@
+/* CustomerDashboard.module.css — color tokens and reusable patterns
+ * for the customer-side dashboard shell. The file uses CSS custom
+ * properties so the same module can theme every panel of the page
+ * (sidebar, header, stats grid, order tracking, wishlist grid,
+ * notifications) from a single source of truth.
+ *
+ * Dynamic color tiles (`.statTile`, `.notificationTile`) accept a
+ * `--tile-color` CSS variable set inline via the style attribute. This
+ * keeps the dynamic value declarative without violating the
+ * `no-inline-styles` rule (only the variable is set, the rule stays
+ * in the stylesheet).
+ */
+
+.root {
+	--brand: #ff6a00;
+	--brand-soft: #fff5eb;
+	--brand-glow: rgba(255, 106, 0, 0.15);
+	--ink: #333;
+	--ink-muted: #666;
+	--ink-faint: #999;
+	--border: #e5e5e5;
+	--surface-soft: #f0f2f5;
+	--navy: #001529;
+	--success: #4caf50;
+	--danger: #f44336;
+	--warning: #ff9800;
+	--info: #1688c9;
+}
+
+.page {
+	background: var(--surface-soft);
+}
+
+.sidebar {
+	background: var(--navy);
+}
+
+.brandTile {
+	background: var(--brand);
+}
+
+.brandAvatar {
+	background: var(--brand);
+}
+
+.navLinkActive {
+	background: var(--brand-glow);
+}
+
+.navIndicator {
+	background: var(--brand);
+}
+
+.iconText {
+	color: var(--ink);
+}
+
+.iconTextMuted {
+	color: var(--ink-muted);
+}
+
+.iconTextFaint {
+	color: var(--ink-faint);
+}
+
+.iconDanger {
+	color: var(--danger);
+}
+
+.linkOrange {
+	color: var(--brand);
+}
+
+.searchSurface {
+	background: var(--surface-soft);
+}
+
+.searchInput {
+	color: var(--ink);
+}
+
+.sectionTitle {
+	color: var(--ink);
+}
+
+.orderCard {
+	border-color: var(--surface-soft);
+}
+
+.iconTileSoft {
+	background: var(--brand-soft);
+}
+
+.iconTileOrange {
+	color: var(--brand);
+}
+
+.priceOrange {
+	color: var(--brand);
+}
+
+.wishlistCard {
+	border-color: var(--surface-soft);
+}
+
+.wishlistImage {
+	background: var(--surface-soft);
+}
+
+.ratingStar {
+	color: var(--warning);
+}
+
+.orderHeader {
+	color: var(--ink);
+}
+
+.mutedText {
+	color: var(--ink-muted);
+}
+
+.mutedTextFaint {
+	color: var(--ink-faint);
+}
+
+.statValue {
+	color: var(--ink);
+}
+
+.statLabel {
+	color: var(--ink-muted);
+}
+
+/* Dynamic-color tile (accepts `--tile-color` from inline style). */
+.tile {
+	background: color-mix(in srgb, var(--tile-color) 15%, transparent);
+	color: var(--tile-color);
+}
+
+/* Timeline stepper. */
+.timelineStep {
+	background: var(--brand);
+	color: #ffffff;
+}
+
+.timelineStepPending {
+	background: var(--border);
+	color: var(--ink-faint);
+}
+
+.timelineConnector {
+	background: var(--border);
+}
+
+.timelineConnectorDone {
+	background: var(--brand);
+}

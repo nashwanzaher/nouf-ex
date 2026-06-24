@@ -45,12 +45,14 @@ export default function ToastContainer({ toasts, onRemove }: ToastContainerProps
 							initial={{ opacity: 0, y: -20, scale: 0.95 }}
 							animate={{ opacity: 1, y: 0, scale: 1 }}
 							exit={{ opacity: 0, y: -20, scale: 0.95 }}
-							className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${colors[toast.type]}`}>
+							className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg ${colors[toast.type]}`}
+						>
 							<Icon size={18} className={iconColors[toast.type]} />
 							<span className="text-sm font-medium flex-1">{toast.message}</span>
 							<button
 								onClick={() => onRemove(toast.id)}
-								className="p-1 rounded-lg hover:bg-black/5 transition-colors">
+								className="p-1 rounded-lg hover:bg-black/5 transition-colors"
+							>
 								<X size={14} />
 							</button>
 						</motion.div>

@@ -80,12 +80,7 @@ export function readLocalCart(): SyncableCartItem[] {
 		// Coerce to the bare shape we need; skip malformed rows.
 		const out: SyncableCartItem[] = [];
 		for (const row of parsed) {
-			if (
-				row &&
-				typeof row === 'object' &&
-				'productId' in row &&
-				'quantity' in row
-			) {
+			if (row && typeof row === 'object' && 'productId' in row && 'quantity' in row) {
 				const r = row as { productId: unknown; quantity: unknown };
 				const pid = String(r.productId);
 				const qty = Number(r.quantity);
@@ -126,7 +121,7 @@ export function clearLocalCart(): void {
 export async function syncLocalCartToServer(
 	userId: number,
 	items: SyncableCartItem[],
-	signal?: AbortSignal
+	signal?: AbortSignal,
 ): Promise<CartSyncResult> {
 	let pushed = 0;
 	let failed = 0;
@@ -184,10 +179,7 @@ export async function syncLocalCartToServer(
  * If the sync fails entirely (network down), the local cart is
  * PRESERVED and the caller falls back to the local view.
  */
-export async function syncOnLogin(
-	userId: number,
-	signal?: AbortSignal
-): Promise<CartSyncResult> {
+export async function syncOnLogin(userId: number, signal?: AbortSignal): Promise<CartSyncResult> {
 	const local = readLocalCart();
 	if (local.length === 0) {
 		// Nothing to push. Still pull the server cart so the UI shows

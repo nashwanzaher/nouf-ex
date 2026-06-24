@@ -35,7 +35,7 @@ import {
 // Re-export the pg-wrapper connection so route files have a single
 // import surface for "everything I need to talk to the DB".
 export const db = new PgDb(
-	process.env.DATABASE_URL || 'postgresql://postgres:***REDACTED***@localhost:5432/noufex_db'
+	process.env.DATABASE_URL || 'postgresql://postgres:***REDACTED***@localhost:5432/noufex_db',
 );
 
 // Re-export the middleware helpers. Route files import these via
@@ -50,7 +50,7 @@ export type { AuthRole };
 const scrypt = promisify(scryptCb) as (
 	password: string,
 	salt: string | Buffer,
-	keylen: number
+	keylen: number,
 ) => Promise<Buffer>;
 const SCRYPT_KEYLEN = 64;
 
@@ -112,7 +112,7 @@ export const authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth');
 /** Zod validator that returns a tagged union instead of throwing. */
 export function validate<T>(
 	schema: z.ZodType<T>,
-	body: unknown
+	body: unknown,
 ): { ok: true; data: T } | { ok: false; error: string } {
 	const r = schema.safeParse(body);
 	return r.success
@@ -151,14 +151,14 @@ export async function writeAuditLog(
 	entityType: string,
 	entityId: number | string,
 	oldValues: Record<string, unknown> | null,
-	newValues: Record<string, unknown> | null
+	newValues: Record<string, unknown> | null,
 ): Promise<void> {
 	try {
 		await db
 			.prepare(
 				`INSERT INTO admin_audit_log
 				 (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-				 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`
+				 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`,
 			)
 			.run(
 				req.user!.id,
@@ -168,7 +168,7 @@ export async function writeAuditLog(
 				oldValues ? JSON.stringify(oldValues) : null,
 				newValues ? JSON.stringify(newValues) : null,
 				req.ip,
-				req.header('user-agent') ?? null
+				req.header('user-agent') ?? null,
 			);
 	} catch (err) {
 		log.warn({ msg: 'audit_log_failed', entity: entityType, error: (err as Error).message });
@@ -285,7 +285,7 @@ export type ResolveStoreIdResult =
 
 export function resolveOrderStoreId(
 	requestedProductIds: number[],
-	productRows: OrderProductRow[]
+	productRows: OrderProductRow[],
 ): ResolveStoreIdResult {
 	if (requestedProductIds.length === 0) {
 		return { ok: false, code: 'EMPTY_CART' };
@@ -383,10 +383,12 @@ export type CouponRow = {
  *  the discount math. */
 export async function computeCouponDiscount(
 	coupon: { type: string; value: number; max_discount: number | null },
-	orderSubtotal: number
+	orderSubtotal: number,
 ): Promise<number> {
 	const row = (await db
-		.prepare('SELECT coupon_discount_amount($1, $2::numeric, $3::numeric, $4::numeric) AS discount')
+		.prepare(
+			'SELECT coupon_discount_amount($1, $2::numeric, $3::numeric, $4::numeric) AS discount',
+		)
 		.get(coupon.type, coupon.value, coupon.max_discount, orderSubtotal)) as
 		| { discount: string }
 		| undefined;

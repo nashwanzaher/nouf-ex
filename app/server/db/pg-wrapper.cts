@@ -207,7 +207,7 @@ export function pgify(sql: string): string {
 interface QueryExecutor {
 	query: (
 		sql: string,
-		params: unknown[]
+		params: unknown[],
 	) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
 }
 
@@ -226,7 +226,7 @@ class PgStatement {
 	}
 
 	private async _query(
-		params: unknown[]
+		params: unknown[],
 	): Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }> {
 		const args = params && params.length ? Array.from(params) : [];
 		const res = await this.pool.query(this.pgSql, args);
@@ -260,14 +260,14 @@ class PgTxDb {
 	private readonly client: {
 		query: (
 			sql: string,
-			params: unknown[]
+			params: unknown[],
 		) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
 	};
 
 	constructor(client: {
 		query: (
 			sql: string,
-			params: unknown[]
+			params: unknown[],
 		) => Promise<{ rows: Record<string, unknown>[]; rowCount: number | null }>;
 	}) {
 		this.client = client;

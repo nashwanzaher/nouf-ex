@@ -107,7 +107,12 @@ interface ReportCategory {
 }
 
 const categories: ReportCategory[] = [
-	{ id: 'revenue', label: 'مبيعات المنصة', icon: BarChart3, description: 'الإيرادات وحجم الطلبات' },
+	{
+		id: 'revenue',
+		label: 'مبيعات المنصة',
+		icon: BarChart3,
+		description: 'الإيرادات وحجم الطلبات',
+	},
 	{
 		id: 'users',
 		label: 'المستخدمون',
@@ -115,7 +120,12 @@ const categories: ReportCategory[] = [
 		description: 'التسجيل والاحتفاظ والبيانات الديموغرافية',
 	},
 	{ id: 'merchants', label: 'المتاجر', icon: Store, description: 'أداء المتاجر ونسب التوثيق' },
-	{ id: 'orders', label: 'الطلبات', icon: ShoppingBag, description: 'تحليل الطلبات ونسب الإلغاء' },
+	{
+		id: 'orders',
+		label: 'الطلبات',
+		icon: ShoppingBag,
+		description: 'تحليل الطلبات ونسب الإلغاء',
+	},
 	{
 		id: 'disputes',
 		label: 'النزاعات',
@@ -231,14 +241,21 @@ export default function ReportsAnalytics() {
 			case 'revenue':
 				return (
 					<ResponsiveContainer width="100%" height="100%">
-						<AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+						<AreaChart
+							data={revenueData}
+							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+						>
 							<defs>
 								<linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
 									<stop offset="5%" stopColor={GOLD} stopOpacity={0.3} />
 									<stop offset="95%" stopColor={GOLD} stopOpacity={0} />
 								</linearGradient>
 							</defs>
-							<CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke="#F0F0F0"
+								vertical={false}
+							/>
 							<XAxis
 								dataKey="name"
 								tick={{ fontSize: 12, fontFamily: 'Cairo', fill: '#6B6B6B' }}
@@ -262,7 +279,11 @@ export default function ReportsAnalytics() {
 							<Legend
 								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
 								formatter={(v: string) =>
-									({ revenue: 'الإيرادات', orders: 'الطلبات', commission: 'العمولات' })[v] ?? v
+									({
+										revenue: 'الإيرادات',
+										orders: 'الطلبات',
+										commission: 'العمولات',
+									})[v] ?? v
 								}
 							/>
 							<Area
@@ -286,8 +307,15 @@ export default function ReportsAnalytics() {
 			case 'users':
 				return (
 					<ResponsiveContainer width="100%" height="100%">
-						<LineChart data={usersData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+						<LineChart
+							data={usersData}
+							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+						>
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke="#F0F0F0"
+								vertical={false}
+							/>
 							<XAxis
 								dataKey="name"
 								tick={{ fontSize: 12, fontFamily: 'Cairo', fill: '#6B6B6B' }}
@@ -342,8 +370,15 @@ export default function ReportsAnalytics() {
 			case 'merchants':
 				return (
 					<ResponsiveContainer width="100%" height="100%">
-						<BarChart data={merchantsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+						<BarChart
+							data={merchantsData}
+							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+						>
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke="#F0F0F0"
+								vertical={false}
+							/>
 							<XAxis
 								dataKey="name"
 								tick={{ fontSize: 12, fontFamily: 'Cairo', fill: '#6B6B6B' }}
@@ -367,7 +402,9 @@ export default function ReportsAnalytics() {
 							<Legend
 								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
 								formatter={(v: string) =>
-									({ new: 'جدد', verified: 'موثقون', pending: 'قيد المراجعة' })[v] ?? v
+									({ new: 'جدد', verified: 'موثقون', pending: 'قيد المراجعة' })[
+										v
+									] ?? v
 								}
 							/>
 							<Bar dataKey="new" fill={GOLD} radius={[4, 4, 0, 0]} />
@@ -379,8 +416,15 @@ export default function ReportsAnalytics() {
 			case 'orders':
 				return (
 					<ResponsiveContainer width="100%" height="100%">
-						<BarChart data={ordersData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+						<BarChart
+							data={ordersData}
+							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+						>
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke="#F0F0F0"
+								vertical={false}
+							/>
 							<XAxis
 								dataKey="name"
 								tick={{ fontSize: 12, fontFamily: 'Cairo', fill: '#6B6B6B' }}
@@ -404,7 +448,11 @@ export default function ReportsAnalytics() {
 							<Legend
 								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
 								formatter={(v: string) =>
-									({ completed: 'مكتملة', cancelled: 'ملغاة', returned: 'مسترجعة' })[v] ?? v
+									({
+										completed: 'مكتملة',
+										cancelled: 'ملغاة',
+										returned: 'مسترجعة',
+									})[v] ?? v
 								}
 							/>
 							<Bar dataKey="completed" fill={GREEN} radius={[4, 4, 0, 0]} />
@@ -416,8 +464,15 @@ export default function ReportsAnalytics() {
 			case 'disputes':
 				return (
 					<ResponsiveContainer width="100%" height="100%">
-						<LineChart data={disputesData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-							<CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+						<LineChart
+							data={disputesData}
+							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+						>
+							<CartesianGrid
+								strokeDasharray="3 3"
+								stroke="#F0F0F0"
+								vertical={false}
+							/>
 							<XAxis
 								dataKey="name"
 								tick={{ fontSize: 12, fontFamily: 'Cairo', fill: '#6B6B6B' }}
@@ -441,7 +496,11 @@ export default function ReportsAnalytics() {
 							<Legend
 								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
 								formatter={(v: string) =>
-									({ filed: 'مقدمة', resolved: 'محلولة', avgDays: 'متوسط الأيام' })[v] ?? v
+									({
+										filed: 'مقدمة',
+										resolved: 'محلولة',
+										avgDays: 'متوسط الأيام',
+									})[v] ?? v
 								}
 							/>
 							<Line
@@ -481,7 +540,10 @@ export default function ReportsAnalytics() {
 									outerRadius="80%"
 									innerRadius="50%"
 									dataKey="value"
-									label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+									label={({ name, percent }) =>
+										`${name} ${(percent * 100).toFixed(0)}%`
+									}
+								>
 									{growthPie.map((entry, index) => (
 										<Cell key={index} fill={entry.color} />
 									))}
@@ -500,9 +562,16 @@ export default function ReportsAnalytics() {
 						<div className="flex flex-wrap md:flex-col gap-3 shrink-0">
 							{growthPie.map((item) => (
 								<div key={item.name} className="flex items-center gap-2">
-									<div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-									<span className="text-xs font-cairo text-[#6B6B6B]">{item.name}</span>
-									<span className="text-xs font-mono font-bold text-[#111111]">{item.value}%</span>
+									<div
+										className="w-3 h-3 rounded-full"
+										style={{ backgroundColor: item.color }}
+									/>
+									<span className="text-xs font-cairo text-[#6B6B6B]">
+										{item.name}
+									</span>
+									<span className="text-xs font-mono font-bold text-[#111111]">
+										{item.value}%
+									</span>
 								</div>
 							))}
 						</div>
@@ -528,9 +597,11 @@ export default function ReportsAnalytics() {
 								isActive
 									? 'border-[#D4A853] bg-amber-50/50 shadow-md'
 									: 'border-transparent bg-white hover:bg-[#F8F8F8] shadow-sm'
-							}`}>
+							}`}
+						>
 							<div
-								className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-[#D4A853]/20' : 'bg-[#F8F8F8]'}`}>
+								className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-[#D4A853]/20' : 'bg-[#F8F8F8]'}`}
+							>
 								<Icon
 									className={`w-5 h-5 ${isActive ? 'text-[#D4A853]' : 'text-[#6B6B6B]'}`}
 									strokeWidth={1.5}
@@ -538,7 +609,8 @@ export default function ReportsAnalytics() {
 							</div>
 							<div className="text-center">
 								<p
-									className={`text-xs font-cairo font-semibold ${isActive ? 'text-[#D4A853]' : 'text-[#111111]'}`}>
+									className={`text-xs font-cairo font-semibold ${isActive ? 'text-[#D4A853]' : 'text-[#111111]'}`}
+								>
 									{cat.label}
 								</p>
 								<p className="text-[10px] text-[#6B6B6B] font-cairo hidden xl:block">
@@ -557,10 +629,17 @@ export default function ReportsAnalytics() {
 						<CardContent className="p-4">
 							<p className="text-xs text-[#6B6B6B] font-cairo mb-1">{m.label}</p>
 							<div className="flex items-center justify-between">
-								<p className="text-xl font-mono font-bold text-[#111111]">{m.value}</p>
+								<p className="text-xl font-mono font-bold text-[#111111]">
+									{m.value}
+								</p>
 								<span
-									className={`flex items-center gap-0.5 text-[10px] font-cairo font-semibold ${m.up ? 'text-emerald-500' : 'text-red-500'}`}>
-									{m.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+									className={`flex items-center gap-0.5 text-[10px] font-cairo font-semibold ${m.up ? 'text-emerald-500' : 'text-red-500'}`}
+								>
+									{m.up ? (
+										<TrendingUp className="w-3 h-3" />
+									) : (
+										<TrendingDown className="w-3 h-3" />
+									)}
 									{m.change}
 								</span>
 							</div>
@@ -574,12 +653,17 @@ export default function ReportsAnalytics() {
 				<CardHeader className="pt-5 px-5 pb-3">
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 						<div className="flex items-center gap-2">
-							<currentCategory.icon className="w-5 h-5 text-[#D4A853]" strokeWidth={1.5} />
+							<currentCategory.icon
+								className="w-5 h-5 text-[#D4A853]"
+								strokeWidth={1.5}
+							/>
 							<div>
 								<h3 className="text-[#111111] font-cairo font-bold text-base">
 									{currentCategory.label}
 								</h3>
-								<p className="text-xs text-[#6B6B6B] font-cairo">{currentDateRange}</p>
+								<p className="text-xs text-[#6B6B6B] font-cairo">
+									{currentDateRange}
+								</p>
 							</div>
 						</div>
 						<div className="flex items-center gap-2">
@@ -593,7 +677,8 @@ export default function ReportsAnalytics() {
 											period === p
 												? 'bg-white text-[#111111] shadow-sm'
 												: 'text-[#6B6B6B] hover:text-[#111111]'
-										}`}>
+										}`}
+									>
 										{p}
 									</button>
 								))}
@@ -603,7 +688,8 @@ export default function ReportsAnalytics() {
 								onClick={handleExportCSV}
 								variant="outline"
 								size="sm"
-								className="font-cairo text-xs gap-1 border-[#D4A853] text-[#D4A853] hover:bg-amber-50">
+								className="font-cairo text-xs gap-1 border-[#D4A853] text-[#D4A853] hover:bg-amber-50"
+							>
 								<Download className="w-3.5 h-3.5" />
 								تصدير CSV
 							</Button>

@@ -29,7 +29,13 @@ import { cn } from '@/lib/utils';
 /* ------------------------------------------------------------------ */
 const sidebarNavItems = [
 	{ icon: LayoutDashboard, label: 'لوحة المعلومات', labelEn: 'Dashboard', path: '/seller' },
-	{ icon: Package, label: 'المنتجات', labelEn: 'Products', path: '/seller/products', badge: '342' },
+	{
+		icon: Package,
+		label: 'المنتجات',
+		labelEn: 'Products',
+		path: '/seller/products',
+		badge: '342',
+	},
 	{ icon: ShoppingBag, label: 'الطلبات', labelEn: 'Orders', path: '/seller/orders', badge: '12' },
 	{
 		icon: MessageSquare,
@@ -182,8 +188,9 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
 		<span
 			className={cn(
 				'px-2 py-0.5 rounded text-[11px] font-semibold',
-				colors[status] || 'bg-gray-400 text-white'
-			)}>
+				colors[status] || 'bg-gray-400 text-white',
+			)}
+		>
 			{label}
 		</span>
 	);
@@ -216,21 +223,25 @@ export default function SellerDashboard() {
 				{collapsed ? (
 					<div
 						className="mx-auto w-9 h-9 rounded flex items-center justify-center"
-						style={{ background: '#FF6A00' }}>
+						style={{ background: '#FF6A00' }}
+					>
 						<span className="text-white font-bold text-sm">ن</span>
 					</div>
 				) : (
 					<div className="flex items-center gap-3">
 						<div
 							className="w-9 h-9 rounded flex items-center justify-center"
-							style={{ background: '#FF6A00' }}>
+							style={{ background: '#FF6A00' }}
+						>
 							<Globe className="w-5 h-5 text-white" strokeWidth={1.5} />
 						</div>
 						<div>
 							<h1 className="text-white font-bold text-sm leading-tight">
 								{isRTL ? 'نوف إكس' : 'Nouf-ex'}
 							</h1>
-							<p className="text-white/50 text-[10px]">{isRTL ? 'لوحة التاجر' : 'Seller Panel'}</p>
+							<p className="text-white/50 text-[10px]">
+								{isRTL ? 'لوحة التاجر' : 'Seller Panel'}
+							</p>
 						</div>
 					</div>
 				)}
@@ -247,9 +258,12 @@ export default function SellerDashboard() {
 							onClick={closeMobile}
 							className={cn(
 								'flex items-center gap-3 px-3 py-2.5 rounded transition-all duration-200 relative group',
-								active ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5'
+								active
+									? 'text-white'
+									: 'text-white/50 hover:text-white hover:bg-white/5',
 							)}
-							style={active ? { background: 'rgba(255,106,0,0.15)' } : {}}>
+							style={active ? { background: 'rgba(255,106,0,0.15)' } : {}}
+						>
 							{active && (
 								<span
 									className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-l-full"
@@ -265,7 +279,8 @@ export default function SellerDashboard() {
 									{item.badge && (
 										<span
 											className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-											style={{ background: '#FF6A00', color: 'white' }}>
+											style={{ background: '#FF6A00', color: 'white' }}
+										>
 											{item.badge}
 										</span>
 									)}
@@ -281,7 +296,9 @@ export default function SellerDashboard() {
 				{!collapsed ? (
 					<button className="flex items-center gap-3 px-3 py-2 rounded hover:bg-white/5 transition-colors w-full text-left">
 						<LogOut className="w-4 h-4 text-[#F44336] shrink-0" strokeWidth={1.5} />
-						<span className="text-xs text-[#F44336]">{isRTL ? 'تسجيل الخروج' : 'Logout'}</span>
+						<span className="text-xs text-[#F44336]">
+							{isRTL ? 'تسجيل الخروج' : 'Logout'}
+						</span>
 					</button>
 				) : (
 					<button className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto">
@@ -296,37 +313,46 @@ export default function SellerDashboard() {
 		<div
 			className="min-h-[100dvh] flex"
 			style={{ background: '#F0F2F5' }}
-			dir={isRTL ? 'rtl' : 'ltr'}>
+			dir={isRTL ? 'rtl' : 'ltr'}
+		>
 			{/* Desktop Sidebar */}
 			<aside
 				className={cn(
 					'fixed top-0 bottom-0 z-40 hidden lg:flex flex-col transition-all duration-300',
 					isRTL ? 'right-0' : 'left-0',
-					sidebarW
+					sidebarW,
 				)}
-				style={{ background: '#001529' }}>
+				style={{ background: '#001529' }}
+			>
 				{renderSidebarContent()}
 			</aside>
 
 			{/* Mobile Sidebar */}
 			{mobileOpen && (
 				<div className="fixed inset-0 z-[60] lg:hidden">
-					<div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+					<div
+						className="absolute inset-0 bg-black/60"
+						onClick={() => setMobileOpen(false)}
+					/>
 					<div
 						className={cn(
 							'absolute top-0 h-full w-[260px] flex flex-col',
-							isRTL ? 'right-0' : 'left-0'
+							isRTL ? 'right-0' : 'left-0',
 						)}
-						style={{ background: '#001529' }}>
+						style={{ background: '#001529' }}
+					>
 						<div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
 							<div className="flex items-center gap-3">
 								<div
 									className="w-9 h-9 rounded flex items-center justify-center"
-									style={{ background: '#FF6A00' }}>
+									style={{ background: '#FF6A00' }}
+								>
 									<Globe className="w-5 h-5 text-white" strokeWidth={1.5} />
 								</div>
 								<div>
-									<h1 className="text-white font-bold text-sm">{isRTL ? 'نوف إكس' : 'Nouf-ex'}</h1>
+									<h1 className="text-white font-bold text-sm">
+										{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+									</h1>
 									<p className="text-white/50 text-[10px]">
 										{isRTL ? 'لوحة التاجر' : 'Seller Panel'}
 									</p>
@@ -345,14 +371,17 @@ export default function SellerDashboard() {
 										to={item.path}
 										className={cn(
 											'flex items-center gap-3 px-3 py-3 rounded transition-all',
-											active ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5'
+											active
+												? 'text-white'
+												: 'text-white/50 hover:text-white hover:bg-white/5',
 										)}
-										style={active ? { background: 'rgba(255,106,0,0.15)' } : {}}>
+										style={active ? { background: 'rgba(255,106,0,0.15)' } : {}}
+									>
 										{active && (
 											<span
 												className={cn(
 													'absolute top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-l-full',
-													isRTL ? 'right-0' : 'left-0'
+													isRTL ? 'right-0' : 'left-0',
 												)}
 												style={{ background: '#FF6A00' }}
 											/>
@@ -364,7 +393,8 @@ export default function SellerDashboard() {
 										{item.badge && (
 											<span
 												className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-												style={{ background: '#FF6A00', color: 'white' }}>
+												style={{ background: '#FF6A00', color: 'white' }}
+											>
 												{item.badge}
 											</span>
 										)}
@@ -381,19 +411,22 @@ export default function SellerDashboard() {
 				className={cn(
 					'flex-1 min-h-[100dvh] flex flex-col transition-all duration-300',
 					isRTL ? 'lg:mr-[240px]' : 'lg:ml-[240px]',
-					collapsed && (isRTL ? 'lg:mr-[72px]' : 'lg:ml-[72px]')
-				)}>
+					collapsed && (isRTL ? 'lg:mr-[72px]' : 'lg:ml-[72px]'),
+				)}
+			>
 				{/* Top Bar */}
 				<header className="h-16 bg-white shadow-sm sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6">
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => setMobileOpen(true)}
-							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100">
+							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
+						>
 							<Menu className="w-5 h-5" style={{ color: '#333' }} strokeWidth={1.5} />
 						</button>
 						<button
 							onClick={() => setCollapsed(!collapsed)}
-							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors">
+							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
+						>
 							{collapsed ? (
 								<ChevronRight className="w-4 h-4" style={{ color: '#666' }} />
 							) : (
@@ -411,8 +444,13 @@ export default function SellerDashboard() {
 						{/* Search */}
 						<div
 							className="hidden md:flex items-center rounded px-3 py-2 w-56"
-							style={{ background: '#F0F2F5' }}>
-							<Search className="w-4 h-4" style={{ color: '#999' }} strokeWidth={1.5} />
+							style={{ background: '#F0F2F5' }}
+						>
+							<Search
+								className="w-4 h-4"
+								style={{ color: '#999' }}
+								strokeWidth={1.5}
+							/>
 							<input
 								type="text"
 								placeholder={isRTL ? 'بحث...' : 'Search...'}
@@ -425,30 +463,47 @@ export default function SellerDashboard() {
 						<div className="relative">
 							<button
 								onClick={() => setNotifOpen(!notifOpen)}
-								className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
-								<Bell className="w-5 h-5" style={{ color: '#666' }} strokeWidth={1.5} />
+								className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+							>
+								<Bell
+									className="w-5 h-5"
+									style={{ color: '#666' }}
+									strokeWidth={1.5}
+								/>
 								<span
 									className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-									style={{ background: '#FF6A00' }}>
+									style={{ background: '#FF6A00' }}
+								>
 									3
 								</span>
 							</button>
 							{notifOpen && (
 								<>
-									<div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+									<div
+										className="fixed inset-0 z-40"
+										onClick={() => setNotifOpen(false)}
+									/>
 									<div
 										className={cn(
 											'absolute top-full mt-2 w-80 bg-white rounded shadow-lg border z-50 overflow-hidden',
-											isRTL ? 'left-0' : 'right-0'
+											isRTL ? 'left-0' : 'right-0',
 										)}
-										style={{ borderColor: '#E5E5E5' }}>
+										style={{ borderColor: '#E5E5E5' }}
+									>
 										<div
 											className="p-3 border-b flex items-center justify-between"
-											style={{ borderColor: '#E5E5E5' }}>
-											<h3 className="font-semibold text-sm" style={{ color: '#333' }}>
+											style={{ borderColor: '#E5E5E5' }}
+										>
+											<h3
+												className="font-semibold text-sm"
+												style={{ color: '#333' }}
+											>
 												{isRTL ? 'الإشعارات' : 'Notifications'}
 											</h3>
-											<span className="text-[10px] cursor-pointer" style={{ color: '#FF6A00' }}>
+											<span
+												className="text-[10px] cursor-pointer"
+												style={{ color: '#FF6A00' }}
+											>
 												{isRTL ? 'تحديد الكل' : 'Mark all read'}
 											</span>
 										</div>
@@ -459,8 +514,11 @@ export default function SellerDashboard() {
 													className="p-3 border-b hover:bg-gray-50 transition-colors cursor-pointer"
 													style={{
 														borderColor: '#F0F2F5',
-														background: n.unread ? '#FFF5EB' : 'transparent',
-													}}>
+														background: n.unread
+															? '#FFF5EB'
+															: 'transparent',
+													}}
+												>
 													<div className="flex items-start gap-2">
 														{n.unread && (
 															<span
@@ -469,10 +527,16 @@ export default function SellerDashboard() {
 															/>
 														)}
 														<div>
-															<p className="text-xs" style={{ color: '#333' }}>
+															<p
+																className="text-xs"
+																style={{ color: '#333' }}
+															>
 																{isRTL ? n.text : n.textEn}
 															</p>
-															<p className="text-[10px] mt-0.5" style={{ color: '#999' }}>
+															<p
+																className="text-[10px] mt-0.5"
+																style={{ color: '#999' }}
+															>
 																{n.time}
 															</p>
 														</div>
@@ -488,7 +552,8 @@ export default function SellerDashboard() {
 						{/* Profile */}
 						<div
 							className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold"
-							style={{ background: '#FF6A00' }}>
+							style={{ background: '#FF6A00' }}
+						>
 							أ
 						</div>
 					</div>
@@ -504,7 +569,8 @@ export default function SellerDashboard() {
 									<div className="flex items-start justify-between mb-3">
 										<div
 											className="w-10 h-10 rounded flex items-center justify-center"
-											style={{ background: `${stat.color}15` }}>
+											style={{ background: `${stat.color}15` }}
+										>
 											<stat.icon
 												className="w-5 h-5"
 												style={{ color: stat.color }}
@@ -514,8 +580,11 @@ export default function SellerDashboard() {
 										<span
 											className={cn(
 												'text-[11px] font-semibold px-1.5 py-0.5 rounded',
-												stat.positive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
-											)}>
+												stat.positive
+													? 'bg-green-50 text-green-600'
+													: 'bg-red-50 text-red-600',
+											)}
+										>
 											{stat.change}
 										</span>
 									</div>
@@ -539,15 +608,18 @@ export default function SellerDashboard() {
 									</h3>
 									<div
 										className="flex items-center gap-1 rounded p-1"
-										style={{ background: '#F0F2F5' }}>
+										style={{ background: '#F0F2F5' }}
+									>
 										{['week', 'month', 'year'].map((p) => (
 											<button
 												key={p}
 												className="px-3 py-1 rounded text-xs font-semibold transition-all"
 												style={{
-													background: p === 'week' ? '#FF6A00' : 'transparent',
+													background:
+														p === 'week' ? '#FF6A00' : 'transparent',
 													color: p === 'week' ? 'white' : '#666',
-												}}>
+												}}
+											>
 												{p === 'week'
 													? isRTL
 														? 'أسبوع'
@@ -565,11 +637,15 @@ export default function SellerDashboard() {
 								</div>
 								<div className="flex items-end gap-3 h-48">
 									{chartData.map((d, i) => (
-										<div key={i} className="flex-1 flex flex-col items-center gap-2">
+										<div
+											key={i}
+											className="flex-1 flex flex-col items-center gap-2"
+										>
 											<div className="w-full flex flex-col items-center">
 												<span
 													className="text-[10px] font-semibold mb-1"
-													style={{ color: '#FF6A00' }}>
+													style={{ color: '#FF6A00' }}
+												>
 													${d.revenue}
 												</span>
 												<div
@@ -599,16 +675,24 @@ export default function SellerDashboard() {
 										<div
 											key={i}
 											className="flex items-start gap-3 p-3 rounded transition-colors hover:bg-gray-50"
-											style={{ background: n.unread ? '#FFF5EB' : 'transparent' }}>
+											style={{
+												background: n.unread ? '#FFF5EB' : 'transparent',
+											}}
+										>
 											<div
 												className="w-2 h-2 rounded-full mt-1.5 shrink-0"
-												style={{ background: n.unread ? '#FF6A00' : '#E5E5E5' }}
+												style={{
+													background: n.unread ? '#FF6A00' : '#E5E5E5',
+												}}
 											/>
 											<div className="flex-1">
 												<p className="text-xs" style={{ color: '#333' }}>
 													{isRTL ? n.text : n.textEn}
 												</p>
-												<p className="text-[10px] mt-0.5" style={{ color: '#999' }}>
+												<p
+													className="text-[10px] mt-0.5"
+													style={{ color: '#999' }}
+												>
 													{n.time}
 												</p>
 											</div>
@@ -622,14 +706,16 @@ export default function SellerDashboard() {
 						<div className="bg-white rounded shadow-sm overflow-hidden">
 							<div
 								className="p-5 border-b flex items-center justify-between"
-								style={{ borderColor: '#F0F2F5' }}>
+								style={{ borderColor: '#F0F2F5' }}
+							>
 								<h3 className="font-bold text-base" style={{ color: '#333' }}>
 									{isRTL ? 'أحدث الطلبات' : 'Recent Orders'}
 								</h3>
 								<Link
 									to="/seller/orders"
 									className="flex items-center gap-1 text-xs font-semibold hover:underline"
-									style={{ color: '#FF6A00' }}>
+									style={{ color: '#FF6A00' }}
+								>
 									{isRTL ? 'عرض الكل' : 'View All'}
 									<ArrowLeft className="w-3 h-3" strokeWidth={1.5} />
 								</Link>
@@ -641,32 +727,37 @@ export default function SellerDashboard() {
 											<th
 												className={cn(
 													'pb-3 pt-3 text-[11px] font-semibold',
-													isRTL ? 'pr-4 text-right' : 'pl-4 text-left'
+													isRTL ? 'pr-4 text-right' : 'pl-4 text-left',
 												)}
-												style={{ color: '#999' }}>
+												style={{ color: '#999' }}
+											>
 												{isRTL ? 'رقم الطلب' : 'Order #'}
 											</th>
 											<th
 												className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
-												style={{ color: '#999' }}>
+												style={{ color: '#999' }}
+											>
 												{isRTL ? 'العميل' : 'Customer'}
 											</th>
 											<th
 												className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left hidden md:table-cell"
-												style={{ color: '#999' }}>
+												style={{ color: '#999' }}
+											>
 												{isRTL ? 'التاريخ' : 'Date'}
 											</th>
 											<th
 												className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
-												style={{ color: '#999' }}>
+												style={{ color: '#999' }}
+											>
 												{isRTL ? 'المبلغ' : 'Amount'}
 											</th>
 											<th
 												className={cn(
 													'pb-3 pt-3 text-[11px] font-semibold',
-													isRTL ? 'pl-4 text-left' : 'pr-4 text-right'
+													isRTL ? 'pl-4 text-left' : 'pr-4 text-right',
 												)}
-												style={{ color: '#999' }}>
+												style={{ color: '#999' }}
+											>
 												{isRTL ? 'الحالة' : 'Status'}
 											</th>
 										</tr>
@@ -676,27 +767,50 @@ export default function SellerDashboard() {
 											<tr
 												key={i}
 												className="hover:bg-gray-50 transition-colors"
-												style={{ borderBottom: '1px solid #F0F2F5' }}>
+												style={{ borderBottom: '1px solid #F0F2F5' }}
+											>
 												<td
-													className={cn('py-3 text-xs font-mono', isRTL ? 'pr-4' : 'pl-4')}
-													style={{ color: '#333' }}>
+													className={cn(
+														'py-3 text-xs font-mono',
+														isRTL ? 'pr-4' : 'pl-4',
+													)}
+													style={{ color: '#333' }}
+												>
 													{order.id}
 												</td>
-												<td className="py-3 px-3 text-xs" style={{ color: '#333' }}>
+												<td
+													className="py-3 px-3 text-xs"
+													style={{ color: '#333' }}
+												>
 													{isRTL ? order.customer : order.customerEn}
 												</td>
 												<td
 													className="py-3 px-3 text-xs hidden md:table-cell"
-													style={{ color: '#666' }}>
+													style={{ color: '#666' }}
+												>
 													{order.date}
 												</td>
-												<td className="py-3 px-3 text-xs font-semibold" style={{ color: '#333' }}>
+												<td
+													className="py-3 px-3 text-xs font-semibold"
+													style={{ color: '#333' }}
+												>
 													{order.amount}
 												</td>
-												<td className={cn('py-3', isRTL ? 'pl-4 text-left' : 'pr-4 text-right')}>
+												<td
+													className={cn(
+														'py-3',
+														isRTL
+															? 'pl-4 text-left'
+															: 'pr-4 text-right',
+													)}
+												>
 													<StatusBadge
 														status={order.status}
-														label={isRTL ? order.statusLabel : order.statusLabelEn}
+														label={
+															isRTL
+																? order.statusLabel
+																: order.statusLabelEn
+														}
 													/>
 												</td>
 											</tr>

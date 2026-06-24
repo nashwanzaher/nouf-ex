@@ -33,7 +33,7 @@ function renderSearch(query: string) {
 	return render(
 		<MemoryRouter initialEntries={[`/search?q=${encodeURIComponent(query)}`]}>
 			<SearchResults />
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 

@@ -58,7 +58,8 @@ export class ErrorBoundary extends Component<Props, State> {
 		return (
 			<div
 				role="alert"
-				className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-12 bg-aliSurface">
+				className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-12 bg-aliSurface"
+			>
 				<div className="text-6xl font-bold text-aliOrange mb-4">!</div>
 				<h1 className="text-xl font-semibold text-aliText mb-2">Something went wrong</h1>
 				<p className="text-sm text-aliTextSec max-w-md mb-6">
@@ -67,7 +68,8 @@ export class ErrorBoundary extends Component<Props, State> {
 				<button
 					type="button"
 					onClick={this.reset}
-					className="px-5 py-2 bg-aliOrange text-white rounded-lg hover:bg-aliOrangeHover transition-colors">
+					className="px-5 py-2 bg-aliOrange text-white rounded-lg hover:bg-aliOrangeHover transition-colors"
+				>
 					Try again
 				</button>
 			</div>

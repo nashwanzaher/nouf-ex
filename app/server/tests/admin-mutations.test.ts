@@ -129,13 +129,18 @@ const adminOrderStatusSchema = z
 	.strict();
 
 describe('adminOrderStatusSchema', () => {
-	it.each(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])(
-		'accepts status=%s',
-		(status) => {
-			const r = adminOrderStatusSchema.safeParse({ status });
-			expect(r.success).toBe(true);
-		}
-	);
+	it.each([
+		'pending',
+		'confirmed',
+		'processing',
+		'shipped',
+		'delivered',
+		'cancelled',
+		'refunded',
+	])('accepts status=%s', (status) => {
+		const r = adminOrderStatusSchema.safeParse({ status });
+		expect(r.success).toBe(true);
+	});
 
 	it('rejects an unknown status (state-machine sanity)', () => {
 		const r = adminOrderStatusSchema.safeParse({ status: 'in_transit' });
@@ -143,7 +148,10 @@ describe('adminOrderStatusSchema', () => {
 	});
 
 	it('accepts an optional note', () => {
-		const r = adminOrderStatusSchema.safeParse({ status: 'shipped', note: 'Customer not home' });
+		const r = adminOrderStatusSchema.safeParse({
+			status: 'shipped',
+			note: 'Customer not home',
+		});
 		expect(r.success).toBe(true);
 		if (r.success) expect(r.data.note).toBe('Customer not home');
 	});
@@ -199,7 +207,7 @@ describe('adminDisputeUpdateSchema', () => {
 		(status) => {
 			const r = adminDisputeUpdateSchema.safeParse({ status });
 			expect(r.success).toBe(true);
-		}
+		},
 	);
 
 	it('rejects the legacy "in_review" / "resolved" values', () => {
@@ -208,12 +216,18 @@ describe('adminDisputeUpdateSchema', () => {
 	});
 
 	it('rejects negative refund_amount', () => {
-		const r = adminDisputeUpdateSchema.safeParse({ status: 'resolved_buyer', refund_amount: -100 });
+		const r = adminDisputeUpdateSchema.safeParse({
+			status: 'resolved_buyer',
+			refund_amount: -100,
+		});
 		expect(r.success).toBe(false);
 	});
 
 	it('rejects resolution shorter than 3 chars', () => {
-		const r = adminDisputeUpdateSchema.safeParse({ status: 'resolved_buyer', resolution: 'ok' });
+		const r = adminDisputeUpdateSchema.safeParse({
+			status: 'resolved_buyer',
+			resolution: 'ok',
+		});
 		expect(r.success).toBe(false);
 	});
 });
@@ -263,7 +277,7 @@ describe('buildUpdateSet', () => {
 		const set = buildUpdateSet({ status: 'banned', role: 'customer' });
 		set.params.push(42);
 		expect(set.sql + ` WHERE id = $${set.params.length}`).toBe(
-			'status = $1, role = $2 WHERE id = $3'
+			'status = $1, role = $2 WHERE id = $3',
 		);
 		expect(set.params).toEqual(['banned', 'customer', 42]);
 	});
@@ -280,7 +294,7 @@ function selfProtectionCheck(
 		status?: 'active' | 'suspended' | 'banned';
 		role?: 'customer' | 'merchant' | 'admin';
 		[k: string]: unknown;
-	}
+	},
 ): { allowed: boolean; reason?: string } {
 	if (actingUserId !== targetUserId) return { allowed: true };
 	if (patch.status === 'banned') {

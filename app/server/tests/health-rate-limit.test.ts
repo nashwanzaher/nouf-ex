@@ -69,7 +69,7 @@ function mockRes(): Response & {
 function call(
 	mw: ReturnType<typeof healthRateLimit>,
 	req: Partial<Request>,
-	res: Response
+	res: Response,
 ): boolean {
 	let nextCalled = false;
 	mw(req as Request, res, () => {

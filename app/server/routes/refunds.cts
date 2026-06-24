@@ -35,7 +35,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		const result = (await db
 			.prepare(
 				`INSERT INTO refunds (order_id, user_id, amount, reason, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'requested', NOW(), NOW()) RETURNING id`
+         VALUES (?, ?, ?, ?, 'requested', NOW(), NOW()) RETURNING id`,
 			)
 			.get(order_id, userId, amount, reason)) as { id: number };
 		sendSuccess(res, result, 'Refund requested');
@@ -63,16 +63,18 @@ refundsRouter.post(
 					`UPDATE refunds
             SET status = ?, admin_notes = ?, resolved_at = NOW(), updated_at = NOW()
           WHERE id = ? AND status IN ('requested', 'approved')
-          RETURNING order_id, amount`
+          RETURNING order_id, amount`,
 				)
-				.get(finalStatus, adminNotes, id)) as { order_id: number; amount: number } | undefined;
+				.get(finalStatus, adminNotes, id)) as
+				| { order_id: number; amount: number }
+				| undefined;
 			if (!result) return sendError(res, 'Refund not found or already resolved', 404);
 
 			if (finalStatus === 'processed') {
 				await db
 					.prepare(
 						`UPDATE payments SET status = 'refunded', updated_at = NOW()
-            WHERE order_id = ? AND status = 'completed'`
+            WHERE order_id = ? AND status = 'completed'`,
 					)
 					.run(result.order_id);
 				const order = (await db
@@ -82,14 +84,19 @@ refundsRouter.post(
 					await db
 						.prepare(
 							`INSERT INTO transactions (store_id, type, amount, balance_after, reference_type, reference_id, description, created_at)
-             VALUES (?, 'refund', ?, 0, 'refund', ?, ?, NOW())`
+             VALUES (?, 'refund', ?, 0, 'refund', ?, ?, NOW())`,
 						)
-						.run(order.store_id, -result.amount, id, `Refund #${id} for order ${result.order_id}`);
+						.run(
+							order.store_id,
+							-result.amount,
+							id,
+							`Refund #${id} for order ${result.order_id}`,
+						);
 				}
 			}
 			sendSuccess(res, { id, status: finalStatus }, 'Refund resolved');
 		} catch (err) {
 			return sendError(res, err);
 		}
-	}
+	},
 );

@@ -96,7 +96,7 @@ const renderCheckout = () =>
 	render(
 		<MemoryRouter initialEntries={['/checkout']}>
 			<Checkout />
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 
 // Import after the mocks so the mocked modules take effect.
@@ -150,7 +150,10 @@ describe('Checkout page (P0-1: cart-to-order pipeline)', () => {
 		await waitFor(() => {
 			const orderCall = fetchSpy.mock.calls.find((c) => {
 				const url = typeof c[0] === 'string' ? c[0] : (c[0] as Request).url;
-				return url.includes('/api/orders') && (c[1] as RequestInit | undefined)?.method === 'POST';
+				return (
+					url.includes('/api/orders') &&
+					(c[1] as RequestInit | undefined)?.method === 'POST'
+				);
 			});
 			expect(orderCall, 'POST /api/orders was not called').toBeDefined();
 		});
@@ -158,7 +161,7 @@ describe('Checkout page (P0-1: cart-to-order pipeline)', () => {
 		// And we navigated to /customer/orders?just=N.
 		await waitFor(() => {
 			const navCall = navigateMock.mock.calls.find(
-				(c) => typeof c[0] === 'string' && c[0].startsWith('/customer/orders')
+				(c) => typeof c[0] === 'string' && c[0].startsWith('/customer/orders'),
 			);
 			expect(navCall, 'expected navigation to /customer/orders').toBeDefined();
 		});

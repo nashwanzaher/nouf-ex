@@ -154,7 +154,7 @@ export default function Home() {
 					n.delete(p.id);
 					return n;
 				}),
-			1500
+			1500,
 		);
 	};
 
@@ -166,7 +166,10 @@ export default function Home() {
 				name: i18n.language === 'ar' ? 'هواتف ذكية' : 'Smartphones',
 				img: '/category-electronics.jpg',
 			},
-			{ name: i18n.language === 'ar' ? 'قهوة يمنية' : 'Yemeni Coffee', img: '/category-food.jpg' },
+			{
+				name: i18n.language === 'ar' ? 'قهوة يمنية' : 'Yemeni Coffee',
+				img: '/category-food.jpg',
+			},
 			{
 				name: i18n.language === 'ar' ? 'أثاث تقليدي' : 'Traditional Furniture',
 				img: '/category-home.jpg',
@@ -178,7 +181,7 @@ export default function Home() {
 			},
 			{ name: i18n.language === 'ar' ? 'عطور' : 'Perfumes', img: '/category-beauty.jpg' },
 		],
-		[i18n.language]
+		[i18n.language],
 	);
 
 	const stats = statsData;
@@ -199,7 +202,10 @@ export default function Home() {
 							{catsLoading ? (
 								<div className="p-4 space-y-2">
 									{Array.from({ length: 8 }).map((_, i) => (
-										<div key={i} className="h-9 bg-gray-200 animate-pulse rounded" />
+										<div
+											key={i}
+											className="h-9 bg-gray-200 animate-pulse rounded"
+										/>
 									))}
 								</div>
 							) : (
@@ -209,29 +215,37 @@ export default function Home() {
 											key={cat.id}
 											className="relative"
 											onMouseEnter={() => setHoveredCat(cat.id)}
-											onMouseLeave={() => setHoveredCat(null)}>
+											onMouseLeave={() => setHoveredCat(null)}
+										>
 											<Link
 												to="/categories"
-												className="flex items-center justify-between px-4 py-2.5 text-sm text-aliText hover:bg-orange-50 hover:text-aliOrange transition-colors">
+												className="flex items-center justify-between px-4 py-2.5 text-sm text-aliText hover:bg-orange-50 hover:text-aliOrange transition-colors"
+											>
 												<span>{getCatName(cat, i18n.language)}</span>
-												<ChevronRight size={14} className="text-aliTextMute" />
+												<ChevronRight
+													size={14}
+													className="text-aliTextMute"
+												/>
 											</Link>
 											{/* Subcategory flyout */}
 											{hoveredCat === cat.id &&
 												'subcategories' in cat &&
-												(cat as Category & { subcategories: Category[] }).subcategories.length >
-													0 && (
+												(cat as Category & { subcategories: Category[] })
+													.subcategories.length > 0 && (
 													<div className="absolute top-0 right-full mr-0 w-48 bg-white rounded-xl shadow-lg border border-aliBorder py-2 z-50">
-														{(cat as Category & { subcategories: Category[] }).subcategories.map(
-															(sub) => (
-																<Link
-																	key={sub.id}
-																	to="/categories"
-																	className="block px-4 py-2 text-sm text-aliText hover:bg-orange-50 hover:text-aliOrange transition-colors">
-																	{getCatName(sub, i18n.language)}
-																</Link>
-															)
-														)}
+														{(
+															cat as Category & {
+																subcategories: Category[];
+															}
+														).subcategories.map((sub) => (
+															<Link
+																key={sub.id}
+																to="/categories"
+																className="block px-4 py-2 text-sm text-aliText hover:bg-orange-50 hover:text-aliOrange transition-colors"
+															>
+																{getCatName(sub, i18n.language)}
+															</Link>
+														))}
 													</div>
 												)}
 										</div>
@@ -264,7 +278,8 @@ export default function Home() {
 							<div className="max-w-2xl mx-auto w-full">
 								<form
 									onSubmit={handleSearch}
-									className="flex w-full h-14 rounded-3xl border-2 border-aliOrange overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow">
+									className="flex w-full h-14 rounded-3xl border-2 border-aliOrange overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow"
+								>
 									<div className="flex items-center px-4 border-r border-aliBorder shrink-0">
 										<span className="text-sm text-aliTextSec font-medium">
 											{i18n.language === 'ar' ? 'الكل' : 'All'}
@@ -287,12 +302,14 @@ export default function Home() {
 									/>
 									<button
 										type="button"
-										className="h-full px-3 text-aliTextMute hover:text-aliOrange transition-colors">
+										className="h-full px-3 text-aliTextMute hover:text-aliOrange transition-colors"
+									>
 										<Camera size={20} />
 									</button>
 									<button
 										type="submit"
-										className="h-full px-8 bg-aliOrange text-white font-bold text-base hover:bg-aliOrangeHover transition-colors flex items-center gap-2">
+										className="h-full px-8 bg-aliOrange text-white font-bold text-base hover:bg-aliOrangeHover transition-colors flex items-center gap-2"
+									>
 										<Search size={18} />
 										<span className="hidden sm:inline">{t('nav.search')}</span>
 									</button>
@@ -308,12 +325,18 @@ export default function Home() {
 										},
 										{
 											key: 'hot' as const,
-											label: i18n.language === 'ar' ? 'الأكثر بحثاً' : 'Hot Products',
+											label:
+												i18n.language === 'ar'
+													? 'الأكثر بحثاً'
+													: 'Hot Products',
 											icon: Zap,
 										},
 										{
 											key: 'fast' as const,
-											label: i18n.language === 'ar' ? 'تخصيص سريع' : 'Fast Customization',
+											label:
+												i18n.language === 'ar'
+													? 'تخصيص سريع'
+													: 'Fast Customization',
 											icon: Clock,
 										},
 									].map((tab) => (
@@ -324,7 +347,8 @@ export default function Home() {
 												activeTab === tab.key
 													? 'text-aliOrange bg-orange-50'
 													: 'text-aliTextMute hover:text-aliText'
-											}`}>
+											}`}
+										>
 											<tab.icon size={14} />
 											{tab.label}
 										</button>
@@ -345,8 +369,13 @@ export default function Home() {
 									{hotSearches.map((item) => (
 										<button
 											key={item.name}
-											onClick={() => navigate(`/search?q=${encodeURIComponent(item.name)}`)}
-											className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-aliBorder hover:border-aliOrange hover:shadow-sm transition-all group">
+											onClick={() =>
+												navigate(
+													`/search?q=${encodeURIComponent(item.name)}`,
+												)
+											}
+											className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-aliBorder hover:border-aliOrange hover:shadow-sm transition-all group"
+										>
 											<div className="w-10 h-10 rounded-md bg-aliSurface overflow-hidden shrink-0">
 												<img
 													src={item.img}
@@ -354,7 +383,9 @@ export default function Home() {
 													className="w-full h-full object-cover group-hover:scale-110 transition-transform"
 												/>
 											</div>
-											<span className="text-sm text-aliText font-medium">{item.name}</span>
+											<span className="text-sm text-aliText font-medium">
+												{item.name}
+											</span>
 										</button>
 									))}
 								</div>
@@ -380,7 +411,10 @@ export default function Home() {
 								{
 									icon: BadgeCheck,
 									value: `${stats.products_count?.toLocaleString()}+`,
-									label: i18n.language === 'ar' ? 'منتج متوفر' : 'Products Available',
+									label:
+										i18n.language === 'ar'
+											? 'منتج متوفر'
+											: 'Products Available',
 								},
 								{
 									icon: Package,
@@ -403,7 +437,9 @@ export default function Home() {
 										<stat.icon size={22} className="text-aliOrange" />
 									</div>
 									<div>
-										<p className="font-bold text-aliText text-lg leading-tight">{stat.value}</p>
+										<p className="font-bold text-aliText text-lg leading-tight">
+											{stat.value}
+										</p>
 										<p className="text-xs text-aliTextSec">{stat.label}</p>
 									</div>
 								</div>
@@ -433,8 +469,10 @@ export default function Home() {
 							</div>
 							<Link
 								to="/deals"
-								className="text-white text-sm font-medium hover:underline flex items-center gap-1">
-								{i18n.language === 'ar' ? 'عرض الكل' : 'View All'} <ChevronRight size={16} />
+								className="text-white text-sm font-medium hover:underline flex items-center gap-1"
+							>
+								{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
+								<ChevronRight size={16} />
 							</Link>
 						</div>
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -443,10 +481,12 @@ export default function Home() {
 								: dealProducts.slice(0, 4).map((product) => (
 										<div
 											key={product.id}
-											className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+											className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group"
+										>
 											<Link
 												to={`/product/${product.id}`}
-												className="block relative aspect-square overflow-hidden bg-aliSurface">
+												className="block relative aspect-square overflow-hidden bg-aliSurface"
+											>
 												<img
 													src={product.main_image}
 													alt={getProductName(product, i18n.language)}
@@ -471,7 +511,9 @@ export default function Home() {
 															{formatPrice(product.original_price)}
 														</span>
 													)}
-													<span className="text-aliTextMute text-xs">{t('product.currency')}</span>
+													<span className="text-aliTextMute text-xs">
+														{t('product.currency')}
+													</span>
 												</div>
 											</div>
 										</div>
@@ -510,10 +552,12 @@ export default function Home() {
 								return (
 									<div
 										key={product.id}
-										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group">
+										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
+									>
 										<Link
 											to={`/product/${product.id}`}
-											className="block relative aspect-square overflow-hidden bg-aliSurface">
+											className="block relative aspect-square overflow-hidden bg-aliSurface"
+										>
 											<img
 												src={product.main_image}
 												alt={getProductName(product, i18n.language)}
@@ -521,7 +565,9 @@ export default function Home() {
 											/>
 											{product.badges?.includes('bestseller') && (
 												<span className="absolute top-2 right-2 bg-aliOrange text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-													{i18n.language === 'ar' ? 'الأكثر مبيعاً' : 'Hot'}
+													{i18n.language === 'ar'
+														? 'الأكثر مبيعاً'
+														: 'Hot'}
 												</span>
 											)}
 											{product.badges?.includes('new') && (
@@ -551,19 +597,25 @@ export default function Home() {
 											</div>
 											<div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
 												<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
-													MOQ: {Math.max(1, Math.floor(product.stock / 5))} pcs
+													MOQ:{' '}
+													{Math.max(1, Math.floor(product.stock / 5))} pcs
 												</span>
 												<span className="text-[10px] text-aliTextMute">
-													{product.sold_count} {i18n.language === 'ar' ? 'مباع' : 'sold'}
+													{product.sold_count}{' '}
+													{i18n.language === 'ar' ? 'مباع' : 'sold'}
 												</span>
 											</div>
 											<div className="flex items-center justify-between mt-2 pt-2 border-t border-aliBorder/50">
 												<div className="flex items-center gap-1">
 													<span className="text-xs text-aliTextMute">
-														{store ? getStoreName(store, i18n.language) : ''}
+														{store
+															? getStoreName(store, i18n.language)
+															: ''}
 													</span>
 													<span className="text-[10px] bg-orange-100 text-aliOrange px-1 rounded font-medium">
-														{store ? `${store.since_year || '1'}yr` : '1yr'}
+														{store
+															? `${store.since_year || '1'}yr`
+															: '1yr'}
 													</span>
 												</div>
 												<span className="text-[10px] text-aliTextMute flex items-center gap-0.5">
@@ -576,7 +628,8 @@ export default function Home() {
 													addedIds.has(product.id)
 														? 'bg-green-500 text-white'
 														: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
-												}`}>
+												}`}
+											>
 												<ShoppingCart size={12} />
 												{addedIds.has(product.id)
 													? i18n.language === 'ar'
@@ -606,8 +659,10 @@ export default function Home() {
 						</h2>
 						<Link
 							to="/search"
-							className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
-							{i18n.language === 'ar' ? 'عرض الكل' : 'View All'} <ChevronRight size={16} />
+							className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1"
+						>
+							{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
+							<ChevronRight size={16} />
 						</Link>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -616,10 +671,12 @@ export default function Home() {
 							: newProducts.map((product) => (
 									<div
 										key={product.id}
-										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group">
+										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
+									>
 										<Link
 											to={`/product/${product.id}`}
-											className="block relative aspect-square overflow-hidden bg-aliSurface">
+											className="block relative aspect-square overflow-hidden bg-aliSurface"
+										>
 											<img
 												src={product.main_image}
 												alt={getProductName(product, i18n.language)}
@@ -649,7 +706,8 @@ export default function Home() {
 													addedIds.has(product.id)
 														? 'bg-green-500 text-white'
 														: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
-												}`}>
+												}`}
+											>
 												<ShoppingCart size={12} />
 												{addedIds.has(product.id)
 													? i18n.language === 'ar'
@@ -678,8 +736,10 @@ export default function Home() {
 					</h2>
 					<Link
 						to="/categories"
-						className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
-						{i18n.language === 'ar' ? 'عرض الكل' : 'View All'} <ChevronRight size={16} />
+						className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1"
+					>
+						{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
+						<ChevronRight size={16} />
 					</Link>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -689,7 +749,8 @@ export default function Home() {
 								<Link
 									key={store.id}
 									to={`/store/${store.id}`}
-									className="bg-white rounded-lg border border-aliBorder p-4 hover:shadow-md hover:border-aliOrange/30 transition-all group text-center">
+									className="bg-white rounded-lg border border-aliBorder p-4 hover:shadow-md hover:border-aliOrange/30 transition-all group text-center"
+								>
 									<div className="w-16 h-16 rounded-full bg-aliSurface mx-auto mb-3 overflow-hidden">
 										<img
 											src={store.logo || '/default-avatar.png'}
@@ -701,16 +762,23 @@ export default function Home() {
 										{getStoreName(store, i18n.language)}
 									</h3>
 									<div className="flex items-center justify-center gap-1 mt-1">
-										<Star size={12} className="text-yellow-400 fill-yellow-400" />
-										<span className="text-xs text-aliTextSec">{store.rating}</span>
+										<Star
+											size={12}
+											className="text-yellow-400 fill-yellow-400"
+										/>
+										<span className="text-xs text-aliTextSec">
+											{store.rating}
+										</span>
 									</div>
 									<div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-aliTextMute">
 										<span className="bg-aliSurface px-1.5 py-0.5 rounded">
 											{store.products_count} products
 										</span>
 										<span
-											className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${store.is_verified ? 'bg-orange-50 text-aliOrange' : 'bg-gray-100 text-gray-400'}`}>
-											<BadgeCheck size={10} /> {store.is_verified ? 'Verified' : 'Unverified'}
+											className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${store.is_verified ? 'bg-orange-50 text-aliOrange' : 'bg-gray-100 text-gray-400'}`}
+										>
+											<BadgeCheck size={10} />{' '}
+											{store.is_verified ? 'Verified' : 'Unverified'}
 										</span>
 									</div>
 								</Link>
@@ -736,8 +804,10 @@ export default function Home() {
 							</p>
 							<Link
 								to="/categories"
-								className="inline-flex items-center gap-2 bg-aliOrange text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-aliOrangeHover transition-colors">
-								{i18n.language === 'ar' ? 'تسوق الآن' : 'Shop Now'} <ChevronRight size={16} />
+								className="inline-flex items-center gap-2 bg-aliOrange text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-aliOrangeHover transition-colors"
+							>
+								{i18n.language === 'ar' ? 'تسوق الآن' : 'Shop Now'}{' '}
+								<ChevronRight size={16} />
 							</Link>
 						</div>
 						<div className="grid grid-cols-2 gap-3 shrink-0">
@@ -749,8 +819,12 @@ export default function Home() {
 								},
 								{
 									icon: RefreshCw,
-									title: i18n.language === 'ar' ? 'سياسة الإرجاع' : 'Refund Policy',
-									desc: i18n.language === 'ar' ? 'إرجاع خلال 30 يوم' : '30-day returns',
+									title:
+										i18n.language === 'ar' ? 'سياسة الإرجاع' : 'Refund Policy',
+									desc:
+										i18n.language === 'ar'
+											? 'إرجاع خلال 30 يوم'
+											: '30-day returns',
 								},
 								{
 									icon: Package,
@@ -759,13 +833,17 @@ export default function Home() {
 								},
 								{
 									icon: Headphones,
-									title: i18n.language === 'ar' ? 'حماية ما بعد البيع' : 'After-sales',
+									title:
+										i18n.language === 'ar'
+											? 'حماية ما بعد البيع'
+											: 'After-sales',
 									desc: i18n.language === 'ar' ? 'دعم 24/7' : '24/7 support',
 								},
 							].map((step) => (
 								<div
 									key={step.title}
-									className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm">
+									className="bg-white/10 rounded-xl p-3 text-center backdrop-blur-sm"
+								>
 									<step.icon size={22} className="text-aliOrange mx-auto mb-1" />
 									<p className="font-semibold text-sm">{step.title}</p>
 									<p className="text-white/60 text-[10px]">{step.desc}</p>
@@ -791,8 +869,10 @@ export default function Home() {
 					</div>
 					<Link
 						to="/search"
-						className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
-						{i18n.language === 'ar' ? 'عرض الكل' : 'View All'} <ChevronRight size={16} />
+						className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1"
+					>
+						{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
+						<ChevronRight size={16} />
 					</Link>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -804,17 +884,20 @@ export default function Home() {
 								.map((product) => (
 									<div
 										key={product.id}
-										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group">
+										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
+									>
 										<Link
 											to={`/product/${product.id}`}
-											className="block relative aspect-square overflow-hidden bg-aliSurface">
+											className="block relative aspect-square overflow-hidden bg-aliSurface"
+										>
 											<img
 												src={product.main_image}
 												alt={getProductName(product, i18n.language)}
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 											/>
 											<span className="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-												<Truck size={10} /> {i18n.language === 'ar' ? 'جاهز' : 'Ready'}
+												<Truck size={10} />{' '}
+												{i18n.language === 'ar' ? 'جاهز' : 'Ready'}
 											</span>
 										</Link>
 										<div className="p-2.5">
@@ -832,8 +915,10 @@ export default function Home() {
 												</span>
 											</div>
 											<div className="text-[10px] text-aliTextMute mt-1">
-												{product.stock} {i18n.language === 'ar' ? 'متوفر' : 'in stock'} - MOQ:{' '}
-												{Math.max(1, Math.floor(product.stock / 5))} pcs
+												{product.stock}{' '}
+												{i18n.language === 'ar' ? 'متوفر' : 'in stock'} -
+												MOQ: {Math.max(1, Math.floor(product.stock / 5))}{' '}
+												pcs
 											</div>
 										</div>
 									</div>

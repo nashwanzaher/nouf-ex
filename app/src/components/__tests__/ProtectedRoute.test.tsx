@@ -15,7 +15,7 @@ import ProtectedRoute from '../ProtectedRoute';
 
 function renderAt(
 	initialPath: string,
-	user: { id: string; role: 'customer' | 'merchant' | 'admin' } | null
+	user: { id: string; role: 'customer' | 'merchant' | 'admin' } | null,
 ) {
 	if (user) localStorage.setItem('noufex_user', JSON.stringify(user));
 	else localStorage.removeItem('noufex_user');
@@ -35,7 +35,7 @@ function renderAt(
 					<Route path="/" element={<div>Home Page</div>} />
 				</Routes>
 			</MemoryRouter>
-		</AppProvider>
+		</AppProvider>,
 	);
 }
 
@@ -70,7 +70,7 @@ describe('ProtectedRoute', () => {
 						/>
 					</Routes>
 				</MemoryRouter>
-			</AppProvider>
+			</AppProvider>,
 		);
 		// localStorage is empty here, so we should land on Login.
 		// (This test just exercises the no-allowedRoles branch's *call path*.)

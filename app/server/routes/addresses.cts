@@ -45,7 +45,7 @@ addressesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				`INSERT INTO addresses (user_id, label, full_name, phone, governorate, city, district,
            street, building, notes, is_default, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, 0), NOW(), NOW())
-         RETURNING *`
+         RETURNING *`,
 			)
 			.get(
 				userId,
@@ -58,7 +58,7 @@ addressesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				data.street,
 				data.building ?? null,
 				data.notes ?? null,
-				data.is_default ? 1 : 0
+				data.is_default ? 1 : 0,
 			);
 		sendSuccess(res, result, 'Address created');
 	} catch (err) {

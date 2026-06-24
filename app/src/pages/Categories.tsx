@@ -54,7 +54,8 @@ function ProductGridSkeleton({ count = 8 }: { count?: number }) {
 			{Array.from({ length: count }).map((_, i) => (
 				<div
 					key={i}
-					className="bg-white rounded-lg border border-[#E5E5E5] overflow-hidden animate-pulse">
+					className="bg-white rounded-lg border border-[#E5E5E5] overflow-hidden animate-pulse"
+				>
 					<div className="aspect-square bg-[#F0F0F0]" />
 					<div className="p-2.5 space-y-2">
 						<div className="h-3 bg-[#F0F0F0] rounded w-full" />
@@ -116,7 +117,9 @@ export default function CategoriesPage() {
 	const apiProducts = prodData?.products ?? [];
 
 	/* ─── Client-side price filter ─── */
-	const filtered = apiProducts.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
+	const filtered = apiProducts.filter(
+		(p) => p.price >= priceRange[0] && p.price <= priceRange[1],
+	);
 
 	/* ─── Client-side sort (refine API results) ─── */
 	const sorted = useMemo(() => {
@@ -156,7 +159,7 @@ export default function CategoriesPage() {
 					n.delete(p.id);
 					return n;
 				}),
-			1500
+			1500,
 		);
 	};
 
@@ -170,7 +173,7 @@ export default function CategoriesPage() {
 			allCategories
 				.filter((c) => c.parent_id == null)
 				.reduce((sum, c) => sum + (c.product_count ?? 0), 0),
-		[allCategories]
+		[allCategories],
 	);
 
 	/* ─── Breadcrumb ─── */
@@ -193,7 +196,8 @@ export default function CategoriesPage() {
 								idx === breadcrumb.length - 1
 									? 'text-aliText font-semibold'
 									: 'text-aliTextMute hover:text-aliOrange transition-colors'
-							}>
+							}
+						>
 							{item.label}
 						</Link>
 					</div>
@@ -224,7 +228,8 @@ export default function CategoriesPage() {
 										activeCatSlug === null
 											? 'bg-orange-50 text-aliOrange font-semibold'
 											: 'text-aliText hover:bg-aliSurface'
-									}`}>
+									}`}
+								>
 									<span>{lang === 'ar' ? 'جميع المنتجات' : 'All Products'}</span>
 									<span className="text-xs text-aliTextMute bg-aliSurface px-1.5 py-0.5 rounded">
 										{totalProductCount}
@@ -246,9 +251,14 @@ export default function CategoriesPage() {
 													isActive
 														? 'bg-orange-50 text-aliOrange font-semibold'
 														: 'text-aliText hover:bg-aliSurface'
-												}`}>
+												}`}
+											>
 												<span className="flex items-center gap-2">
-													{isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+													{isActive ? (
+														<ChevronDown size={14} />
+													) : (
+														<ChevronRight size={14} />
+													)}
 													{getCatName(parent, lang)}
 												</span>
 												<span className="text-xs text-aliTextMute bg-aliSurface px-1.5 py-0.5 rounded">
@@ -260,19 +270,31 @@ export default function CategoriesPage() {
 												<div className="mr-4 border-r-2 border-aliBorder pr-2 mt-1 space-y-0.5">
 													{children.map((sub) => {
 														const subCount = sub.product_count ?? 0;
-														const isSubActive = activeSubSlug === sub.slug;
+														const isSubActive =
+															activeSubSlug === sub.slug;
 														return (
 															<button
 																key={sub.id}
-																onClick={() => setActiveSubSlug(isSubActive ? null : sub.slug)}
+																onClick={() =>
+																	setActiveSubSlug(
+																		isSubActive
+																			? null
+																			: sub.slug,
+																	)
+																}
 																className={`w-full text-right px-3 py-2 rounded-lg text-sm transition-colors ${
 																	isSubActive
 																		? 'text-aliOrange font-medium bg-orange-50'
 																		: 'text-aliTextSec hover:text-aliText hover:bg-aliSurface'
-																}`}>
+																}`}
+															>
 																<span className="flex items-center justify-between">
-																	<span>{getCatName(sub, lang)}</span>
-																	<span className="text-[10px] text-aliTextMute">{subCount}</span>
+																	<span>
+																		{getCatName(sub, lang)}
+																	</span>
+																	<span className="text-[10px] text-aliTextMute">
+																		{subCount}
+																	</span>
 																</span>
 															</button>
 														);
@@ -293,7 +315,9 @@ export default function CategoriesPage() {
 									<input
 										type="number"
 										value={priceRange[0]}
-										onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+										onChange={(e) =>
+											setPriceRange([Number(e.target.value), priceRange[1]])
+										}
 										className="w-full h-9 rounded-lg border border-aliBorder px-2 text-sm text-aliText outline-none focus:border-aliOrange"
 										placeholder="Min"
 									/>
@@ -301,7 +325,9 @@ export default function CategoriesPage() {
 									<input
 										type="number"
 										value={priceRange[1]}
-										onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+										onChange={(e) =>
+											setPriceRange([priceRange[0], Number(e.target.value)])
+										}
 										className="w-full h-9 rounded-lg border border-aliBorder px-2 text-sm text-aliText outline-none focus:border-aliOrange"
 										placeholder="Max"
 									/>
@@ -312,7 +338,9 @@ export default function CategoriesPage() {
 									max={200000}
 									step={1000}
 									value={priceRange[1]}
-									onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+									onChange={(e) =>
+										setPriceRange([priceRange[0], Number(e.target.value)])
+									}
 									className="w-full accent-aliOrange"
 								/>
 							</div>
@@ -330,22 +358,29 @@ export default function CategoriesPage() {
 								: lang === 'ar'
 									? 'جميع المنتجات'
 									: 'All Products'}
-							<span className="text-aliTextMute text-sm font-normal ml-2">({sorted.length})</span>
+							<span className="text-aliTextMute text-sm font-normal ml-2">
+								({sorted.length})
+							</span>
 						</h1>
 						<div className="flex items-center gap-2">
 							<Filter size={16} className="text-aliTextMute" />
 							<select
 								value={sortBy}
 								onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-								className="h-9 px-3 rounded-lg border border-aliBorder text-sm text-aliText bg-white outline-none focus:border-aliOrange">
-								<option value="sold">{lang === 'ar' ? 'الأكثر مبيعاً' : 'Best Selling'}</option>
+								className="h-9 px-3 rounded-lg border border-aliBorder text-sm text-aliText bg-white outline-none focus:border-aliOrange"
+							>
+								<option value="sold">
+									{lang === 'ar' ? 'الأكثر مبيعاً' : 'Best Selling'}
+								</option>
 								<option value="price-asc">
 									{lang === 'ar' ? 'السعر: من الأقل' : 'Price: Low to High'}
 								</option>
 								<option value="price-desc">
 									{lang === 'ar' ? 'السعر: من الأعلى' : 'Price: High to Low'}
 								</option>
-								<option value="rating">{lang === 'ar' ? 'التقييم' : 'Rating'}</option>
+								<option value="rating">
+									{lang === 'ar' ? 'التقييم' : 'Rating'}
+								</option>
 							</select>
 						</div>
 					</div>
@@ -361,21 +396,25 @@ export default function CategoriesPage() {
 								activeCatSlug === null
 									? 'bg-aliOrange text-white'
 									: 'bg-white border border-aliBorder text-aliText'
-							}`}>
+							}`}
+						>
 							{lang === 'ar' ? 'الكل' : 'All'}
 						</button>
 						{tree.map(({ parent }) => (
 							<button
 								key={parent.id}
 								onClick={() => {
-									setActiveCatSlug(parent.slug === activeCatSlug ? null : parent.slug);
+									setActiveCatSlug(
+										parent.slug === activeCatSlug ? null : parent.slug,
+									);
 									setActiveSubSlug(null);
 								}}
 								className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
 									activeCatSlug === parent.slug
 										? 'bg-aliOrange text-white'
 										: 'bg-white border border-aliBorder text-aliText'
-								}`}>
+								}`}
+							>
 								{getCatName(parent, lang)}
 							</button>
 						))}
@@ -389,10 +428,12 @@ export default function CategoriesPage() {
 							{sorted.map((product) => (
 								<div
 									key={product.id}
-									className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group">
+									className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
+								>
 									<Link
 										to={`/product/${product.id}`}
-										className="block relative aspect-square overflow-hidden bg-aliSurface">
+										className="block relative aspect-square overflow-hidden bg-aliSurface"
+									>
 										<img
 											src={product.main_image}
 											alt={getProductName(product, lang)}
@@ -419,7 +460,9 @@ export default function CategoriesPage() {
 											<span className="text-aliOrange font-bold">
 												{product.price.toLocaleString()}
 											</span>
-											<span className="text-aliTextMute text-xs ml-1">{t('product.currency')}</span>
+											<span className="text-aliTextMute text-xs ml-1">
+												{t('product.currency')}
+											</span>
 											{product.original_price > product.price && (
 												<span className="text-aliTextMute text-xs line-through ml-1">
 													{product.original_price.toLocaleString()}
@@ -427,13 +470,21 @@ export default function CategoriesPage() {
 											)}
 										</div>
 										<div className="flex items-center gap-1 mt-1">
-											<Star size={12} className="text-yellow-400 fill-yellow-400" />
-											<span className="text-xs text-aliTextSec">{product.rating}</span>
-											<span className="text-[10px] text-aliTextMute">({product.review_count})</span>
+											<Star
+												size={12}
+												className="text-yellow-400 fill-yellow-400"
+											/>
+											<span className="text-xs text-aliTextSec">
+												{product.rating}
+											</span>
+											<span className="text-[10px] text-aliTextMute">
+												({product.review_count})
+											</span>
 										</div>
 										<div className="flex items-center gap-1.5 mt-1.5">
 											<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
-												MOQ: {Math.max(1, Math.floor((product.stock ?? 0) / 5))}
+												MOQ:{' '}
+												{Math.max(1, Math.floor((product.stock ?? 0) / 5))}
 											</span>
 											<span className="text-[10px] text-aliTextMute">
 												{product.sold_count} sold
@@ -445,7 +496,8 @@ export default function CategoriesPage() {
 												addedIds.has(product.id)
 													? 'bg-green-500 text-white'
 													: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
-											}`}>
+											}`}
+										>
 											<ShoppingCart size={12} />
 											{addedIds.has(product.id) ? 'Added!' : 'Add to Cart'}
 										</button>

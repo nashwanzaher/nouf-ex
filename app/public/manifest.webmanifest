@@ -1,45 +1,45 @@
 {
-  "name": "Nouf-ex — Yemen Marketplace",
-  "short_name": "Nouf-ex",
-  "description": "B2B/B2C marketplace connecting Yemeni merchants and customers (Alibaba/Taobao-inspired).",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "any",
-  "background_color": "#ffffff",
-  "theme_color": "#0d9488",
-  "lang": "ar",
-  "dir": "rtl",
-  "categories": ["shopping", "business"],
-  "icons": [
-    {
-      "src": "/noufex-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/noufex-logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Categories",
-      "url": "/categories",
-      "description": "Browse all product categories"
-    },
-    {
-      "name": "Deals",
-      "url": "/deals",
-      "description": "Active deals and discounts"
-    },
-    {
-      "name": "My Orders",
-      "url": "/customer/orders",
-      "description": "Track your purchases"
-    }
-  ]
+	"name": "Nouf-ex — Yemen Marketplace",
+	"short_name": "Nouf-ex",
+	"description": "B2B/B2C marketplace connecting Yemeni merchants and customers (Alibaba/Taobao-inspired).",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "any",
+	"background_color": "#ffffff",
+	"theme_color": "#0d9488",
+	"lang": "ar",
+	"dir": "rtl",
+	"categories": ["shopping", "business"],
+	"icons": [
+		{
+			"src": "/noufex-logo.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		},
+		{
+			"src": "/noufex-logo.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "maskable"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Categories",
+			"url": "/categories",
+			"description": "Browse all product categories"
+		},
+		{
+			"name": "Deals",
+			"url": "/deals",
+			"description": "Active deals and discounts"
+		},
+		{
+			"name": "My Orders",
+			"url": "/customer/orders",
+			"description": "Track your purchases"
+		}
+	]
 }

@@ -85,7 +85,9 @@ export function installFetchSpy(): void {
 			const methodOk = !mswHandler.info?.method || mswHandler.info.method === req.method;
 			if (!methodOk) continue;
 			if (!matchesPath(mswHandler.info?.path, url)) {
-				triedHandlers.push(`${mswHandler.info?.method ?? 'ANY'} ${String(mswHandler.info?.path)}`);
+				triedHandlers.push(
+					`${mswHandler.info?.method ?? 'ANY'} ${String(mswHandler.info?.path)}`,
+				);
 				continue;
 			}
 
@@ -125,16 +127,19 @@ export function installFetchSpy(): void {
 				}
 				return await toResponse(result);
 			} catch (err) {
-				return new Response(JSON.stringify({ success: false, error: (err as Error).message }), {
-					status: 500,
-					headers: { 'content-type': 'application/json' },
-				});
+				return new Response(
+					JSON.stringify({ success: false, error: (err as Error).message }),
+					{
+						status: 500,
+						headers: { 'content-type': 'application/json' },
+					},
+				);
 			}
 		}
 
 		// Unhandled request — fail loudly so we do not get silent fall-throughs.
 		throw new Error(
-			`[fetch-spy] Unhandled ${req.method} ${req.url} (tried: ${triedHandlers.join(', ')})`
+			`[fetch-spy] Unhandled ${req.method} ${req.url} (tried: ${triedHandlers.join(', ')})`,
 		);
 	};
 }
@@ -207,7 +212,7 @@ function matchesPath(pattern: string | RegExp | undefined, url: string): boolean
 // segment from the URL. `*` segments are ignored.
 function extractParams(
 	pattern: string | RegExp | undefined,
-	url: string
+	url: string,
 ): Record<string, string | undefined> {
 	const params: Record<string, string | undefined> = {};
 	if (!pattern || pattern instanceof RegExp) return params;
@@ -282,7 +287,10 @@ async function toResponse(value: unknown): Promise<Response> {
 			headers: innerResponse.headers,
 		});
 	}
-	const v = value as { status?: number; body?: unknown; headers?: HeadersInit } | null | undefined;
+	const v = value as
+		| { status?: number; body?: unknown; headers?: HeadersInit }
+		| null
+		| undefined;
 	if (v && typeof v === 'object' && 'body' in v) {
 		return new Response(typeof v.body === 'string' ? v.body : JSON.stringify(v.body), {
 			status: v.status ?? 200,

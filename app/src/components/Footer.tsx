@@ -23,20 +23,37 @@ export default function Footer() {
 		},
 		{
 			title:
-				i18n.language === 'ar' ? 'للمشترين' : i18n.language === 'zh' ? '买家中心' : 'For Buyers',
+				i18n.language === 'ar'
+					? 'للمشترين'
+					: i18n.language === 'zh'
+						? '买家中心'
+						: 'For Buyers',
 			links: [
 				{ label: i18n.language === 'ar' ? 'كيفية الشراء' : 'How to Buy', href: '#' },
-				{ label: i18n.language === 'ar' ? 'طلب عرض أسعار' : 'Request for Quotation', href: '#' },
+				{
+					label: i18n.language === 'ar' ? 'طلب عرض أسعار' : 'Request for Quotation',
+					href: '#',
+				},
 				{ label: i18n.language === 'ar' ? 'ضمان التجارة' : 'Trade Assurance', href: '#' },
-				{ label: i18n.language === 'ar' ? 'المشتريات' : 'My Orders', href: '/customer/orders' },
+				{
+					label: i18n.language === 'ar' ? 'المشتريات' : 'My Orders',
+					href: '/customer/orders',
+				},
 			],
 		},
 		{
 			title:
-				i18n.language === 'ar' ? 'للبائعين' : i18n.language === 'zh' ? '卖家中心' : 'For Sellers',
+				i18n.language === 'ar'
+					? 'للبائعين'
+					: i18n.language === 'zh'
+						? '卖家中心'
+						: 'For Sellers',
 			links: [
 				{ label: i18n.language === 'ar' ? 'كيفية البيع' : 'How to Sell', href: '#' },
-				{ label: i18n.language === 'ar' ? 'لوحة التاجر' : 'Seller Dashboard', href: '/seller' },
+				{
+					label: i18n.language === 'ar' ? 'لوحة التاجر' : 'Seller Dashboard',
+					href: '/seller',
+				},
 				{ label: i18n.language === 'ar' ? 'الاشتراكات' : 'Subscriptions', href: '#' },
 				{ label: i18n.language === 'ar' ? 'مركز المساعدة' : 'Help Center', href: '#' },
 			],
@@ -45,7 +62,10 @@ export default function Footer() {
 			title: i18n.language === 'ar' ? 'الدعم' : i18n.language === 'zh' ? '帮助中心' : 'Help',
 			links: [
 				{ label: i18n.language === 'ar' ? 'اتصل بنا' : 'Contact Us', href: '#' },
-				{ label: i18n.language === 'ar' ? 'الشروط والأحكام' : 'Terms of Service', href: '#' },
+				{
+					label: i18n.language === 'ar' ? 'الشروط والأحكام' : 'Terms of Service',
+					href: '#',
+				},
 				{ label: i18n.language === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy', href: '#' },
 				{ label: i18n.language === 'ar' ? 'الأسئلة الشائعة' : 'FAQ', href: '#' },
 			],
@@ -62,7 +82,8 @@ export default function Footer() {
 							{
 								icon: ShieldCheck,
 								title: i18n.language === 'ar' ? 'ضمان التجارة' : 'Trade Assurance',
-								desc: i18n.language === 'ar' ? 'حماية مشترياتك' : 'Buyer protection',
+								desc:
+									i18n.language === 'ar' ? 'حماية مشترياتك' : 'Buyer protection',
 							},
 							{
 								icon: Truck,
@@ -72,12 +93,14 @@ export default function Footer() {
 							{
 								icon: RefreshCw,
 								title: i18n.language === 'ar' ? 'سياسة الإرجاع' : 'Easy Returns',
-								desc: i18n.language === 'ar' ? 'إرجاع خلال 30 يوم' : '30-day returns',
+								desc:
+									i18n.language === 'ar' ? 'إرجاع خلال 30 يوم' : '30-day returns',
 							},
 							{
 								icon: Headphones,
 								title: i18n.language === 'ar' ? 'دعم 24/7' : '24/7 Support',
-								desc: i18n.language === 'ar' ? 'مساعدة دائمة' : 'Always here to help',
+								desc:
+									i18n.language === 'ar' ? 'مساعدة دائمة' : 'Always here to help',
 							},
 						].map((item) => (
 							<div key={item.title} className="flex items-center gap-3">
@@ -114,7 +137,8 @@ export default function Footer() {
 								<a
 									key={social}
 									href="#"
-									className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-aliOrange transition-colors">
+									className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-aliOrange transition-colors"
+								>
 									<span className="text-xs font-bold uppercase">{social[0]}</span>
 								</a>
 							))}
@@ -131,13 +155,15 @@ export default function Footer() {
 										{'href' in link && link.href.startsWith('/') ? (
 											<Link
 												to={link.href}
-												className="text-white/60 text-sm hover:text-aliOrange transition-colors">
+												className="text-white/60 text-sm hover:text-aliOrange transition-colors"
+											>
 												{link.label}
 											</Link>
 										) : (
 											<a
 												href={link.href}
-												className="text-white/60 text-sm hover:text-aliOrange transition-colors">
+												className="text-white/60 text-sm hover:text-aliOrange transition-colors"
+											>
 												{link.label}
 											</a>
 										)}

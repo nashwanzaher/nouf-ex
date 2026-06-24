@@ -68,7 +68,8 @@ export default function Register() {
 				id: String(result.user.id),
 				name: result.user.full_name,
 				email: result.user.email,
-				role: (result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
+				role:
+					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
 			authLogin(authUser, result.token);
@@ -95,13 +96,20 @@ export default function Register() {
 		<div className="min-h-[100dvh] flex" dir={isRTL ? 'rtl' : 'ltr'}>
 			{/* Left Panel — Hero */}
 			<div
-				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}>
-				<div className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`} />
-				<div className={`absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 ${styles.heroCircle}`} />
+				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}
+			>
+				<div
+					className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`}
+				/>
+				<div
+					className={`absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 ${styles.heroCircle}`}
+				/>
 
 				<div className="relative z-10 text-center max-w-md mx-auto">
 					<div className="mb-8">
-						<div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}>
+						<div
+							className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}
+						>
 							<Globe className="w-10 h-10 text-white" strokeWidth={1.5} />
 						</div>
 					</div>
@@ -117,18 +125,30 @@ export default function Register() {
 
 					<div className="grid grid-cols-3 gap-4 mb-8">
 						{[
-							{ icon: Users, label: isRTL ? '10K+ تاجر' : '10K+ Sellers', iconClass: styles.statIconOrange },
+							{
+								icon: Users,
+								label: isRTL ? '10K+ تاجر' : '10K+ Sellers',
+								iconClass: styles.statIconOrange,
+							},
 							{
 								icon: TrendingUp,
 								label: isRTL ? '500K+ منتج' : '500K+ Products',
 								iconClass: styles.statIconBlue,
 							},
-							{ icon: Shield, label: isRTL ? 'دفع آمن' : 'Secure Payment', iconClass: styles.statIconGreen },
+							{
+								icon: Shield,
+								label: isRTL ? 'دفع آمن' : 'Secure Payment',
+								iconClass: styles.statIconGreen,
+							},
 						].map((stat, i) => (
 							<div
 								key={i}
-								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}>
-								<stat.icon className={`w-6 h-6 ${stat.iconClass}`} strokeWidth={1.5} />
+								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}
+							>
+								<stat.icon
+									className={`w-6 h-6 ${stat.iconClass}`}
+									strokeWidth={1.5}
+								/>
 								<span className={`text-xs font-semibold ${styles.statLabel}`}>
 									{stat.label}
 								</span>
@@ -138,7 +158,8 @@ export default function Register() {
 
 					<Link
 						to="/"
-						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}>
+						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}
+					>
 						{isRTL ? 'اكتشف المزيد' : 'View More'}
 						<TrendingUp className="w-4 h-4" strokeWidth={1.5} />
 					</Link>
@@ -156,7 +177,9 @@ export default function Register() {
 									{t('auth.registerTitle')}
 								</h1>
 								<p className={`text-sm ${styles.formSubtitle}`}>
-									{isRTL ? 'أنشئ حسابك وابدأ رحلتك' : 'Create your account and start your journey'}
+									{isRTL
+										? 'أنشئ حسابك وابدأ رحلتك'
+										: 'Create your account and start your journey'}
 								</p>
 							</div>
 
@@ -166,7 +189,8 @@ export default function Register() {
 									type="button"
 									onClick={() => setAccountType('buyer')}
 									data-selected={accountType === 'buyer'}
-									className={`flex flex-col items-center gap-2 p-4 rounded border-2 transition-all duration-200 ${styles.accountTypeBtn}`}>
+									className={`flex flex-col items-center gap-2 p-4 rounded border-2 transition-all duration-200 ${styles.accountTypeBtn}`}
+								>
 									<ShoppingBag
 										className={`w-6 h-6 ${styles.icon}`}
 										strokeWidth={1.5}
@@ -179,11 +203,9 @@ export default function Register() {
 									type="button"
 									onClick={() => setAccountType('seller')}
 									data-selected={accountType === 'seller'}
-									className={`flex flex-col items-center gap-2 p-4 rounded border-2 transition-all duration-200 ${styles.accountTypeBtn}`}>
-									<Store
-										className={`w-6 h-6 ${styles.icon}`}
-										strokeWidth={1.5}
-									/>
+									className={`flex flex-col items-center gap-2 p-4 rounded border-2 transition-all duration-200 ${styles.accountTypeBtn}`}
+								>
+									<Store className={`w-6 h-6 ${styles.icon}`} strokeWidth={1.5} />
 									<span className={`text-sm font-semibold ${styles.formLabel}`}>
 										{isRTL ? 'بائع' : 'Seller'}
 									</span>
@@ -194,13 +216,16 @@ export default function Register() {
 								{errors.form && (
 									<div
 										role="alert"
-										className={`text-sm p-3 rounded ${styles.formAlert}`}>
+										className={`text-sm p-3 rounded ${styles.formAlert}`}
+									>
 										{errors.form}
 									</div>
 								)}
 								{/* Email */}
 								<div>
-									<Label className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}>
+									<Label
+										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
+									>
 										{t('auth.email')}
 									</Label>
 									<div className="relative">
@@ -215,7 +240,9 @@ export default function Register() {
 												setEmail(e.target.value);
 												setErrors((p) => ({ ...p, email: '' }));
 											}}
-											placeholder={isRTL ? 'your@email.com' : 'your@email.com'}
+											placeholder={
+												isRTL ? 'your@email.com' : 'your@email.com'
+											}
 											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
 										/>
 									</div>
@@ -228,7 +255,9 @@ export default function Register() {
 
 								{/* Password */}
 								<div>
-									<Label className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}>
+									<Label
+										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
+									>
 										{t('auth.password')}
 									</Label>
 									<div className="relative">
@@ -249,7 +278,8 @@ export default function Register() {
 										<button
 											type="button"
 											onClick={() => setShowPassword(!showPassword)}
-											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}>
+											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}
+										>
 											{showPassword ? (
 												<EyeOff className="w-5 h-5" strokeWidth={1.5} />
 											) : (
@@ -266,7 +296,9 @@ export default function Register() {
 
 								{/* Confirm Password */}
 								<div>
-									<Label className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}>
+									<Label
+										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
+									>
 										{t('auth.confirmPassword')}
 									</Label>
 									<div className="relative">
@@ -281,13 +313,16 @@ export default function Register() {
 												setConfirmPassword(e.target.value);
 												setErrors((p) => ({ ...p, confirmPassword: '' }));
 											}}
-											placeholder={isRTL ? 'تأكيد كلمة المرور' : 'Confirm password'}
+											placeholder={
+												isRTL ? 'تأكيد كلمة المرور' : 'Confirm password'
+											}
 											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.confirmPassword ? styles.inputError : styles.input}`}
 										/>
 										<button
 											type="button"
 											onClick={() => setShowConfirm(!showConfirm)}
-											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}>
+											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}
+										>
 											{showConfirm ? (
 												<EyeOff className="w-5 h-5" strokeWidth={1.5} />
 											) : (
@@ -310,13 +345,22 @@ export default function Register() {
 											setTerms(!terms);
 											setErrors((p) => ({ ...p, terms: '' }));
 										}}
-										className="flex items-start gap-2 text-left w-full">
+										className="flex items-start gap-2 text-left w-full"
+									>
 										<div
 											data-checked={terms}
-											className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${styles.termsBox}`}>
-											{terms && <Check className="w-3 h-3 text-white" strokeWidth={2} />}
+											className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${styles.termsBox}`}
+										>
+											{terms && (
+												<Check
+													className="w-3 h-3 text-white"
+													strokeWidth={2}
+												/>
+											)}
 										</div>
-										<span className={`text-xs leading-relaxed ${styles.formSubtitle}`}>
+										<span
+											className={`text-xs leading-relaxed ${styles.formSubtitle}`}
+										>
 											{isRTL
 												? 'أوافق على شروط الخدمة وسياسة الخصوصية'
 												: 'I agree to the Terms of Service and Privacy Policy'}
@@ -333,7 +377,8 @@ export default function Register() {
 								<Button
 									type="submit"
 									disabled={isLoading}
-									className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}>
+									className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}
+								>
 									{isLoading ? (
 										<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
 									) : (
@@ -345,12 +390,13 @@ export default function Register() {
 							{/* Switch to login */}
 							<p className={`mt-6 text-center text-sm ${styles.formSubtitle}`}>
 								{t('auth.haveAccount')}{' '}
-									<Link
-										to="/auth/login"
-										className={`font-semibold hover:underline ${styles.ctaLink}`}>
-										{t('auth.loginTitle')}
-									</Link>
-								</p>
+								<Link
+									to="/auth/login"
+									className={`font-semibold hover:underline ${styles.ctaLink}`}
+								>
+									{t('auth.loginTitle')}
+								</Link>
+							</p>
 						</div>
 					</div>
 				</div>

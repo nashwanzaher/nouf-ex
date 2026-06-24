@@ -39,7 +39,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 		const result = await db
 			.prepare(
 				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, transaction_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
 			)
 			.run(
 				order_id,
@@ -48,12 +48,14 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 				currency,
 				method,
 				initialStatus,
-				transaction_id ?? null
+				transaction_id ?? null,
 			);
 
 		if (method !== 'cod') {
 			await db
-				.prepare(`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`)
+				.prepare(
+					`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`,
+				)
 				.run(order_id);
 		}
 
@@ -69,9 +71,9 @@ paymentsRouter.get('/order/:orderId', requireAuth, async (req: Request, res: Res
 		if (!Number.isInteger(orderId) || orderId <= 0) {
 			return sendError(res, 'Invalid order id', 400);
 		}
-		const order = (await db.prepare('SELECT customer_id FROM orders WHERE id = ?').get(orderId)) as
-			| { customer_id: number }
-			| undefined;
+		const order = (await db
+			.prepare('SELECT customer_id FROM orders WHERE id = ?')
+			.get(orderId)) as { customer_id: number } | undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
 		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
 			return sendError(res, 'Forbidden', 403);
@@ -106,7 +108,7 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 		const result = (await db
 			.prepare(
 				`UPDATE payments SET status = 'completed', paid_at = NOW(), updated_at = NOW()
-          WHERE id = ? RETURNING order_id`
+          WHERE id = ? RETURNING order_id`,
 			)
 			.get(id)) as { order_id: number } | undefined;
 		await db

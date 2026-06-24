@@ -254,13 +254,15 @@ describe('Auth API', () => {
 	});
 
 	it('login throws ApiError on bad credentials', async () => {
-		await expect(login({ email: 'x@y.com', password: 'wrong' })).rejects.toBeInstanceOf(ApiError);
+		await expect(login({ email: 'x@y.com', password: 'wrong' })).rejects.toBeInstanceOf(
+			ApiError,
+		);
 	});
 
 	it('register POSTs the registration body', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		await expect(
-			register({ email: 'taken@x.com', password: 'secret', name: 'Taken' })
+			register({ email: 'taken@x.com', password: 'secret', name: 'Taken' }),
 		).rejects.toBeInstanceOf(ApiError);
 		const call = fetchSpy.mock.calls[0];
 		expect(call?.[1]?.method).toBe('POST');
@@ -368,7 +370,7 @@ describe('Coupons API', () => {
 
 	it('validateCoupon throws ApiError on an unknown code', async () => {
 		await expect(
-			validateCoupon({ code: 'INVALID', order_subtotal: 100, user_id: 5 })
+			validateCoupon({ code: 'INVALID', order_subtotal: 100, user_id: 5 }),
 		).rejects.toBeInstanceOf(ApiError);
 	});
 

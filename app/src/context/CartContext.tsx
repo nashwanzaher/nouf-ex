@@ -42,7 +42,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 					items: state.items.map((i) =>
 						i.productId === action.payload.productId
 							? { ...i, quantity: i.quantity + action.payload.quantity }
-							: i
+							: i,
 					),
 				};
 			}
@@ -52,11 +52,15 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 			return { items: state.items.filter((i) => i.productId !== action.payload) };
 		case 'UPDATE_QTY':
 			if (action.payload.quantity <= 0) {
-				return { items: state.items.filter((i) => i.productId !== action.payload.productId) };
+				return {
+					items: state.items.filter((i) => i.productId !== action.payload.productId),
+				};
 			}
 			return {
 				items: state.items.map((i) =>
-					i.productId === action.payload.productId ? { ...i, quantity: action.payload.quantity } : i
+					i.productId === action.payload.productId
+						? { ...i, quantity: action.payload.quantity }
+						: i,
 				),
 			};
 		case 'CLEAR':
@@ -88,7 +92,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 	const cartCount = useMemo(() => state.items.reduce((s, i) => s + i.quantity, 0), [state.items]);
 	const cartTotal = useMemo(
 		() => state.items.reduce((s, i) => s + i.price * i.quantity, 0),
-		[state.items]
+		[state.items],
 	);
 	return (
 		<CartContext.Provider value={{ state, dispatch, cartCount, cartTotal }}>

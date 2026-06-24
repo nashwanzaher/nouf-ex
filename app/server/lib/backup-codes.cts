@@ -26,7 +26,7 @@ import { promisify } from 'util';
 const scryptAsync = promisify(scryptCb) as (
 	password: string,
 	salt: Buffer,
-	keylen: number
+	keylen: number,
 ) => Promise<Buffer>;
 
 const BACKUP_CODE_LENGTH = 10;
@@ -43,7 +43,7 @@ function pickChar(): string {
 		// characters (well under 256) so the modulo bias is at
 		// most 31/256 ≈ 12% — acceptable for a non-cryptographic
 		// identifier (the security is in the hash, not the code).
-		randomBytes(1)[0] % BACKUP_ALPHABET.length
+		randomBytes(1)[0] % BACKUP_ALPHABET.length,
 	);
 }
 

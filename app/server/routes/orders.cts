@@ -53,7 +53,7 @@ ordersRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
 				`SELECT o.*, s.store_name as store_name, s.logo as store_logo
          FROM orders o
          LEFT JOIN stores s ON o.store_id = s.id
-         WHERE o.id = ?`
+         WHERE o.id = ?`,
 			)
 			.get(orderId)) as (Record<string, unknown> & { customer_id: number }) | undefined;
 
@@ -70,7 +70,7 @@ ordersRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
 				`SELECT oi.*, p.name_en as product_name, p.name_ar as product_name_ar, p.main_image as product_image
          FROM order_items oi
          LEFT JOIN products p ON oi.product_id = p.id
-         WHERE oi.order_id = ?`
+         WHERE oi.order_id = ?`,
 			)
 			.all(orderId)) as Record<string, unknown>[];
 
@@ -119,7 +119,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				`SELECT id, store_id, is_active, deleted_at
 				   FROM products
 				  WHERE id = ANY(?)
-				  ORDER BY id`
+				  ORDER BY id`,
 			)
 			.all(productIds)) as Array<{
 			id: number;
@@ -134,7 +134,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 					res,
 					`Product ${storeResult.productId} is unavailable`,
 					400,
-					'PRODUCT_UNAVAILABLE'
+					'PRODUCT_UNAVAILABLE',
 				);
 			}
 			if (storeResult.code === 'MIXED_STORES') {
@@ -142,7 +142,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 					res,
 					'All items in an order must come from a single store. Split the cart and try again.',
 					400,
-					'MIXED_STORES'
+					'MIXED_STORES',
 				);
 			}
 			return sendError(res, 'No products to order.', 400, 'EMPTY_CART');
@@ -182,7 +182,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 							`SELECT ${COUPON_COLUMNS}
                              FROM coupons
                             WHERE code = ? AND is_active = TRUE
-                            FOR UPDATE`
+                            FOR UPDATE`,
 						)
 						.get(resolvedCouponCode)) as CouponRow | undefined;
 					if (!coupon) {
@@ -199,7 +199,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 					}
 					if (coupon.min_order != null && resolvedSubtotal < coupon.min_order) {
 						throw new Error(
-							`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`
+							`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`,
 						);
 					}
 					resolvedDiscount = await computeCouponDiscount(coupon, resolvedSubtotal);
@@ -207,7 +207,8 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				const finalDiscount = Math.round(resolvedDiscount * 100) / 100;
 				const finalTotal = Math.max(
 					0,
-					Math.round((resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100) / 100
+					Math.round((resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100) /
+						100,
 				);
 
 				const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -221,7 +222,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			       VALUES (?, ?, ?, 'pending', ?, 'pending',
 			               ?, ?, ?, ?, ?, ?, 'YER',
 			               ?, ?)
-			       RETURNING id`
+			       RETURNING id`,
 					)
 					.run(
 						customerId,
@@ -235,7 +236,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 						finalDiscount,
 						finalTotal,
 						JSON.stringify(shippingAddress),
-						notes || null
+						notes || null,
 					)) as { lastInsertRowid: number | null };
 				if (result.lastInsertRowid == null) {
 					throw new HttpError(500, 'Failed to create order', { code: 'INSERT_FAILED' });
@@ -243,19 +244,21 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				const newOrderId: number = result.lastInsertRowid;
 
 				const readProduct = txDb.prepare(
-					`SELECT name_ar, name_en FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`
+					`SELECT name_ar, name_en FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`,
 				);
 
 				const insertItem = txDb.prepare(
 					`INSERT INTO order_items
 			        (order_id, product_id, variant_id, product_name, quantity,
 			         unit_price, total_price)
-			       VALUES (?, ?, ?, ?, ?, ?, ?)`
+			       VALUES (?, ?, ?, ?, ?, ?, ?)`,
 				);
 
 				for (const item of items) {
 					if (item.quantity <= 0) {
-						throw new Error(`Invalid quantity ${item.quantity} for product ${item.productId}`);
+						throw new Error(
+							`Invalid quantity ${item.quantity} for product ${item.productId}`,
+						);
 					}
 					const product = (await readProduct.get(item.productId)) as
 						| { name_ar: string; name_en: string | null }
@@ -271,17 +274,17 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 						product.name_en || product.name_ar,
 						item.quantity,
 						unitPrice,
-						unitPrice * item.quantity
+						unitPrice * item.quantity,
 					);
 				}
 				return { id: newOrderId, orderNumber, finalDiscount, finalTotal };
-			}
+			},
 		);
 
 		sendSuccess(
 			res,
 			{ id: orderId, orderNumber, discount: finalDiscount, total: finalTotal },
-			'Order created successfully'
+			'Order created successfully',
 		);
 	} catch (err) {
 		return sendError(res, err);

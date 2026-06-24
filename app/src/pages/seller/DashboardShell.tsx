@@ -66,8 +66,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 			<aside
 				className={cn(
 					'fixed top-0 bottom-0 right-0 z-40 bg-[#1A1612] border-l border-[rgba(212,168,83,0.1)] transition-all duration-300 hidden md:flex flex-col',
-					sidebarWidth
-				)}>
+					sidebarWidth,
+				)}
+			>
 				{/* Sidebar Header */}
 				<div className="h-16 flex items-center justify-between px-4 border-b border-[rgba(255,255,255,0.06)]">
 					{!collapsed && (
@@ -78,13 +79,16 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 					{collapsed && (
 						<Link to="/" className="mx-auto">
 							<div className="w-8 h-8 rounded-lg bg-[#D4A853] flex items-center justify-center">
-								<span className="text-[#1A1612] font-amiri font-bold text-sm">ن</span>
+								<span className="text-[#1A1612] font-amiri font-bold text-sm">
+									ن
+								</span>
 							</div>
 						</Link>
 					)}
 					<button
 						onClick={() => setCollapsed(!collapsed)}
-						className="w-7 h-7 rounded-lg bg-[rgba(212,168,83,0.15)] hover:bg-[rgba(212,168,83,0.25)] flex items-center justify-center transition-colors">
+						className="w-7 h-7 rounded-lg bg-[rgba(212,168,83,0.15)] hover:bg-[rgba(212,168,83,0.25)] flex items-center justify-center transition-colors"
+					>
 						{collapsed ? (
 							<ChevronLeft className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
 						) : (
@@ -109,8 +113,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 									'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group',
 									active
 										? 'bg-[rgba(212,168,83,0.15)] text-[#D4A853]'
-										: 'text-[#AAAAAA] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#F5F5F0]'
-								)}>
+										: 'text-[#AAAAAA] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#F5F5F0]',
+								)}
+							>
 								{active && (
 									<motion.div
 										layoutId="activeIndicator"
@@ -121,15 +126,18 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 								<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
 								{!collapsed && (
 									<>
-										<span className="text-sm font-cairo font-medium flex-1">{item.label}</span>
+										<span className="text-sm font-cairo font-medium flex-1">
+											{item.label}
+										</span>
 										{item.badge && (
 											<span
 												className={cn(
 													'px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
 													item.badgeColor === 'red'
 														? 'bg-[#EF4444] text-white'
-														: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]'
-												)}>
+														: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]',
+												)}
+											>
 												{item.badge}
 											</span>
 										)}
@@ -145,7 +153,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 					<div className="p-3 border-t border-[rgba(255,255,255,0.06)] space-y-2">
 						<Link
 							to="/store/1"
-							className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[rgba(255,255,255,0.06)] transition-colors">
+							className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+						>
 							<div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center shrink-0">
 								<Store className="w-4 h-4 text-[#1A1612]" strokeWidth={1.5} />
 							</div>
@@ -177,22 +186,32 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 			<header
 				className={cn(
 					'fixed top-0 left-0 h-16 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] z-30 flex items-center transition-all duration-300 hidden md:flex',
-					collapsed ? 'right-[72px]' : 'right-[260px]'
-				)}>
+					collapsed ? 'right-[72px]' : 'right-[260px]',
+				)}
+			>
 				<div className="w-full px-6 flex items-center justify-between">
 					<div>
 						<h1 className="text-lg font-amiri font-bold text-[#1A1612]">{title}</h1>
-						{breadcrumb && <p className="text-xs text-[#AAAAAA] font-cairo">{breadcrumb}</p>}
+						{breadcrumb && (
+							<p className="text-xs text-[#AAAAAA] font-cairo">{breadcrumb}</p>
+						)}
 					</div>
 					<div className="flex items-center gap-2">
 						<button className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors">
-							<Search className="w-[18px] h-[18px] text-[#6B6B6B]" strokeWidth={1.5} />
+							<Search
+								className="w-[18px] h-[18px] text-[#6B6B6B]"
+								strokeWidth={1.5}
+							/>
 						</button>
 						<div className="relative">
 							<button
 								onClick={() => setNotificationsOpen(!notificationsOpen)}
-								className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors relative">
-								<Bell className="w-[18px] h-[18px] text-[#6B6B6B]" strokeWidth={1.5} />
+								className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors relative"
+							>
+								<Bell
+									className="w-[18px] h-[18px] text-[#6B6B6B]"
+									strokeWidth={1.5}
+								/>
 								<span className="absolute -top-0.5 -left-0.5 w-4 h-4 bg-[#EF4444] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
 									٣
 								</span>
@@ -209,7 +228,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 											animate={{ opacity: 1, y: 0, scale: 1 }}
 											exit={{ opacity: 0, y: -10, scale: 0.95 }}
 											transition={{ duration: 0.15 }}
-											className="absolute left-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#F3EDE4] z-50 overflow-hidden">
+											className="absolute left-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#F3EDE4] z-50 overflow-hidden"
+										>
 											<div className="p-4 border-b border-[#F3EDE4] flex items-center justify-between">
 												<h3 className="font-cairo font-semibold text-sm text-[#111111]">
 													الإشعارات
@@ -220,24 +240,46 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 											</div>
 											<div className="max-h-72 overflow-y-auto">
 												{[
-													{ text: 'طلب جديد #١٢٤٣', time: 'قبل ٥ دقائق', unread: true },
-													{ text: 'تقييم جديد على منتجك', time: 'قبل ٢ ساعة', unread: true },
-													{ text: 'تنبيه: المخزون منخفض', time: 'قبل ٤ ساعات', unread: true },
-													{ text: 'تم تحديث حالة الطلب #١٢٤٠', time: 'أمس', unread: false },
+													{
+														text: 'طلب جديد #١٢٤٣',
+														time: 'قبل ٥ دقائق',
+														unread: true,
+													},
+													{
+														text: 'تقييم جديد على منتجك',
+														time: 'قبل ٢ ساعة',
+														unread: true,
+													},
+													{
+														text: 'تنبيه: المخزون منخفض',
+														time: 'قبل ٤ ساعات',
+														unread: true,
+													},
+													{
+														text: 'تم تحديث حالة الطلب #١٢٤٠',
+														time: 'أمس',
+														unread: false,
+													},
 												].map((notif, i) => (
 													<div
 														key={i}
 														className={cn(
 															'p-3 border-b border-[#F3EDE4] hover:bg-[#F8F8F8] transition-colors cursor-pointer',
-															notif.unread && 'bg-[rgba(212,168,83,0.05)]'
-														)}>
+															notif.unread &&
+																'bg-[rgba(212,168,83,0.05)]',
+														)}
+													>
 														<div className="flex items-start gap-2">
 															{notif.unread && (
 																<span className="w-2 h-2 rounded-full bg-[#D4A853] mt-1.5 shrink-0" />
 															)}
 															<div>
-																<p className="text-xs font-cairo text-[#111111]">{notif.text}</p>
-																<p className="text-[10px] text-[#AAAAAA] mt-0.5">{notif.time}</p>
+																<p className="text-xs font-cairo text-[#111111]">
+																	{notif.text}
+																</p>
+																<p className="text-[10px] text-[#AAAAAA] mt-0.5">
+																	{notif.time}
+																</p>
 															</div>
 														</div>
 													</div>
@@ -250,7 +292,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 						</div>
 						<Link
 							to="/seller/products"
-							className="w-9 h-9 rounded-xl bg-[#D4A853] hover:bg-[#c49a48] flex items-center justify-center transition-colors">
+							className="w-9 h-9 rounded-xl bg-[#D4A853] hover:bg-[#c49a48] flex items-center justify-center transition-colors"
+						>
 							<Plus className="w-[18px] h-[18px] text-[#1A1612]" strokeWidth={1.5} />
 						</Link>
 						<div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A853] to-[#8B6914] flex items-center justify-center mr-1">
@@ -264,7 +307,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 			<header className="fixed top-0 left-0 right-0 h-14 bg-white shadow-sm z-30 flex md:hidden items-center px-4 justify-between">
 				<button
 					onClick={() => setMobileDrawerOpen(true)}
-					className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center">
+					className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center"
+				>
 					<Menu className="w-5 h-5 text-[#111111]" strokeWidth={1.5} />
 				</button>
 				<h1 className="text-base font-amiri font-bold text-[#1A1612]">{title}</h1>
@@ -297,12 +341,14 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							animate={{ x: 0 }}
 							exit={{ x: '100%' }}
 							transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-							className="fixed top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-[#1A1612] z-50 md:hidden flex flex-col">
+							className="fixed top-0 right-0 bottom-0 w-[280px] max-w-[85vw] bg-[#1A1612] z-50 md:hidden flex flex-col"
+						>
 							<div className="h-14 flex items-center justify-between px-4 border-b border-[rgba(255,255,255,0.06)]">
 								<img src="/noufex-logo.svg" alt="نوف-إكس" className="h-8" />
 								<button
 									onClick={() => setMobileDrawerOpen(false)}
-									className="w-8 h-8 rounded-lg hover:bg-[rgba(255,255,255,0.06)] flex items-center justify-center">
+									className="w-8 h-8 rounded-lg hover:bg-[rgba(255,255,255,0.06)] flex items-center justify-center"
+								>
 									<X className="w-5 h-5 text-[#AAAAAA]" strokeWidth={1.5} />
 								</button>
 							</div>
@@ -321,18 +367,22 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 												'flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200',
 												active
 													? 'bg-[rgba(212,168,83,0.15)] text-[#D4A853]'
-													: 'text-[#AAAAAA] hover:bg-[rgba(255,255,255,0.06)]'
-											)}>
+													: 'text-[#AAAAAA] hover:bg-[rgba(255,255,255,0.06)]',
+											)}
+										>
 											<item.icon className="w-5 h-5" strokeWidth={1.5} />
-											<span className="text-sm font-cairo font-medium flex-1">{item.label}</span>
+											<span className="text-sm font-cairo font-medium flex-1">
+												{item.label}
+											</span>
 											{item.badge && (
 												<span
 													className={cn(
 														'px-1.5 py-0.5 rounded-md text-[10px] font-bold',
 														item.badgeColor === 'red'
 															? 'bg-[#EF4444] text-white'
-															: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]'
-													)}>
+															: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]',
+													)}
+												>
 													{item.badge}
 												</span>
 											)}
@@ -343,7 +393,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							<div className="p-3 border-t border-[rgba(255,255,255,0.06)]">
 								<button className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] transition-colors w-full text-right">
 									<LogOut className="w-4 h-4 text-[#EF4444]" strokeWidth={1.5} />
-									<span className="text-sm font-cairo text-[#EF4444]">تسجيل الخروج</span>
+									<span className="text-sm font-cairo text-[#EF4444]">
+										تسجيل الخروج
+									</span>
 								</button>
 							</div>
 						</motion.div>
@@ -355,8 +407,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 			<main
 				className={cn(
 					'pt-14 md:pt-16 pb-20 md:pb-6 px-4 md:px-6 min-h-[100dvh] transition-all duration-300',
-					collapsed ? 'md:mr-[72px]' : 'md:mr-[260px]'
-				)}>
+					collapsed ? 'md:mr-[72px]' : 'md:mr-[260px]',
+				)}
+			>
 				{children}
 			</main>
 
@@ -371,10 +424,13 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 								onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
 								className={cn(
 									'flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors',
-									active ? 'text-[#D4A853]' : 'text-[#AAAAAA]'
-								)}>
+									active ? 'text-[#D4A853]' : 'text-[#AAAAAA]',
+								)}
+							>
 								<tab.icon className="w-5 h-5" strokeWidth={1.5} />
-								<span className="text-[10px] font-cairo font-medium">{tab.label}</span>
+								<span className="text-[10px] font-cairo font-medium">
+									{tab.label}
+								</span>
 							</button>
 						);
 					}
@@ -384,8 +440,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							to={tab.path!}
 							className={cn(
 								'flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors',
-								active ? 'text-[#D4A853]' : 'text-[#AAAAAA]'
-							)}>
+								active ? 'text-[#D4A853]' : 'text-[#AAAAAA]',
+							)}
+						>
 							<tab.icon className="w-5 h-5" strokeWidth={1.5} />
 							<span className="text-[10px] font-cairo font-medium">{tab.label}</span>
 							{tab.path === '/seller/orders' && (
@@ -412,7 +469,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							animate={{ y: 0 }}
 							exit={{ y: '100%' }}
 							transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-							className="fixed bottom-16 left-4 right-4 bg-white rounded-2xl shadow-xl z-50 md:hidden p-4 space-y-1">
+							className="fixed bottom-16 left-4 right-4 bg-white rounded-2xl shadow-xl z-50 md:hidden p-4 space-y-1"
+						>
 							{navItems.slice(3).map((item) => (
 								<Link
 									key={item.path}
@@ -421,9 +479,15 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 										setMobileDrawerOpen(false);
 										setMobileMoreOpen(false);
 									}}
-									className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#F8F8F8] transition-colors text-[#111111]">
-									<item.icon className="w-5 h-5 text-[#6B6B6B]" strokeWidth={1.5} />
-									<span className="text-sm font-cairo font-medium">{item.label}</span>
+									className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#F8F8F8] transition-colors text-[#111111]"
+								>
+									<item.icon
+										className="w-5 h-5 text-[#6B6B6B]"
+										strokeWidth={1.5}
+									/>
+									<span className="text-sm font-cairo font-medium">
+										{item.label}
+									</span>
 								</Link>
 							))}
 						</motion.div>

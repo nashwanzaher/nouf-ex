@@ -34,7 +34,7 @@ function renderLayoutAt(path: string) {
 			<Layout>
 				<div data-testid="content">Body</div>
 			</Layout>
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 

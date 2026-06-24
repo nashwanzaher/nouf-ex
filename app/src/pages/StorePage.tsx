@@ -80,7 +80,7 @@ export default function StorePage() {
 			(p) =>
 				p.name_ar.toLowerCase().includes(q) ||
 				p.name_en.toLowerCase().includes(q) ||
-				p.name_zh.includes(q)
+				p.name_zh.includes(q),
 		);
 	}
 	if (catFilter !== 'all') {
@@ -107,12 +107,17 @@ export default function StorePage() {
 		return (
 			<div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
 				<h2 className="text-xl font-bold text-[#333]">
-					{lang === 'ar' ? 'المتجر غير موجود' : lang === 'zh' ? '商店不存在' : 'Store not found'}
+					{lang === 'ar'
+						? 'المتجر غير موجود'
+						: lang === 'zh'
+							? '商店不存在'
+							: 'Store not found'}
 				</h2>
 				<p className="text-sm text-[#999] mb-4 mt-2">{storeError || ''}</p>
 				<Link
 					to="/"
-					className="px-6 py-2 bg-[#FF6A00] text-white rounded-lg font-semibold hover:bg-[#E55F00]">
+					className="px-6 py-2 bg-[#FF6A00] text-white rounded-lg font-semibold hover:bg-[#E55F00]"
+				>
 					{t('common.back')}
 				</Link>
 			</div>
@@ -156,7 +161,9 @@ export default function StorePage() {
 	// Unique category IDs for this store's products
 	const storeCategoryIds = Array.from(new Set(storeProducts.map((p) => p.category_id)));
 
-	const yearsActive = store.since_year ? new Date().getFullYear() - parseInt(store.since_year) : 0;
+	const yearsActive = store.since_year
+		? new Date().getFullYear() - parseInt(store.since_year)
+		: 0;
 
 	return (
 		<div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-4" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -177,18 +184,25 @@ export default function StorePage() {
 							className="w-20 h-20 lg:w-24 lg:h-24 rounded-full border-4 border-white shadow-lg object-cover -mt-10"
 						/>
 						<div className="pb-1">
-							<h1 className="text-xl lg:text-2xl font-bold text-[#333]">{getStoreName(store)}</h1>
+							<h1 className="text-xl lg:text-2xl font-bold text-[#333]">
+								{getStoreName(store)}
+							</h1>
 							<div className="flex items-center gap-3 mt-1 flex-wrap">
 								<div className="flex items-center gap-1">
 									<Star size={14} className="text-[#FF6A00] fill-[#FF6A00]" />
-									<span className="text-sm font-bold text-[#333]">{store.rating}</span>
-									<span className="text-xs text-[#999]">({store.review_count})</span>
+									<span className="text-sm font-bold text-[#333]">
+										{store.rating}
+									</span>
+									<span className="text-xs text-[#999]">
+										({store.review_count})
+									</span>
 								</div>
 								<span className="text-xs text-[#999] flex items-center gap-1">
 									<MapPin size={12} /> {store.location}
 								</span>
 								<span className="text-xs text-[#999] flex items-center gap-1">
-									<Clock size={12} /> {yearsActive} {lang === 'ar' ? 'سنة' : 'yrs'}
+									<Clock size={12} /> {yearsActive}{' '}
+									{lang === 'ar' ? 'سنة' : 'yrs'}
 								</span>
 							</div>
 							{/* Badges */}
@@ -196,7 +210,8 @@ export default function StorePage() {
 								{storeBadges.map((badge) => (
 									<span
 										key={badge}
-										className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded font-medium ${trustIcons[badge]?.bg || 'bg-gray-100'} ${trustIcons[badge]?.color || 'text-gray-700'}`}>
+										className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded font-medium ${trustIcons[badge]?.bg || 'bg-gray-100'} ${trustIcons[badge]?.color || 'text-gray-700'}`}
+									>
 										{badge === 'golden' && <Award size={12} />}
 										{badge === 'verified' && <BadgeCheck size={12} />}
 										{badge === 'diamond' && <Award size={12} />}
@@ -254,12 +269,15 @@ export default function StorePage() {
 				].map((stat, i) => (
 					<div
 						key={i}
-						className="bg-white rounded border border-[#E5E5E5] p-4 flex items-center gap-3">
+						className="bg-white rounded border border-[#E5E5E5] p-4 flex items-center gap-3"
+					>
 						<div className="w-10 h-10 rounded-full bg-[#F7F8FA] flex items-center justify-center flex-shrink-0">
 							<stat.icon size={18} className={stat.color} />
 						</div>
 						<div>
-							<p className="font-bold text-lg text-[#333] leading-tight">{stat.value}</p>
+							<p className="font-bold text-lg text-[#333] leading-tight">
+								{stat.value}
+							</p>
 							<p className="text-xs text-[#999]">{stat.label}</p>
 						</div>
 					</div>
@@ -275,13 +293,20 @@ export default function StorePage() {
 							label: lang === 'ar' ? 'المنتجات' : 'Products',
 							count: storeProducts.length,
 						},
-						{ key: 'profile' as const, label: lang === 'ar' ? 'ملف الشركة' : 'Company Profile' },
-						{ key: 'markets' as const, label: lang === 'ar' ? 'الأسواق الرئيسية' : 'Main Markets' },
+						{
+							key: 'profile' as const,
+							label: lang === 'ar' ? 'ملف الشركة' : 'Company Profile',
+						},
+						{
+							key: 'markets' as const,
+							label: lang === 'ar' ? 'الأسواق الرئيسية' : 'Main Markets',
+						},
 					].map((tab) => (
 						<button
 							key={tab.key}
 							onClick={() => setActiveTab(tab.key)}
-							className={`px-6 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.key ? 'border-[#FF6A00] text-[#FF6A00]' : 'border-transparent text-[#666] hover:text-[#333]'}`}>
+							className={`px-6 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.key ? 'border-[#FF6A00] text-[#FF6A00]' : 'border-transparent text-[#666] hover:text-[#333]'}`}
+						>
 							{tab.label}
 							{tab.count !== undefined && (
 								<span className="ml-1.5 text-xs bg-[#F7F8FA] text-[#999] px-1.5 py-0.5 rounded">
@@ -303,7 +328,11 @@ export default function StorePage() {
 										type="text"
 										value={searchQuery}
 										onChange={(e) => setSearchQuery(e.target.value)}
-										placeholder={lang === 'ar' ? 'ابحث في المتجر...' : 'Search in store...'}
+										placeholder={
+											lang === 'ar'
+												? 'ابحث في المتجر...'
+												: 'Search in store...'
+										}
 										className="w-full h-9 pl-9 pr-3 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00]"
 									/>
 									<Search
@@ -314,34 +343,49 @@ export default function StorePage() {
 								<div className="flex gap-1.5 overflow-auto">
 									<button
 										onClick={() => setCatFilter('all')}
-										className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex-shrink-0 ${catFilter === 'all' ? 'bg-[#FF6A00] text-white' : 'bg-[#F7F8FA] text-[#666] hover:bg-[#FF6A00]/10'}`}>
+										className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex-shrink-0 ${catFilter === 'all' ? 'bg-[#FF6A00] text-white' : 'bg-[#F7F8FA] text-[#666] hover:bg-[#FF6A00]/10'}`}
+									>
 										{lang === 'ar' ? 'الكل' : 'All'}
 									</button>
 									{storeCategoryIds.map((catId) => (
 										<button
 											key={catId}
 											onClick={() => setCatFilter(String(catId))}
-											className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex-shrink-0 ${catFilter === String(catId) ? 'bg-[#FF6A00] text-white' : 'bg-[#F7F8FA] text-[#666] hover:bg-[#FF6A00]/10'}`}>
+											className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex-shrink-0 ${catFilter === String(catId) ? 'bg-[#FF6A00] text-white' : 'bg-[#F7F8FA] text-[#666] hover:bg-[#FF6A00]/10'}`}
+										>
 											{getCategoryName(catId)}
 										</button>
 									))}
 								</div>
 								<div className="ml-auto flex items-center gap-1">
-									<span className="text-xs text-[#999]">{t('common.sortBy')}:</span>
+									<span className="text-xs text-[#999]">
+										{t('common.sortBy')}:
+									</span>
 									<select
 										value={sort}
 										onChange={(e) =>
-											setSort(e.target.value as 'default' | 'price-low' | 'price-high' | 'rating')
+											setSort(
+												e.target.value as
+													| 'default'
+													| 'price-low'
+													| 'price-high'
+													| 'rating',
+											)
 										}
-										className="h-8 px-2 rounded border border-[#E5E5E5] bg-white text-xs text-[#333] focus:outline-none">
-										<option value="default">{lang === 'ar' ? 'افتراضي' : 'Default'}</option>
+										className="h-8 px-2 rounded border border-[#E5E5E5] bg-white text-xs text-[#333] focus:outline-none"
+									>
+										<option value="default">
+											{lang === 'ar' ? 'افتراضي' : 'Default'}
+										</option>
 										<option value="price-low">
 											{lang === 'ar' ? 'السعر: من低到高' : 'Price: Low'}
 										</option>
 										<option value="price-high">
 											{lang === 'ar' ? 'السعر: من高到低' : 'Price: High'}
 										</option>
-										<option value="rating">{lang === 'ar' ? 'التقييم' : 'Rating'}</option>
+										<option value="rating">
+											{lang === 'ar' ? 'التقييم' : 'Rating'}
+										</option>
 									</select>
 								</div>
 							</div>
@@ -359,7 +403,8 @@ export default function StorePage() {
 										<Link
 											key={p.id}
 											to={`/product/${p.id}`}
-											className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden">
+											className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden"
+										>
 											<div className="aspect-square bg-[#F7F8FA] overflow-hidden relative">
 												<img
 													src={p.main_image}
@@ -380,16 +425,26 @@ export default function StorePage() {
 													<span className="text-base font-bold text-[#FF6A00]">
 														{p.price.toLocaleString()}
 													</span>
-													<span className="text-xs text-[#999]">{t('product.currency')}</span>
+													<span className="text-xs text-[#999]">
+														{t('product.currency')}
+													</span>
 												</div>
 												<div className="flex items-center gap-1 mt-1">
 													<div className="flex items-center gap-0.5">
-														<Star size={10} className="text-[#FF6A00] fill-[#FF6A00]" />
-														<span className="text-xs font-bold text-[#333]">{p.rating}</span>
+														<Star
+															size={10}
+															className="text-[#FF6A00] fill-[#FF6A00]"
+														/>
+														<span className="text-xs font-bold text-[#333]">
+															{p.rating}
+														</span>
 													</div>
-													<span className="text-xs text-[#999]">({p.review_count})</span>
+													<span className="text-xs text-[#999]">
+														({p.review_count})
+													</span>
 													<span className="text-xs text-[#999] ml-auto">
-														{p.sold_count} {lang === 'ar' ? 'مبيع' : 'sold'}
+														{p.sold_count}{' '}
+														{lang === 'ar' ? 'مبيع' : 'sold'}
 													</span>
 												</div>
 											</div>
@@ -440,8 +495,12 @@ export default function StorePage() {
 												<item.icon size={14} className="text-[#FF6A00]" />
 											</div>
 											<div>
-												<span className="text-[#999] block text-xs">{item.label}</span>
-												<span className="text-[#333] font-medium">{item.value}</span>
+												<span className="text-[#999] block text-xs">
+													{item.label}
+												</span>
+												<span className="text-[#333] font-medium">
+													{item.value}
+												</span>
 											</div>
 										</div>
 									))}
@@ -449,22 +508,34 @@ export default function StorePage() {
 							</div>
 							<div>
 								<h3 className="text-base font-bold text-[#333] mb-4">
-									{lang === 'ar' ? 'القدرات والشهادات' : 'Capabilities & Certifications'}
+									{lang === 'ar'
+										? 'القدرات والشهادات'
+										: 'Capabilities & Certifications'}
 								</h3>
 								<div className="space-y-3">
 									{[
 										lang === 'ar'
 											? 'شحن إلى أكثر من 50 دولة حول العالم'
 											: 'Shipping to 50+ countries worldwide',
-										lang === 'ar' ? 'تصنيع حسب الطلب (OEM/ODM)' : 'OEM/ODM Manufacturing Available',
-										lang === 'ar' ? 'فريق دعم فني على مدار الساعة' : '24/7 Technical Support Team',
+										lang === 'ar'
+											? 'تصنيع حسب الطلب (OEM/ODM)'
+											: 'OEM/ODM Manufacturing Available',
+										lang === 'ar'
+											? 'فريق دعم فني على مدار الساعة'
+											: '24/7 Technical Support Team',
 										lang === 'ar'
 											? 'شهادات جودة دولية (ISO 9001)'
 											: 'International Quality Certifications (ISO 9001)',
 										lang === 'ar' ? 'تدقيق مصنع سنوي' : 'Annual Factory Audits',
 									].map((cap, i) => (
-										<div key={i} className="flex items-center gap-2 text-sm text-[#666]">
-											<BadgeCheck size={14} className="text-[#4CAF50] flex-shrink-0" />
+										<div
+											key={i}
+											className="flex items-center gap-2 text-sm text-[#666]"
+										>
+											<BadgeCheck
+												size={14}
+												className="text-[#4CAF50] flex-shrink-0"
+											/>
 											<span>{cap}</span>
 										</div>
 									))}
@@ -482,7 +553,10 @@ export default function StorePage() {
 							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
 								{[
 									{
-										country: lang === 'ar' ? 'المملكة العربية السعودية' : 'Saudi Arabia',
+										country:
+											lang === 'ar'
+												? 'المملكة العربية السعودية'
+												: 'Saudi Arabia',
 										pct: 35,
 										flag: 'SA',
 									},
@@ -491,29 +565,52 @@ export default function StorePage() {
 										pct: 25,
 										flag: 'AE',
 									},
-									{ country: lang === 'ar' ? 'الكويت' : 'Kuwait', pct: 15, flag: 'KW' },
-									{ country: lang === 'ar' ? 'قطر' : 'Qatar', pct: 10, flag: 'QA' },
 									{
-										country: lang === 'ar' ? 'الولايات المتحدة' : 'United States',
+										country: lang === 'ar' ? 'الكويت' : 'Kuwait',
+										pct: 15,
+										flag: 'KW',
+									},
+									{
+										country: lang === 'ar' ? 'قطر' : 'Qatar',
+										pct: 10,
+										flag: 'QA',
+									},
+									{
+										country:
+											lang === 'ar' ? 'الولايات المتحدة' : 'United States',
 										pct: 8,
 										flag: 'US',
 									},
 									{
-										country: lang === 'ar' ? 'المملكة المتحدة' : 'United Kingdom',
+										country:
+											lang === 'ar' ? 'المملكة المتحدة' : 'United Kingdom',
 										pct: 5,
 										flag: 'UK',
 									},
-									{ country: lang === 'ar' ? 'ماليزيا' : 'Malaysia', pct: 2, flag: 'MY' },
+									{
+										country: lang === 'ar' ? 'ماليزيا' : 'Malaysia',
+										pct: 2,
+										flag: 'MY',
+									},
 								].map((m, i) => (
-									<div key={i} className="bg-[#F7F8FA] rounded p-3 border border-[#E5E5E5]">
+									<div
+										key={i}
+										className="bg-[#F7F8FA] rounded p-3 border border-[#E5E5E5]"
+									>
 										<div className="flex items-center gap-2 mb-2">
 											<Globe size={14} className="text-[#FF6A00]" />
-											<span className="text-sm font-medium text-[#333]">{m.country}</span>
+											<span className="text-sm font-medium text-[#333]">
+												{m.country}
+											</span>
 										</div>
 										<div className="h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
 											<div
 												className={`h-full bg-[#FF6A00] rounded-full transition-all ${styles.exportBar}`}
-												style={{ '--export-pct': `${m.pct}%` } as React.CSSProperties}
+												style={
+													{
+														'--export-pct': `${m.pct}%`,
+													} as React.CSSProperties
+												}
 											/>
 										</div>
 										<span className="text-xs text-[#999] mt-1">{m.pct}%</span>
@@ -550,7 +647,8 @@ function StoreIcon({ size, className }: { size: number; className?: string }) {
 			stroke="currentColor"
 			strokeWidth="2"
 			strokeLinecap="round"
-			strokeLinejoin="round">
+			strokeLinejoin="round"
+		>
 			<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
 			<polyline points="9 22 9 12 15 12 15 22" />
 		</svg>
@@ -568,7 +666,8 @@ function CalendarIcon({ size, className }: { size: number; className?: string })
 			stroke="currentColor"
 			strokeWidth="2"
 			strokeLinecap="round"
-			strokeLinejoin="round">
+			strokeLinejoin="round"
+		>
 			<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
 			<line x1="16" y1="2" x2="16" y2="6" />
 			<line x1="8" y1="2" x2="8" y2="6" />

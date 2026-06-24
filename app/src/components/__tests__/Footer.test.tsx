@@ -25,7 +25,7 @@ function renderFooter() {
 	return render(
 		<MemoryRouter>
 			<Footer />
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 
@@ -58,12 +58,18 @@ describe('Footer', () => {
 
 	it('renders an internal /customer/orders route link', () => {
 		renderFooter();
-		expect(screen.getByText('My Orders').closest('a')).toHaveAttribute('href', '/customer/orders');
+		expect(screen.getByText('My Orders').closest('a')).toHaveAttribute(
+			'href',
+			'/customer/orders',
+		);
 	});
 
 	it('renders an internal /seller route link', () => {
 		renderFooter();
-		expect(screen.getByText('Seller Dashboard').closest('a')).toHaveAttribute('href', '/seller');
+		expect(screen.getByText('Seller Dashboard').closest('a')).toHaveAttribute(
+			'href',
+			'/seller',
+		);
 	});
 
 	it('includes the current year in the copyright', () => {

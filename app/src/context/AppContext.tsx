@@ -143,23 +143,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 	 *  so pages don't need to know the action shape. */
 	const setUser = useCallback(
 		(user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
-		[]
+		[],
 	);
 	const setToken = useCallback(
 		(token: string | null) => dispatch({ type: 'SET_TOKEN', payload: token }),
-		[]
+		[],
 	);
 	const addToast = useCallback(
 		(toast: Omit<Toast, 'id'>) =>
 			dispatch({
 				type: 'ADD_TOAST',
-				payload: { ...toast, id: `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` },
+				payload: {
+					...toast,
+					id: `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+				},
 			}),
-		[]
+		[],
 	);
 	const removeToast = useCallback(
 		(id: string) => dispatch({ type: 'REMOVE_TOAST', payload: id }),
-		[]
+		[],
 	);
 
 	const value = { state, dispatch, setUser, setToken, addToast, removeToast };
@@ -194,7 +197,8 @@ export function useAuth() {
 				const result = await syncOnLogin(Number(user.id));
 				if (result.degraded) {
 					addToast({
-						message: 'Some cart items could not be saved to your account. Please review and retry.',
+						message:
+							'Some cart items could not be saved to your account. Please review and retry.',
 						type: 'warning',
 					});
 				} else if (result.pushed > 0) {
@@ -207,7 +211,7 @@ export function useAuth() {
 				// Silently swallow — login already succeeded.
 			}
 		},
-		[setUser, setToken, addToast]
+		[setUser, setToken, addToast],
 	);
 	const logout = useCallback(() => {
 		setUser(null);

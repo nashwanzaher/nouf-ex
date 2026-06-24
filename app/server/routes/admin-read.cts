@@ -22,7 +22,7 @@ adminReadRouter.get('/users', ...adminAuth, async (req: Request, res: Response) 
 				role: z.enum(['customer', 'merchant', 'admin']).optional(),
 				is_active: z.enum(['active', 'suspended', 'banned']).optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -51,7 +51,7 @@ adminReadRouter.get('/users', ...adminAuth, async (req: Request, res: Response) 
 				        preferred_language, gender, last_login, created_at, updated_at
 				 FROM users ${whereSql}
 				 ORDER BY created_at DESC
-				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -76,7 +76,7 @@ adminReadRouter.get('/stores', ...adminAuth, async (req: Request, res: Response)
 					.optional()
 					.transform((s) => (s === 'true' ? true : s === 'false' ? false : undefined)),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -102,7 +102,7 @@ adminReadRouter.get('/stores', ...adminAuth, async (req: Request, res: Response)
 			.prepare(
 				`SELECT * FROM stores ${whereSql}
 				 ORDER BY created_at DESC
-				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -129,7 +129,7 @@ adminReadRouter.get('/products', ...adminAuth, async (req: Request, res: Respons
 				store_id: z.coerce.number().int().positive().optional(),
 				category_id: z.coerce.number().int().positive().optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -163,7 +163,7 @@ adminReadRouter.get('/products', ...adminAuth, async (req: Request, res: Respons
 			.prepare(
 				`SELECT * FROM products ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -195,7 +195,7 @@ adminReadRouter.get('/orders', ...adminAuth, async (req: Request, res: Response)
 					.optional(),
 				payment_status: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -221,7 +221,7 @@ adminReadRouter.get('/orders', ...adminAuth, async (req: Request, res: Response)
 			.prepare(
 				`SELECT * FROM orders ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -238,7 +238,7 @@ adminReadRouter.get('/disputes', ...adminAuth, async (req: Request, res: Respons
 				status: z.enum(['open', 'in_review', 'resolved', 'rejected']).optional(),
 				priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -264,7 +264,7 @@ adminReadRouter.get('/disputes', ...adminAuth, async (req: Request, res: Respons
 			.prepare(
 				`SELECT * FROM disputes ${whereSql}
 					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`
+					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -282,7 +282,7 @@ adminReadRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Respon
 				action: z.string().trim().min(1).max(50).optional(),
 				user_id: z.coerce.number().int().positive().optional(),
 			}),
-			req.query
+			req.query,
 		);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
 
@@ -314,7 +314,7 @@ adminReadRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Respon
 				        new_values, ip_address, user_agent, created_at
 				 FROM admin_audit_log ${whereSql}
 				 ORDER BY created_at DESC
-				 LIMIT $${params.length - 1} OFFSET $${params.length}`
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -337,40 +337,44 @@ adminReadRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response)
 		const reviews = count(await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get());
 		const disputes = count(await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get());
 		const openDisputes = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`).get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`).get(),
 		);
 		const pendingOrders = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`).get()
+			await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`)
+				.get(),
 		);
 		const paidOrders = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`).get()
+			await db
+				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`)
+				.get(),
 		);
 		const suspendedUsers = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`).get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`).get(),
 		);
 		const inactiveStores = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`).get()
+			await db.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`).get(),
 		);
 		const recentOrders = count(
 			await db
 				.prepare(
 					`SELECT COUNT(*)::int AS c FROM orders
-					 WHERE created_at > NOW() - INTERVAL '7 days'`
+					 WHERE created_at > NOW() - INTERVAL '7 days'`,
 				)
-				.get()
+				.get(),
 		);
 		const recentUsers = count(
 			await db
 				.prepare(
 					`SELECT COUNT(*)::int AS c FROM users
-					 WHERE created_at > NOW() - INTERVAL '7 days'`
+					 WHERE created_at > NOW() - INTERVAL '7 days'`,
 				)
-				.get()
+				.get(),
 		);
 		const revenueRow = (await db
 			.prepare(
 				`SELECT COALESCE(SUM(total), 0)::numeric AS s
-					 FROM orders WHERE payment_status = 'paid'`
+					 FROM orders WHERE payment_status = 'paid'`,
 			)
 			.get()) as { s: string } | undefined;
 		const revenueYer = revenueRow ? Number(revenueRow.s) : 0;

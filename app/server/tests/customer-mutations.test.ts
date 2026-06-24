@@ -206,7 +206,7 @@ describe('resolveOrderStoreId', () => {
 	function row(
 		id: number,
 		store_id: number,
-		overrides: Partial<OrderProductRow> = {}
+		overrides: Partial<OrderProductRow> = {},
 	): OrderProductRow {
 		return {
 			id,
@@ -223,10 +223,7 @@ describe('resolveOrderStoreId', () => {
 	});
 
 	it('returns MIXED_STORES when items span more than one store', () => {
-		const r = resolveOrderStoreId(
-			[1, 2],
-			[row(1, 7), row(2, 9)]
-		);
+		const r = resolveOrderStoreId([1, 2], [row(1, 7), row(2, 9)]);
 		expect(r.ok).toBe(false);
 		if (!r.ok) expect(r.code).toBe('MIXED_STORES');
 	});
@@ -244,10 +241,7 @@ describe('resolveOrderStoreId', () => {
 	});
 
 	it('returns PRODUCT_UNAVAILABLE for an inactive product (is_active=false)', () => {
-		const r = resolveOrderStoreId(
-			[1, 2],
-			[row(1, 7), row(2, 7, { is_active: false })]
-		);
+		const r = resolveOrderStoreId([1, 2], [row(1, 7), row(2, 7, { is_active: false })]);
 		expect(r.ok).toBe(false);
 		if (!r.ok) expect(r.code).toBe('PRODUCT_UNAVAILABLE');
 	});
@@ -255,7 +249,7 @@ describe('resolveOrderStoreId', () => {
 	it('returns PRODUCT_UNAVAILABLE for a soft-deleted product (deleted_at != null)', () => {
 		const r = resolveOrderStoreId(
 			[1, 2],
-			[row(1, 7), row(2, 7, { deleted_at: '2026-06-01T00:00:00Z' })]
+			[row(1, 7), row(2, 7, { deleted_at: '2026-06-01T00:00:00Z' })],
 		);
 		expect(r.ok).toBe(false);
 		if (!r.ok) expect(r.code).toBe('PRODUCT_UNAVAILABLE');
@@ -271,10 +265,7 @@ describe('resolveOrderStoreId', () => {
 		// A user could legitimately request the same product twice
 		// (e.g. duplicate line items). The storeId resolution is
 		// based on the unique set of stores, not the line count.
-		const r = resolveOrderStoreId(
-			[1, 1, 1],
-			[row(1, 7)]
-		);
+		const r = resolveOrderStoreId([1, 1, 1], [row(1, 7)]);
 		expect(r).toEqual({ ok: true, storeId: 7 });
 	});
 });

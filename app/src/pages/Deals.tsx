@@ -62,7 +62,7 @@ export default function DealsPage() {
 	const getName = useCallback(
 		(p: Product) =>
 			i18n.language === 'en' ? p.name_en : i18n.language === 'zh' ? p.name_zh : p.name_ar,
-		[i18n.language]
+		[i18n.language],
 	);
 
 	const addToCart = useCallback(
@@ -86,10 +86,10 @@ export default function DealsPage() {
 						n.delete(p.id);
 						return n;
 					}),
-				1500
+				1500,
 			);
 		},
-		[dispatch, getName]
+		[dispatch, getName],
 	);
 
 	const allProducts = dealsResp?.products ?? [];
@@ -172,7 +172,9 @@ export default function DealsPage() {
 							<Flame size={22} className="text-red-500" />
 							<h2 className="text-xl lg:text-2xl font-bold text-aliText">
 								{i18n.language === 'ar' ? 'عروض نارية' : 'Hot Deals'}
-								<span className="text-sm font-normal text-aliTextMute ml-2">25%+ off</span>
+								<span className="text-sm font-normal text-aliTextMute ml-2">
+									25%+ off
+								</span>
 							</h2>
 						</div>
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -218,11 +220,14 @@ export default function DealsPage() {
 						<div className="text-center py-16 bg-white rounded-xl border border-aliBorder">
 							<Clock size={48} className="text-aliTextMute mx-auto mb-4" />
 							<p className="text-aliTextSec text-lg">
-								{i18n.language === 'ar' ? 'لا توجد عروض حالياً' : 'No deals at the moment'}
+								{i18n.language === 'ar'
+									? 'لا توجد عروض حالياً'
+									: 'No deals at the moment'}
 							</p>
 							<Link
 								to="/"
-								className="inline-block mt-4 px-6 py-2.5 bg-aliOrange text-white rounded-lg font-semibold hover:bg-aliOrangeHover transition-colors">
+								className="inline-block mt-4 px-6 py-2.5 bg-aliOrange text-white rounded-lg font-semibold hover:bg-aliOrangeHover transition-colors"
+							>
 								{i18n.language === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
 							</Link>
 						</div>
@@ -256,11 +261,15 @@ function DealCard({
 	return (
 		<div
 			className={`bg-white rounded-xl overflow-hidden border hover:shadow-lg transition-all group ${
-				hot ? 'border-red-200 hover:border-red-300' : 'border-aliBorder hover:border-aliOrange/30'
-			}`}>
+				hot
+					? 'border-red-200 hover:border-red-300'
+					: 'border-aliBorder hover:border-aliOrange/30'
+			}`}
+		>
 			<Link
 				to={`/product/${product.id}`}
-				className="block relative aspect-square overflow-hidden bg-aliSurface">
+				className="block relative aspect-square overflow-hidden bg-aliSurface"
+			>
 				<img
 					src={product.main_image}
 					alt={getName(product)}
@@ -268,7 +277,8 @@ function DealCard({
 				/>
 				{/* Discount Badge */}
 				<div
-					className={`absolute top-2 left-2 ${hot ? 'bg-red-500' : 'bg-aliOrange'} text-white font-bold px-2.5 py-1 rounded-lg text-sm flex items-center gap-1`}>
+					className={`absolute top-2 left-2 ${hot ? 'bg-red-500' : 'bg-aliOrange'} text-white font-bold px-2.5 py-1 rounded-lg text-sm flex items-center gap-1`}
+				>
 					<Zap size={12} />-{discount}%
 				</div>
 				{/* Limited badge */}
@@ -296,7 +306,9 @@ function DealCard({
 
 				{/* Price */}
 				<div className="flex items-baseline gap-2 mt-2">
-					<span className="text-xl font-bold text-aliOrange">{product.price.toLocaleString()}</span>
+					<span className="text-xl font-bold text-aliOrange">
+						{product.price.toLocaleString()}
+					</span>
 					<span className="text-aliTextMute text-xs">{t('product.currency')}</span>
 					{product.original_price && (
 						<span className="text-aliTextMute text-sm line-through">
@@ -309,7 +321,8 @@ function DealCard({
 				{product.original_price && (
 					<p className="text-xs text-green-600 font-medium mt-0.5">
 						{i18n.language === 'ar' ? 'وفر' : 'Save'}{' '}
-						{(product.original_price - product.price).toLocaleString()} {t('product.currency')}
+						{(product.original_price - product.price).toLocaleString()}{' '}
+						{t('product.currency')}
 					</p>
 				)}
 
@@ -340,7 +353,8 @@ function DealCard({
 							: hot
 								? 'bg-red-500 text-white hover:bg-red-600'
 								: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
-					}`}>
+					}`}
+				>
 					<ShoppingCart size={16} />
 					{addedIds.has(product.id)
 						? i18n.language === 'ar'

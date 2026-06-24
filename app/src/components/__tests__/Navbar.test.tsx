@@ -67,7 +67,7 @@ function renderNavbar() {
 	return render(
 		<MemoryRouter>
 			<Navbar />
-		</MemoryRouter>
+		</MemoryRouter>,
 	);
 }
 
@@ -98,7 +98,9 @@ describe('Navbar', () => {
 		// dropdown that contains the /auth/login link. The dropdown menu
 		// uses `t('nav.login')` etc.; with the i18n stub these are the
 		// raw keys, so we look for the /auth/login link directly.
-		const userButton = screen.getAllByRole('button').find((b) => b.querySelector('.lucide-user'));
+		const userButton = screen
+			.getAllByRole('button')
+			.find((b) => b.querySelector('.lucide-user'));
 		expect(userButton).toBeDefined();
 		if (userButton) {
 			fireEvent.click(userButton);
@@ -123,7 +125,9 @@ describe('Navbar', () => {
 		mockAuth.token = 'jwt-token';
 		renderNavbar();
 		// Open the user dropdown by clicking the user icon button.
-		const userButton = screen.getAllByRole('button').find((b) => b.querySelector('.lucide-user'));
+		const userButton = screen
+			.getAllByRole('button')
+			.find((b) => b.querySelector('.lucide-user'));
 		expect(userButton).toBeDefined();
 		if (userButton) {
 			fireEvent.click(userButton);

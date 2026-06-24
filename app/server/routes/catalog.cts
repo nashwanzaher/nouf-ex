@@ -90,7 +90,9 @@ catalogRouter.get('/products', async (req: Request, res: Response) => {
 		}
 		if (search) {
 			const term = `%${search}%`;
-			where.push('(name_en LIKE ? OR name_ar LIKE ? OR name_zh LIKE ? OR description_en LIKE ?)');
+			where.push(
+				'(name_en LIKE ? OR name_ar LIKE ? OR name_zh LIKE ? OR description_en LIKE ?)',
+			);
 			params.push(term, term, term, term);
 		}
 
@@ -118,7 +120,10 @@ catalogRouter.get('/products', async (req: Request, res: Response) => {
 		// treated as "no limit provided" while every other number is
 		// preserved verbatim and only then clamped into [1, 100].
 		const parsedLimit = Number(limit);
-		const numLimit = Math.max(1, Math.min(100, Number.isFinite(parsedLimit) ? parsedLimit : 20));
+		const numLimit = Math.max(
+			1,
+			Math.min(100, Number.isFinite(parsedLimit) ? parsedLimit : 20),
+		);
 		const numOffset = Math.max(0, Number(offset) || 0);
 		// The window function returns the unfiltered count of the
 		// query (before LIMIT/OFFSET) on every row, so we can read
@@ -158,7 +163,7 @@ catalogRouter.get('/products/featured', async (_req: Request, res: Response) => 
 	try {
 		const rows = (await db
 			.prepare(
-				'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC LIMIT 10'
+				'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC LIMIT 10',
 			)
 			.all()) as Record<string, unknown>[];
 		const products = rows.map(getProductWithParsedFields);
@@ -176,7 +181,7 @@ catalogRouter.get('/products/deals', async (_req: Request, res: Response) => {
 	try {
 		const rows = (await db
 			.prepare(
-				'SELECT * FROM products WHERE is_active = 1 AND deal_discount > 0 ORDER BY deal_discount DESC LIMIT 10'
+				'SELECT * FROM products WHERE is_active = 1 AND deal_discount > 0 ORDER BY deal_discount DESC LIMIT 10',
 			)
 			.all()) as Record<string, unknown>[];
 		const products = rows.map(getProductWithParsedFields);
@@ -194,9 +199,9 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
 
-		const product = (await db.prepare('SELECT * FROM products WHERE id = ?').get(Number(id))) as
-			| Record<string, unknown>
-			| undefined;
+		const product = (await db
+			.prepare('SELECT * FROM products WHERE id = ?')
+			.get(Number(id))) as Record<string, unknown> | undefined;
 
 		if (!product) {
 			return sendError(res, 'Product not found', 404);
@@ -214,7 +219,7 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
          FROM reviews r
          LEFT JOIN users u ON r.customer_id = u.id
          WHERE r.product_id = ?
-         ORDER BY r.created_at DESC`
+         ORDER BY r.created_at DESC`,
 			)
 			.all(Number(id))) as Record<string, unknown>[];
 
@@ -304,7 +309,7 @@ catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => 
          LEFT JOIN users u ON r.customer_id = u.id
          LEFT JOIN products p ON r.product_id = p.id
          WHERE r.store_id = ? AND r.is_visible = TRUE
-         ORDER BY r.created_at DESC`
+         ORDER BY r.created_at DESC`,
 			)
 			.all(Number(id))) as Record<string, unknown>[];
 		return sendSuccess(res, reviews);
@@ -329,7 +334,7 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
          FROM categories c
          LEFT JOIN products p ON c.id = p.category_id AND p.is_active = 1
          GROUP BY c.id
-         ORDER BY c.sort_order ASC`
+         ORDER BY c.sort_order ASC`,
 			)
 			.all();
 		return sendSuccess(res, categories);
@@ -395,7 +400,13 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 			storeId: req.query.store ? Number(req.query.store) : undefined,
 			minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
 			maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
-			sort: (req.query.sort as 'relevance' | 'price_asc' | 'price_desc' | 'newest' | undefined) ?? 'relevance',
+			sort:
+				(req.query.sort as
+					| 'relevance'
+					| 'price_asc'
+					| 'price_desc'
+					| 'newest'
+					| undefined) ?? 'relevance',
 			limit: req.query.limit !== undefined ? Number(req.query.limit) : undefined,
 			offset: req.query.offset !== undefined ? Number(req.query.offset) : undefined,
 		});

@@ -23,6 +23,9 @@ mcp-server/dist/
 mcp-server/node_modules/
 mcp-server/.tmp*
 
+# Continue (agent state caches, regenerated on every editor session)
+.continue/
+
 # Local logs (e.g. logs/autostart.log from scripts/autostart.ps1)
 logs/
 *.log.*
@@ -50,4 +53,3 @@ app/playwright/.cache/
 admin-dashboard.png
 login-page-fixed.png
 .playwright-mcp/
-

@@ -136,7 +136,9 @@ describe('authRouter — GET /api/auth/me', () => {
 			// The mock returns undefined → handler throws HttpError(404).
 			// We just want to confirm the auth gate cleared.
 			const token = signTestToken({ sub: 7, role: 'customer' });
-			const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
+			const res = await request(app)
+				.get('/api/auth/me')
+				.set('Authorization', `Bearer ${token}`);
 			expect([200, 404, 500]).toContain(res.status);
 			// Critically, must NOT be 401.
 			expect(res.status).not.toBe(401);

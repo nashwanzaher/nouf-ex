@@ -38,7 +38,7 @@ describe('CartContext', () => {
 					image: '',
 					merchantName: '',
 				},
-			})
+			}),
 		);
 		expect(result.current.state.items).toHaveLength(1);
 		expect(result.current.cartCount).toBe(1);
@@ -68,8 +68,15 @@ describe('CartContext', () => {
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD',
-				payload: { productId: '1', name: '', price: 50, quantity: 1, image: '', merchantName: '' },
-			})
+				payload: {
+					productId: '1',
+					name: '',
+					price: 50,
+					quantity: 1,
+					image: '',
+					merchantName: '',
+				},
+			}),
 		);
 		act(() => result.current.dispatch({ type: 'REMOVE', payload: '1' }));
 		expect(result.current.state.items).toEqual([]);
@@ -80,17 +87,30 @@ describe('CartContext', () => {
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD',
-				payload: { productId: '1', name: '', price: 10, quantity: 1, image: '', merchantName: '' },
-			})
+				payload: {
+					productId: '1',
+					name: '',
+					price: 10,
+					quantity: 1,
+					image: '',
+					merchantName: '',
+				},
+			}),
 		);
 		act(() =>
-			result.current.dispatch({ type: 'UPDATE_QTY', payload: { productId: '1', quantity: 5 } })
+			result.current.dispatch({
+				type: 'UPDATE_QTY',
+				payload: { productId: '1', quantity: 5 },
+			}),
 		);
 		expect(result.current.state.items[0]?.quantity).toBe(5);
 		expect(result.current.cartCount).toBe(5);
 
 		act(() =>
-			result.current.dispatch({ type: 'UPDATE_QTY', payload: { productId: '1', quantity: 0 } })
+			result.current.dispatch({
+				type: 'UPDATE_QTY',
+				payload: { productId: '1', quantity: 0 },
+			}),
 		);
 		expect(result.current.state.items).toEqual([]);
 	});
@@ -100,8 +120,15 @@ describe('CartContext', () => {
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD',
-				payload: { productId: '1', name: '', price: 10, quantity: 2, image: '', merchantName: '' },
-			})
+				payload: {
+					productId: '1',
+					name: '',
+					price: 10,
+					quantity: 2,
+					image: '',
+					merchantName: '',
+				},
+			}),
 		);
 		act(() => result.current.dispatch({ type: 'CLEAR' }));
 		expect(result.current.state.items).toEqual([]);
@@ -112,8 +139,15 @@ describe('CartContext', () => {
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD',
-				payload: { productId: '1', name: '', price: 10, quantity: 1, image: '', merchantName: '' },
-			})
+				payload: {
+					productId: '1',
+					name: '',
+					price: 10,
+					quantity: 1,
+					image: '',
+					merchantName: '',
+				},
+			}),
 		);
 		// The provider writes via useEffect, which runs after the render.
 		await new Promise((r) => setTimeout(r, 0));
@@ -127,8 +161,15 @@ describe('CartContext', () => {
 		localStorage.setItem(
 			'noufex_cart',
 			JSON.stringify([
-				{ productId: '42', name: 'Pre', price: 9, quantity: 2, image: '', merchantName: '' },
-			])
+				{
+					productId: '42',
+					name: 'Pre',
+					price: 9,
+					quantity: 2,
+					image: '',
+					merchantName: '',
+				},
+			]),
 		);
 		const { result } = renderHook(() => useCart(), { wrapper: wrapper() });
 		expect(result.current.state.items).toHaveLength(1);
@@ -147,14 +188,28 @@ describe('CartContext', () => {
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD',
-				payload: { productId: '1', name: '', price: 100, quantity: 2, image: '', merchantName: '' },
-			})
+				payload: {
+					productId: '1',
+					name: '',
+					price: 100,
+					quantity: 2,
+					image: '',
+					merchantName: '',
+				},
+			}),
 		);
 		act(() =>
 			result.current.dispatch({
 				type: 'ADD',
-				payload: { productId: '2', name: '', price: 50, quantity: 3, image: '', merchantName: '' },
-			})
+				payload: {
+					productId: '2',
+					name: '',
+					price: 50,
+					quantity: 3,
+					image: '',
+					merchantName: '',
+				},
+			}),
 		);
 		expect(result.current.cartTotal).toBe(350); // 100*2 + 50*3
 	});

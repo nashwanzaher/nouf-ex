@@ -133,12 +133,7 @@ describe('auth-2fa router — error envelope', () => {
 describe('auth-2fa router — rate limits (N2)', () => {
 	/** Send `n` POSTs from a synthetic IP. Returns the array of
 	 *  status codes in send order. */
-	async function flood(
-		ip: string,
-		path: string,
-		body: unknown,
-		n: number
-	): Promise<number[]> {
+	async function flood(ip: string, path: string, body: unknown, n: number): Promise<number[]> {
 		const codes: number[] = [];
 		for (let i = 0; i < n; i++) {
 			const r = await request(app)
@@ -199,12 +194,7 @@ describe('auth-2fa router — rate limits (N2)', () => {
 	});
 
 	it('/backup-codes/regenerate: 5/min/IP — the 6th attempt returns 429', async () => {
-		const codes = await flood(
-			'198.51.100.14',
-			'/api/auth/2fa/backup-codes/regenerate',
-			{},
-			6
-		);
+		const codes = await flood('198.51.100.14', '/api/auth/2fa/backup-codes/regenerate', {}, 6);
 		for (let i = 0; i < 5; i++) expect(codes[i]).not.toBe(429);
 		expect(codes[5]).toBe(429);
 	});

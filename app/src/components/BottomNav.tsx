@@ -27,8 +27,11 @@ export default function BottomNav() {
 						key={item.to}
 						to={item.to}
 						className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors ${
-							isActive(item.to) ? 'text-aliOrange' : 'text-aliTextMute hover:text-aliText'
-						}`}>
+							isActive(item.to)
+								? 'text-aliOrange'
+								: 'text-aliTextMute hover:text-aliText'
+						}`}
+					>
 						<div className="relative">
 							<item.icon size={22} strokeWidth={isActive(item.to) ? 2.5 : 1.5} />
 							{item.to === '/checkout' && cartCount > 0 && (

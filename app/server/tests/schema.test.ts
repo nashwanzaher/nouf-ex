@@ -100,7 +100,9 @@ describe('SQL schema files', () => {
 			const usageIdx = sql.search(/CREATE TABLE\s+(IF NOT EXISTS\s+)?coupon_usage\b/i);
 			expect(couponsIdx).toBeGreaterThan(-1);
 			expect(usageIdx).toBeGreaterThan(-1);
-			expect(couponsIdx, 'coupons must be defined before coupon_usage').toBeLessThan(usageIdx);
+			expect(couponsIdx, 'coupons must be defined before coupon_usage').toBeLessThan(
+				usageIdx,
+			);
 		});
 	});
 

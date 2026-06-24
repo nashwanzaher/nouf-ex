@@ -38,7 +38,8 @@ function GridSkeleton({ count = 10 }: { count?: number }) {
 			{Array.from({ length: count }).map((_, i) => (
 				<div
 					key={i}
-					className="bg-white rounded border border-[#E5E5E5] overflow-hidden flex flex-col animate-pulse">
+					className="bg-white rounded border border-[#E5E5E5] overflow-hidden flex flex-col animate-pulse"
+				>
 					<div className="aspect-square bg-[#F0F0F0]" />
 					<div className="p-3 flex-1 flex flex-col gap-2">
 						<div className="h-3 bg-[#F0F0F0] rounded w-full" />
@@ -59,7 +60,8 @@ function ListSkeleton({ count = 5 }: { count?: number }) {
 			{Array.from({ length: count }).map((_, i) => (
 				<div
 					key={i}
-					className="bg-white rounded border border-[#E5E5E5] overflow-hidden flex flex-col sm:flex-row animate-pulse">
+					className="bg-white rounded border border-[#E5E5E5] overflow-hidden flex flex-col sm:flex-row animate-pulse"
+				>
 					<div className="aspect-square sm:w-48 sm:aspect-auto sm:h-full bg-[#F0F0F0] flex-shrink-0" />
 					<div className="p-4 flex-1 flex flex-col sm:flex-row gap-4">
 						<div className="flex-1 space-y-2">
@@ -84,7 +86,7 @@ export default function SearchResults() {
 	const { t, i18n } = useTranslation();
 	const [query, setQuery] = useState(initialQ);
 	const [sort, setSort] = useState<'relevance' | 'price-low' | 'price-high' | 'rating'>(
-		'relevance'
+		'relevance',
 	);
 	const [catFilter, setCatFilter] = useState<string>('all');
 	const [priceRange, setPriceRange] = useState<string>('all');
@@ -153,7 +155,11 @@ export default function SearchResults() {
 
 	const toggleCompare = (id: number) => {
 		setCompareList((prev) =>
-			prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 4 ? [...prev, id] : prev
+			prev.includes(id)
+				? prev.filter((x) => x !== id)
+				: prev.length < 4
+					? [...prev, id]
+					: prev,
 		);
 	};
 
@@ -181,11 +187,15 @@ export default function SearchResults() {
 							}
 							className="w-full h-11 pl-10 pr-4 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]"
 						/>
-						<Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]" />
+						<Search
+							size={16}
+							className="absolute left-3 top-1/2 -translate-y-1/2 text-[#999]"
+						/>
 					</div>
 					<button
 						type="submit"
-						className="h-11 px-6 bg-[#FF6A00] text-white rounded font-bold text-sm hover:bg-[#E55F00] transition-colors">
+						className="h-11 px-6 bg-[#FF6A00] text-white rounded font-bold text-sm hover:bg-[#E55F00] transition-colors"
+					>
 						{t('common.search')}
 					</button>
 				</div>
@@ -207,7 +217,8 @@ export default function SearchResults() {
 				<div className="flex flex-wrap items-center gap-2 p-3">
 					<button
 						onClick={() => setShowFilters(!showFilters)}
-						className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E5E5] rounded text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors">
+						className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E5E5] rounded text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors"
+					>
 						<Filter size={14} />
 						<span>{lang === 'ar' ? 'الفلاتر' : 'Filters'}</span>
 					</button>
@@ -217,8 +228,11 @@ export default function SearchResults() {
 						<select
 							value={catFilter}
 							onChange={(e) => setCatFilter(e.target.value)}
-							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50">
-							<option value="all">{lang === 'ar' ? 'جميع الفئات' : 'All Categories'}</option>
+							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50"
+						>
+							<option value="all">
+								{lang === 'ar' ? 'جميع الفئات' : 'All Categories'}
+							</option>
 							{cats
 								.filter((c) => c !== 'all')
 								.map((cat) => (
@@ -238,7 +252,8 @@ export default function SearchResults() {
 						<select
 							value={priceRange}
 							onChange={(e) => setPriceRange(e.target.value)}
-							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50">
+							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50"
+						>
 							{priceRanges.map((pr) => (
 								<option key={pr.key} value={pr.key}>
 									{pr.label}
@@ -258,7 +273,8 @@ export default function SearchResults() {
 							<select
 								value={sort}
 								onChange={(e) => setSort(e.target.value as typeof sort)}
-								className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer">
+								className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer"
+							>
 								{sortOptions.map((so) => (
 									<option key={so.key} value={so.key}>
 										{so.label}
@@ -273,12 +289,14 @@ export default function SearchResults() {
 						<div className="flex border border-[#E5E5E5] rounded overflow-hidden ml-2">
 							<button
 								onClick={() => setViewMode('grid')}
-								className={`p-1.5 ${viewMode === 'grid' ? 'bg-[#FF6A00] text-white' : 'bg-white text-[#666] hover:text-[#FF6A00]'}`}>
+								className={`p-1.5 ${viewMode === 'grid' ? 'bg-[#FF6A00] text-white' : 'bg-white text-[#666] hover:text-[#FF6A00]'}`}
+							>
 								<Grid3X3 size={16} />
 							</button>
 							<button
 								onClick={() => setViewMode('list')}
-								className={`p-1.5 ${viewMode === 'list' ? 'bg-[#FF6A00] text-white' : 'bg-white text-[#666] hover:text-[#FF6A00]'}`}>
+								className={`p-1.5 ${viewMode === 'list' ? 'bg-[#FF6A00] text-white' : 'bg-white text-[#666] hover:text-[#FF6A00]'}`}
+							>
 								<List size={16} />
 							</button>
 						</div>
@@ -305,7 +323,9 @@ export default function SearchResults() {
 				(results.length === 0 ? (
 					<div className="text-center py-16 bg-white rounded border border-[#E5E5E5]">
 						<Search size={48} className="mx-auto text-[#DDD] mb-4" />
-						<h2 className="text-lg font-bold text-[#333] mb-2">{t('common.noResults')}</h2>
+						<h2 className="text-lg font-bold text-[#333] mb-2">
+							{t('common.noResults')}
+						</h2>
 						<p className="text-[#999]">
 							{lang === 'ar'
 								? 'جرب كلمات مختلفة أو تصفح الفئات'
@@ -319,7 +339,8 @@ export default function SearchResults() {
 								{results.map((p) => (
 									<div
 										key={p.id}
-										className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden flex flex-col">
+										className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden flex flex-col"
+									>
 										{/* Image */}
 										<Link to={`/product/${p.id}`} className="block">
 											<div className="aspect-square bg-[#F7F8FA] overflow-hidden relative">
@@ -335,7 +356,9 @@ export default function SearchResults() {
 												)}
 												{p.badges?.includes('bestseller') && (
 													<span className="absolute bottom-2 left-2 bg-[#FF6A00] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-														{lang === 'ar' ? 'الأكثر مبيعاً' : 'BESTSELLER'}
+														{lang === 'ar'
+															? 'الأكثر مبيعاً'
+															: 'BESTSELLER'}
 													</span>
 												)}
 											</div>
@@ -358,7 +381,9 @@ export default function SearchResults() {
 													</span>
 												)}
 											</div>
-											<span className="text-xs text-[#999]">{t('product.currency')}</span>
+											<span className="text-xs text-[#999]">
+												{t('product.currency')}
+											</span>
 											{/* MOQ + Sold */}
 											<div className="flex items-center gap-1 mt-1 text-xs text-[#999]">
 												<span>MOQ: {p.moq ?? 10}</span>
@@ -370,10 +395,17 @@ export default function SearchResults() {
 											{/* Rating */}
 											<div className="flex items-center gap-1 mt-1">
 												<div className="flex items-center gap-0.5">
-													<Star size={10} className="text-[#FF6A00] fill-[#FF6A00]" />
-													<span className="text-xs font-bold text-[#333]">{p.rating}</span>
+													<Star
+														size={10}
+														className="text-[#FF6A00] fill-[#FF6A00]"
+													/>
+													<span className="text-xs font-bold text-[#333]">
+														{p.rating}
+													</span>
 												</div>
-												<span className="text-xs text-[#999]">({p.review_count})</span>
+												<span className="text-xs text-[#999]">
+													({p.review_count})
+												</span>
 											</div>
 											{/* Actions */}
 											<div className="mt-2 pt-2 border-t border-[#E5E5E5] flex gap-1.5">
@@ -383,7 +415,8 @@ export default function SearchResults() {
 												</button>
 												<button
 													onClick={() => toggleCompare(p.id)}
-													className={`h-7 px-2 rounded border text-xs font-medium transition-colors flex items-center gap-1 ${compareList.includes(p.id) ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#999] hover:border-[#FF6A00]'}`}>
+													className={`h-7 px-2 rounded border text-xs font-medium transition-colors flex items-center gap-1 ${compareList.includes(p.id) ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#999] hover:border-[#FF6A00]'}`}
+												>
 													<CheckSquare size={12} />
 												</button>
 											</div>
@@ -397,9 +430,13 @@ export default function SearchResults() {
 								{results.map((p) => (
 									<div
 										key={p.id}
-										className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden flex flex-col sm:flex-row">
+										className="bg-white rounded border border-[#E5E5E5] hover:shadow-md hover:border-[#FF6A00]/30 transition-all group overflow-hidden flex flex-col sm:flex-row"
+									>
 										{/* Image */}
-										<Link to={`/product/${p.id}`} className="block sm:w-48 flex-shrink-0">
+										<Link
+											to={`/product/${p.id}`}
+											className="block sm:w-48 flex-shrink-0"
+										>
 											<div className="aspect-square sm:aspect-auto sm:h-full bg-[#F7F8FA] overflow-hidden relative">
 												<img
 													src={p.main_image}
@@ -435,17 +472,21 @@ export default function SearchResults() {
 															/>
 														))}
 													</div>
-													<span className="text-xs text-[#999]">({p.review_count})</span>
+													<span className="text-xs text-[#999]">
+														({p.review_count})
+													</span>
 													<span className="text-xs text-[#999]">|</span>
 													<span className="text-xs text-[#999]">
-														{p.sold_count} {lang === 'ar' ? 'مبيع' : 'sold'}
+														{p.sold_count}{' '}
+														{lang === 'ar' ? 'مبيع' : 'sold'}
 													</span>
 												</div>
 												<div className="flex flex-wrap gap-2 mt-2">
 													{p.features?.slice(0, 3).map((f, i) => (
 														<span
 															key={i}
-															className="text-xs bg-[#F7F8FA] text-[#666] px-2 py-0.5 rounded">
+															className="text-xs bg-[#F7F8FA] text-[#666] px-2 py-0.5 rounded"
+														>
 															{f}
 														</span>
 													))}
@@ -456,8 +497,12 @@ export default function SearchResults() {
 													<span className="text-lg font-bold text-[#FF6A00]">
 														{p.price.toLocaleString()}
 													</span>
-													<span className="text-xs text-[#999] ml-1">{t('product.currency')}</span>
-													<div className="text-xs text-[#999]">MOQ: {p.moq ?? 10}</div>
+													<span className="text-xs text-[#999] ml-1">
+														{t('product.currency')}
+													</span>
+													<div className="text-xs text-[#999]">
+														MOQ: {p.moq ?? 10}
+													</div>
 												</div>
 												<div className="flex gap-1.5">
 													<button className="h-8 px-3 rounded border border-[#FF6A00] text-[#FF6A00] text-xs font-medium hover:bg-[#FFF8F3] transition-colors flex items-center gap-1">
@@ -466,7 +511,8 @@ export default function SearchResults() {
 													</button>
 													<button
 														onClick={() => toggleCompare(p.id)}
-														className={`h-8 px-2 rounded border text-xs font-medium transition-colors ${compareList.includes(p.id) ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#999]'}`}>
+														className={`h-8 px-2 rounded border text-xs font-medium transition-colors ${compareList.includes(p.id) ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#999]'}`}
+													>
 														<CheckSquare size={14} />
 													</button>
 												</div>
@@ -485,7 +531,8 @@ export default function SearchResults() {
 					<button
 						disabled={currentPage <= 1}
 						onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-						className="h-9 px-3 rounded border border-[#E5E5E5] text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors disabled:opacity-50">
+						className="h-9 px-3 rounded border border-[#E5E5E5] text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors disabled:opacity-50"
+					>
 						{lang === 'ar' ? 'السابق' : 'Prev'}
 					</button>
 					{(() => {
@@ -500,7 +547,8 @@ export default function SearchResults() {
 							<button
 								key={page}
 								onClick={() => setCurrentPage(page)}
-								className={`h-9 w-9 rounded text-sm font-medium transition-colors ${page === currentPage ? 'bg-[#FF6A00] text-white' : 'border border-[#E5E5E5] text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00]'}`}>
+								className={`h-9 w-9 rounded text-sm font-medium transition-colors ${page === currentPage ? 'bg-[#FF6A00] text-white' : 'border border-[#E5E5E5] text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00]'}`}
+							>
 								{page}
 							</button>
 						));
@@ -511,12 +559,14 @@ export default function SearchResults() {
 							Math.max(
 								1,
 								Math.ceil(
-									((data && (data as { total?: number }).total) ?? results.length) / pageSize
-								)
+									((data && (data as { total?: number }).total) ??
+										results.length) / pageSize,
+								),
 							)
 						}
 						onClick={() => setCurrentPage((p) => p + 1)}
-						className="h-9 px-3 rounded border border-[#E5E5E5] text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors disabled:opacity-50">
+						className="h-9 px-3 rounded border border-[#E5E5E5] text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors disabled:opacity-50"
+					>
 						{lang === 'ar' ? 'التالي' : 'Next'}
 					</button>
 				</div>

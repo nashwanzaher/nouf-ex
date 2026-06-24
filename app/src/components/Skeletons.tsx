@@ -8,7 +8,8 @@ export function ProductCardSkeleton() {
 	return (
 		<div
 			data-testid="product-card-skeleton"
-			className="bg-white rounded-2xl overflow-hidden border border-[#F0EBE3] animate-pulse">
+			className="bg-white rounded-2xl overflow-hidden border border-[#F0EBE3] animate-pulse"
+		>
 			<div className="aspect-square bg-[#E5E5E5]" />
 			<div className="p-4 space-y-2">
 				<div className="h-3 bg-[#E5E5E5] rounded w-3/4" />
@@ -33,7 +34,8 @@ export function CategorySkeleton() {
 	return (
 		<div
 			data-testid="category-skeleton"
-			className="bg-white rounded-2xl p-4 border border-[#F0EBE3] animate-pulse">
+			className="bg-white rounded-2xl p-4 border border-[#F0EBE3] animate-pulse"
+		>
 			<div className="aspect-square bg-[#E5E5E5] rounded-xl mb-3" />
 			<div className="h-3 bg-[#E5E5E5] rounded w-2/3 mx-auto" />
 		</div>
@@ -72,7 +74,8 @@ export function StatsSkeleton() {
 	return (
 		<div
 			data-testid="stats-skeleton"
-			className="flex flex-wrap justify-center gap-6 lg:gap-12 animate-pulse">
+			className="flex flex-wrap justify-center gap-6 lg:gap-12 animate-pulse"
+		>
 			{Array.from({ length: 4 }).map((_, i) => (
 				<div key={i} className="flex items-center gap-3">
 					<div className="w-11 h-11 rounded-full bg-[#E5E5E5]" />
@@ -90,7 +93,8 @@ export function SearchResultSkeleton() {
 	return (
 		<div
 			data-testid="search-result-skeleton"
-			className="bg-white rounded border border-[#E5E5E5] p-3 flex gap-3 animate-pulse">
+			className="bg-white rounded border border-[#E5E5E5] p-3 flex gap-3 animate-pulse"
+		>
 			<div className="w-20 h-20 sm:w-24 sm:h-24 bg-[#E5E5E5] rounded flex-shrink-0" />
 			<div className="flex-1 space-y-2">
 				<div className="h-3 bg-[#E5E5E5] rounded w-3/4" />

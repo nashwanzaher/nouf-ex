@@ -421,7 +421,7 @@ async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T
 
 export async function getProducts(
 	filters: ProductFilters = {},
-	options?: RequestOptions
+	options?: RequestOptions,
 ): Promise<{ products: Product[]; total: number; limit: number; offset: number }> {
 	const params = new URLSearchParams();
 	if (filters.category) params.set('category', filters.category);
@@ -439,7 +439,7 @@ export async function getProducts(
 
 export async function getProduct(
 	id: number,
-	options?: RequestOptions
+	options?: RequestOptions,
 ): Promise<ProductWithDetails> {
 	return apiRequest(`/products/${id}`, { signal: options?.signal });
 }
@@ -474,7 +474,7 @@ export async function getCategories(options?: RequestOptions): Promise<Category[
 
 export async function getCategory(
 	slug: string,
-	options?: RequestOptions
+	options?: RequestOptions,
 ): Promise<CategoryWithProducts> {
 	return apiRequest(`/categories/${slug}`, { signal: options?.signal });
 }
@@ -483,7 +483,7 @@ export async function getCategory(
 
 export async function getReviews(
 	filters: ReviewFilters = {},
-	options?: RequestOptions
+	options?: RequestOptions,
 ): Promise<Review[]> {
 	const params = new URLSearchParams();
 	if (filters.productId) params.set('productId', String(filters.productId));
@@ -564,7 +564,7 @@ export async function clearCart(userId: number): Promise<void> {
 
 export async function getWishlist(
 	userId: number,
-	options?: RequestOptions
+	options?: RequestOptions,
 ): Promise<WishlistItem[]> {
 	return apiRequest(`/wishlist/${userId}`, { signal: options?.signal });
 }
@@ -648,7 +648,7 @@ export interface CreatePaymentBody {
 }
 
 export async function createPayment(
-	body: CreatePaymentBody
+	body: CreatePaymentBody,
 ): Promise<{ id: number; status: string; idempotent?: boolean }> {
 	return apiRequest('/payments', {
 		method: 'POST',
@@ -689,7 +689,7 @@ export async function deleteAddress(id: number): Promise<{ id: number }> {
 
 export async function getShippingMethods(
 	weightKg = 1,
-	options?: RequestOptions
+	options?: RequestOptions,
 ): Promise<ShippingMethod[]> {
 	return apiRequest(`/shipping/methods?weight_kg=${weightKg}`, { signal: options?.signal });
 }
@@ -736,7 +736,7 @@ export interface ResolveRefundBody {
 
 export async function resolveRefund(
 	id: number,
-	body: ResolveRefundBody
+	body: ResolveRefundBody,
 ): Promise<{ id: number; status: string }> {
 	return apiRequest(`/refunds/${id}/resolve`, {
 		method: 'POST',

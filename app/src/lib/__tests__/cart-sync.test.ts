@@ -15,12 +15,7 @@
  *     only when every item pushed, preserves local on degradation
  */
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	readLocalCart,
-	clearLocalCart,
-	syncLocalCartToServer,
-	syncOnLogin,
-} from '../cart-sync';
+import { readLocalCart, clearLocalCart, syncLocalCartToServer, syncOnLogin } from '../cart-sync';
 import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());
@@ -112,10 +107,10 @@ describe('syncLocalCartToServer', () => {
 			// GET  /api/cart/7 (getCart)   — has a user id
 			if (url.endsWith('/api/cart')) {
 				postCount++;
-				return new Response(
-					JSON.stringify({ success: true, data: { id: postCount } }),
-					{ status: 200, headers: { 'content-type': 'application/json' } }
-				);
+				return new Response(JSON.stringify({ success: true, data: { id: postCount } }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' },
+				});
 			}
 			return new Response(JSON.stringify({ success: true, data: [] }), {
 				status: 200,
@@ -140,10 +135,10 @@ describe('syncLocalCartToServer', () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
 			const url = String(input);
 			if (url.endsWith('/api/cart')) {
-				return new Response(
-					JSON.stringify({ success: false, error: 'Out of stock' }),
-					{ status: 400, headers: { 'content-type': 'application/json' } }
-				);
+				return new Response(JSON.stringify({ success: false, error: 'Out of stock' }), {
+					status: 400,
+					headers: { 'content-type': 'application/json' },
+				});
 			}
 			return new Response(JSON.stringify({ success: true, data: [] }), {
 				status: 200,
@@ -168,10 +163,10 @@ describe('syncLocalCartToServer', () => {
 			callCount++;
 			const url = String(input);
 			if (url.endsWith('/api/cart')) {
-				return new Response(
-					JSON.stringify({ success: false, error: 'Auth required' }),
-					{ status: 401, headers: { 'content-type': 'application/json' } }
-				);
+				return new Response(JSON.stringify({ success: false, error: 'Auth required' }), {
+					status: 401,
+					headers: { 'content-type': 'application/json' },
+				});
 			}
 			return new Response('{}', { status: 200 });
 		});
@@ -180,7 +175,7 @@ describe('syncLocalCartToServer', () => {
 			syncLocalCartToServer(1, [
 				{ productId: '1', quantity: 1 },
 				{ productId: '2', quantity: 1 },
-			])
+			]),
 		).rejects.toBeDefined();
 
 		// The first item throws, the second is never attempted.
@@ -205,7 +200,7 @@ describe('syncLocalCartToServer', () => {
 				{ productId: '2', quantity: 1 },
 				{ productId: '3', quantity: 1 },
 			],
-			controller.signal
+			controller.signal,
 		);
 		controller.abort();
 		const result = await promise;
@@ -265,10 +260,9 @@ describe('syncOnLogin', () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
 			const url = String(input);
 			if (url.endsWith('/api/cart')) {
-				return new Response(
-					JSON.stringify({ success: false, error: 'stock' }),
-					{ status: 400 }
-				);
+				return new Response(JSON.stringify({ success: false, error: 'stock' }), {
+					status: 400,
+				});
 			}
 			return new Response(JSON.stringify({ success: true, data: [] }), { status: 200 });
 		});
@@ -293,7 +287,7 @@ describe('syncOnLogin', () => {
 					success: true,
 					data: [{ id: 99, user_id: 1, product_id: 5, quantity: 3 }],
 				}),
-				{ status: 200 }
+				{ status: 200 },
 			);
 		});
 

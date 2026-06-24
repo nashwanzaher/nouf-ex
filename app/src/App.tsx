@@ -44,7 +44,9 @@ export default function App() {
 							<Route
 								path="/checkout"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<Checkout />
 									</ProtectedRoute>
 								}
@@ -84,7 +86,9 @@ export default function App() {
 							<Route
 								path="/customer"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<CustomerDashboard />
 									</ProtectedRoute>
 								}
@@ -92,7 +96,9 @@ export default function App() {
 							<Route
 								path="/customer/orders"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<CustomerOrders />
 									</ProtectedRoute>
 								}
@@ -100,7 +106,9 @@ export default function App() {
 							<Route
 								path="/customer/wishlist"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<Wishlist />
 									</ProtectedRoute>
 								}
@@ -108,7 +116,9 @@ export default function App() {
 							<Route
 								path="/customer/reviews"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<Reviews />
 									</ProtectedRoute>
 								}
@@ -116,7 +126,9 @@ export default function App() {
 							<Route
 								path="/customer/addresses"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<Addresses />
 									</ProtectedRoute>
 								}
@@ -124,7 +136,9 @@ export default function App() {
 							<Route
 								path="/customer/notifications"
 								element={
-									<ProtectedRoute allowedRoles={['customer', 'merchant', 'admin']}>
+									<ProtectedRoute
+										allowedRoles={['customer', 'merchant', 'admin']}
+									>
 										<Notifications />
 									</ProtectedRoute>
 								}

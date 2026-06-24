@@ -48,7 +48,8 @@ describe('usePlaceOrder', () => {
 
 	it('returns the server order object on success', async () => {
 		const { result } = renderHook(() => usePlaceOrder());
-		let placed: { id: number; orderNumber: string; discount: number; total: number } | null = null;
+		let placed: { id: number; orderNumber: string; discount: number; total: number } | null =
+			null;
 		await act(async () => {
 			placed = await result.current.placeOrder({
 				items: [{ productId: 1, quantity: 1, unitPrice: 25000 }],

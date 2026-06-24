@@ -20,14 +20,16 @@ export default function Layout({ children }: { children: ReactNode }) {
 		<div className="min-h-screen flex flex-col bg-aliSurface text-aliText">
 			<a
 				href="#main-content"
-				className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-aliOrange focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold">
+				className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-aliOrange focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-bold"
+			>
 				Skip to content
 			</a>
 			<Navbar />
 			<main
 				id="main-content"
 				className="flex-1 pb-20 lg:pb-0"
-				dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
+				dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
+			>
 				{children}
 			</main>
 			{!isDashboard && <Footer />}

@@ -23,23 +23,23 @@ statsRouter.get('/home', async (_req: Request, res: Response) => {
 		// the home page rendering zeros instead of 500.
 		const pick = (row: unknown): number => (row as { count?: number } | undefined)?.count ?? 0;
 		const productsCount = pick(
-			await db.prepare('SELECT COUNT(*) as count FROM products WHERE is_active = 1').get()
+			await db.prepare('SELECT COUNT(*) as count FROM products WHERE is_active = 1').get(),
 		);
 		const storesCount = pick(
-			await db.prepare('SELECT COUNT(*) as count FROM stores WHERE is_active = 1').get()
+			await db.prepare('SELECT COUNT(*) as count FROM stores WHERE is_active = 1').get(),
 		);
 		const ordersCount = pick(await db.prepare('SELECT COUNT(*) as count FROM orders').get());
 		const usersCount = pick(await db.prepare('SELECT COUNT(*) as count FROM users').get());
 
 		const featuredProducts = (await db
 			.prepare(
-				'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC LIMIT 6'
+				'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC LIMIT 6',
 			)
 			.all()) as Record<string, unknown>[];
 
 		const dealsProducts = (await db
 			.prepare(
-				'SELECT * FROM products WHERE is_active = 1 AND deal_discount > 0 ORDER BY deal_discount DESC LIMIT 6'
+				'SELECT * FROM products WHERE is_active = 1 AND deal_discount > 0 ORDER BY deal_discount DESC LIMIT 6',
 			)
 			.all()) as Record<string, unknown>[];
 

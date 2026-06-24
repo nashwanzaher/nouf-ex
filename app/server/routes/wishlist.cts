@@ -21,7 +21,7 @@ wishlistRouter.get('/:userId', requireAuth, async (req: Request, res: Response) 
          JOIN products p ON w.product_id = p.id
          LEFT JOIN stores s ON p.store_id = s.id
          WHERE w.user_id = ?
-         ORDER BY w.created_at DESC`
+         ORDER BY w.created_at DESC`,
 			)
 			.all(userId);
 		return sendSuccess(res, items);
@@ -47,7 +47,7 @@ wishlistRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 
 		const result = (await db
 			.prepare(
-				'INSERT INTO wishlist (user_id, product_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP) RETURNING id'
+				'INSERT INTO wishlist (user_id, product_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP) RETURNING id',
 			)
 			.run(userId, productId)) as { lastInsertRowid: number | null };
 		if (result.lastInsertRowid == null) {

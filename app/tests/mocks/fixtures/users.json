@@ -1,92 +1,92 @@
 [
-  {
-    "id": 1,
-    "email": "admin@noufex.com",
-    "full_name": "System Admin",
-    "avatar": null,
-    "role": "admin",
-    "phone": "777000000",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 2,
-    "email": "ahmed@email.com",
-    "full_name": "Ahmed Mohammed",
-    "avatar": "/testimonial-avatar-1.jpg",
-    "role": "customer",
-    "phone": "777111111",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 3,
-    "email": "fatima@email.com",
-    "full_name": "Fatima Al-Hassan",
-    "avatar": "/testimonial-avatar-2.jpg",
-    "role": "customer",
-    "phone": "777222222",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 4,
-    "email": "khaled@email.com",
-    "full_name": "Khaled Al-Saadi",
-    "avatar": "/testimonial-avatar-3.jpg",
-    "role": "customer",
-    "phone": "777333333",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 5,
-    "email": "merchant1@noufex.com",
-    "full_name": "Ali Al-Qahtani",
-    "avatar": "/testimonial-avatar-1.jpg",
-    "role": "merchant",
-    "phone": "777444444",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 6,
-    "email": "merchant2@noufex.com",
-    "full_name": "Noor Abdullah",
-    "avatar": "/testimonial-avatar-2.jpg",
-    "role": "merchant",
-    "phone": "777555555",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 7,
-    "email": "merchant3@noufex.com",
-    "full_name": "Mohammed Sanaani",
-    "avatar": "/testimonial-avatar-3.jpg",
-    "role": "merchant",
-    "phone": "777666666",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 8,
-    "email": "sara@email.com",
-    "full_name": "Sara Johnson",
-    "avatar": "/testimonial-avatar-1.jpg",
-    "role": "customer",
-    "phone": "777777777",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 9,
-    "email": "merchant4@noufex.com",
-    "full_name": "Aisha Bukhari",
-    "avatar": "/testimonial-avatar-2.jpg",
-    "role": "merchant",
-    "phone": "777888888",
-    "created_at": "2026-06-20 18:48:35"
-  },
-  {
-    "id": 10,
-    "email": "merchant5@noufex.com",
-    "full_name": "Yusuf Al-Mekhlafi",
-    "avatar": "/testimonial-avatar-3.jpg",
-    "role": "merchant",
-    "phone": "777999999",
-    "created_at": "2026-06-20 18:48:35"
-  }
+	{
+		"id": 1,
+		"email": "admin@noufex.com",
+		"full_name": "System Admin",
+		"avatar": null,
+		"role": "admin",
+		"phone": "777000000",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 2,
+		"email": "ahmed@email.com",
+		"full_name": "Ahmed Mohammed",
+		"avatar": "/testimonial-avatar-1.jpg",
+		"role": "customer",
+		"phone": "777111111",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 3,
+		"email": "fatima@email.com",
+		"full_name": "Fatima Al-Hassan",
+		"avatar": "/testimonial-avatar-2.jpg",
+		"role": "customer",
+		"phone": "777222222",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 4,
+		"email": "khaled@email.com",
+		"full_name": "Khaled Al-Saadi",
+		"avatar": "/testimonial-avatar-3.jpg",
+		"role": "customer",
+		"phone": "777333333",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 5,
+		"email": "merchant1@noufex.com",
+		"full_name": "Ali Al-Qahtani",
+		"avatar": "/testimonial-avatar-1.jpg",
+		"role": "merchant",
+		"phone": "777444444",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 6,
+		"email": "merchant2@noufex.com",
+		"full_name": "Noor Abdullah",
+		"avatar": "/testimonial-avatar-2.jpg",
+		"role": "merchant",
+		"phone": "777555555",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 7,
+		"email": "merchant3@noufex.com",
+		"full_name": "Mohammed Sanaani",
+		"avatar": "/testimonial-avatar-3.jpg",
+		"role": "merchant",
+		"phone": "777666666",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 8,
+		"email": "sara@email.com",
+		"full_name": "Sara Johnson",
+		"avatar": "/testimonial-avatar-1.jpg",
+		"role": "customer",
+		"phone": "777777777",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 9,
+		"email": "merchant4@noufex.com",
+		"full_name": "Aisha Bukhari",
+		"avatar": "/testimonial-avatar-2.jpg",
+		"role": "merchant",
+		"phone": "777888888",
+		"created_at": "2026-06-20 18:48:35"
+	},
+	{
+		"id": 10,
+		"email": "merchant5@noufex.com",
+		"full_name": "Yusuf Al-Mekhlafi",
+		"avatar": "/testimonial-avatar-3.jpg",
+		"role": "merchant",
+		"phone": "777999999",
+		"created_at": "2026-06-20 18:48:35"
+	}
 ]

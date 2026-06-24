@@ -38,7 +38,7 @@ couponsRouter.post('/validate', requireAuth, async (req: Request, res: Response)
 			return sendError(
 				res,
 				`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}`,
-				400
+				400,
 			);
 		}
 
@@ -76,7 +76,9 @@ couponsRouter.post('/redeem', requireAuth, async (req: Request, res: Response) =
 		if (orderOwner.customer_id !== user_id) return sendError(res, 'Forbidden', 403);
 
 		const already = await db
-			.prepare('SELECT id FROM coupon_usage WHERE coupon_id = ? AND user_id = ? AND order_id = ?')
+			.prepare(
+				'SELECT id FROM coupon_usage WHERE coupon_id = ? AND user_id = ? AND order_id = ?',
+			)
 			.get(coupon.id, user_id, order_id);
 		if (already)
 			return sendSuccess(res, { id: (already as { id: number }).id }, 'Already redeemed');
@@ -84,7 +86,7 @@ couponsRouter.post('/redeem', requireAuth, async (req: Request, res: Response) =
 		const result = (await db
 			.prepare(
 				`INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount, used_at)
-         VALUES (?, ?, ?, 0, NOW()) RETURNING id`
+         VALUES (?, ?, ?, 0, NOW()) RETURNING id`,
 			)
 			.get(coupon.id, user_id, order_id)) as { id: number };
 		await db

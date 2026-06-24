@@ -35,7 +35,7 @@ describe('ErrorBoundary', () => {
 		render(
 			<ErrorBoundary>
 				<Bomb shouldExplode={false} />
-			</ErrorBoundary>
+			</ErrorBoundary>,
 		);
 		expect(screen.getByText('Safe')).toBeInTheDocument();
 	});
@@ -44,7 +44,7 @@ describe('ErrorBoundary', () => {
 		render(
 			<ErrorBoundary>
 				<Bomb shouldExplode={true} />
-			</ErrorBoundary>
+			</ErrorBoundary>,
 		);
 		expect(screen.getByRole('alert')).toBeInTheDocument();
 		expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('ErrorBoundary', () => {
 		render(
 			<ErrorBoundary fallback={(err) => <div>Custom: {err.message}</div>}>
 				<Bomb shouldExplode={true} />
-			</ErrorBoundary>
+			</ErrorBoundary>,
 		);
 		expect(screen.getByText('Custom: boom')).toBeInTheDocument();
 	});
@@ -63,7 +63,7 @@ describe('ErrorBoundary', () => {
 		render(
 			<ErrorBoundary>
 				<Bomb shouldExplode={true} />
-			</ErrorBoundary>
+			</ErrorBoundary>,
 		);
 		expect(errorSpy).toHaveBeenCalled();
 		// React 19 sometimes passes a printf-style format string as the
@@ -81,7 +81,7 @@ describe('ErrorBoundary', () => {
 		const { rerender } = render(
 			<ErrorBoundary>
 				<Bomb shouldExplode={state.explode} />
-			</ErrorBoundary>
+			</ErrorBoundary>,
 		);
 		expect(screen.getByRole('alert')).toBeInTheDocument();
 
@@ -90,7 +90,7 @@ describe('ErrorBoundary', () => {
 		rerender(
 			<ErrorBoundary>
 				<Bomb shouldExplode={state.explode} />
-			</ErrorBoundary>
+			</ErrorBoundary>,
 		);
 
 		// Click "Try again" — the boundary should now render the safe child.

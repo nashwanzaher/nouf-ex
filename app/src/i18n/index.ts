@@ -7,15 +7,14 @@ import zh from './locales/zh.json';
 
 const resources = { ar: { translation: ar }, en: { translation: en }, zh: { translation: zh } };
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'ar',
-    supportedLngs: ['ar', 'en', 'zh'],
-    interpolation: { escapeValue: false },
-    detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
-  });
+i18n.use(LanguageDetector)
+	.use(initReactI18next)
+	.init({
+		resources,
+		fallbackLng: 'ar',
+		supportedLngs: ['ar', 'en', 'zh'],
+		interpolation: { escapeValue: false },
+		detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
+	});
 
 export default i18n;

@@ -42,7 +42,7 @@ describe('Deals page', () => {
 		render(
 			<MemoryRouter>
 				<Deals />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		// The countdown renders hours/minutes/seconds labels.
 		expect(await screen.findByText(/hours/i)).toBeInTheDocument();
@@ -54,7 +54,7 @@ describe('Deals page', () => {
 		render(
 			<MemoryRouter>
 				<Deals />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		// The deals fixture contains a Pro Laptop (deal_discount > 0).
 		expect(await screen.findByText(/Pro Laptop/i)).toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('Deals page', () => {
 		render(
 			<MemoryRouter>
 				<Deals />
-			</MemoryRouter>
+			</MemoryRouter>,
 		);
 		await screen.findByText(/Pro Laptop/i);
 		// Find any "Add to cart" button on the page and click it.

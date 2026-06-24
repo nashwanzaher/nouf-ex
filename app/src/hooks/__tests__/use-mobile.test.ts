@@ -14,7 +14,11 @@ const MOBILE_BREAKPOINT = 768;
 
 function setWindowWidth(width: number) {
 	// happy-dom uses `innerWidth` on `window`.
-	Object.defineProperty(window, 'innerWidth', { value: width, configurable: true, writable: true });
+	Object.defineProperty(window, 'innerWidth', {
+		value: width,
+		configurable: true,
+		writable: true,
+	});
 	// Fire a resize event so the hook re-snapshots.
 	window.dispatchEvent(new Event('resize'));
 }

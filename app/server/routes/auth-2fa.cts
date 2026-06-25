@@ -362,7 +362,7 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 		if (!v.success) {
 			return sendError(res, 'Invalid input: ' + v.error.message, 400, 'VALIDATION_ERROR');
 		}
-		const partial = verifyPartialToken(v.data.partial_token);
+		const partial = await verifyPartialToken(v.data.partial_token);
 		if (!partial) {
 			return sendError(res, 'Invalid or expired partial token.', 401, 'PARTIAL_INVALID');
 		}

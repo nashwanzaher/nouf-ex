@@ -19,37 +19,18 @@
  *     fail — so a network eavesdropper cannot reuse a captured
  *     partial_token + a future TOTP code to log in.
  *
- * The token format mirrors signAuthToken() in middleware.ts:
- *   <base64url(payload)>.<base64url(hmac(payload))>
- *
- * Payload: { sub, purpose: '2fa', jti, exp } where jti is a random
- * 128-bit nonce that the server tracks (in memory) for the
- * single-use check. A short TTL (5 min) bounds the replay window.
+ * Replay protection storage:
+ *   The "already-used" set lives in the `used_jtis` Postgres table
+ *   (migration 0010) so multiple server replicas behind a load
+ *   balancer share the same view. The atomic UPSERT is a single
+ *   INSERT ... ON CONFLICT DO NOTHING, returning the affected row
+ *   count — a return value of 1 means "first time we see this jti,
+ *   proceed"; 0 means "already used, reject".
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
-import { promisify as _promisify } from 'util';
-void _promisify; // (unused — the type cast below is the only consumer)
+import { db } from './shared.cts';
 
-// Cache of used JTIs. Entries are evicted lazily on lookup. We
-// keep the cache in-process for simplicity; horizontal scale-out
-// will need a shared store (Redis, or a `revoked_tokens` table).
-const USED_JTIS = new Map<string, number>(); // jti → expiresAt (ms)
-const JTI_CLEANUP_INTERVAL_MS = 60_000;
 const PARTIAL_TTL_SECONDS = 5 * 60; // 5 minutes
-
-// Background sweeper — drops expired JTIs from the cache.
-const sweeper = setInterval(() => {
-	const now = Date.now();
-	for (const [k, exp] of USED_JTIS) {
-		if (exp <= now) USED_JTIS.delete(k);
-	}
-}, JTI_CLEANUP_INTERVAL_MS);
-sweeper.unref();
-
-/** Stop the background sweeper (for tests). */
-export function _stopPartialTokenSweeperForTests(): void {
-	clearInterval(sweeper);
-}
 
 interface PartialTokenPayload {
 	sub: number;
@@ -60,13 +41,13 @@ interface PartialTokenPayload {
 
 function getAuthSecret(): string {
 	const s = process.env.AUTH_SECRET;
-	if (s && s.length >= 32) return s;
-	if (process.env.NODE_ENV === 'production') {
-		throw new Error('AUTH_SECRET env var is required in production (>=32 random chars).');
+	if (!s || s.length < 32) {
+		throw new Error(
+			'AUTH_SECRET env var is required (>=32 random chars). ' +
+				'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64url\'))"',
+		);
 	}
-	// Dev-only fallback (must be stable across calls in the same
-	// process so verification works).
-	return 'dev-only-partial-token-fallback-secret-must-be-32+chars';
+	return s;
 }
 
 function base64url(buf: Buffer): string {
@@ -80,7 +61,7 @@ function fromBase64url(s: string): Buffer {
 }
 
 /** Sign a partial token bound to a user. The token is single-use
- *  (tracked by jti) and short-lived (5 min). */
+ *  (tracked by jti in the `used_jtis` table) and short-lived (5 min). */
 export function signPartialToken(userId: number): string {
 	const now = Math.floor(Date.now() / 1000);
 	const payload: PartialTokenPayload = {
@@ -94,11 +75,15 @@ export function signPartialToken(userId: number): string {
 	return body + '.' + sig;
 }
 
-/** Verify a partial token. Returns the user id on success, or null
- *  on any failure (bad signature, expired, wrong purpose, already
- *  used). On success, the jti is marked as used — a second call
- *  with the same token will fail. */
-export function verifyPartialToken(token: string): { sub: number } | null {
+/**
+ * Verify a partial token. Returns the user id on success, or null on
+ * any failure (bad signature, expired, wrong purpose, already used).
+ *
+ * On success the jti is atomically marked as used via UPSERT. A second
+ * call with the same token will fail because the INSERT … ON CONFLICT
+ * DO NOTHING will affect 0 rows.
+ */
+export async function verifyPartialToken(token: string): Promise<{ sub: number } | null> {
 	const dot = token.indexOf('.');
 	if (dot < 0) return null;
 	const body = token.slice(0, dot);
@@ -121,13 +106,33 @@ export function verifyPartialToken(token: string): { sub: number } | null {
 	if (typeof payload.exp !== 'number') return null;
 	if (payload.exp <= Math.floor(Date.now() / 1000)) return null;
 
-	// Single-use: jti may not have been seen before.
-	if (USED_JTIS.has(payload.jti)) return null;
-	USED_JTIS.set(payload.jti, payload.exp * 1000);
+	// Atomic single-use reservation: returns 1 on first use, 0 on replay.
+	const expiresAt = new Date(payload.exp * 1000).toISOString();
+	const result = (await db
+		.prepare(
+			`INSERT INTO used_jtis (jti, user_id, expires_at)
+			 VALUES (?, ?, ?)
+			 ON CONFLICT (jti) DO NOTHING
+			 RETURNING jti`,
+		)
+		.get(payload.jti, payload.sub, expiresAt)) as { jti: string } | undefined;
+	if (!result) {
+		// Replay — this jti was already used (or its row hasn't expired
+		// yet, which is the same effect).
+		return null;
+	}
 	return { sub: payload.sub };
 }
 
-/** Test helper: clear the jti cache. */
-export function _resetPartialTokenForTests(): void {
-	USED_JTIS.clear();
+/**
+ * Test helper: clear the jti cache for a specific user. Deletes rows
+ * from `used_jtis` matching the supplied user_id (or all rows when
+ * userId is undefined).
+ */
+export async function _resetPartialTokenForTests(userId?: number): Promise<void> {
+	if (userId === undefined) {
+		await db.prepare('DELETE FROM used_jtis').run();
+	} else {
+		await db.prepare('DELETE FROM used_jtis WHERE user_id = ?').run(userId);
+	}
 }

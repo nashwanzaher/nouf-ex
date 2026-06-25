@@ -1,32 +1,56 @@
 # noufex-mcp
 
-A Model Context Protocol server for deep, accurate inspection of the
-**Nouf-ex** project and its PostgreSQL database (`noufex_db`).
+A Model Context Protocol (MCP) server for deep, accurate inspection of the
+**Nouf-ex** project and its PostgreSQL database (`noufex_db`) — designed
+for AI agents (GitHub Copilot, Claude, etc.) that need to read this
+codebase with the same fidelity as a human reviewer.
 
-The server exposes four families of tools over `stdio`:
+---
 
-| Family   | Tools                                                                                                                                                          |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **db**   | `db_stats`, `db_list_tables`, `db_describe_table`, `db_list_views`, `db_list_functions`, `db_list_triggers`, `db_get_migrations`, `db_sample_rows`, `db_query` |
-| **code** | `code_tree`, `code_read_file`, `code_search`                                                                                                                   |
-| **api**  | `api_list_endpoints`, `api_get_endpoint`, `api_search`                                                                                                         |
-| **docs** | `docs_list`, `docs_read`, `docs_search`                                                                                                                        |
+## Purpose
 
-The DB tools are **read-only by default** — `db_query` accepts only
-`SELECT` / `WITH` / `EXPLAIN` / `SHOW` unless the caller passes
-`read_only: false`.
+**noufex-mcp** is a read-only bridge between an LLM agent and three
+sources of truth:
+
+1. **The PostgreSQL schema** (`noufex_db`) — table definitions, indexes,
+   triggers, views, roles, migration history, sample rows.
+2. **The application source** (`app/server/`, `app/src/`, `database/`) —
+   file tree, content with line numbers, regex search across the
+   working tree.
+3. **The REST API surface** (`app/server/index.ts`) — every Express
+   route with verb, path, auth middleware heuristic, and source
+   excerpt.
+
+This lets an agent answer questions like:
+
+- "Show me the orders table schema and the last 5 rows."
+- "What endpoints require `admin` role?"
+- "Which files reference `DATABASE_URL`?"
+- "Read me the security middleware."
+- "Search the source for `rate-limit` and show the surrounding code."
+
+…without parsing the repo blindly or hallucinating endpoint names.
+
+> **The server never modifies state by default.** All filesystem and DB
+> tools are read-only. The one write-capable tool (`db_query`) refuses
+> any non-`SELECT` statement unless the caller explicitly passes
+> `read_only: false`.
 
 ---
 
 ## Quick start
 
+### 1. Build the server
+
 ```sh
 cd mcp-server
 npm install
-npm run build          # one-time — produces dist/index.js
+npm run build          # produces dist/index.js (CommonJS bundle)
 ```
 
-Then register it in `.vscode/mcp.json` (already provided in this workspace):
+### 2. Register with VS Code
+
+The workspace already ships with `.vscode/mcp.json`:
 
 ```jsonc
 {
@@ -34,123 +58,200 @@ Then register it in `.vscode/mcp.json` (already provided in this workspace):
 		"noufex": {
 			"type": "stdio",
 			"command": "node",
-			"args": ["${workspaceFolder}/mcp-server/dist/index.js", "--root", "${workspaceFolder}"],
+			"args": [
+				"${workspaceFolder}/mcp-server/dist/index.js",
+				"--root",
+				"${workspaceFolder}",
+			],
 		},
 	},
 }
 ```
 
-After saving, VS Code will start the server the next time an MCP-aware
-agent connects. Use `MCP: List Servers` and **Start** the `noufex`
-entry from the command palette to verify.
+After saving, VS Code will spawn the server the next time an MCP-aware
+agent (GitHub Copilot Chat, Continue, Claude Desktop, etc.) connects.
+Use **MCP: List Servers** from the command palette to verify the
+`noufex` server appears, then **Start** it.
 
-For ad-hoc testing:
+### 3. Smoke test
 
 ```sh
+# Quick health check (server speaks MCP over stdio; send a tools/list):
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
   | node mcp-server/dist/index.js --root .
+
+# Or run the smoke test script (no MCP framing required):
+node mcp-server/scripts/smoke-mcp.cjs
 ```
 
-(you'll need to send a real MCP framing header; `tsx` + a small script is
-easier — see `scripts/smoke-mcp.ts`.)
+The smoke test calls `db_stats`, `db_list_tables`, `db_describe_table`,
+and `api_list_endpoints` and asserts each returns well-formed data.
 
 ---
 
-## Tool reference (selected)
+## Tool reference (17 tools)
 
-### `db_describe_table`
+### `db_*` — Database inspection (9 tools)
 
-Returns columns (with types, nullability, defaults), CHECK constraints,
-indexes, and foreign keys for a single table.
+| Tool | What it does | Returns |
+|---|---|---|
+| `db_stats` | Database overview | Table / view / function / trigger counts + total size |
+| `db_list_tables` | All base tables in `public` | name, approximate row count, disk size |
+| `db_describe_table` | Single table schema | columns, CHECK constraints, indexes, FK references |
+| `db_list_views` | All views with definitions | name + first 80 chars of DDL + `security_invoker` setting |
+| `db_list_functions` | PL/pgSQL functions in `public` | name, args, return type, volatility (helps understand triggers) |
+| `db_list_triggers` | All triggers | table, function, event, timing |
+| `db_get_migrations` | Applied migrations from `schema_migrations` | version, description, applied_at, checksum |
+| `db_sample_rows` | Sample rows from a table | first N rows; optional WHERE clause |
+| `db_query` | Run arbitrary SQL | **read-only by default**; pass `read_only: false` for writes |
 
-```jsonc
-{
-	"name": "db_describe_table",
-	"arguments": { "table": "products" },
-}
-```
+> **Example — describe the orders table:**
+>
+> ```jsonc
+> { "name": "db_describe_table", "arguments": { "table": "orders" } }
+> ```
 
-### `db_query`
+> **Example — search for high-value orders:**
+>
+> ```jsonc
+> {
+>   "name": "db_query",
+>   "arguments": {
+>     "sql": "SELECT id, order_number, total, status FROM orders WHERE total > 100000 ORDER BY total DESC LIMIT 5",
+>   },
+> }
+> ```
 
-Runs arbitrary SQL. Defaults to read-only mode; pass `read_only: false`
-to allow writes.
+### `code_*` — Source inspection (3 tools)
 
-```jsonc
-{
-	"name": "db_query",
-	"arguments": {
-		"sql": "SELECT id, name_ar, price FROM products WHERE is_active = TRUE ORDER BY price DESC LIMIT 5",
-		"max_rows": 10,
-	},
-}
-```
+| Tool | What it does |
+|---|---|
+| `code_tree` | Returns the file tree under a path (skips `node_modules/`, `dist/`, `coverage/`) |
+| `code_read_file` | Reads a file with line numbers (max 200 KB) |
+| `code_search` | Regex search across files; supports `include`/`exclude` glob patterns |
 
-### `api_list_endpoints`
+> **Example — find every callsite of `requireRole`:**
+>
+> ```jsonc
+> {
+>   "name": "code_search",
+>   "arguments": {
+>     "pattern": "requireRole\\(",
+>     "include": "app/server/**/*.cts",
+>     "exclude": "**/*.test.ts",
+>   },
+> }
+> ```
 
-Returns every Express route from `app/server/index.ts` with verb, path,
-auth requirement, and source line.
+> **Example — read a route file with line numbers:**
+>
+> ```jsonc
+> { "name": "code_read_file", "arguments": { "path": "app/server/routes/auth.cts" } }
+> ```
 
-```jsonc
-{ "name": "api_list_endpoints", "arguments": { "method": "GET" } }
-```
+> **Path safety:** `code_read_file` and `code_search` resolve every path
+> against the project root and reject any result that escapes it (e.g.
+> `../etc/passwd`). You cannot read files outside the workspace.
 
-### `api_get_endpoint`
+### `api_*` — REST API inspection (3 tools)
 
-Returns the same metadata plus a numbered source excerpt.
+| Tool | What it does |
+|---|---|
+| `api_list_endpoints` | All Express routes from `app/server/index.ts` with verb, path, auth middleware |
+| `api_get_endpoint` | One endpoint's metadata + numbered source excerpt |
+| `api_search` | Search endpoints by path substring |
 
-```jsonc
-{
-	"name": "api_get_endpoint",
-	"arguments": { "method": "GET", "path": "/api/products/:id", "context_lines": 30 },
-}
-```
+The middleware heuristic auto-detects:
 
-### `code_search`
+- `requireAuth` → `authed`
+- `requireRole('admin')` → `role:admin`
+- `requireRole('merchant')` → `role:merchant`
+- otherwise → `public`
 
-Regex search across source files. Use `include` / `exclude` globs.
+Results are cached based on `mtime` so re-running during a session is
+instant.
 
-```jsonc
-{
-	"name": "code_search",
-	"arguments": {
-		"pattern": "requireAuth|requireRole",
-		"include": "app/server/**/*.ts",
-		"exclude": "**/*.test.ts",
-	},
-}
-```
+> **Example — every admin-only endpoint:**
+>
+> ```jsonc
+> {
+>   "name": "api_search",
+>   "arguments": { "pattern": "/api/admin" },
+> }
+> ```
 
-### `docs_read`
+### `docs_*` — Documentation inspection (3 tools)
 
-Reads a single markdown file from `docs/`.
+| Tool | What it does |
+|---|---|
+| `docs_list` | List every `.md` under `docs/` with size |
+| `docs_read` | Read one doc (max 120 KB) |
+| `docs_search` | Regex search across docs |
 
-```jsonc
-{ "name": "docs_read", "arguments": { "path": "docs/architecture.md" } }
-```
+By default, `docs_list` excludes `research/` and `audit/`. Pass
+`--include-research` or `--include-audit` to scan them.
 
 ---
 
 ## Configuration
 
-The server resolves the project root and the database URL in this order:
+The server resolves the project root and the database URL in this order
+(first match wins):
 
-1. CLI flag `--root <path>` (defaults to the parent of `cwd`).
-2. CLI flag `--db-url <connection string>`.
-3. Environment variables `DATABASE_URL` (or `DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD`).
+1. **CLI flags**: `--root <path>` and `--db-url <connection string>`.
+2. **Environment**: `DATABASE_URL`, or `DB_HOST` + `DB_PORT` + `DB_NAME` + `DB_USER` + `DB_PASSWORD`.
+3. **`.env`** at the project root is auto-loaded when present.
 
-`.env` from the project root is loaded automatically when present.
+Example:
+
+```sh
+node mcp-server/dist/index.js \
+  --root /home/me/noufex \
+  --db-url 'postgresql://noufex_app:CHANGE_ME_APP@localhost:5432/noufex_db'
+```
 
 ---
 
-## Security notes
+## Common workflows
 
-- All filesystem tools validate that the resolved path stays inside the
-  project root.
-- DB connection details are redacted (`password → ***`) in any stderr /
-  log output.
-- The default safety stance for `db_query` is read-only — explicit
-  override is required to run `INSERT/UPDATE/DELETE/DDL`.
-- No external HTTP calls are made by the server.
+### "Review a PR that adds a new endpoint"
+
+1. `api_list_endpoints` — see if the new route is registered.
+2. `api_get_endpoint` for the new path — read its handler.
+3. `code_search` for the route name — find all callsites + tests.
+4. `db_describe_table` for any new tables it touches.
+5. `db_list_triggers` — verify any state-machine triggers still cover the new transitions.
+
+### "Debug a 500 error"
+
+1. `db_describe_table` + `db_sample_rows` — inspect the relevant table.
+2. `code_search` for the error message string.
+3. `code_read_file` on the matching route file.
+
+### "Check schema migrations are applied"
+
+1. `db_get_migrations` — list all applied migrations.
+2. `db_describe_table` on a table that the latest migration should have changed.
+
+### "Find every place a constant is used"
+
+1. `code_search` for the constant name (e.g. `AUTH_SECRET`).
+2. `docs_search` to find documentation references.
+
+---
+
+## Security model
+
+| Concern | Mitigation |
+|---|---|
+| Reading files outside the project root | `code_read_file` and `code_search` resolve paths against `--root` and reject anything that escapes it (verified with `path.relative`) |
+| Accidental DB writes | `db_query` rejects anything that isn't `SELECT`/`WITH`/`EXPLAIN`/`SHOW` unless the caller passes `read_only: false`; multi-statement queries are rejected; `--` comments are stripped before pattern matching |
+| Password leakage in logs | All `password=...` strings are replaced with `password=***` before any stderr/log output |
+| External network calls | The server makes **zero** outbound HTTP requests; all data is local |
+| Multi-statement SQL injection | Each query is checked for `;` outside of comments/strings before being passed to `pg` |
+
+The server logs each tool invocation to **stderr** in one-line JSON.
+Configure your log shipper to capture and forward these.
 
 ---
 
@@ -161,6 +262,10 @@ mcp-server/
 ├── README.md              ← this file
 ├── package.json
 ├── tsconfig.json
+├── scripts/
+│   ├── smoke-mcp.cjs            ← basic health check
+│   ├── smoke-mcp-full.cjs       ← exercises every tool family
+│   └── smoke-search.cjs        ← verifies code_search glob behaviour
 └── src/
     ├── index.ts           ← MCP entrypoint, tool registration
     ├── project.ts         ← CLI/env → ProjectContext
@@ -169,3 +274,16 @@ mcp-server/
     ├── api-tools.ts       ← api_* tools (parses app/server/index.ts)
     └── docs-tools.ts      ← docs_* tools (walks docs/)
 ```
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Server fails to start | `dist/index.js` missing | Run `npm run build` in `mcp-server/` |
+| `db_describe_table` returns "relation does not exist" | table name in wrong schema | Default schema is `public`; pass `{ "schema": "other" }` if needed |
+| `code_search` returns nothing | Include glob excludes too much | Drop `exclude` and re-run with just `include` |
+| `api_list_endpoints` is empty | `app/server/index.ts` not at the configured `--root` | Verify the root path; the parser only walks this single file |
+| "Permission denied" reading `pg_hba.conf` | DB user can't authenticate | The server uses the URL provided — fix `.env` or the `--db-url` flag |
+| VS Code doesn't show the server | MCP extension not installed | Install **GitHub Copilot Chat** with MCP support, or another MCP client |

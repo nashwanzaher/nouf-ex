@@ -40,6 +40,7 @@ import { statsRouter } from './routes/stats.cts';
 import { shippingRouter } from './routes/shipping.cts';
 import { storeFollowersRouter } from './routes/store-followers.cts';
 import { addressesRouter } from './routes/addresses.cts';
+import { messagesRouter } from './routes/messages.cts';
 
 dotenv.config();
 
@@ -142,6 +143,7 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/messages', messagesRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/coupons', couponsRouter);
 app.use('/api/refunds', refundsRouter);

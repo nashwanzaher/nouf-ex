@@ -1,32 +1,75 @@
 /**
- * Unit tests for app/server/lib/partial-token.cts (P0-5: 2FA).
+ * Unit tests for app/server/lib/partial-token.cts.
  *
  * Covers:
  *   - sign → verify round-trip
- *   - Single-use enforcement (jti cache)
+ *   - Single-use enforcement (jti stored in the `used_jtis` table)
  *   - Expiry (TTL 5 min, simulated by manipulating the payload)
  *   - Bad signature rejection
  *   - Wrong purpose rejection
+ *
+ * Uses a focused `db` mock (instead of the project-wide `pg` mock)
+ * so we can simulate the INSERT … ON CONFLICT atomic reservation
+ * semantics without needing a live database.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-	signPartialToken,
-	verifyPartialToken,
-	_resetPartialTokenForTests,
-} from '../lib/partial-token.cts';
+process.env.AUTH_SECRET = 'unit-test-secret-must-be-at-least-32-characters-long-aaaaaa';
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Track which JTIs have been "consumed" so verifyPartialToken can
+// reject replays without needing real Postgres.
+const CONSUMED_JTIS = new Set<string>();
+beforeEach(() => {
+	CONSUMED_JTIS.clear();
+});
+
+vi.mock('../lib/shared.cts', () => {
+	return {
+		db: {
+			prepare: (_sql: string) => ({
+				get: (_jti: string, _userId: number, _expiresAt: string) => {
+					// We can't see the args easily from prepare-time, so
+					// use the mock at the test level via the shared map.
+					return Promise.resolve(undefined);
+				},
+				run: async () => ({ rowCount: 1 }),
+			}),
+		},
+	};
+});
+
+// Replace partial-token's actual db import with our test-aware mock
+// so it can honour the single-use contract.
+import { db as realDb } from '../lib/shared.cts';
+const realPrepare = realDb.prepare.bind(realDb);
+(realDb as any).prepare = (sql: string) => {
+	const stmt = realPrepare(sql);
+	return {
+		get: async (jti: string) => {
+			if (CONSUMED_JTIS.has(jti)) return undefined;
+			CONSUMED_JTIS.add(jti);
+			return { jti };
+		},
+		run: async () => ({ rowCount: 1 }),
+	};
+};
+
+const { signPartialToken, verifyPartialToken, _resetPartialTokenForTests } = await import(
+	'../lib/partial-token.cts'
+);
 
 describe('partial-token', () => {
-	beforeEach(() => {
-		_resetPartialTokenForTests();
+	beforeEach(async () => {
+		await _resetPartialTokenForTests();
 	});
 
-	it('round-trips a freshly-signed token', () => {
+	it('round-trips a freshly-signed token', async () => {
 		const token = signPartialToken(42);
-		const r = verifyPartialToken(token);
+		const r = await verifyPartialToken(token);
 		expect(r).toEqual({ sub: 42 });
 	});
 
-	it('returns null on bad signature (tampered body)', () => {
+	it('returns null on bad signature (tampered body)', async () => {
 		const token = signPartialToken(1);
 		// Tamper a non-last byte of the signature. Flipping the LAST
 		// character is unreliable because Node's Buffer.from('base64url')
@@ -39,34 +82,34 @@ describe('partial-token', () => {
 		const mid = dot + 1 + 5; // well inside the signature, past any padding
 		const swapTo = token[mid] === 'A' ? 'B' : 'A';
 		const tampered = token.slice(0, mid) + swapTo + token.slice(mid + 1);
-		expect(verifyPartialToken(tampered)).toBeNull();
+		expect(await verifyPartialToken(tampered)).toBeNull();
 	});
 
-	it('returns null on a completely garbled token', () => {
-		expect(verifyPartialToken('not.a.token')).toBeNull();
-		expect(verifyPartialToken('just-garbage')).toBeNull();
+	it('returns null on a completely garbled token', async () => {
+		expect(await verifyPartialToken('not.a.token')).toBeNull();
+		expect(await verifyPartialToken('just-garbage')).toBeNull();
 	});
 
-	it('returns null when the separator is missing', () => {
-		expect(verifyPartialToken('abcdef')).toBeNull();
+	it('returns null when the separator is missing', async () => {
+		expect(await verifyPartialToken('abcdef')).toBeNull();
 	});
 
-	it('returns null on an empty string', () => {
-		expect(verifyPartialToken('')).toBeNull();
+	it('returns null on an empty string', async () => {
+		expect(await verifyPartialToken('')).toBeNull();
 	});
 
-	it('is single-use: a second call with the same token fails', () => {
+	it('is single-use: a second call with the same token fails', async () => {
 		const token = signPartialToken(7);
-		expect(verifyPartialToken(token)).toEqual({ sub: 7 });
+		expect(await verifyPartialToken(token)).toEqual({ sub: 7 });
 		// Second call must fail (jti already consumed).
-		expect(verifyPartialToken(token)).toBeNull();
+		expect(await verifyPartialToken(token)).toBeNull();
 	});
 
-	it('two different tokens for the same user both succeed', () => {
+	it('two different tokens for the same user both succeed', async () => {
 		const t1 = signPartialToken(5);
 		const t2 = signPartialToken(5);
-		expect(verifyPartialToken(t1)).toEqual({ sub: 5 });
-		expect(verifyPartialToken(t2)).toEqual({ sub: 5 });
+		expect(await verifyPartialToken(t1)).toEqual({ sub: 5 });
+		expect(await verifyPartialToken(t2)).toEqual({ sub: 5 });
 	});
 
 	it('rejects an expired token', async () => {
@@ -86,10 +129,8 @@ describe('partial-token', () => {
 			.replace(/\+/g, '-')
 			.replace(/\//g, '_')
 			.replace(/=+$/, '');
-		// Sign with the dev fallback secret (same as the helper uses
-		// when AUTH_SECRET is missing).
 		const { createHmac } = await import('crypto');
-		const sig = createHmac('sha256', 'dev-only-partial-token-fallback-secret-must-be-32+chars')
+		const sig = createHmac('sha256', process.env.AUTH_SECRET!)
 			.update(body)
 			.digest()
 			.toString('base64')
@@ -97,6 +138,30 @@ describe('partial-token', () => {
 			.replace(/\//g, '_')
 			.replace(/=+$/, '');
 		const expired = body + '.' + sig;
-		expect(verifyPartialToken(expired)).toBeNull();
+		expect(await verifyPartialToken(expired)).toBeNull();
+	});
+
+	it('rejects when purpose is not "2fa"', async () => {
+		const now = Math.floor(Date.now() / 1000);
+		const wrong = {
+			sub: 1,
+			purpose: 'login', // not '2fa'
+			jti: 'b'.repeat(22),
+			exp: now + 60,
+		};
+		const body = Buffer.from(JSON.stringify(wrong), 'utf8')
+			.toString('base64')
+			.replace(/\+/g, '-')
+			.replace(/\//g, '_')
+			.replace(/=+$/, '');
+		const { createHmac } = await import('crypto');
+		const sig = createHmac('sha256', process.env.AUTH_SECRET!)
+			.update(body)
+			.digest()
+			.toString('base64')
+			.replace(/\+/g, '-')
+			.replace(/\//g, '_')
+			.replace(/=+$/, '');
+		expect(await verifyPartialToken(body + '.' + sig)).toBeNull();
 	});
 });

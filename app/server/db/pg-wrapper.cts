@@ -284,7 +284,10 @@ export class PgDb {
 	constructor(connectionString: string) {
 		const config = {
 			connectionString,
-			max: 10,
+			// Pool size: default 20 (was 10). Override via DB_POOL_MAX env var.
+			// 20 matches a typical 4-vCPU host under moderate load; raise
+			// further for high-concurrency deployments.
+			max: parseInt(process.env.DB_POOL_MAX || '20', 10),
 			idleTimeoutMillis: 30_000,
 			connectionTimeoutMillis: 5_000,
 		};

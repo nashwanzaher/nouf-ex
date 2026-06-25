@@ -9,7 +9,7 @@
  * without code changes).
  */
 
-import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
+import { randomUUID, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import type { Response, RequestHandler, ErrorRequestHandler } from 'express';
 import { PgDb } from './db/pg-wrapper.cts';
 
@@ -67,18 +67,23 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	if (process.env.NODE_ENV === 'production') {
 		res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
 	}
-	// Content-Security-Policy — explicit per-directive, no `unsafe-eval` even
-	// in dev. The `'unsafe-inline'` allowance for `style-src` covers the
-	// dynamic Tailwind/inline-style attributes some shadcn components emit.
-	// Remove once we move to nonced hashes.
+	// Generate a per-request CSP nonce (16 bytes → 22-char base64url). The
+	// nonce is exposed to the SPA via (1) the CSP header below and (2) a
+	// non-HttpOnly cookie + meta tag injected by the static-file handler in
+	// index.ts so the client can attach it to dynamically-created <script>
+	// and <style> tags. We use 'strict-dynamic' so once the initial bundle
+	// loads under the nonce, browsers trust any script it pulls in (which
+	// matches Vite's import-graph output).
+	const nonce = randomBytes(16).toString('base64url');
+	res.locals.cspNonce = nonce;
 	res.setHeader(
 		'Content-Security-Policy',
 		[
 			"default-src 'self'",
-			// Inline styles are common in React (style={{...}}) — keep
-			// `unsafe-inline` here until we adopt nonce-based CSP.
-			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-			"script-src 'self' 'unsafe-inline'",
+			// Inline styles are common in React (style={{...}}) — nonced
+			// style tags are allowed; everything else is blocked.
+			`style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
+			`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
 			"font-src 'self' data: https://fonts.gstatic.com",
 			"img-src 'self' data: blob: https:",
 			"connect-src 'self' ws: wss:",
@@ -290,15 +295,17 @@ function fromBase64url(s: string): Buffer {
 
 function getAuthSecret(): string {
 	const s = process.env.AUTH_SECRET;
-	if (s && s.length >= 32) return s;
-	// Dev-only fallback. Throw in production.
-	if (process.env.NODE_ENV === 'production') {
+	// SECURITY: Never accept a weak/missing AUTH_SECRET — not even in dev.
+	// A predictable HMAC key lets an attacker forge any user's auth token,
+	// so we fail fast at module-load time. Generate one with:
+	//   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+	if (!s || s.length < 32) {
 		throw new Error(
-			'AUTH_SECRET env var is required in production (≥32 random chars). ' +
+			'AUTH_SECRET env var is required (≥32 random chars). ' +
 				"Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
 		);
 	}
-	return 'dev-only-secret-' + 'x'.repeat(40);
+	return s;
 }
 
 export function signAuthToken(payload: { sub: number; role: AuthRole }): string {

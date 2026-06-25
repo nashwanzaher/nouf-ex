@@ -286,6 +286,22 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			{ id: orderId, orderNumber, discount: finalDiscount, total: finalTotal },
 			'Order created successfully',
 		);
+
+		// Fire notifications to the customer (and merchant) AFTER the
+		// transaction has committed. We do this best-effort: any failure
+		// here is logged but never blocks the order response.
+		try {
+			const { notify } = await import('../lib/notifications/dispatcher.cts');
+			await notify({
+				userId: customerId,
+				type: 'order',
+				title: `Order ${orderNumber} placed`,
+				body: `Your order for ${finalTotal.toLocaleString()} YER has been placed and is awaiting confirmation.`,
+				data: { order_id: orderId, order_number: orderNumber, total: finalTotal },
+			});
+		} catch (notifyErr) {
+			console.error('[orders] notification dispatch failed:', notifyErr);
+		}
 	} catch (err) {
 		return sendError(res, err);
 	}

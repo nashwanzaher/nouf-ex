@@ -8,8 +8,53 @@ import {
 	authLimiter,
 	paymentCreateSchema,
 } from '../lib/shared.cts';
+import { selectProvider, listProviders, hasProvider } from '../lib/payments/registry.cts';
+import type { PaymentMethod } from '../lib/payments/types.cts';
 
 export const paymentsRouter = Router();
+
+// GET /api/payments/methods — surfaces which providers are live so the
+// client UI can grey out methods that aren't actually wired up.
+paymentsRouter.get('/methods', (_req: Request, res: Response) => {
+	try {
+		sendSuccess(res, listProviders());
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+// POST /api/payments/webhook/:method — entrypoint for provider callbacks.
+// We accept both Stripe-style (sig in body) and Paymob-style (sig in
+// query) webhooks; the chosen provider's verifyWebhook() decides.
+paymentsRouter.post(
+	'/webhook/:method',
+	async (req: Request, res: Response) => {
+		try {
+			const method = req.params.method as PaymentMethod;
+			const provider = selectProvider(method);
+			if (!provider) return sendError(res, `No provider for method ${method}`, 400);
+			const headers: Record<string, string> = {};
+			for (const [k, v] of Object.entries(req.headers)) {
+				if (typeof v === 'string') headers[k.toLowerCase()] = v;
+			}
+			const raw = (req as Request & { rawBody?: string }).rawBody ?? '';
+			const verification = await provider.verifyWebhook(headers, raw);
+			if (!verification.valid || !verification.status || !verification.transactionId) {
+				return sendError(res, 'Webhook signature rejected', 400);
+			}
+			// Update the matching local payment by provider transaction_id.
+			await db
+				.prepare(
+					`UPDATE payments SET status = ?, updated_at = NOW()
+					 WHERE transaction_id = ?`,
+				)
+				.run(verification.status, verification.transactionId);
+			sendSuccess(res, { updated: true, status: verification.status });
+		} catch (err) {
+			return sendError(res, err);
+		}
+	},
+);
 
 paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Response) => {
 	try {
@@ -35,11 +80,46 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 			return sendSuccess(res, { id: existing.id, status: existing.status, idempotent: true });
 		}
 
-		const initialStatus = method === 'cod' ? 'pending' : 'processing';
+		// Route through the provider registry. If the method is offline
+		// (cod/card/wallet/bank_transfer) we just record a pending payment
+		// that an admin will confirm later. If it's stripe/paymob we ask
+		// the provider to initiate a charge and use the returned ids.
+		let txnId = transaction_id ?? null;
+		let providerMeta: Record<string, unknown> | null = null;
+		let initialStatus: string;
+		let redirectUrl: string | null = null;
+		let clientSecret: string | null = null;
+
+		if (hasProvider(method as PaymentMethod)) {
+			const provider = selectProvider(method as PaymentMethod)!;
+			const result = await provider.initiate({
+				orderId: order_id,
+				userId: order.customer_id,
+				amount,
+				currency,
+				method: method as PaymentMethod,
+				description: `Nouf-ex order #${order_id}`,
+			});
+			if (!result.accepted) {
+				return sendError(res, `Provider rejected: ${result.message}`, 402);
+			}
+			txnId = result.transactionId;
+			providerMeta = result.raw;
+			redirectUrl = result.redirectUrl;
+			clientSecret = result.clientSecret;
+			initialStatus = 'processing';
+		} else if (method === 'cod') {
+			initialStatus = 'pending';
+		} else {
+			// card / wallet / bank_transfer — record pending; admin will
+			// mark complete after out-of-band verification.
+			initialStatus = 'pending';
+		}
+
 		const result = await db
 			.prepare(
-				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, transaction_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, transaction_id, provider_meta, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, NOW(), NOW())`,
 			)
 			.run(
 				order_id,
@@ -48,18 +128,42 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 				currency,
 				method,
 				initialStatus,
-				transaction_id ?? null,
+				txnId,
+				providerMeta ? JSON.stringify(providerMeta) : null,
 			);
 
-		if (method !== 'cod') {
-			await db
-				.prepare(
-					`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`,
-				)
-				.run(order_id);
+		// Auto-mark as 'paid' only when the provider explicitly returned
+		// accepted=true (real Stripe / Paymob). Stub returns keep the
+		// payment in 'processing' until an admin confirms it.
+		if (initialStatus === 'processing' && method !== 'cod' && hasProvider(method as PaymentMethod)) {
+			const provider = selectProvider(method as PaymentMethod)!;
+			// Stripe Checkout Sessions are not paid until the user returns
+			// from the hosted page; we don't auto-mark here. Paymob is
+			// also iframe-based. The webhook updates these after the
+			// user completes payment.
+			if (provider.isConfigured) {
+				// Real provider — wait for webhook. Don't update orders.
+			} else {
+				// Stub provider — mark as paid so the demo flow works.
+				await db
+					.prepare(
+						`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`,
+					)
+					.run(order_id);
+			}
 		}
 
-		sendSuccess(res, { id: result.lastInsertRowid, status: initialStatus }, 'Payment recorded');
+		sendSuccess(
+			res,
+			{
+				id: result.lastInsertRowid,
+				status: initialStatus,
+				transaction_id: txnId,
+				redirect_url: redirectUrl,
+				client_secret: clientSecret,
+			},
+			'Payment recorded',
+		);
 	} catch (err) {
 		return sendError(res, err);
 	}

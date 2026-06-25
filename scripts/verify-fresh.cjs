@@ -16,7 +16,7 @@ async function verifyPassword(password, stored) {
 }
 
 (async () => {
-  const c = new Client({ connectionString: 'postgresql://postgres:***REDACTED***@localhost:5432/noufex_db_fresh' });
+  const c = new Client({ connectionString: process.env.DATABASE_URL || (() => { throw new Error('DATABASE_URL not set. Source .env or set the env var before running this script.'); })() });
   await c.connect();
   const tests = [
     ['admin@noufex.com', 'admin123'],

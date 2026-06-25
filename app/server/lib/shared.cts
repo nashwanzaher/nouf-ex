@@ -34,11 +34,18 @@ import {
 
 // Re-export the pg-wrapper connection so route files have a single
 // import surface for "everything I need to talk to the DB".
-export const db = new PgDb(
-	process.env.DATABASE_URL || 'postgresql://postgres:***REDACTED***@localhost:5432/noufex_db',
-);
-
-// Re-export the middleware helpers. Route files import these via
+//
+// SECURITY: Never hardcode credentials here. DATABASE_URL must be supplied
+// via .env (host) or docker-compose env_file (container). Fail fast at
+// module-load time if it is missing — better than silently using a fallback
+// that could leak secrets into git history.
+const _databaseUrl = process.env.DATABASE_URL;
+if (!_databaseUrl) {
+    throw new Error(
+        'DATABASE_URL is not set. Configure it in .env (local) or via docker-compose env_file (container).',
+    );
+}
+export const db = new PgDb(_databaseUrl);
 // `import { requireAuth, sendError, ... } from '../lib/shared.js'`
 // so a future refactor of the middleware module doesn't break them.
 export { requireAuth, requireRole, sendSuccess, sendError, HttpError, log };

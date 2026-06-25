@@ -49,7 +49,9 @@ const db = process.argv[2];
 	const c = new Client({
 		connectionString:
 			process.env.DATABASE_URL ||
-			'postgresql://postgres:***REDACTED***@localhost:5432/postgres',
+			(() => {
+				throw new Error('DATABASE_URL not set. Source .env or set the env var before running this script.');
+			})(),
 	});
 	await c.connect();
 	try {

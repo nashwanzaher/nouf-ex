@@ -41,9 +41,12 @@ vi.mock('../lib/shared.cts', () => {
 // Replace partial-token's actual db import with our test-aware mock
 // so it can honour the single-use contract.
 import { db as realDb } from '../lib/shared.cts';
-const realPrepare = realDb.prepare.bind(realDb);
-(realDb as any).prepare = (sql: string) => {
-	const stmt = realPrepare(sql);
+// Cast through unknown so the test can monkey-patch prepare() — the
+// real `db` type from shared.cts is strictly typed and doesn't allow
+// reassignment of its members. We don't type this as `any` because
+// eslint flags it.
+type DbLike = { prepare: (sql?: string) => unknown };
+(realDb as unknown as DbLike).prepare = () => {
 	return {
 		get: async (jti: string) => {
 			if (CONSUMED_JTIS.has(jti)) return undefined;

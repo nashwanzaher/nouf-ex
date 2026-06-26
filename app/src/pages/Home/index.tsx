@@ -163,25 +163,25 @@ export default function Home() {
 	const hotSearches = useMemo(
 		() => [
 			{
-				name: i18n.language === 'ar' ? 'هواتف ذكية' : 'Smartphones',
+				name: t('home.hotSearchSmartphones', 'Smartphones'),
 				img: '/category-electronics.jpg',
 			},
 			{
-				name: i18n.language === 'ar' ? 'قهوة يمنية' : 'Yemeni Coffee',
+				name: t('home.hotSearchYemeniCoffee', 'Yemeni Coffee'),
 				img: '/category-food.jpg',
 			},
 			{
-				name: i18n.language === 'ar' ? 'أثاث تقليدي' : 'Traditional Furniture',
+				name: t('home.hotSearchFurniture', 'Traditional Furniture'),
 				img: '/category-home.jpg',
 			},
-			{ name: i18n.language === 'ar' ? 'عسل سدر' : 'Sidr Honey', img: '/category-food.jpg' },
+			{ name: t('home.hotSearchSidrHoney', 'Sidr Honey'), img: '/category-food.jpg' },
 			{
-				name: i18n.language === 'ar' ? 'فضة يمنية' : 'Yemeni Silver',
+				name: t('home.hotSearchYemeniSilver', 'Yemeni Silver'),
 				img: '/category-handicrafts.jpg',
 			},
-			{ name: i18n.language === 'ar' ? 'عطور' : 'Perfumes', img: '/category-beauty.jpg' },
+			{ name: t('home.hotSearchPerfumes', 'Perfumes'), img: '/category-beauty.jpg' },
 		],
-		[i18n.language],
+		[t],
 	);
 
 	const stats = statsData;
@@ -196,7 +196,7 @@ export default function Home() {
 						<div className="hidden lg:block bg-white rounded-xl border border-aliBorder shadow-sm overflow-hidden h-fit">
 							<h3 className="font-bold text-aliText px-4 py-3 border-b border-aliBorder bg-aliSurface/50 flex items-center gap-2">
 								<span className="text-aliOrange">
-									{i18n.language === 'ar' ? 'التصنيفات' : 'Categories'}
+									{t('home.categoriesHeading', 'Categories')}
 								</span>
 							</h3>
 							{catsLoading ? (
@@ -259,18 +259,13 @@ export default function Home() {
 							{/* Welcome Message */}
 							<div className="text-center mb-2">
 								<h1 className="text-2xl lg:text-3xl font-bold text-aliText mb-2">
-									{i18n.language === 'ar'
-										? 'مرحباً بك في Nouf-ex'
-										: i18n.language === 'zh'
-											? '欢迎来到Nouf-ex'
-											: 'Welcome to Nouf-ex'}
+									{t('home.welcomeTitle', 'Welcome to Nouf-ex')}
 								</h1>
 								<p className="text-aliTextSec text-sm">
-									{i18n.language === 'ar'
-										? 'المصدر الرئيسي للمنتجات اليمنية الأصيلة'
-										: i18n.language === 'zh'
-											? '也门正宗产品的首选来源'
-											: 'The leading source for authentic Yemeni products'}
+									{t(
+										'home.welcomeSubtitle',
+										'The leading source for authentic Yemeni products',
+									)}
 								</p>
 							</div>
 
@@ -282,7 +277,7 @@ export default function Home() {
 								>
 									<div className="flex items-center px-4 border-r border-aliBorder shrink-0">
 										<span className="text-sm text-aliTextSec font-medium">
-											{i18n.language === 'ar' ? 'الكل' : 'All'}
+											{t('nav.allCategories', 'All Categories')}
 										</span>
 										<ChevronDown size={14} className="text-aliTextMute ml-1" />
 									</div>
@@ -290,13 +285,10 @@ export default function Home() {
 										type="text"
 										value={searchQ}
 										onChange={(e) => setSearchQ(e.target.value)}
-										placeholder={
-											i18n.language === 'ar'
-												? 'ابحث عن منتجات...'
-												: i18n.language === 'zh'
-													? '搜索产品、供应商...'
-													: 'Search products, suppliers...'
-										}
+										placeholder={t(
+											'nav.searchPlaceholder',
+											'Search products...',
+										)}
 										className="flex-1 h-full px-4 text-base text-aliText placeholder-aliTextMute outline-none bg-transparent"
 										dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
 									/>
@@ -320,23 +312,17 @@ export default function Home() {
 									{[
 										{
 											key: 'rfq' as const,
-											label: i18n.language === 'ar' ? 'طلب عرض أسعار' : 'RFQ',
+											label: t('home.tabRfq', 'RFQ'),
 											icon: TrendingUp,
 										},
 										{
 											key: 'hot' as const,
-											label:
-												i18n.language === 'ar'
-													? 'الأكثر بحثاً'
-													: 'Hot Products',
+											label: t('home.tabHot', 'Hot Products'),
 											icon: Zap,
 										},
 										{
 											key: 'fast' as const,
-											label:
-												i18n.language === 'ar'
-													? 'تخصيص سريع'
-													: 'Fast Customization',
+											label: t('home.tabFast', 'Fast Customization'),
 											icon: Clock,
 										},
 									].map((tab) => (
@@ -359,11 +345,7 @@ export default function Home() {
 							{/* Hot Searches */}
 							<div>
 								<p className="text-xs text-aliTextMute mb-2 text-center">
-									{i18n.language === 'ar'
-										? 'عمليات البحث الشائعة:'
-										: i18n.language === 'zh'
-											? '热门搜索：'
-											: 'Hot searches:'}
+									{t('home.hotSearchesLabel', 'Hot searches:')}
 								</p>
 								<div className="flex justify-center gap-3 flex-wrap">
 									{hotSearches.map((item) => (
@@ -411,25 +393,22 @@ export default function Home() {
 								{
 									icon: BadgeCheck,
 									value: `${stats.products_count?.toLocaleString()}+`,
-									label:
-										i18n.language === 'ar'
-											? 'منتج متوفر'
-											: 'Products Available',
+									label: t('home.statProductsAvailable', 'Products Available'),
 								},
 								{
 									icon: Package,
 									value: `${stats.stores_count?.toLocaleString()}+`,
-									label: i18n.language === 'ar' ? 'متجر' : 'Stores',
+									label: t('home.statStores', 'Stores'),
 								},
 								{
 									icon: Globe,
 									value: `${stats.orders_count?.toLocaleString()}+`,
-									label: i18n.language === 'ar' ? 'طلبية' : 'Orders',
+									label: t('home.statOrders', 'Orders'),
 								},
 								{
 									icon: Users,
 									value: `${stats.users_count?.toLocaleString()}+`,
-									label: i18n.language === 'ar' ? 'عميل سعيد' : 'Happy Buyers',
+									label: t('home.statHappyBuyers', 'Happy Buyers'),
 								},
 							].map((stat) => (
 								<div key={stat.label} className="flex items-center gap-3">
@@ -457,22 +436,17 @@ export default function Home() {
 							<div className="flex items-center gap-3 text-white">
 								<Zap size={24} className="text-yellow-200" />
 								<h2 className="text-xl lg:text-2xl font-bold">
-									{i18n.language === 'ar'
-										? 'عروض فلاش'
-										: i18n.language === 'zh'
-											? '限时抢购'
-											: 'Flash Deals'}
+									{t('home.dealsTitle', 'Flash Deals')}
 								</h2>
 								<span className="text-sm bg-white/20 px-3 py-1 rounded-full">
-									{i18n.language === 'ar' ? 'لمدة محدودة' : 'Limited Time'}
+									{t('home.dealsLimitedTime', 'Limited Time')}
 								</span>
 							</div>
 							<Link
 								to="/deals"
 								className="text-white text-sm font-medium hover:underline flex items-center gap-1"
 							>
-								{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
-								<ChevronRight size={16} />
+								{t('home.viewAll', 'View All')} <ChevronRight size={16} />
 							</Link>
 						</div>
 						<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -527,19 +501,15 @@ export default function Home() {
 			<section className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
 				<div className="flex items-center justify-between mb-5">
 					<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-						{i18n.language === 'ar'
-							? 'مخصص لك'
-							: i18n.language === 'zh'
-								? '为你推荐'
-								: 'Just for You'}
-					</h2>
-					<div className="flex items-center gap-2">
-						<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
-							{i18n.language === 'ar' ? 'الأكثر مبيعاً' : 'Bestsellers'}
-						</button>
-						<span className="text-aliBorder">|</span>
-						<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors">
-							{i18n.language === 'ar' ? 'الأحدث' : 'Newest'}
+					{t('home.justForYou', 'Just for You')}
+				</h2>
+				<div className="flex items-center gap-2">
+					<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
+						{t('home.bestsellersTab', 'Bestsellers')}
+					</button>
+					<span className="text-aliBorder">|</span>
+					<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors">
+						{t('home.newestTab', 'Newest')}
 						</button>
 					</div>
 				</div>
@@ -597,12 +567,13 @@ export default function Home() {
 											</div>
 											<div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
 												<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
-													MOQ:{' '}
-													{Math.max(1, Math.floor(product.stock / 5))} pcs
+													{t('home.moqBadge', 'MOQ: {count} pcs', {
+														count: Math.max(1, Math.floor(product.stock / 5)),
+													})}
 												</span>
 												<span className="text-[10px] text-aliTextMute">
 													{product.sold_count}{' '}
-													{i18n.language === 'ar' ? 'مباع' : 'sold'}
+													{t('home.soldSuffix', 'sold')}
 												</span>
 											</div>
 											<div className="flex items-center justify-between mt-2 pt-2 border-t border-aliBorder/50">
@@ -651,18 +622,13 @@ export default function Home() {
 				<section className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
 					<div className="flex items-center justify-between mb-5">
 						<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-							{i18n.language === 'ar'
-								? 'وصل حديثاً'
-								: i18n.language === 'zh'
-									? '新品上市'
-									: 'New Arrivals'}
+							{t('home.newArrivals', 'New Arrivals')}
 						</h2>
 						<Link
 							to="/search"
 							className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1"
 						>
-							{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
-							<ChevronRight size={16} />
+							{t('home.viewAll', 'View All')} <ChevronRight size={16} />
 						</Link>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -683,7 +649,7 @@ export default function Home() {
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 											/>
 											<span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-												{i18n.language === 'ar' ? 'جديد' : 'New'}
+												{t('home.newBadge', 'New')}
 											</span>
 										</Link>
 										<div className="p-2.5">
@@ -728,18 +694,13 @@ export default function Home() {
 			<section className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
 				<div className="flex items-center justify-between mb-5">
 					<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-						{i18n.language === 'ar'
-							? 'أفضل التجار'
-							: i18n.language === 'zh'
-								? '顶级制造商'
-								: 'Top Ranked Manufacturers'}
+						{t('home.topMerchants', 'Top Ranked Manufacturers')}
 					</h2>
 					<Link
 						to="/categories"
 						className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1"
 					>
-						{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
-						<ChevronRight size={16} />
+						{t('home.viewAll', 'View All')} <ChevronRight size={16} />
 					</Link>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -772,13 +733,17 @@ export default function Home() {
 									</div>
 									<div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-aliTextMute">
 										<span className="bg-aliSurface px-1.5 py-0.5 rounded">
-											{store.products_count} products
+											{t('home.storeProductsCount', '{count} products', {
+												count: store.products_count,
+											})}
 										</span>
 										<span
 											className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${store.is_verified ? 'bg-orange-50 text-aliOrange' : 'bg-gray-100 text-gray-400'}`}
 										>
 											<BadgeCheck size={10} />{' '}
-											{store.is_verified ? 'Verified' : 'Unverified'}
+											{store.is_verified
+												? t('home.storeVerified', 'Verified')
+												: t('home.storeUnverified', 'Unverified')}
 										</span>
 									</div>
 								</Link>
@@ -798,46 +763,39 @@ export default function Home() {
 								</h2>
 							</div>
 							<p className="text-white/80 mb-4">
-								{i18n.language === 'ar'
-									? 'تسوق بثقة مع حماية المشتري. دفع آمن، سياسة إرجاع مرنة، ودعم لوجستي شامل.'
-									: 'Order with confidence. Safe payment, flexible returns, and comprehensive logistics support.'}
+								{t(
+									'home.trustBannerDesc',
+									'Order with confidence. Safe payment, flexible returns, and comprehensive logistics support.',
+								)}
 							</p>
 							<Link
 								to="/categories"
 								className="inline-flex items-center gap-2 bg-aliOrange text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-aliOrangeHover transition-colors"
 							>
-								{i18n.language === 'ar' ? 'تسوق الآن' : 'Shop Now'}{' '}
-								<ChevronRight size={16} />
+								{t('home.trustShopNow', 'Shop Now')} <ChevronRight size={16} />
 							</Link>
 						</div>
 						<div className="grid grid-cols-2 gap-3 shrink-0">
 							{[
 								{
 									icon: Truck,
-									title: i18n.language === 'ar' ? 'شحن آمن' : 'Safe Shipping',
-									desc: i18n.language === 'ar' ? 'تتبع كامل' : 'Full tracking',
+									title: t('home.trustSafeShippingTitle', 'Safe Shipping'),
+									desc: t('home.trustSafeShippingDesc', 'Full tracking'),
 								},
 								{
 									icon: RefreshCw,
-									title:
-										i18n.language === 'ar' ? 'سياسة الإرجاع' : 'Refund Policy',
-									desc:
-										i18n.language === 'ar'
-											? 'إرجاع خلال 30 يوم'
-											: '30-day returns',
+									title: t('home.trustRefundTitle', 'Refund Policy'),
+									desc: t('home.trustRefundDesc', '30-day returns'),
 								},
 								{
 									icon: Package,
-									title: i18n.language === 'ar' ? 'اللوجستيات' : 'Logistics',
-									desc: i18n.language === 'ar' ? 'توصيل سريع' : 'Fast delivery',
+									title: t('home.trustLogisticsTitle', 'Logistics'),
+									desc: t('home.trustLogisticsDesc', 'Fast delivery'),
 								},
 								{
 									icon: Headphones,
-									title:
-										i18n.language === 'ar'
-											? 'حماية ما بعد البيع'
-											: 'After-sales',
-									desc: i18n.language === 'ar' ? 'دعم 24/7' : '24/7 support',
+									title: t('home.trustAfterSalesTitle', 'After-sales'),
+									desc: t('home.trustAfterSalesDesc', '24/7 support'),
 								},
 							].map((step) => (
 								<div
@@ -860,19 +818,14 @@ export default function Home() {
 					<div className="flex items-center gap-2">
 						<Truck size={22} className="text-aliOrange" />
 						<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-							{i18n.language === 'ar'
-								? 'جاهز للشحن'
-								: i18n.language === 'zh'
-									? '现货供应'
-									: 'Ready to Ship'}
+							{t('home.readyToShip', 'Ready to Ship')}
 						</h2>
 					</div>
 					<Link
 						to="/search"
 						className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1"
 					>
-						{i18n.language === 'ar' ? 'عرض الكل' : 'View All'}{' '}
-						<ChevronRight size={16} />
+						{t('home.viewAll', 'View All')} <ChevronRight size={16} />
 					</Link>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -897,7 +850,7 @@ export default function Home() {
 											/>
 											<span className="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
 												<Truck size={10} />{' '}
-												{i18n.language === 'ar' ? 'جاهز' : 'Ready'}
+												{t('home.readyBadge', 'Ready')}
 											</span>
 										</Link>
 										<div className="p-2.5">
@@ -916,8 +869,10 @@ export default function Home() {
 											</div>
 											<div className="text-[10px] text-aliTextMute mt-1">
 												{product.stock}{' '}
-												{i18n.language === 'ar' ? 'متوفر' : 'in stock'} -
-												MOQ: {Math.max(1, Math.floor(product.stock / 5))}{' '}
+												{t('home.inStock', 'in stock')} -{' '}
+												{t('home.moqBadge', 'MOQ: {count} pcs', {
+													count: Math.max(1, Math.floor(product.stock / 5)),
+												})}{' '}
 												pcs
 											</div>
 										</div>

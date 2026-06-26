@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Search, Store, ShoppingCart, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import gsap from 'gsap';
@@ -72,6 +73,7 @@ const floatingProducts = [
 ];
 
 export default function HeroSection() {
+	const { t } = useTranslation();
 	const sectionRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const productsRef = useRef<HTMLDivElement>(null);
@@ -198,23 +200,26 @@ export default function HeroSection() {
 				<div className="hero-overline inline-flex items-center gap-2 glass-dark px-5 py-2 rounded-full mb-6">
 					<span className="w-2 h-2 bg-[#D4A853] rounded-full animate-pulse" />
 					<span className="text-[#D4A853] text-xs font-cairo font-semibold tracking-wide">
-						منصة التجارة الإلكترونية الأولى في اليمن
+						{t('hero.overline', "Yemen's #1 e-commerce platform")}
 					</span>
 				</div>
 
 				{/* Headline */}
 				<h1 className="font-amiri font-bold leading-[1.05] mb-4">
 					<span className="hero-headline-1 block text-[#1A1612] text-4xl md:text-6xl xl:text-[120px] text-shadow-glow">
-						بيع واشتري بثقة
+						{t('hero.headline1', 'Buy & sell with confidence')}
 					</span>
 					<span className="hero-headline-2 block text-4xl md:text-6xl xl:text-[120px] shimmer-text mt-2">
-						في نوف-إكس
+						{t('hero.headline2', 'on Nouf-ex')}
 					</span>
 				</h1>
 
 				{/* Subheadline */}
 				<p className="hero-subheadline text-[#6B6B6B] text-base md:text-lg xl:text-xl font-cairo max-w-xl mx-auto leading-relaxed mb-8">
-					آلاف التجار والمنتجات بين يديك. أنشئ متجرك الإلكتروني وابدأ البيع خلال دقائق.
+					{t(
+						'hero.subheadline',
+						'Thousands of merchants and products at your fingertips. Create your online store and start selling in minutes.',
+					)}
 				</p>
 
 				{/* CTA Buttons */}
@@ -222,7 +227,7 @@ export default function HeroSection() {
 					<Link to="/seller" className="hero-cta w-full sm:w-auto">
 						<Button className="w-full sm:w-auto h-14 px-10 bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-bold text-base rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]">
 							<Store className="w-5 h-5 ml-2" strokeWidth={1.5} />
-							ابدأ البيع مجاناً
+							{t('hero.ctaStartSelling', 'Start Selling Free')}
 						</Button>
 					</Link>
 					<Link to="/search" className="hero-cta w-full sm:w-auto">
@@ -231,7 +236,7 @@ export default function HeroSection() {
 							className="w-full sm:w-auto h-14 px-10 border-2 border-[#D4A853] text-[#D4A853] hover:bg-[#D4A853] hover:text-[#1A1612] font-cairo font-bold text-base rounded-2xl transition-all active:scale-[0.98]"
 						>
 							<ShoppingCart className="w-5 h-5 ml-2" strokeWidth={1.5} />
-							تسوق الآن
+							{t('hero.ctaShopNow', 'Shop Now')}
 						</Button>
 					</Link>
 				</div>
@@ -240,20 +245,23 @@ export default function HeroSection() {
 				<div className="hero-search glass-light rounded-2xl h-14 md:h-16 max-w-2xl mx-auto flex items-center shadow-lg overflow-hidden">
 					<Button className="h-10 md:h-12 px-6 bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl mr-2 shrink-0">
 						<Search className="w-4 h-4 ml-1" strokeWidth={1.5} />
-						بحث
+						{t('hero.searchButton', 'Search')}
 					</Button>
 					<div className="hidden sm:flex items-center border-l border-[#e0d5c7] pl-3 ml-3 shrink-0">
 						<select className="bg-transparent text-sm font-cairo text-[#6B6B6B] outline-none cursor-pointer">
-							<option>جميع الفئات</option>
-							<option>إلكترونيات</option>
-							<option>أزياء</option>
-							<option>غذائيات</option>
+							<option>{t('hero.searchAllCategories', 'All Categories')}</option>
+							<option>{t('hero.searchElectronics', 'Electronics')}</option>
+							<option>{t('hero.searchFashion', 'Fashion')}</option>
+							<option>{t('hero.searchFood', 'Food')}</option>
 						</select>
 						<ChevronDown className="w-4 h-4 text-[#AAAAAA] mr-1" strokeWidth={1.5} />
 					</div>
 					<input
 						type="text"
-						placeholder="ابحث عن منتجات، تجار، أو ماركات..."
+						placeholder={t(
+							'hero.searchPlaceholder',
+							'Search products, merchants, or brands...',
+						)}
 						className="flex-1 h-full bg-transparent px-4 text-sm md:text-base font-cairo text-[#111111] placeholder:text-[#AAAAAA] outline-none text-right"
 						dir="rtl"
 					/>

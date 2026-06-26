@@ -373,8 +373,11 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
 														الفئة *
 													</label>
-													<select className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white">
-														<option>اختر الفئة</option>
+													<select
+														aria-label={t('seller.categoryLabel', 'Category')}
+														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
+													>
+														<option>{t('seller.selectCategory', 'Select category')}</option>
 														{categories.slice(1).map((c) => (
 															<option key={c}>{c}</option>
 														))}
@@ -397,7 +400,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</label>
 												<textarea
 													rows={4}
-													placeholder="اكتب وصفاً مفصلاً للمنتج..."
+													placeholder={t('seller.descriptionPlaceholder', 'Write detailed product description...')}
 													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo resize-none"
 												/>
 											</div>
@@ -411,6 +414,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												type="file"
 												multiple
 												accept="image/*"
+												aria-label={t('seller.uploadImages', 'Upload product images')}
 												className="hidden"
 											/>
 											<div
@@ -444,6 +448,8 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 																	e.stopPropagation();
 																	removeImage(i);
 																}}
+																title={t('common.remove', 'Remove')}
+																aria-label={t('common.remove', 'Remove')}
 																className="absolute top-1 left-1 w-6 h-6 rounded-full bg-[#EF4444] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
 															>
 																<X
@@ -540,11 +546,14 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
 														اسم المتغير
 													</label>
-													<select className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white">
-														<option>اختر المتغير</option>
-														<option>اللون</option>
-														<option>المقاس</option>
-														<option>المواد</option>
+													<select
+														aria-label={t('seller.variantName', 'Variant name')}
+														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
+													>
+														<option>{t('seller.selectVariant', 'Select variant')}</option>
+														<option>{t('seller.variantColor', 'Color')}</option>
+														<option>{t('seller.variantSize', 'Size')}</option>
+														<option>{t('seller.variantMaterial', 'Material')}</option>
 													</select>
 												</div>
 												<div>
@@ -973,7 +982,11 @@ export default function SellerProducts() {
 									</div>
 									{/* Hover Actions */}
 									<div className="absolute inset-x-0 bottom-0 p-3 flex items-center justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-200">
-										<button className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white flex items-center justify-center transition-colors">
+										<button
+											title={t('common.edit', 'Edit')}
+											aria-label={t('common.edit', 'Edit')}
+											className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white flex items-center justify-center transition-colors"
+										>
 											<Edit3
 												className="w-3.5 h-3.5 text-[#111111]"
 												strokeWidth={1.5}
@@ -981,6 +994,8 @@ export default function SellerProducts() {
 										</button>
 										<button
 											onClick={() => deleteProduct(product.id)}
+											title={t('common.delete', 'Delete')}
+											aria-label={t('common.delete', 'Delete')}
 											className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white flex items-center justify-center transition-colors"
 										>
 											<Trash2
@@ -988,7 +1003,11 @@ export default function SellerProducts() {
 												strokeWidth={1.5}
 											/>
 										</button>
-										<button className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white flex items-center justify-center transition-colors">
+										<button
+											title={t('seller.view', 'View')}
+											aria-label={t('seller.view', 'View')}
+											className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white flex items-center justify-center transition-colors"
+										>
 											<Eye
 												className="w-3.5 h-3.5 text-[#111111]"
 												strokeWidth={1.5}
@@ -1089,7 +1108,11 @@ export default function SellerProducts() {
 										</td>
 										<td className="px-4 py-3">
 											<div className="flex items-center gap-1">
-												<button className="w-7 h-7 rounded-lg hover:bg-[#F3EDE4] flex items-center justify-center transition-colors">
+												<button
+													title={t('common.edit', 'Edit')}
+													aria-label={t('common.edit', 'Edit')}
+													className="w-7 h-7 rounded-lg hover:bg-[#F3EDE4] flex items-center justify-center transition-colors"
+												>
 													<Edit3
 														className="w-3.5 h-3.5 text-[#6B6B6B]"
 														strokeWidth={1.5}
@@ -1097,6 +1120,8 @@ export default function SellerProducts() {
 												</button>
 												<button
 													onClick={() => deleteProduct(product.id)}
+													title={t('common.delete', 'Delete')}
+													aria-label={t('common.delete', 'Delete')}
 													className="w-7 h-7 rounded-lg hover:bg-[rgba(239,68,68,0.1)] flex items-center justify-center transition-colors"
 												>
 													<Trash2

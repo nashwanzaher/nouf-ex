@@ -274,7 +274,11 @@ export default function CustomerDashboard() {
 						<span className={`text-xs ${styles.iconDanger}`}>{t('nav.logout')}</span>
 					</button>
 				) : (
-					<button className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto">
+					<button
+						title={t('nav.logout', 'Logout')}
+						aria-label={t('nav.logout', 'Logout')}
+						className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto"
+					>
 						<LogOut className={`w-4 h-4 ${styles.iconDanger}`} strokeWidth={1.5} />
 					</button>
 				)}
@@ -321,7 +325,12 @@ export default function CustomerDashboard() {
 									{t('seller.brandName', 'Nouf-ex')}
 								</span>
 							</div>
-							<button onClick={() => setMobileOpen(false)} className="text-white/70">
+							<button
+								onClick={() => setMobileOpen(false)}
+								title={t('common.close', 'Close')}
+								aria-label={t('common.close', 'Close')}
+								className="text-white/70"
+							>
 								<X className="w-5 h-5" />
 							</button>
 						</div>
@@ -373,6 +382,8 @@ export default function CustomerDashboard() {
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => setMobileOpen(true)}
+							title={t('common.menu', 'Menu')}
+							aria-label={t('common.menu', 'Menu')}
 							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
 						>
 							<Menu className={`w-5 h-5 ${styles.iconText}`} strokeWidth={1.5} />

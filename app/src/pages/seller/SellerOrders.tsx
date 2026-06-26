@@ -694,6 +694,7 @@ export default function SellerOrders() {
 									<td className="px-4 py-3">
 										<input
 											type="checkbox"
+											aria-label={t('seller.selectOrder', 'Select order')}
 											className="rounded border-[#AAAAAA]"
 										/>
 									</td>

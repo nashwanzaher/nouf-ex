@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 /* ------------------------------------------------------------------ */
 interface NavItem {
 	id: string;
+	labelKey: string;
 	label: string;
 	labelEn: string;
 	icon: React.ElementType;
@@ -32,19 +33,20 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-	{ id: 'overview', label: 'لوحة التحكم', labelEn: 'Dashboard', icon: LayoutDashboard },
-	{ id: 'users', label: 'المستخدمون', labelEn: 'Users', icon: Users },
-	{ id: 'sellers', label: 'التجار', labelEn: 'Sellers', icon: Store, badge: '5 pending' },
-	{ id: 'orders', label: 'الطلبات', labelEn: 'Orders', icon: ShoppingBag },
+	{ id: 'overview', labelKey: 'admin.navDashboard', label: 'لوحة التحكم', labelEn: 'Dashboard', icon: LayoutDashboard },
+	{ id: 'users', labelKey: 'admin.navUsers', label: 'المستخدمون', labelEn: 'Users', icon: Users },
+	{ id: 'sellers', labelKey: 'admin.navSellers', label: 'التجار', labelEn: 'Sellers', icon: Store, badge: '5 pending' },
+	{ id: 'orders', labelKey: 'admin.navOrders', label: 'الطلبات', labelEn: 'Orders', icon: ShoppingBag },
 	{
 		id: 'disputes',
+		labelKey: 'admin.navDisputes',
 		label: 'النزاعات',
 		labelEn: 'Disputes',
 		icon: AlertTriangle,
 		badge: '8 active',
 	},
-	{ id: 'analytics', label: 'التقارير', labelEn: 'Reports', icon: BarChart3 },
-	{ id: 'settings', label: 'الإعدادات', labelEn: 'Settings', icon: Settings },
+	{ id: 'analytics', labelKey: 'admin.navAnalytics', label: 'التقارير', labelEn: 'Reports', icon: BarChart3 },
+	{ id: 'settings', labelKey: 'admin.navSettings', label: 'الإعدادات', labelEn: 'Settings', icon: Settings },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -342,7 +344,7 @@ export default function AdminDashboard() {
 							{!collapsed && (
 								<>
 									<span className="text-sm font-medium flex-1">
-										{isRTL ? item.label : item.labelEn}
+										{t(item.labelKey)}
 									</span>
 									{item.badge && (
 										<span
@@ -442,7 +444,7 @@ export default function AdminDashboard() {
 			{/* Chart */}
 			<div className="bg-white rounded p-5 shadow-sm">
 				<h3 className="font-bold text-base mb-4" style={{ color: '#333' }}>
-					{isRTL ? 'إيرادات المنصة' : 'Platform Revenue'}
+					{t('admin.platformRevenue', 'Platform Revenue')}
 				</h3>
 				<div className="flex items-end gap-4 h-48">
 					{revenueChart.map((d, i) => (
@@ -475,7 +477,7 @@ export default function AdminDashboard() {
 				<div className="bg-white rounded shadow-sm overflow-hidden">
 					<div className="p-5 border-b" style={{ borderColor: '#F0F2F5' }}>
 						<h3 className="font-bold text-base" style={{ color: '#333' }}>
-							{isRTL ? 'أحدث المستخدمين' : 'Recent Users'}
+							{t('admin.recentUsers', 'Recent Users')}
 						</h3>
 					</div>
 					<div className="overflow-x-auto">
@@ -571,7 +573,7 @@ export default function AdminDashboard() {
 				<div className="bg-white rounded shadow-sm overflow-hidden">
 					<div className="p-5 border-b" style={{ borderColor: '#F0F2F5' }}>
 						<h3 className="font-bold text-base" style={{ color: '#333' }}>
-							{isRTL ? 'أحدث الطلبات' : 'Recent Orders'}
+							{t('admin.recentOrders', 'Recent Orders')}
 						</h3>
 					</div>
 					<div className="overflow-x-auto">
@@ -890,7 +892,7 @@ export default function AdminDashboard() {
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'التاجر' : 'Seller'}
+								{t('admin.tableSeller', 'Seller')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
@@ -963,7 +965,7 @@ export default function AdminDashboard() {
 		<div className="bg-white rounded shadow-sm overflow-hidden">
 			<div className="p-5 border-b" style={{ borderColor: '#F0F2F5' }}>
 				<h3 className="font-bold text-base" style={{ color: '#333' }}>
-					{isRTL ? 'النزاعات' : 'Disputes'}
+					{t('admin.disputesTitle', 'Disputes')}
 				</h3>
 			</div>
 			<div className="overflow-x-auto">
@@ -977,13 +979,13 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'النزاع' : 'Dispute'}
+								{t('admin.tableDispute', 'Dispute')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'السبب' : 'Reason'}
+								{t('admin.tableReason', 'Reason')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left hidden md:table-cell"
@@ -1184,7 +1186,7 @@ export default function AdminDashboard() {
 										)}
 										<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
 										<span className="text-sm font-medium flex-1">
-											{isRTL ? item.label : item.labelEn}
+											{t(item.labelKey)}
 										</span>
 										{item.badge && (
 											<span
@@ -1243,9 +1245,7 @@ export default function AdminDashboard() {
 						</button>
 						<div>
 							<h2 className="font-bold text-base" style={{ color: '#333' }}>
-								{isRTL
-									? navItems.find((n) => n.id === activePage)?.label
-									: navItems.find((n) => n.id === activePage)?.labelEn}
+								{t(navItems.find((n) => n.id === activePage)?.labelKey ?? '')}
 							</h2>
 						</div>
 					</div>

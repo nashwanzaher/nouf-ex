@@ -446,5 +446,49 @@
     "searchFashion": "服装",
     "searchFood": "食品",
     "searchPlaceholder": "搜索商品、商家或品牌..."
-  }
+    },
+    "search": {
+        "ui": {
+            "placeholder": "搜索产品...",
+            "priceRangeAll": "全部",
+            "sortRelevance": "最匹配",
+            "sortPriceLow": "价格：从低到高",
+            "sortPriceHigh": "价格：从高到低",
+            "sortRating": "评分最高",
+            "resultsCount": "{count} 件商品",
+            "resultsCountPlural": "{count} 件商品",
+            "resultsFor": "搜索",
+            "allProductsFallback": "全部商品",
+            "filters": "筛选",
+            "allCategories": "全部分类",
+            "errorTitle": "加载商品出错",
+            "emptyMessage": "请尝试其他关键词或浏览分类",
+            "bestseller": "热卖",
+            "soldSuffix": "件已售",
+            "contact": "联系",
+            "prev": "上一页",
+            "next": "下一页"
+        }
+    },
+    "deals": {
+        "limitedOffer": "限时优惠",
+        "flashSale": "限时抢购",
+        "flashSaleDesc": "精选商品限时大降价，机会难得！",
+        "hours": "小时",
+        "minutes": "分钟",
+        "seconds": "秒",
+        "activeDeals": "{count} 个进行中的优惠",
+        "endingSoon": "即将结束",
+        "verifiedProducts": "已验证商品",
+        "hotDeals": "热卖优惠",
+        "allDeals": "所有优惠",
+        "noDeals": "暂无优惠",
+        "backToHome": "返回首页",
+        "limitedBadge": "限量",
+        "soldSuffix": "件已售",
+        "onlyLeft": "仅剩 {count} 件！",
+        "addedToCart": "已加入！",
+        "addToCart": "加入购物车"
+
+}
 }

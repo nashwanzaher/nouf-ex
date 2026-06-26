@@ -140,17 +140,17 @@ export default function SearchResults() {
 	}, [results]);
 
 	const priceRanges = [
-		{ key: 'all', label: lang === 'ar' ? 'الكل' : 'All' },
+		{ key: 'all', label: t('search.ui.priceRangeAll', 'All') },
 		{ key: '0-5000', label: '0 - 5,000' },
 		{ key: '5000-20000', label: '5,000 - 20,000' },
 		{ key: '20000-50000', label: '20,000 - 50,000' },
 		{ key: '50000-', label: '50,000+' },
 	];
 	const sortOptions = [
-		{ key: 'relevance', label: lang === 'ar' ? 'الأكثر تطابقاً' : 'Best Match' },
-		{ key: 'price-low', label: lang === 'ar' ? 'السعر: من低到高' : 'Price: Low to High' },
-		{ key: 'price-high', label: lang === 'ar' ? 'السعر: من高到低' : 'Price: High to Low' },
-		{ key: 'rating', label: lang === 'ar' ? 'الأعلى تقييماً' : 'Highest Rated' },
+		{ key: 'relevance', label: t('search.ui.sortRelevance', 'Best Match') },
+		{ key: 'price-low', label: t('search.ui.sortPriceLow', 'Price: Low to High') },
+		{ key: 'price-high', label: t('search.ui.sortPriceHigh', 'Price: High to Low') },
+		{ key: 'rating', label: t('search.ui.sortRating', 'Highest Rated') },
 	];
 
 	const toggleCompare = (id: number) => {
@@ -178,13 +178,7 @@ export default function SearchResults() {
 							type="text"
 							value={query}
 							onChange={(e) => setQuery(e.target.value)}
-							placeholder={
-								lang === 'ar'
-									? 'ابحث عن منتجات...'
-									: lang === 'zh'
-										? '搜索产品...'
-										: 'Search for products...'
-							}
+							placeholder={t('search.ui.placeholder', 'Search for products...')}
 							className="w-full h-11 pl-10 pr-4 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] focus:ring-1 focus:ring-[#FF6A00]"
 						/>
 						<Search
@@ -204,10 +198,21 @@ export default function SearchResults() {
 			{/* ─── Results Count ─── */}
 			<div className="mb-4">
 				<h1 className="text-lg font-bold text-[#333]">
-					{loading ? '...' : results.length} {lang === 'ar' ? 'منتج' : 'product'}
-					{results.length !== 1 ? 's' : ''} {lang === 'ar' ? 'لـ' : 'for'}{' '}
+					{loading
+						? '...'
+						: t(
+								results.length === 1
+									? 'search.ui.resultsCount'
+									: 'search.ui.resultsCountPlural',
+								'{count} products',
+								{ count: results.length },
+							)}{' '}
+					{t('search.ui.resultsFor', 'for')}{' '}
 					<span className="text-[#FF6A00]">
-						"{initialQ || (lang === 'ar' ? 'الكل' : 'All Products')}"
+						"
+						{initialQ ||
+							t('search.ui.allProductsFallback', 'All Products')}
+						"
 					</span>
 				</h1>
 			</div>
@@ -220,7 +225,7 @@ export default function SearchResults() {
 						className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E5E5] rounded text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors"
 					>
 						<Filter size={14} />
-						<span>{lang === 'ar' ? 'الفلاتر' : 'Filters'}</span>
+						<span>{t('search.ui.filters', 'Filters')}</span>
 					</button>
 
 					{/* Category filter */}
@@ -231,7 +236,7 @@ export default function SearchResults() {
 							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50"
 						>
 							<option value="all">
-								{lang === 'ar' ? 'جميع الفئات' : 'All Categories'}
+								{t('search.ui.allCategories', 'All Categories')}
 							</option>
 							{cats
 								.filter((c) => c !== 'all')
@@ -308,7 +313,7 @@ export default function SearchResults() {
 			{error && (
 				<div className="text-center py-16 bg-white rounded border border-red-200 mb-4">
 					<p className="text-red-500 font-medium mb-2">
-						{lang === 'ar' ? 'حدث خطأ' : 'Error loading products'}
+						{t('search.ui.errorTitle', 'Error loading products')}
 					</p>
 					<p className="text-[#999] text-sm">{error}</p>
 				</div>
@@ -327,9 +332,10 @@ export default function SearchResults() {
 							{t('common.noResults')}
 						</h2>
 						<p className="text-[#999]">
-							{lang === 'ar'
-								? 'جرب كلمات مختلفة أو تصفح الفئات'
-								: 'Try different keywords or browse categories'}
+							{t(
+								'search.ui.emptyMessage',
+								'Try different keywords or browse categories',
+							)}
 						</p>
 					</div>
 				) : (
@@ -356,9 +362,7 @@ export default function SearchResults() {
 												)}
 												{p.badges?.includes('bestseller') && (
 													<span className="absolute bottom-2 left-2 bg-[#FF6A00] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-														{lang === 'ar'
-															? 'الأكثر مبيعاً'
-															: 'BESTSELLER'}
+														{t('search.ui.bestseller', 'BESTSELLER')}
 													</span>
 												)}
 											</div>
@@ -389,7 +393,7 @@ export default function SearchResults() {
 												<span>MOQ: {p.moq ?? 10}</span>
 												<span>|</span>
 												<span>
-													{p.sold_count} {lang === 'ar' ? 'مبيع' : 'sold'}
+													{p.sold_count} {t('search.ui.soldSuffix', 'sold')}
 												</span>
 											</div>
 											{/* Rating */}
@@ -411,7 +415,7 @@ export default function SearchResults() {
 											<div className="mt-2 pt-2 border-t border-[#E5E5E5] flex gap-1.5">
 												<button className="flex-1 h-7 rounded border border-[#FF6A00] text-[#FF6A00] text-xs font-medium hover:bg-[#FFF8F3] transition-colors flex items-center justify-center gap-1">
 													<MessageCircle size={12} />
-													{lang === 'ar' ? 'تواصل' : 'Contact'}
+													{t('search.ui.contact', 'Contact')}
 												</button>
 												<button
 													onClick={() => toggleCompare(p.id)}
@@ -478,7 +482,7 @@ export default function SearchResults() {
 													<span className="text-xs text-[#999]">|</span>
 													<span className="text-xs text-[#999]">
 														{p.sold_count}{' '}
-														{lang === 'ar' ? 'مبيع' : 'sold'}
+														{t('search.ui.soldSuffix', 'sold')}
 													</span>
 												</div>
 												<div className="flex flex-wrap gap-2 mt-2">
@@ -507,7 +511,7 @@ export default function SearchResults() {
 												<div className="flex gap-1.5">
 													<button className="h-8 px-3 rounded border border-[#FF6A00] text-[#FF6A00] text-xs font-medium hover:bg-[#FFF8F3] transition-colors flex items-center gap-1">
 														<MessageCircle size={12} />
-														{lang === 'ar' ? 'تواصل' : 'Contact'}
+														{t('search.ui.contact', 'Contact')}
 													</button>
 													<button
 														onClick={() => toggleCompare(p.id)}
@@ -533,7 +537,7 @@ export default function SearchResults() {
 						onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 						className="h-9 px-3 rounded border border-[#E5E5E5] text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors disabled:opacity-50"
 					>
-						{lang === 'ar' ? 'السابق' : 'Prev'}
+						{t('search.ui.prev', 'Prev')}
 					</button>
 					{(() => {
 						const totalCount: number =
@@ -567,7 +571,7 @@ export default function SearchResults() {
 						onClick={() => setCurrentPage((p) => p + 1)}
 						className="h-9 px-3 rounded border border-[#E5E5E5] text-sm text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors disabled:opacity-50"
 					>
-						{lang === 'ar' ? 'التالي' : 'Next'}
+						{t('search.ui.next', 'Next')}
 					</button>
 				</div>
 			)}

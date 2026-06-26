@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useApi';
 import type { Product } from '../hooks/useApi';
@@ -106,20 +107,17 @@ export default function DealsPage() {
 							<div className="flex items-center gap-2 justify-center lg:justify-start mb-2">
 								<Flame size={28} className="text-yellow-200" />
 								<span className="text-yellow-100 font-semibold text-sm uppercase tracking-wider">
-									{i18n.language === 'ar' ? 'عروض محدودة' : 'Limited Time Offer'}
+									{t('deals.limitedOffer', 'Limited Time Offer')}
 								</span>
 							</div>
 							<h1 className="text-3xl lg:text-4xl font-extrabold text-white mb-2">
-								{i18n.language === 'ar'
-									? 'تخفيضات فلاش'
-									: i18n.language === 'zh'
-										? '限时抢购'
-										: 'Flash Sale'}
+								{t('deals.flashSale', 'Flash Sale')}
 							</h1>
 							<p className="text-white/80 text-sm lg:text-base max-w-md">
-								{i18n.language === 'ar'
-									? 'خصومات هائلة على منتجات مختارة لفترة محدودة فقط!'
-									: 'Huge discounts on selected products for a limited time only!'}
+								{t(
+									'deals.flashSaleDesc',
+									'Huge discounts on selected products for a limited time only!',
+								)}
 							</p>
 						</div>
 
@@ -127,17 +125,17 @@ export default function DealsPage() {
 						<div className="flex items-center gap-3 sm:gap-4">
 							<TimeBlock
 								value={countdown.hours}
-								label={i18n.language === 'ar' ? 'ساعة' : 'Hours'}
+								label={t('deals.hours', 'Hours')}
 							/>
 							<span className="text-3xl font-extrabold text-white/60 -mt-4">:</span>
 							<TimeBlock
 								value={countdown.minutes}
-								label={i18n.language === 'ar' ? 'دقيقة' : 'Mins'}
+								label={t('deals.minutes', 'Mins')}
 							/>
 							<span className="text-3xl font-extrabold text-white/60 -mt-4">:</span>
 							<TimeBlock
 								value={countdown.seconds}
-								label={i18n.language === 'ar' ? 'ثانية' : 'Secs'}
+								label={t('deals.seconds', 'Secs')}
 							/>
 						</div>
 					</div>
@@ -150,16 +148,18 @@ export default function DealsPage() {
 					<div className="flex items-center gap-1.5">
 						<Zap size={16} className="text-aliOrange" />
 						<span>
-							{deals.length} {i18n.language === 'ar' ? 'عرض نشط' : 'active deals'}
+							{t('deals.activeDeals', '{count} active deals', {
+								count: deals.length,
+							})}
 						</span>
 					</div>
 					<div className="flex items-center gap-1.5">
 						<Clock size={16} className="text-aliOrange" />
-						<span>{i18n.language === 'ar' ? 'تنتهي قريباً' : 'Ending soon'}</span>
+						<span>{t('deals.endingSoon', 'Ending soon')}</span>
 					</div>
 					<div className="flex items-center gap-1.5">
 						<BadgeCheck size={16} className="text-aliOrange" />
-						<span>{i18n.language === 'ar' ? 'منتجات موثقة' : 'Verified products'}</span>
+						<span>{t('deals.verifiedProducts', 'Verified products')}</span>
 					</div>
 				</div>
 			</div>
@@ -171,7 +171,7 @@ export default function DealsPage() {
 						<div className="flex items-center gap-2 mb-5">
 							<Flame size={22} className="text-red-500" />
 							<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-								{i18n.language === 'ar' ? 'عروض نارية' : 'Hot Deals'}
+								{t('deals.hotDeals', 'Hot Deals')}
 								<span className="text-sm font-normal text-aliTextMute ml-2">
 									25%+ off
 								</span>
@@ -185,7 +185,6 @@ export default function DealsPage() {
 									addedIds={addedIds}
 									addToCart={addToCart}
 									getName={getName}
-									i18n={i18n}
 									t={t}
 									hot
 								/>
@@ -199,7 +198,7 @@ export default function DealsPage() {
 					<div className="flex items-center gap-2 mb-5">
 						<Zap size={22} className="text-aliOrange" />
 						<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-							{i18n.language === 'ar' ? 'جميع العروض' : 'All Deals'}
+							{t('deals.allDeals', 'All Deals')}
 						</h2>
 					</div>
 					{deals.length > 0 ? (
@@ -211,7 +210,6 @@ export default function DealsPage() {
 									addedIds={addedIds}
 									addToCart={addToCart}
 									getName={getName}
-									i18n={i18n}
 									t={t}
 								/>
 							))}
@@ -220,15 +218,13 @@ export default function DealsPage() {
 						<div className="text-center py-16 bg-white rounded-xl border border-aliBorder">
 							<Clock size={48} className="text-aliTextMute mx-auto mb-4" />
 							<p className="text-aliTextSec text-lg">
-								{i18n.language === 'ar'
-									? 'لا توجد عروض حالياً'
-									: 'No deals at the moment'}
+								{t('deals.noDeals', 'No deals at the moment')}
 							</p>
 							<Link
 								to="/"
 								className="inline-block mt-4 px-6 py-2.5 bg-aliOrange text-white rounded-lg font-semibold hover:bg-aliOrangeHover transition-colors"
 							>
-								{i18n.language === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
+								{t('deals.backToHome', 'Back to Home')}
 							</Link>
 						</div>
 					)}
@@ -244,7 +240,6 @@ function DealCard({
 	addedIds,
 	addToCart,
 	getName,
-	i18n,
 	t,
 	hot = false,
 }: {
@@ -252,8 +247,7 @@ function DealCard({
 	addedIds: Set<number>;
 	addToCart: (p: Product) => void;
 	getName: (p: Product) => string;
-	i18n: { language: string };
-	t: (key: string) => string;
+	t: TFunction;
 	hot?: boolean;
 }) {
 	const discount = product.deal_discount ?? 0;
@@ -283,7 +277,7 @@ function DealCard({
 				</div>
 				{/* Limited badge */}
 				<div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
-					{i18n.language === 'ar' ? 'كمية محدودة' : 'Limited'}
+					{t('deals.limitedBadge', 'Limited')}
 				</div>
 				{/* Progress bar */}
 				<div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/10">
@@ -320,7 +314,7 @@ function DealCard({
 				{/* Savings */}
 				{product.original_price && (
 					<p className="text-xs text-green-600 font-medium mt-0.5">
-						{i18n.language === 'ar' ? 'وفر' : 'Save'}{' '}
+						{t('nav.save', 'Save')}{' '}
 						{(product.original_price - product.price).toLocaleString()}{' '}
 						{t('product.currency')}
 					</p>
@@ -334,14 +328,15 @@ function DealCard({
 					</div>
 					<span>|</span>
 					<span>
-						{product.sold_count} {i18n.language === 'ar' ? 'مباع' : 'sold'}
+						{product.sold_count} {t('deals.soldSuffix', 'sold')}
 					</span>
 				</div>
 
 				{/* Stock left */}
 				<p className="text-[10px] text-red-500 font-medium mt-1">
-					{i18n.language === 'ar' ? 'تبقى' : 'Only'} {product.stock}{' '}
-					{i18n.language === 'ar' ? 'قطع' : 'left'}!
+					{t('deals.onlyLeft', 'Only {count} left!', {
+						count: product.stock,
+					})}
 				</p>
 
 				{/* Add to cart button */}
@@ -357,12 +352,8 @@ function DealCard({
 				>
 					<ShoppingCart size={16} />
 					{addedIds.has(product.id)
-						? i18n.language === 'ar'
-							? 'تمت الإضافة!'
-							: 'Added!'
-						: i18n.language === 'ar'
-							? 'أضف للسلة'
-							: 'Add to Cart'}
+						? t('deals.addedToCart', 'Added!')
+						: t('deals.addToCart', 'Add to Cart')}
 				</button>
 			</div>
 		</div>

@@ -178,8 +178,11 @@ export default function CategoriesPage() {
 
 	/* ─── Breadcrumb ─── */
 	const breadcrumb = [
-		{ label: lang === 'ar' ? 'الرئيسية' : 'Home', href: '/' },
-		{ label: lang === 'ar' ? 'التصنيفات' : 'Categories', href: '/categories' },
+		{ label: t('nav.home', 'Home'), href: '/' },
+		{
+			label: t('categories.ui.sidebarHeading', 'Categories'),
+			href: '/categories',
+		},
 		...(activeParent ? [{ label: getCatName(activeParent, lang), href: '#' }] : []),
 	];
 
@@ -214,7 +217,7 @@ export default function CategoriesPage() {
 							<div className="px-4 py-3 border-b border-aliBorder bg-aliSurface/50 flex items-center gap-2">
 								<SlidersHorizontal size={16} className="text-aliOrange" />
 								<h3 className="font-bold text-aliText">
-									{lang === 'ar' ? 'التصنيفات' : 'Categories'}
+									{t('categories.ui.sidebarHeading', 'Categories')}
 								</h3>
 							</div>
 							<div className="p-2">
@@ -230,7 +233,7 @@ export default function CategoriesPage() {
 											: 'text-aliText hover:bg-aliSurface'
 									}`}
 								>
-									<span>{lang === 'ar' ? 'جميع المنتجات' : 'All Products'}</span>
+									<span>{t('categories.ui.allProducts', 'All Products')}</span>
 									<span className="text-xs text-aliTextMute bg-aliSurface px-1.5 py-0.5 rounded">
 										{totalProductCount}
 									</span>
@@ -309,7 +312,7 @@ export default function CategoriesPage() {
 							{/* Price Filter */}
 							<div className="border-t border-aliBorder p-4">
 								<h4 className="font-semibold text-sm text-aliText mb-3">
-									{lang === 'ar' ? 'السعر' : 'Price'}
+									{t('categories.ui.price', 'Price')}
 								</h4>
 								<div className="flex items-center gap-2 mb-2">
 									<input
@@ -355,9 +358,7 @@ export default function CategoriesPage() {
 						<h1 className="text-xl lg:text-2xl font-bold text-aliText">
 							{activeParent
 								? getCatName(activeParent, lang)
-								: lang === 'ar'
-									? 'جميع المنتجات'
-									: 'All Products'}
+								: t('categories.ui.allProducts', 'All Products')}
 							<span className="text-aliTextMute text-sm font-normal ml-2">
 								({sorted.length})
 							</span>
@@ -370,16 +371,16 @@ export default function CategoriesPage() {
 								className="h-9 px-3 rounded-lg border border-aliBorder text-sm text-aliText bg-white outline-none focus:border-aliOrange"
 							>
 								<option value="sold">
-									{lang === 'ar' ? 'الأكثر مبيعاً' : 'Best Selling'}
+									{t('categories.ui.sortBestSelling', 'Best Selling')}
 								</option>
 								<option value="price-asc">
-									{lang === 'ar' ? 'السعر: من الأقل' : 'Price: Low to High'}
+									{t('categories.ui.sortPriceAsc', 'Price: Low to High')}
 								</option>
 								<option value="price-desc">
-									{lang === 'ar' ? 'السعر: من الأعلى' : 'Price: High to Low'}
+									{t('categories.ui.sortPriceDesc', 'Price: High to Low')}
 								</option>
 								<option value="rating">
-									{lang === 'ar' ? 'التقييم' : 'Rating'}
+									{t('categories.ui.sortRating', 'Rating')}
 								</option>
 							</select>
 						</div>
@@ -398,7 +399,7 @@ export default function CategoriesPage() {
 									: 'bg-white border border-aliBorder text-aliText'
 							}`}
 						>
-							{lang === 'ar' ? 'الكل' : 'All'}
+							{t('categories.ui.allFilter', 'All')}
 						</button>
 						{tree.map(({ parent }) => (
 							<button
@@ -509,10 +510,10 @@ export default function CategoriesPage() {
 						<div className="text-center py-16 bg-white rounded-xl border border-aliBorder">
 							<Search size={48} className="text-aliTextMute mx-auto mb-4" />
 							<p className="text-aliTextSec text-lg mb-2">
-								{lang === 'ar' ? 'لا توجد منتجات' : 'No products found'}
+								{t('categories.ui.noProducts', 'No products found')}
 							</p>
 							<p className="text-aliTextMute text-sm">
-								{lang === 'ar' ? 'جرب تعديل الفلاتر' : 'Try adjusting your filters'}
+								{t('categories.ui.tryAdjustingFilters', 'Try adjusting your filters')}
 							</p>
 						</div>
 					)}

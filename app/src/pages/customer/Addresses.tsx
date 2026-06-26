@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Plus, Edit3, Trash2, CheckCircle, Home, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,6 +73,7 @@ const initialAddresses: Address[] = [
 ];
 
 export default function Addresses() {
+	const { t } = useTranslation();
 	const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
@@ -133,15 +135,19 @@ export default function Addresses() {
 			<div className="md:mr-60 min-h-[100dvh]">
 				<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30 flex items-center justify-between">
 					<div>
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">عناويني</h1>
-						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">إدارة عناوين الشحن</p>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+							{t('addresses.title', 'My Addresses')}
+						</h1>
+						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
+							{t('addresses.subtitle', 'Manage shipping addresses')}
+						</p>
 					</div>
 					<Button
 						onClick={openAdd}
 						className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl"
 					>
 						<Plus className="w-4 h-4 ml-1" strokeWidth={1.5} />
-						إضافة عنوان
+						{t('addresses.addButton', 'Add Address')}
 					</Button>
 				</div>
 
@@ -153,17 +159,20 @@ export default function Addresses() {
 								strokeWidth={1}
 							/>
 							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-								لا توجد عناوين
+								{t('addresses.emptyTitle', 'No addresses yet')}
 							</h3>
 							<p className="text-[#6B6B6B] font-cairo text-sm mb-4">
-								أضف عنواناً لشحن طلباتك إليه
+								{t(
+									'addresses.emptySubtitle',
+									'Add an address to ship your orders to',
+								)}
 							</p>
 							<Button
 								onClick={openAdd}
 								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 							>
 								<Plus className="w-4 h-4 ml-1" strokeWidth={1.5} />
-								إضافة عنوان جديد
+								{t('addresses.emptyButton', 'Add New Address')}
 							</Button>
 						</div>
 					) : (
@@ -207,7 +216,7 @@ export default function Addresses() {
 										</div>
 										{addr.isDefault && (
 											<span className="bg-[#D4A853] text-[#1A1612] text-[10px] font-cairo font-semibold px-2.5 py-1 rounded-full">
-												افتراضي
+												{t('addresses.defaultBadge', 'Default')}
 											</span>
 										)}
 									</div>
@@ -240,7 +249,7 @@ export default function Addresses() {
 											className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#F3EDE4] text-sm text-[#6B6B6B] hover:bg-[#F8F8F8] font-cairo transition-colors"
 										>
 											<Edit3 className="w-3.5 h-3.5" strokeWidth={1.5} />
-											تعديل
+											{t('addresses.edit', 'Edit')}
 										</button>
 										<button
 											onClick={() => deleteAddress(addr.id)}
@@ -259,7 +268,7 @@ export default function Addresses() {
 												className="w-3.5 h-3.5"
 												strokeWidth={1.5}
 											/>
-											تعيين كافتراضي
+											{t('addresses.setDefault', 'Set as default')}
 										</button>
 									)}
 								</div>
@@ -277,32 +286,41 @@ export default function Addresses() {
 				>
 					<DialogHeader>
 						<DialogTitle className="font-amiri text-xl text-[#1A1612]">
-							{editingId ? 'تعديل العنوان' : 'إضافة عنوان جديد'}
+							{editingId
+								? t('addresses.dialogTitleEdit', 'Edit Address')
+								: t('addresses.dialogTitleAdd', 'Add New Address')}
 						</DialogTitle>
 					</DialogHeader>
 					<div className="space-y-4 pt-2">
 						<div>
 							<Label className="font-cairo text-sm text-[#111111]">
-								الاسم الكامل
+								{t('addresses.labelFullName', 'Full Name')}
 							</Label>
 							<Input
 								value={form.name || ''}
 								onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-								placeholder="الاسم كما يظهر على البطاقة"
+								placeholder={t(
+									'addresses.placeholderFullName',
+									'Name as it appears on the card',
+								)}
 								className="rounded-xl mt-1 font-cairo"
 							/>
 						</div>
 						<div>
-							<Label className="font-cairo text-sm text-[#111111]">رقم الهاتف</Label>
+							<Label className="font-cairo text-sm text-[#111111]">
+								{t('addresses.labelPhone', 'Phone Number')}
+							</Label>
 							<Input
 								value={form.phone || ''}
 								onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-								placeholder="+967 7XX XXX XXX"
+								placeholder={t('addresses.placeholderPhone', '+967 7XX XXX XXX')}
 								className="rounded-xl mt-1 font-cairo"
 							/>
 						</div>
 						<div>
-							<Label className="font-cairo text-sm text-[#111111]">المحافظة</Label>
+							<Label className="font-cairo text-sm text-[#111111]">
+								{t('addresses.labelGovernorate', 'Governorate')}
+							</Label>
 							<select
 								value={form.governorate || ''}
 								onChange={(e) =>
@@ -310,7 +328,9 @@ export default function Addresses() {
 								}
 								className="w-full mt-1 rounded-xl border border-[#e4e4e7] px-3 py-2 text-sm font-cairo focus:outline-none focus:ring-2 focus:ring-[#D4A853]/30 focus:border-[#D4A853]"
 							>
-								<option value="">اختر المحافظة</option>
+								<option value="">
+									{t('addresses.placeholderGovernorate', 'Select governorate')}
+								</option>
 								{yemeniGovernorates.map((g) => (
 									<option key={g} value={g}>
 										{g}
@@ -320,62 +340,75 @@ export default function Addresses() {
 						</div>
 						<div className="grid grid-cols-2 gap-3">
 							<div>
-								<Label className="font-cairo text-sm text-[#111111]">المدينة</Label>
+								<Label className="font-cairo text-sm text-[#111111]">
+									{t('addresses.labelCity', 'City')}
+								</Label>
 								<Input
 									value={form.city || ''}
 									onChange={(e) =>
 										setForm((f) => ({ ...f, city: e.target.value }))
 									}
-									placeholder="المدينة"
+									placeholder={t('addresses.placeholderCity', 'City')}
 									className="rounded-xl mt-1 font-cairo"
 								/>
 							</div>
 							<div>
 								<Label className="font-cairo text-sm text-[#111111]">
-									الحي/المنطقة
+									{t('addresses.labelDistrict', 'District/Area')}
 								</Label>
 								<Input
 									value={form.district || ''}
 									onChange={(e) =>
 										setForm((f) => ({ ...f, district: e.target.value }))
 									}
-									placeholder="الحي"
+									placeholder={t('addresses.placeholderDistrict', 'District')}
 									className="rounded-xl mt-1 font-cairo"
 								/>
 							</div>
 						</div>
 						<div>
-							<Label className="font-cairo text-sm text-[#111111]">الشارع</Label>
+							<Label className="font-cairo text-sm text-[#111111]">
+								{t('addresses.labelStreet', 'Street')}
+							</Label>
 							<Input
 								value={form.street || ''}
 								onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
-								placeholder="اسم الشارع الرئيسي"
+								placeholder={t(
+									'addresses.placeholderStreet',
+									'Main street name',
+								)}
 								className="rounded-xl mt-1 font-cairo"
 							/>
 						</div>
 						<div>
 							<Label className="font-cairo text-sm text-[#111111]">
-								المبنى/الطابق/الشقة
+								{t('addresses.labelBuilding', 'Building / Floor / Apartment')}
 							</Label>
 							<Input
 								value={form.building || ''}
 								onChange={(e) =>
 									setForm((f) => ({ ...f, building: e.target.value }))
 								}
-								placeholder="مثال: عمارة الأوراس - الطابق ٣ - شقة ١٢"
+								placeholder={t(
+									'addresses.placeholderBuilding',
+									'e.g. Al-Auras Building - Floor 3 - Apt 12',
+								)}
 								className="rounded-xl mt-1 font-cairo"
 							/>
 						</div>
 						<div>
 							<Label className="font-cairo text-sm text-[#111111]">
-								إرشادات إضافية
+								{t('addresses.labelDirections', 'Additional directions')}
 							</Label>
 							<Textarea
 								value={form.directions || ''}
 								onChange={(e) =>
 									setForm((f) => ({ ...f, directions: e.target.value }))
 								}
-								placeholder="أي معلومات إضافية تساعد المندوب في الوصول..."
+								placeholder={t(
+									'addresses.placeholderDirections',
+									'Any additional info to help the courier reach you...',
+								)}
 								className="rounded-xl mt-1 font-cairo min-h-[80px] resize-none"
 							/>
 						</div>
@@ -389,7 +422,10 @@ export default function Addresses() {
 								className="w-4 h-4 rounded accent-[#D4A853]"
 							/>
 							<Label className="font-cairo text-sm text-[#111111] cursor-pointer">
-								تعيين كعنوان افتراضي
+								{t(
+									'addresses.labelSetDefaultCheckbox',
+									'Set as default address',
+								)}
 							</Label>
 						</div>
 						<div className="flex gap-3 pt-2">
@@ -397,14 +433,16 @@ export default function Addresses() {
 								onClick={saveAddress}
 								className="flex-1 bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl h-11"
 							>
-								{editingId ? 'حفظ التعديلات' : 'إضافة العنوان'}
+								{editingId
+									? t('addresses.saveEdit', 'Save Changes')
+									: t('addresses.saveAdd', 'Add Address')}
 							</Button>
 							<Button
 								variant="ghost"
 								onClick={() => setDialogOpen(false)}
 								className="font-cairo rounded-xl h-11"
 							>
-								إلغاء
+								{t('addresses.cancel', 'Cancel')}
 							</Button>
 						</div>
 					</div>

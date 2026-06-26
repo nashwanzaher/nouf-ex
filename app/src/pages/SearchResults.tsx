@@ -209,10 +209,7 @@ export default function SearchResults() {
 							)}{' '}
 					{t('search.ui.resultsFor', 'for')}{' '}
 					<span className="text-[#FF6A00]">
-						"
-						{initialQ ||
-							t('search.ui.allProductsFallback', 'All Products')}
-						"
+						"{initialQ || t('search.ui.allProductsFallback', 'All Products')}"
 					</span>
 				</h1>
 			</div>
@@ -393,7 +390,8 @@ export default function SearchResults() {
 												<span>MOQ: {p.moq ?? 10}</span>
 												<span>|</span>
 												<span>
-													{p.sold_count} {t('search.ui.soldSuffix', 'sold')}
+													{p.sold_count}{' '}
+													{t('search.ui.soldSuffix', 'sold')}
 												</span>
 											</div>
 											{/* Rating */}

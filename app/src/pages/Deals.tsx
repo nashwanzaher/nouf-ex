@@ -123,10 +123,7 @@ export default function DealsPage() {
 
 						{/* Countdown Timer */}
 						<div className="flex items-center gap-3 sm:gap-4">
-							<TimeBlock
-								value={countdown.hours}
-								label={t('deals.hours', 'Hours')}
-							/>
+							<TimeBlock value={countdown.hours} label={t('deals.hours', 'Hours')} />
 							<span className="text-3xl font-extrabold text-white/60 -mt-4">:</span>
 							<TimeBlock
 								value={countdown.minutes}

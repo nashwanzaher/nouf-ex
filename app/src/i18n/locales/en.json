@@ -446,49 +446,48 @@
     "searchFashion": "Fashion",
     "searchFood": "Food",
     "searchPlaceholder": "Search products, merchants, or brands..."
-    },
-    "search": {
-        "ui": {
-            "placeholder": "Search for products...",
-            "priceRangeAll": "All",
-            "sortRelevance": "Best Match",
-            "sortPriceLow": "Price: Low to High",
-            "sortPriceHigh": "Price: High to Low",
-            "sortRating": "Highest Rated",
-            "resultsCount": "{count} product",
-            "resultsCountPlural": "{count} products",
-            "resultsFor": "for",
-            "allProductsFallback": "All Products",
-            "filters": "Filters",
-            "allCategories": "All Categories",
-            "errorTitle": "Error loading products",
-            "emptyMessage": "Try different keywords or browse categories",
-            "bestseller": "BESTSELLER",
-            "soldSuffix": "sold",
-            "contact": "Contact",
-            "prev": "Prev",
-            "next": "Next"
-        }
-    },
-    "deals": {
-        "limitedOffer": "Limited Time Offer",
-        "flashSale": "Flash Sale",
-        "flashSaleDesc": "Huge discounts on selected products for a limited time only!",
-        "hours": "Hours",
-        "minutes": "Mins",
-        "seconds": "Secs",
-        "activeDeals": "{count} active deals",
-        "endingSoon": "Ending soon",
-        "verifiedProducts": "Verified products",
-        "hotDeals": "Hot Deals",
-        "allDeals": "All Deals",
-        "noDeals": "No deals at the moment",
-        "backToHome": "Back to Home",
-        "limitedBadge": "Limited",
-        "soldSuffix": "sold",
-        "onlyLeft": "Only {count} left!",
-        "addedToCart": "Added!",
-        "addToCart": "Add to Cart"
-
-}
+  },
+  "search": {
+    "ui": {
+      "placeholder": "Search for products...",
+      "priceRangeAll": "All",
+      "sortRelevance": "Best Match",
+      "sortPriceLow": "Price: Low to High",
+      "sortPriceHigh": "Price: High to Low",
+      "sortRating": "Highest Rated",
+      "resultsCount": "{count} product",
+      "resultsCountPlural": "{count} products",
+      "resultsFor": "for",
+      "allProductsFallback": "All Products",
+      "filters": "Filters",
+      "allCategories": "All Categories",
+      "errorTitle": "Error loading products",
+      "emptyMessage": "Try different keywords or browse categories",
+      "bestseller": "BESTSELLER",
+      "soldSuffix": "sold",
+      "contact": "Contact",
+      "prev": "Prev",
+      "next": "Next"
+    }
+  },
+  "deals": {
+    "limitedOffer": "Limited Time Offer",
+    "flashSale": "Flash Sale",
+    "flashSaleDesc": "Huge discounts on selected products for a limited time only!",
+    "hours": "Hours",
+    "minutes": "Mins",
+    "seconds": "Secs",
+    "activeDeals": "{count} active deals",
+    "endingSoon": "Ending soon",
+    "verifiedProducts": "Verified products",
+    "hotDeals": "Hot Deals",
+    "allDeals": "All Deals",
+    "noDeals": "No deals at the moment",
+    "backToHome": "Back to Home",
+    "limitedBadge": "Limited",
+    "soldSuffix": "sold",
+    "onlyLeft": "Only {count} left!",
+    "addedToCart": "Added!",
+    "addToCart": "Add to Cart"
+  }
 }

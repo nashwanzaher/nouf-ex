@@ -497,8 +497,7 @@ export default function ProductDetail() {
 									)}
 									{store.is_verified === 1 && (
 										<span className="flex items-center gap-1 text-xs bg-[#E3F2FD] text-[#1688C9] px-2 py-0.5 rounded font-medium">
-											<BadgeCheck size={12} />{' '}
-											{t('nav.verified', 'Verified')}
+											<BadgeCheck size={12} /> {t('nav.verified', 'Verified')}
 										</span>
 									)}
 								</div>
@@ -673,7 +672,10 @@ export default function ProductDetail() {
 										t('product.capShipping', 'Shipping to 50+ countries'),
 										t('product.capOem', 'OEM/ODM Available'),
 										t('product.capSupport247', '24/7 Customer Support'),
-										t('product.capQuality', 'International Quality Certifications'),
+										t(
+											'product.capQuality',
+											'International Quality Certifications',
+										),
 									].map((cap, i) => (
 										<div
 											key={i}
@@ -800,19 +802,26 @@ export default function ProductDetail() {
 											<div className="flex items-center gap-3 mt-2">
 												<button className="flex items-center gap-1 text-xs text-[#999] hover:text-[#FF6A00] transition-colors">
 													<ThumbsUp size={12} />{' '}
-													{t('product.helpful', 'Helpful')} ({r.helpful_count})
+													{t('product.helpful', 'Helpful')} (
+													{r.helpful_count})
 												</button>
 												{r.is_verified === 1 && (
 													<span className="flex items-center gap-1 text-xs text-[#4CAF50]">
 														<BadgeCheck size={12} />{' '}
-														{t('product.verifiedBuyer', 'Verified Buyer')}
+														{t(
+															'product.verifiedBuyer',
+															'Verified Buyer',
+														)}
 													</span>
 												)}
 											</div>
 											{r.merchant_reply && (
 												<div className="mt-2 p-3 bg-[#F7F8FA] rounded text-sm">
 													<span className="font-semibold text-[#333]">
-														{t('product.sellerReplyLabel', 'Seller Reply:')}
+														{t(
+															'product.sellerReplyLabel',
+															'Seller Reply:',
+														)}
 													</span>
 													<p className="text-[#666] mt-0.5">
 														{r.merchant_reply}

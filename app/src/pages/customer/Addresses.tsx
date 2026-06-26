@@ -373,10 +373,7 @@ export default function Addresses() {
 							<Input
 								value={form.street || ''}
 								onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
-								placeholder={t(
-									'addresses.placeholderStreet',
-									'Main street name',
-								)}
+								placeholder={t('addresses.placeholderStreet', 'Main street name')}
 								className="rounded-xl mt-1 font-cairo"
 							/>
 						</div>
@@ -422,10 +419,7 @@ export default function Addresses() {
 								className="w-4 h-4 rounded accent-[#D4A853]"
 							/>
 							<Label className="font-cairo text-sm text-[#111111] cursor-pointer">
-								{t(
-									'addresses.labelSetDefaultCheckbox',
-									'Set as default address',
-								)}
+								{t('addresses.labelSetDefaultCheckbox', 'Set as default address')}
 							</Label>
 						</div>
 						<div className="flex gap-3 pt-2">

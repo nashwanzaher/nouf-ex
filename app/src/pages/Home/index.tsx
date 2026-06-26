@@ -501,15 +501,15 @@ export default function Home() {
 			<section className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
 				<div className="flex items-center justify-between mb-5">
 					<h2 className="text-xl lg:text-2xl font-bold text-aliText">
-					{t('home.justForYou', 'Just for You')}
-				</h2>
-				<div className="flex items-center gap-2">
-					<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
-						{t('home.bestsellersTab', 'Bestsellers')}
-					</button>
-					<span className="text-aliBorder">|</span>
-					<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors">
-						{t('home.newestTab', 'Newest')}
+						{t('home.justForYou', 'Just for You')}
+					</h2>
+					<div className="flex items-center gap-2">
+						<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
+							{t('home.bestsellersTab', 'Bestsellers')}
+						</button>
+						<span className="text-aliBorder">|</span>
+						<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors">
+							{t('home.newestTab', 'Newest')}
 						</button>
 					</div>
 				</div>
@@ -568,7 +568,10 @@ export default function Home() {
 											<div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
 												<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
 													{t('home.moqBadge', 'MOQ: {count} pcs', {
-														count: Math.max(1, Math.floor(product.stock / 5)),
+														count: Math.max(
+															1,
+															Math.floor(product.stock / 5),
+														),
 													})}
 												</span>
 												<span className="text-[10px] text-aliTextMute">
@@ -849,8 +852,7 @@ export default function Home() {
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 											/>
 											<span className="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-												<Truck size={10} />{' '}
-												{t('home.readyBadge', 'Ready')}
+												<Truck size={10} /> {t('home.readyBadge', 'Ready')}
 											</span>
 										</Link>
 										<div className="p-2.5">
@@ -868,10 +870,12 @@ export default function Home() {
 												</span>
 											</div>
 											<div className="text-[10px] text-aliTextMute mt-1">
-												{product.stock}{' '}
-												{t('home.inStock', 'in stock')} -{' '}
+												{product.stock} {t('home.inStock', 'in stock')} -{' '}
 												{t('home.moqBadge', 'MOQ: {count} pcs', {
-													count: Math.max(1, Math.floor(product.stock / 5)),
+													count: Math.max(
+														1,
+														Math.floor(product.stock / 5),
+													),
 												})}{' '}
 												pcs
 											</div>

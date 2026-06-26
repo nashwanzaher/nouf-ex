@@ -513,7 +513,10 @@ export default function CategoriesPage() {
 								{t('categories.ui.noProducts', 'No products found')}
 							</p>
 							<p className="text-aliTextMute text-sm">
-								{t('categories.ui.tryAdjustingFilters', 'Try adjusting your filters')}
+								{t(
+									'categories.ui.tryAdjustingFilters',
+									'Try adjusting your filters',
+								)}
 							</p>
 						</div>
 					)}

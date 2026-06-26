@@ -326,80 +326,92 @@ adminReadRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Respon
 
 adminReadRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => {
 	try {
-		// `get()` returns undefined when no row matches. Guard every
-		// count so a fresh / empty database (or the test mock) does
-		// not throw a TypeError.
-		const count = (row: unknown): number => (row as { c?: number } | undefined)?.c ?? 0;
-		const users = count(await db.prepare('SELECT COUNT(*)::int AS c FROM users').get());
-		const stores = count(await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get());
-		const products = count(await db.prepare('SELECT COUNT(*)::int AS c FROM products').get());
-		const orders = count(await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get());
-		const reviews = count(await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get());
-		const disputes = count(await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get());
-		const openDisputes = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`).get(),
-		);
-		const pendingOrders = count(
-			await db
-				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`)
-				.get(),
-		);
-		const paidOrders = count(
-			await db
-				.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`)
-				.get(),
-		);
-		const suspendedUsers = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`).get(),
-		);
-		const inactiveStores = count(
-			await db.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`).get(),
-		);
-		const recentOrders = count(
-			await db
-				.prepare(
-					`SELECT COUNT(*)::int AS c FROM orders
-					 WHERE created_at > NOW() - INTERVAL '7 days'`,
-				)
-				.get(),
-		);
-		const recentUsers = count(
-			await db
-				.prepare(
-					`SELECT COUNT(*)::int AS c FROM users
-					 WHERE created_at > NOW() - INTERVAL '7 days'`,
-				)
-				.get(),
-		);
-		const revenueRow = (await db
-			.prepare(
-				`SELECT COALESCE(SUM(total), 0)::numeric AS s
-					 FROM orders WHERE payment_status = 'paid'`,
-			)
-			.get()) as { s: string } | undefined;
-		const revenueYer = revenueRow ? Number(revenueRow.s) : 0;
+		// Single CTE-style SELECT: all 14 metrics are computed as scalar
+		// subqueries inside one statement, so the route is one round-trip
+		// to Postgres (was 14 round-trips before).
+		//
+		// The aliases use snake_case to mirror the column convention used
+		// across the rest of the schema. The response keeps its existing
+		// nested shape (counts/flags/recent7d/revenueYer) so the SPA's
+		// AdminDashboard does not need to change.
+		const row = (await db.prepare(
+			`SELECT
+				(SELECT COUNT(*)::int FROM users)                                  AS users,
+				(SELECT COUNT(*)::int FROM stores)                                 AS stores,
+				(SELECT COUNT(*)::int FROM products)                               AS products,
+				(SELECT COUNT(*)::int FROM orders)                                 AS orders,
+				(SELECT COUNT(*)::int FROM reviews)                                AS reviews,
+				(SELECT COUNT(*)::int FROM disputes)                               AS disputes,
+				(SELECT COUNT(*)::int FROM disputes WHERE status = 'open')         AS open_disputes,
+				(SELECT COUNT(*)::int FROM orders  WHERE status = 'pending')       AS pending_orders,
+				(SELECT COUNT(*)::int FROM orders  WHERE payment_status = 'paid')  AS paid_orders,
+				(SELECT COUNT(*)::int FROM users   WHERE status <> 'active')       AS suspended_users,
+				(SELECT COUNT(*)::int FROM stores  WHERE is_active = FALSE)        AS inactive_stores,
+				(SELECT COUNT(*)::int FROM orders  WHERE created_at > NOW() - INTERVAL '7 days') AS recent_orders,
+				(SELECT COUNT(*)::int FROM users   WHERE created_at > NOW() - INTERVAL '7 days') AS recent_users,
+				COALESCE(
+					(SELECT SUM(total)::numeric FROM orders WHERE payment_status = 'paid'),
+					0
+				)                                                                 AS revenue_yer`,
+		).get()) as
+			| {
+				users: number;
+				stores: number;
+				products: number;
+				orders: number;
+				reviews: number;
+				disputes: number;
+				open_disputes: number;
+				pending_orders: number;
+				paid_orders: number;
+				suspended_users: number;
+				inactive_stores: number;
+				recent_orders: number;
+				recent_users: number;
+				revenue_yer: string | number;
+			}
+			| undefined;
+
+		// Empty / fresh DB (or the global pg mock in tests) yields `undefined`.
+		// Default every field to 0 so the SPA's dashboard never sees NaN.
+		const r = row ?? {
+			users: 0,
+			stores: 0,
+			products: 0,
+			orders: 0,
+			reviews: 0,
+			disputes: 0,
+			open_disputes: 0,
+			pending_orders: 0,
+			paid_orders: 0,
+			suspended_users: 0,
+			inactive_stores: 0,
+			recent_orders: 0,
+			recent_users: 0,
+			revenue_yer: 0,
+		};
 
 		return sendSuccess(res, {
 			counts: {
-				users,
-				stores,
-				products,
-				orders,
-				reviews,
-				disputes,
+				users: r.users,
+				stores: r.stores,
+				products: r.products,
+				orders: r.orders,
+				reviews: r.reviews,
+				disputes: r.disputes,
 			},
 			flags: {
-				openDisputes,
-				pendingOrders,
-				paidOrders,
-				suspendedUsers,
-				inactiveStores,
+				openDisputes: r.open_disputes,
+				pendingOrders: r.pending_orders,
+				paidOrders: r.paid_orders,
+				suspendedUsers: r.suspended_users,
+				inactiveStores: r.inactive_stores,
 			},
 			recent7d: {
-				orders: recentOrders,
-				users: recentUsers,
+				orders: r.recent_orders,
+				users: r.recent_users,
 			},
-			revenueYer,
+			revenueYer: Number(r.revenue_yer),
 		});
 	} catch (err) {
 		return sendError(res, err);

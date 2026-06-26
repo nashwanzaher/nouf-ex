@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
 	Search,
@@ -211,13 +212,14 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
 /* ------------------------------------------------------------------ */
 
 function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
+	const { t } = useTranslation();
 	const [statusOpen, setStatusOpen] = useState(false);
 	const statusOptions = [
-		{ key: 'new', label: 'جديد', color: '#2563EB' },
-		{ key: 'processing', label: 'قيد المعالجة', color: '#F59E0B' },
-		{ key: 'shipped', label: 'تم الشحن', color: '#10B981' },
-		{ key: 'delivered', label: 'مكتمل', color: '#10B981' },
-		{ key: 'cancelled', label: 'ملغي', color: '#EF4444' },
+		{ key: 'new', label: t('seller.statusNew', 'New'), color: '#2563EB' },
+		{ key: 'processing', label: t('seller.statusProcessing', 'Processing'), color: '#F59E0B' },
+		{ key: 'shipped', label: t('seller.statusShipped', 'Shipped'), color: '#10B981' },
+		{ key: 'delivered', label: t('seller.statusDelivered', 'Delivered'), color: '#10B981' },
+		{ key: 'cancelled', label: t('seller.statusCancelled', 'Cancelled'), color: '#EF4444' },
 	];
 
 	return (
@@ -248,6 +250,8 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 							</div>
 							<button
 								onClick={onClose}
+								title={t('common.close', 'Close')}
+								aria-label={t('common.close', 'Close')}
 								className="w-8 h-8 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors"
 							>
 								<X className="w-5 h-5 text-[#6B6B6B]" strokeWidth={1.5} />
@@ -264,7 +268,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 										className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8F8F8] hover:bg-[#F3EDE4] text-xs font-cairo font-semibold text-[#111111] transition-colors"
 									>
 										<RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />
-										تغيير الحالة
+										{t('seller.changeStatus', 'Change status')}
 										<ChevronDown
 											className={cn(
 												'w-3 h-3 transition-transform',
@@ -317,7 +321,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 										className="w-4 h-4 text-[#D4A853]"
 										strokeWidth={1.5}
 									/>
-									معلومات العميل
+									{t('seller.customerInfo', 'Customer Info')}
 								</h3>
 								<div className="space-y-2">
 									<p className="text-xs font-cairo font-semibold text-[#111111]">
@@ -338,7 +342,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 							<div>
 								<h3 className="text-sm font-cairo font-semibold text-[#111111] mb-3 flex items-center gap-2">
 									<Package className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
-									المنتجات
+									{t('seller.productsList', 'Products')}
 								</h3>
 								<div className="space-y-2">
 									{order.items.map((item, i) => (
@@ -357,7 +361,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 													{item.name}
 												</p>
 												<p className="text-[10px] text-[#6B6B6B] font-cairo">
-													الكمية: {item.qty}
+													{t('seller.qty', 'Qty')}: {item.qty}
 												</p>
 											</div>
 											<span className="text-xs font-mono font-semibold text-[#111111] shrink-0">
@@ -375,12 +379,12 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 										className="w-4 h-4 text-[#D4A853]"
 										strokeWidth={1.5}
 									/>
-									الدفع
+									{t('seller.paymentSection', 'Payment')}
 								</h3>
 								<div className="space-y-2">
 									<div className="flex justify-between text-xs">
 										<span className="text-[#6B6B6B] font-cairo">
-											طريقة الدفع
+											{t('seller.paymentMethod', 'Payment method')}
 										</span>
 										<span className="font-cairo text-[#111111]">
 											{order.paymentMethod}
@@ -388,7 +392,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 									</div>
 									<div className="flex justify-between text-xs">
 										<span className="text-[#6B6B6B] font-cairo">
-											حالة الدفع
+											{t('seller.paymentStatus', 'Payment status')}
 										</span>
 										<span
 											className={cn(
@@ -402,7 +406,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 										</span>
 									</div>
 									<div className="border-t border-[#F3EDE4] pt-2 flex justify-between text-sm font-bold mt-2">
-										<span className="font-cairo text-[#111111]">الإجمالي</span>
+										<span className="font-cairo text-[#111111]">{t('seller.total', 'Total')}</span>
 										<span className="font-mono text-[#D4A853]">
 											{order.amount}
 										</span>
@@ -414,7 +418,7 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 							<div>
 								<h3 className="text-sm font-cairo font-semibold text-[#111111] mb-3 flex items-center gap-2">
 									<Clock className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
-									سجل الطلب
+									{t('seller.timeline', 'Order Timeline')}
 								</h3>
 								<div className="space-y-0">
 									{order.timeline.map((t, i) => (
@@ -466,11 +470,11 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 							<div className="flex items-center gap-2 pt-2">
 								<button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#D4A853] hover:bg-[#c49a48] text-[#1A1612] rounded-xl text-sm font-cairo font-semibold transition-colors">
 									<Printer className="w-4 h-4" strokeWidth={1.5} />
-									طباعة الفاتورة
+									{t('seller.printInvoice', 'Print Invoice')}
 								</button>
 								<button className="flex items-center justify-center gap-2 px-4 py-3 border border-[#F3EDE4] hover:bg-[#F8F8F8] rounded-xl text-sm font-cairo text-[#6B6B6B] transition-colors">
 									<Truck className="w-4 h-4" strokeWidth={1.5} />
-									تتبع
+									{t('seller.track', 'Track')}
 								</button>
 							</div>
 						</div>
@@ -492,31 +496,32 @@ function SummaryCards({
 	activeFilter: string;
 	onFilter: (f: string) => void;
 }) {
+	const { t } = useTranslation();
 	const cards = [
 		{
 			key: 'new',
-			label: 'جديد',
+			label: t('seller.statusNew', 'New'),
 			count: '١٢',
 			color: '#2563EB',
 			bg: 'bg-[rgba(37,99,235,0.1)]',
 		},
 		{
 			key: 'processing',
-			label: 'قيد المعالجة',
+			label: t('seller.statusProcessing', 'Processing'),
 			count: '٨',
 			color: '#F59E0B',
 			bg: 'bg-[rgba(245,158,11,0.1)]',
 		},
 		{
 			key: 'shipped',
-			label: 'تم الشحن',
+			label: t('seller.statusShipped', 'Shipped'),
 			count: '١٥',
 			color: '#10B981',
 			bg: 'bg-[rgba(16,185,129,0.1)]',
 		},
 		{
 			key: 'delivered',
-			label: 'مكتمل',
+			label: t('seller.statusDelivered', 'Delivered'),
 			count: '٤٣',
 			color: '#D4A853',
 			bg: 'bg-[rgba(212,168,83,0.1)]',
@@ -563,6 +568,7 @@ function SummaryCards({
 /* ------------------------------------------------------------------ */
 
 export default function SellerOrders() {
+	const { t } = useTranslation();
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
 	const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -575,19 +581,24 @@ export default function SellerOrders() {
 	});
 
 	return (
-		<DashboardShell title="الطلبات" breadcrumb="لوحة التحكم / إدارة الطلبات">
+		<DashboardShell
+			title={t('seller.orders', 'Orders')}
+			breadcrumb={t('seller.breadcrumbOrders', 'Dashboard / Orders')}
+		>
 			<div className="space-y-6">
 				{/* Page Header */}
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 					<div className="flex items-center gap-3">
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">الطلبات</h1>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+							{t('seller.orders', 'Orders')}
+						</h1>
 						<span className="px-2.5 py-1 bg-[#EF4444] text-white rounded-xl text-xs font-bold font-cairo">
-							١٢ جديد
+							١٢ {t('seller.new', 'New')}
 						</span>
 					</div>
 					<button className="flex items-center gap-2 px-4 py-2.5 border border-[#D4A853] text-[#D4A853] hover:bg-[#F3EDE4] rounded-xl text-sm font-cairo font-semibold transition-colors w-fit">
 						<Download className="w-4 h-4" strokeWidth={1.5} />
-						تصدير CSV
+						{t('seller.exportCsv', 'Export CSV')}
 					</button>
 				</div>
 
@@ -605,16 +616,20 @@ export default function SellerOrders() {
 							type="text"
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							placeholder="رقم الطلب، اسم العميل..."
+							placeholder={t('seller.searchOrderPlaceholder', 'Order number, customer name...')}
+							aria-label={t('common.search', 'Search')}
 							className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 						/>
 					</div>
 					<div className="flex items-center gap-2">
 						<div className="relative">
-							<select className="appearance-none px-4 py-2.5 pr-10 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white">
-								<option>آخر ٣٠ يوم</option>
-								<option>هذا الأسبوع</option>
-								<option>الشهر الماضي</option>
+							<select
+								aria-label={t('seller.dateRange', 'Date range')}
+								className="appearance-none px-4 py-2.5 pr-10 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
+							>
+								<option>{t('seller.last30Days', 'Last 30 days')}</option>
+								<option>{t('seller.thisWeek', 'This week')}</option>
+								<option>{t('seller.lastMonth', 'Last month')}</option>
 							</select>
 							<CalendarRange
 								className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#AAAAAA] pointer-events-none"
@@ -630,31 +645,35 @@ export default function SellerOrders() {
 						<thead>
 							<tr className="text-right bg-[#F8F8F8]">
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									<input type="checkbox" className="rounded border-[#AAAAAA]" />
+									<input
+										type="checkbox"
+										aria-label={t('seller.selectAll', 'Select all')}
+										className="rounded border-[#AAAAAA]"
+									/>
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									رقم الطلب
+									{t('seller.orderNumber', 'Order #')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									العميل
+									{t('seller.customer', 'Customer')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									التاريخ
+									{t('seller.date', 'Date')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									المنتجات
+									{t('seller.tableOrders', 'Orders')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									المبلغ
+									{t('seller.amount', 'Amount')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									الدفع
+									{t('seller.payment', 'Payment')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									الحالة
+									{t('seller.status', 'Status')}
 								</th>
 								<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-									إجراءات
+									{t('seller.actions', 'Actions')}
 								</th>
 							</tr>
 						</thead>
@@ -683,7 +702,7 @@ export default function SellerOrders() {
 										{order.date}
 									</td>
 									<td className="px-4 py-3 text-xs text-[#6B6B6B] font-cairo">
-										{order.items.length} منتج
+										{order.items.length} {t('seller.itemUnit', 'items')}
 									</td>
 									<td className="px-4 py-3 text-xs font-mono font-semibold text-[#111111]">
 										{order.amount}
@@ -709,6 +728,8 @@ export default function SellerOrders() {
 									<td className="px-4 py-3">
 										<button
 											onClick={() => setSelectedOrder(order)}
+											title={t('seller.view', 'View')}
+											aria-label={t('seller.view', 'View')}
 											className="w-7 h-7 rounded-lg hover:bg-[#F3EDE4] flex items-center justify-center transition-colors"
 										>
 											<Eye
@@ -725,7 +746,11 @@ export default function SellerOrders() {
 
 				{/* Pagination */}
 				<div className="flex items-center justify-center gap-1">
-					<button className="w-9 h-9 rounded-xl hover:bg-white flex items-center justify-center text-[#6B6B6B] transition-colors">
+					<button
+						title={t('seller.prevPage', 'Previous')}
+						aria-label={t('seller.prevPage', 'Previous')}
+						className="w-9 h-9 rounded-xl hover:bg-white flex items-center justify-center text-[#6B6B6B] transition-colors"
+					>
 						<ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
 					</button>
 					{[1, 2, 3].map((p) => (
@@ -741,7 +766,11 @@ export default function SellerOrders() {
 							{p}
 						</button>
 					))}
-					<button className="w-9 h-9 rounded-xl hover:bg-white flex items-center justify-center text-[#6B6B6B] transition-colors">
+					<button
+						title={t('seller.nextPage', 'Next')}
+						aria-label={t('seller.nextPage', 'Next')}
+						className="w-9 h-9 rounded-xl hover:bg-white flex items-center justify-center text-[#6B6B6B] transition-colors"
+					>
 						<ArrowLeft className="w-4 h-4 rotate-180" strokeWidth={1.5} />
 					</button>
 				</div>
@@ -753,10 +782,10 @@ export default function SellerOrders() {
 							<ShoppingBag className="w-8 h-8 text-[#D4A853]" strokeWidth={1.5} />
 						</div>
 						<h3 className="text-base font-amiri font-bold text-[#111111] mb-1">
-							لا توجد طلبات
+							{t('seller.noOrders', 'No orders')}
 						</h3>
 						<p className="text-sm text-[#6B6B6B] font-cairo">
-							لم يتم العثور على طلبات تطابق معايير البحث
+							{t('seller.noOrdersMatch', 'No orders match your search criteria')}
 						</p>
 					</div>
 				)}

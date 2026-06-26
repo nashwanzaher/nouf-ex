@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, Users, BarChart3 } from 'lucide-react';
 import {
@@ -160,10 +161,14 @@ const item = {
 };
 
 export default function SellerAnalytics() {
+	const { t } = useTranslation();
 	const [period, setPeriod] = useState('30days');
 
 	return (
-		<DashboardShell title="الإحصائيات" breadcrumb="لوحة التحكم / التحليلات والإحصائيات">
+		<DashboardShell
+			title={t('seller.analytics', 'Analytics')}
+			breadcrumb={t('seller.breadcrumbAnalytics', 'Dashboard / Analytics')}
+		>
 			<motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
 				{/* Page Header */}
 				<motion.div
@@ -171,9 +176,11 @@ export default function SellerAnalytics() {
 					className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
 				>
 					<div>
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">الإحصائيات</h1>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+							{t('seller.analytics', 'Analytics')}
+						</h1>
 						<p className="text-sm text-[#6B6B6B] font-cairo">
-							تحليل أداء متجرك ومبيعاتك
+							{t('seller.analyticsSubtitle', 'Analyze your store performance and sales')}
 						</p>
 					</div>
 					<div className="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm overflow-x-auto">
@@ -201,7 +208,7 @@ export default function SellerAnalytics() {
 							icon: DollarSign,
 							iconColor: '#10B981',
 							bg: 'bg-[rgba(16,185,129,0.1)]',
-							label: 'إجمالي الإيرادات',
+							label: t('seller.statRevenue', 'Total Revenue'),
 							value: '٢,٤٥٠,٠٠٠',
 							suffix: ' ر.ي',
 							change: '+١٨٪',
@@ -211,7 +218,7 @@ export default function SellerAnalytics() {
 							icon: ShoppingBag,
 							iconColor: '#2563EB',
 							bg: 'bg-[rgba(37,99,235,0.1)]',
-							label: 'إجمالي الطلبات',
+							label: t('seller.statOrders', 'Total Orders'),
 							value: '١٢٤',
 							suffix: '',
 							change: '+٨',
@@ -221,7 +228,7 @@ export default function SellerAnalytics() {
 							icon: BarChart3,
 							iconColor: '#F59E0B',
 							bg: 'bg-[rgba(245,158,11,0.1)]',
-							label: 'متوسط قيمة الطلب',
+							label: t('seller.statAvgOrder', 'Average Order Value'),
 							value: '١٩,٧٥٠',
 							suffix: ' ر.ي',
 							change: '+٥٪',
@@ -231,7 +238,7 @@ export default function SellerAnalytics() {
 							icon: Users,
 							iconColor: '#8B5CF6',
 							bg: 'bg-[rgba(139,92,246,0.1)]',
-							label: 'الزوار',
+							label: t('seller.visitors', 'Visitors'),
 							value: '٣,٤٢٠',
 							suffix: '',
 							change: '-٢٪',
@@ -281,7 +288,7 @@ export default function SellerAnalytics() {
 				<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 					<div className="flex items-center justify-between mb-4">
 						<h3 className="text-base font-amiri font-bold text-[#1A1612]">
-							الإيرادات الشهرية
+							{t('seller.monthlyRevenue', 'Monthly Revenue')}
 						</h3>
 					</div>
 					<div className="h-72">
@@ -315,7 +322,7 @@ export default function SellerAnalytics() {
 									}}
 									formatter={(value: number) => [
 										`${value.toLocaleString()} ر.ي`,
-										'الإيرادات',
+										t('seller.revenue', 'Revenue'),
 									]}
 								/>
 								<Area
@@ -324,7 +331,7 @@ export default function SellerAnalytics() {
 									stroke="#D4A853"
 									strokeWidth={2.5}
 									fill="url(#revGold)"
-									name="الإيرادات"
+									name={t('seller.revenue', 'Revenue')}
 								/>
 							</AreaChart>
 						</ResponsiveContainer>
@@ -337,7 +344,7 @@ export default function SellerAnalytics() {
 					<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 						<div className="flex items-center justify-between mb-4">
 							<h3 className="text-base font-amiri font-bold text-[#1A1612]">
-								الطلبات اليومية
+								{t('seller.dailyOrders', 'Daily Orders')}
 							</h3>
 						</div>
 						<div className="h-64">
@@ -374,13 +381,13 @@ export default function SellerAnalytics() {
 											fontFamily: 'Cairo',
 											fontSize: 12,
 										}}
-										formatter={(value: number) => [`${value}`, 'طلبات']}
+										formatter={(value: number) => [`${value}`, t('seller.orders', 'Orders')]}
 									/>
 									<Bar
 										dataKey="orders"
 										fill="#D4A853"
 										radius={[6, 6, 0, 0]}
-										name="الطلبات"
+										name={t('seller.orders', 'Orders')}
 									/>
 								</BarChart>
 							</ResponsiveContainer>
@@ -391,7 +398,7 @@ export default function SellerAnalytics() {
 					<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 						<div className="flex items-center justify-between mb-4">
 							<h3 className="text-base font-amiri font-bold text-[#1A1612]">
-								مصادر الزيارات
+								{t('seller.trafficSources', 'Traffic Sources')}
 							</h3>
 						</div>
 						<div className="h-64 flex items-center">
@@ -440,7 +447,7 @@ export default function SellerAnalytics() {
 				<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 					<div className="flex items-center justify-between mb-4">
 						<h3 className="text-base font-amiri font-bold text-[#1A1612]">
-							أفضل المنتجات أداءً
+							{t('seller.topProducts', 'Top Performing Products')}
 						</h3>
 					</div>
 					<div className="overflow-x-auto -mx-2">
@@ -448,22 +455,22 @@ export default function SellerAnalytics() {
 							<thead>
 								<tr className="text-right border-b border-[#F3EDE4]">
 									<th className="pb-3 pr-2 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										المنتج
+										{t('seller.tableProduct', 'Product')}
 									</th>
 									<th className="pb-3 px-2 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										المشاهدات
+										{t('seller.tableViews', 'Views')}
 									</th>
 									<th className="pb-3 px-2 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										السلة
+										{t('seller.tableCarts', 'Carts')}
 									</th>
 									<th className="pb-3 px-2 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										الطلبات
+										{t('seller.tableOrders', 'Orders')}
 									</th>
 									<th className="pb-3 px-2 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										الإيرادات
+										{t('seller.revenue', 'Revenue')}
 									</th>
 									<th className="pb-3 pl-2 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										معدل التحويل
+										{t('seller.conversion', 'Conversion')}
 									</th>
 								</tr>
 							</thead>
@@ -505,7 +512,7 @@ export default function SellerAnalytics() {
 					{/* New vs Returning */}
 					<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 						<h3 className="text-base font-amiri font-bold text-[#1A1612] mb-4">
-							العملاء الجدد vs العائدون
+							{t('seller.newVsReturning', 'New vs Returning Customers')}
 						</h3>
 						<div className="h-48">
 							<ResponsiveContainer width="100%" height="100%">
@@ -549,7 +556,7 @@ export default function SellerAnalytics() {
 					{/* Peak Hours */}
 					<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 						<h3 className="text-base font-amiri font-bold text-[#1A1612] mb-4">
-							ساعات الذروة
+							{t('seller.peakHours', 'Peak Hours')}
 						</h3>
 						<div className="h-48">
 							<ResponsiveContainer width="100%" height="100%">
@@ -585,7 +592,7 @@ export default function SellerAnalytics() {
 											fontFamily: 'Cairo',
 											fontSize: 12,
 										}}
-										formatter={(value: number) => [`${value}`, 'طلبات']}
+										formatter={(value: number) => [`${value}`, t('seller.orders', 'Orders')]}
 									/>
 									<Bar dataKey="orders" fill="#2563EB" radius={[4, 4, 0, 0]} />
 								</BarChart>
@@ -596,7 +603,7 @@ export default function SellerAnalytics() {
 					{/* Geographic Distribution */}
 					<motion.div variants={item} className="bg-white rounded-2xl p-5 shadow-sm">
 						<h3 className="text-base font-amiri font-bold text-[#1A1612] mb-4">
-							التوزيع الجغرافي
+							{t('seller.geographicDistribution', 'Geographic Distribution')}
 						</h3>
 						<div className="space-y-3">
 							{geographicData.map((city, i) => (

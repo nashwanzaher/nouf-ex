@@ -106,7 +106,10 @@
     "capQuality": "International Quality Certifications",
     "helpful": "Helpful",
     "verifiedBuyer": "Verified Buyer",
-    "sellerReplyLabel": "Seller Reply:"
+    "sellerReplyLabel": "Seller Reply:",
+    "moqBadge": "MOQ: {count} pcs",
+    "loadingReviews": "Loading reviews...",
+    "noReviewsYet": "No reviews yet"
   },
   "cart": {
     "cartTitle": "Shopping Cart",

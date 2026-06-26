@@ -106,7 +106,10 @@
     "capQuality": "国际质量认证",
     "helpful": "有用",
     "verifiedBuyer": "已验证买家",
-    "sellerReplyLabel": "卖家回复："
+    "sellerReplyLabel": "卖家回复：",
+    "moqBadge": "最小起订量：{count} 件",
+    "loadingReviews": "正在加载评论...",
+    "noReviewsYet": "暂无评论"
   },
   "cart": {
     "cartTitle": "购物车",

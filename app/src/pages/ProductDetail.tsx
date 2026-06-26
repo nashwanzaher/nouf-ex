@@ -152,12 +152,7 @@ export default function ProductDetail() {
 				</div>
 				<h2 className="text-xl font-bold text-[#333] mb-2">{t('common.noResults')}</h2>
 				<p className="text-sm text-[#999] mb-4">
-					{productError ||
-						(lang === 'ar'
-							? 'المنتج غير موجود'
-							: lang === 'zh'
-								? '产品不存在'
-								: 'Product not found')}
+					{productError || t('product.notFound', 'Product not found')}
 				</p>
 				<Link
 					to="/"
@@ -325,9 +320,7 @@ export default function ProductDetail() {
 						{/* MOQ */}
 						<div className="mt-2 flex items-center gap-2">
 							<span className="text-xs bg-[#FF6A00]/10 text-[#FF6A00] px-2 py-0.5 rounded font-medium">
-								{lang === 'ar'
-									? `الحد الأدنى: ${product.moq || 10} قطع`
-									: `MOQ: ${product.moq || 10} pieces`}
+								{t('product.moqValue', `MOQ: ${product.moq || 10} pieces`)}
 							</span>
 							<span className="text-xs bg-[#E8F5E9] text-[#4CAF50] px-2 py-0.5 rounded font-medium flex items-center gap-1">
 								<ShieldCheck size={10} />{' '}
@@ -745,18 +738,14 @@ export default function ProductDetail() {
 								<div className="text-center py-8">
 									<div className="w-8 h-8 border-3 border-[#FF6A00] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
 									<p className="text-sm text-[#999]">
-										{lang === 'ar'
-											? 'جاري تحميل المراجعات...'
-											: 'Loading reviews...'}
+										{t('product.loadingReviews', 'Loading reviews...')}
 									</p>
 								</div>
 							) : (
 								<div className="space-y-4">
 									{reviews.length === 0 && (
 										<div className="text-center py-8 text-[#999]">
-											{lang === 'ar'
-												? 'لا توجد مراجعات بعد'
-												: 'No reviews yet'}
+											{t('product.noReviewsYet', 'No reviews yet')}
 										</div>
 									)}
 									{reviews.map((r) => (

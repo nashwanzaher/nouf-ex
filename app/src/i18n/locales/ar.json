@@ -155,7 +155,10 @@
     "capQuality": "شهادات جودة دولية",
     "helpful": "مفيد",
     "verifiedBuyer": "مشتري موثق",
-    "sellerReplyLabel": "رد التاجر:"
+    "sellerReplyLabel": "رد التاجر:",
+    "moqBadge": "الحد الأدنى: {count} قطع",
+    "loadingReviews": "جاري تحميل المراجعات...",
+    "noReviewsYet": "لا توجد مراجعات بعد"
   },
   "cart": {
     "cartTitle": "سلة التسوق",

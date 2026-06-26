@@ -96,7 +96,7 @@ export default function StorePage() {
 			<div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
 				<div className="w-10 h-10 border-3 border-[#FF6A00] border-t-transparent rounded-full animate-spin mb-4" />
 				<p className="text-[#666]">
-					{lang === 'ar' ? 'جاري التحميل...' : lang === 'zh' ? '加载中...' : 'Loading...'}
+					{t('store.loading', 'Loading...')}
 				</p>
 			</div>
 		);
@@ -107,11 +107,7 @@ export default function StorePage() {
 		return (
 			<div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
 				<h2 className="text-xl font-bold text-[#333]">
-					{lang === 'ar'
-						? 'المتجر غير موجود'
-						: lang === 'zh'
-							? '商店不存在'
-							: 'Store not found'}
+					{t('store.notFound', 'Store not found')}
 				</h2>
 				<p className="text-sm text-[#999] mb-4 mt-2">{storeError || ''}</p>
 				<Link
@@ -128,27 +124,27 @@ export default function StorePage() {
 		verified: {
 			color: 'text-[#1688C9]',
 			bg: 'bg-[#E3F2FD]',
-			label: lang === 'ar' ? 'موثق' : 'Verified',
+			label: t('store.badgeVerified', 'Verified'),
 		},
 		golden: {
 			color: 'text-[#FF8F00]',
 			bg: 'bg-[#FFF8E1]',
-			label: lang === 'ar' ? 'مورد ذهبي' : 'Gold Supplier',
+			label: t('store.badgeGold', 'Gold Supplier'),
 		},
 		diamond: {
 			color: 'text-[#7C4DFF]',
 			bg: 'bg-[#EDE7F6]',
-			label: lang === 'ar' ? 'مورد ألماسي' : 'Diamond Supplier',
+			label: t('store.badgeDiamond', 'Diamond Supplier'),
 		},
 		'fast-shipping': {
 			color: 'text-[#4CAF50]',
 			bg: 'bg-[#E8F5E9]',
-			label: lang === 'ar' ? 'شحن سريع' : 'Fast Shipping',
+			label: t('store.badgeVerified', 'Verified'),
 		},
 		'easy-returns': {
 			color: 'text-[#FF6A00]',
 			bg: 'bg-[#FFF3E0]',
-			label: lang === 'ar' ? 'إرجاع سهل' : 'Easy Returns',
+			label: t('store.badgeGold', 'Gold Supplier'),
 		},
 	};
 
@@ -202,7 +198,7 @@ export default function StorePage() {
 								</span>
 								<span className="text-xs text-[#999] flex items-center gap-1">
 									<Clock size={12} /> {yearsActive}{' '}
-									{lang === 'ar' ? 'سنة' : 'yrs'}
+										{t('store.yearsUnit', 'yrs')}
 								</span>
 							</div>
 							{/* Badges */}
@@ -226,13 +222,17 @@ export default function StorePage() {
 					<div className="flex gap-2 pb-1">
 						<button className="h-9 px-4 rounded bg-[#FF6A00] text-white font-bold text-sm hover:bg-[#E55F00] transition-colors flex items-center gap-1.5">
 							<MessageCircle size={14} />
-							{lang === 'ar' ? 'تواصل معنا' : 'Contact Us'}
+							{t('store.contactUs', 'Contact Us')}
 						</button>
 						<button className="h-9 px-4 rounded border border-[#E5E5E5] text-[#666] font-medium text-sm hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors flex items-center gap-1.5">
 							<Heart size={14} />
-							{lang === 'ar' ? 'متابعة' : 'Follow'}
+							{t('store.follow', 'Follow')}
 						</button>
-						<button className="h-9 px-3 rounded border border-[#E5E5E5] text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors">
+						<button
+							title={t('store.share', 'Share')}
+							aria-label={t('store.share', 'Share')}
+							className="h-9 px-3 rounded border border-[#E5E5E5] text-[#666] hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors"
+						>
 							<Share2 size={14} />
 						</button>
 					</div>
@@ -244,25 +244,25 @@ export default function StorePage() {
 				{[
 					{
 						icon: Package,
-						label: lang === 'ar' ? 'المنتجات' : 'Products',
+						label: t('store.stats.products', 'Products'),
 						value: store.products_count ?? 0,
 						color: 'text-[#FF6A00]',
 					},
 					{
 						icon: TrendingUp,
-						label: lang === 'ar' ? 'المبيعات' : 'Transactions',
+						label: t('store.stats.transactions', 'Transactions'),
 						value: `${((store.sales_count ?? 0) / 1000).toFixed(1)}K+`,
 						color: 'text-[#4CAF50]',
 					},
 					{
 						icon: Star,
-						label: lang === 'ar' ? 'معدل الاستجابة' : 'Response Rate',
+						label: t('store.stats.responseRate', 'Response Rate'),
 						value: `${store.response_rate ?? 98}%`,
 						color: 'text-[#FF8F00]',
 					},
 					{
 						icon: Clock,
-						label: lang === 'ar' ? 'التسليم في الوقت' : 'On-time Delivery',
+						label: t('store.stats.onTimeDelivery', 'On-time Delivery'),
 						value: `${store.on_time_delivery ?? 96}%`,
 						color: 'text-[#1688C9]',
 					},
@@ -290,16 +290,16 @@ export default function StorePage() {
 					{[
 						{
 							key: 'products' as const,
-							label: lang === 'ar' ? 'المنتجات' : 'Products',
+							label: t('store.tabs.products', 'Products'),
 							count: storeProducts.length,
 						},
 						{
 							key: 'profile' as const,
-							label: lang === 'ar' ? 'ملف الشركة' : 'Company Profile',
+							label: t('store.tabs.profile', 'Company Profile'),
 						},
 						{
 							key: 'markets' as const,
-							label: lang === 'ar' ? 'الأسواق الرئيسية' : 'Main Markets',
+							label: t('store.tabs.markets', 'Main Markets'),
 						},
 					].map((tab) => (
 						<button
@@ -328,11 +328,7 @@ export default function StorePage() {
 										type="text"
 										value={searchQuery}
 										onChange={(e) => setSearchQuery(e.target.value)}
-										placeholder={
-											lang === 'ar'
-												? 'ابحث في المتجر...'
-												: 'Search in store...'
-										}
+										placeholder={t('store.searchPlaceholder', 'Search in store...')}
 										className="w-full h-9 pl-9 pr-3 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00]"
 									/>
 									<Search
@@ -343,9 +339,10 @@ export default function StorePage() {
 								<div className="flex gap-1.5 overflow-auto">
 									<button
 										onClick={() => setCatFilter('all')}
+										aria-label={t('store.allCategories', 'All categories')}
 										className={`px-3 py-1.5 rounded text-xs font-medium transition-colors flex-shrink-0 ${catFilter === 'all' ? 'bg-[#FF6A00] text-white' : 'bg-[#F7F8FA] text-[#666] hover:bg-[#FF6A00]/10'}`}
 									>
-										{lang === 'ar' ? 'الكل' : 'All'}
+										{t('common.all', 'All')}
 									</button>
 									{storeCategoryIds.map((catId) => (
 										<button
@@ -372,19 +369,20 @@ export default function StorePage() {
 													| 'rating',
 											)
 										}
+										aria-label={t('store.sortByLabel', 'Sort by')}
 										className="h-8 px-2 rounded border border-[#E5E5E5] bg-white text-xs text-[#333] focus:outline-none"
 									>
 										<option value="default">
-											{lang === 'ar' ? 'افتراضي' : 'Default'}
+											{t('store.sortDefault', 'Default')}
 										</option>
 										<option value="price-low">
-											{lang === 'ar' ? 'السعر: من低到高' : 'Price: Low'}
+											{t('store.sortPriceLow', 'Price: Low')}
 										</option>
 										<option value="price-high">
-											{lang === 'ar' ? 'السعر: من高到低' : 'Price: High'}
+											{t('store.sortPriceHigh', 'Price: High')}
 										</option>
 										<option value="rating">
-											{lang === 'ar' ? 'التقييم' : 'Rating'}
+											{t('store.sortRating', 'Rating')}
 										</option>
 									</select>
 								</div>
@@ -394,7 +392,7 @@ export default function StorePage() {
 								<div className="text-center py-12">
 									<Package size={40} className="mx-auto text-[#DDD] mb-3" />
 									<p className="text-[#999]">
-										{lang === 'ar' ? 'لا توجد منتجات' : 'No products found'}
+										{t('store.emptyProducts', 'No products found')}
 									</p>
 								</div>
 							) : (
@@ -444,7 +442,7 @@ export default function StorePage() {
 													</span>
 													<span className="text-xs text-[#999] ml-auto">
 														{p.sold_count}{' '}
-														{lang === 'ar' ? 'مبيع' : 'sold'}
+														{t('product.soldSuffix', 'sold')}
 													</span>
 												</div>
 											</div>
@@ -460,33 +458,33 @@ export default function StorePage() {
 						<div className="grid md:grid-cols-2 gap-8">
 							<div>
 								<h3 className="text-base font-bold text-[#333] mb-4">
-									{lang === 'ar' ? 'معلومات الشركة' : 'Company Information'}
+									{t('store.profileTitle', 'Company Information')}
 								</h3>
 								<div className="space-y-3">
 									{[
 										{
 											icon: StoreIcon,
-											label: lang === 'ar' ? 'اسم المتجر' : 'Store Name',
+											label: t('store.companyName', 'Store Name'),
 											value: getStoreName(store),
 										},
 										{
 											icon: MapPin,
-											label: lang === 'ar' ? 'الموقع' : 'Location',
+											label: t('store.location', 'Location'),
 											value: store.location,
 										},
 										{
 											icon: CalendarIcon,
-											label: lang === 'ar' ? 'تأسس في' : 'Established',
+											label: t('store.established', 'Established'),
 											value: store.since_year,
 										},
 										{
 											icon: Globe,
-											label: lang === 'ar' ? 'الموقع الإلكتروني' : 'Website',
+											label: t('store.website', 'Website'),
 											value: 'www.nouf-ex.com/' + store.id,
 										},
 										{
 											icon: Phone,
-											label: lang === 'ar' ? 'الهاتف' : 'Phone',
+											label: t('store.phone', 'Phone'),
 											value: storePhone(store.id),
 										},
 									].map((item, i) => (
@@ -508,25 +506,18 @@ export default function StorePage() {
 							</div>
 							<div>
 								<h3 className="text-base font-bold text-[#333] mb-4">
-									{lang === 'ar'
-										? 'القدرات والشهادات'
-										: 'Capabilities & Certifications'}
+									{t('store.capabilities', 'Capabilities & Certifications')}
 								</h3>
 								<div className="space-y-3">
 									{[
-										lang === 'ar'
-											? 'شحن إلى أكثر من 50 دولة حول العالم'
-											: 'Shipping to 50+ countries worldwide',
-										lang === 'ar'
-											? 'تصنيع حسب الطلب (OEM/ODM)'
-											: 'OEM/ODM Manufacturing Available',
-										lang === 'ar'
-											? 'فريق دعم فني على مدار الساعة'
-											: '24/7 Technical Support Team',
-										lang === 'ar'
-											? 'شهادات جودة دولية (ISO 9001)'
-											: 'International Quality Certifications (ISO 9001)',
-										lang === 'ar' ? 'تدقيق مصنع سنوي' : 'Annual Factory Audits',
+										t('store.capShipping', 'Shipping to 50+ countries worldwide'),
+										t('store.capOem', 'OEM/ODM Manufacturing Available'),
+										t('store.capSupport', '24/7 Technical Support Team'),
+										t(
+											'store.capQuality',
+											'International Quality Certifications (ISO 9001)',
+										),
+										t('store.capAudit', 'Annual Factory Audits'),
 									].map((cap, i) => (
 										<div
 											key={i}
@@ -548,47 +539,42 @@ export default function StorePage() {
 					{activeTab === 'markets' && (
 						<div>
 							<h3 className="text-base font-bold text-[#333] mb-4">
-								{lang === 'ar' ? 'الأسواق الرئيسية' : 'Main Export Markets'}
+								{t('store.marketsTitle', 'Main Export Markets')}
 							</h3>
 							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
 								{[
 									{
-										country:
-											lang === 'ar'
-												? 'المملكة العربية السعودية'
-												: 'Saudi Arabia',
+										country: t('store.countrySaudi', 'Saudi Arabia'),
 										pct: 35,
 										flag: 'SA',
 									},
 									{
-										country: lang === 'ar' ? 'الإمارات العربية المتحدة' : 'UAE',
+										country: t('store.countryUae', 'UAE'),
 										pct: 25,
 										flag: 'AE',
 									},
 									{
-										country: lang === 'ar' ? 'الكويت' : 'Kuwait',
+										country: t('store.countryKuwait', 'Kuwait'),
 										pct: 15,
 										flag: 'KW',
 									},
 									{
-										country: lang === 'ar' ? 'قطر' : 'Qatar',
+										country: t('store.countryQatar', 'Qatar'),
 										pct: 10,
 										flag: 'QA',
 									},
 									{
-										country:
-											lang === 'ar' ? 'الولايات المتحدة' : 'United States',
+										country: t('store.countryUs', 'United States'),
 										pct: 8,
 										flag: 'US',
 									},
 									{
-										country:
-											lang === 'ar' ? 'المملكة المتحدة' : 'United Kingdom',
+										country: t('store.countryUk', 'United Kingdom'),
 										pct: 5,
 										flag: 'UK',
 									},
 									{
-										country: lang === 'ar' ? 'ماليزيا' : 'Malaysia',
+										country: t('store.countryMalaysia', 'Malaysia'),
 										pct: 2,
 										flag: 'MY',
 									},
@@ -619,12 +605,13 @@ export default function StorePage() {
 							</div>
 							<div className="mt-6 p-4 bg-[#F7F8FA] rounded border border-[#E5E5E5]">
 								<h4 className="text-sm font-bold text-[#333] mb-2">
-									{lang === 'ar' ? 'إجمالي الصادرات' : 'Total Export Volume'}
+									{t('store.totalExport', 'Total Export Volume')}
 								</h4>
 								<p className="text-sm text-[#666]">
-									{lang === 'ar'
-										? `لقد صدرت ${getStoreName(store)} منتجاتها إلى أكثر من 25 دولة حول العالم، مع أكثر من ${((store.sales_count ?? 0) / 1000).toFixed(1)}K معاملة ناجحة.`
-										: `${getStoreName(store)} has exported products to over 25 countries worldwide, with ${((store.sales_count ?? 0) / 1000).toFixed(1)}K+ successful transactions.`}
+									{t(
+										'store.totalExportDesc',
+										`${getStoreName(store)} has exported products to over 25 countries worldwide, with ${((store.sales_count ?? 0) / 1000).toFixed(1)}K+ successful transactions.`,
+									)}
 								</p>
 							</div>
 						</div>

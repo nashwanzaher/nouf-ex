@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Star, Package, Send, Trash2, Edit3, X, CheckCircle, Clock, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,7 +67,15 @@ const initialSubmitted: SubmittedReview[] = [
 	},
 ];
 
-function StarRatingInput({ rating, onRate }: { rating: number; onRate: (r: number) => void }) {
+function StarRatingInput({
+	rating,
+	onRate,
+	ratingTexts,
+}: {
+	rating: number;
+	onRate: (r: number) => void;
+	ratingTexts: Record<number, string>;
+}) {
 	const [hover, setHover] = useState(0);
 	return (
 		<div className="flex items-center gap-1">
@@ -90,17 +99,21 @@ function StarRatingInput({ rating, onRate }: { rating: number; onRate: (r: numbe
 				</button>
 			))}
 			<span className="text-sm text-[#6B6B6B] font-cairo mr-2">
-				{rating === 1 && 'سيء'}
-				{rating === 2 && 'مقبول'}
-				{rating === 3 && 'جيد'}
-				{rating === 4 && 'جيد جداً'}
-				{rating === 5 && 'ممتاز'}
+				{rating > 0 ? ratingTexts[rating] ?? '' : ''}
 			</span>
 		</div>
 	);
 }
 
 export default function Reviews() {
+	const { t } = useTranslation();
+	const ratingTexts: Record<number, string> = {
+		1: t('reviews.ratingText1', 'Poor'),
+		2: t('reviews.ratingText2', 'Fair'),
+		3: t('reviews.ratingText3', 'Good'),
+		4: t('reviews.ratingText4', 'Very good'),
+		5: t('reviews.ratingText5', 'Excellent'),
+	};
 	const [activeTab, setActiveTab] = useState<'pending' | 'submitted'>('pending');
 	const [reviewTab, setReviewTab] = useState('all');
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -163,8 +176,12 @@ export default function Reviews() {
 
 			<div className="md:mr-60 min-h-[100dvh]">
 				<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30">
-					<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">تقييماتي</h1>
-					<p className="text-sm text-[#6B6B6B] font-cairo mt-1">أدير تقييماتك وآرائك</p>
+					<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+						{t('reviews.title', 'My Reviews')}
+					</h1>
+					<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
+						{t('reviews.subtitle', 'Manage your reviews')}
+					</p>
 				</div>
 
 				<div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -179,7 +196,7 @@ export default function Reviews() {
 							}`}
 						>
 							<Clock className="w-4 h-4" strokeWidth={1.5} />
-							بانتظار التقييم
+							{t('reviews.tabPending', 'Pending')}
 							<span className="bg-[#1A1612]/10 text-[#1A1612] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
 								{pendingReviews.length}
 							</span>
@@ -193,7 +210,7 @@ export default function Reviews() {
 							}`}
 						>
 							<CheckCircle className="w-4 h-4" strokeWidth={1.5} />
-							تقييماتي
+							{t('reviews.tabSubmitted', 'Submitted')}
 							<span className="bg-[#1A1612]/10 text-[#1A1612] text-[10px] font-bold px-1.5 py-0.5 rounded-full">
 								{submitted.length}
 							</span>
@@ -209,10 +226,10 @@ export default function Reviews() {
 										strokeWidth={1.5}
 									/>
 									<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-										لا يوجد منتجات بانتظار التقييم
+										{t('reviews.emptyPendingTitle', 'No products to review')}
 									</h3>
 									<p className="text-[#6B6B6B] font-cairo text-sm">
-										لقد قمت بتقييم جميع منتجاتك
+										{t('reviews.emptyPendingSubtitle', "You've reviewed all your products")}
 									</p>
 								</div>
 							) : (
@@ -235,7 +252,9 @@ export default function Reviews() {
 												<span>{item.merchant}</span>
 												<span>·</span>
 												<Clock className="w-3 h-3" strokeWidth={1.5} />
-												<span>تاريخ الشراء: {item.purchaseDate}</span>
+												<span>
+													{t('reviews.purchaseDate', 'Purchase date')}: {item.purchaseDate}
+												</span>
 											</div>
 										</div>
 										<Button
@@ -243,7 +262,7 @@ export default function Reviews() {
 											className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl shrink-0"
 										>
 											<Star className="w-4 h-4 ml-1" strokeWidth={1.5} />
-											اكتب تقييماً
+											{t('reviews.writeButton', 'Write a review')}
 										</Button>
 									</div>
 								))
@@ -256,20 +275,20 @@ export default function Reviews() {
 							{/* Sub-tabs */}
 							<div className="flex gap-2 overflow-x-auto">
 								{[
-									{ key: 'all', label: 'جميع التقييمات' },
-									{ key: 'positive', label: 'إيجابي' },
-									{ key: 'negative', label: 'سلبي' },
-								].map((t) => (
+									{ key: 'all', label: t('reviews.subTabAll', 'All') },
+									{ key: 'positive', label: t('reviews.subTabPositive', 'Positive') },
+									{ key: 'negative', label: t('reviews.subTabNegative', 'Negative') },
+								].map((tab) => (
 									<button
-										key={t.key}
-										onClick={() => setReviewTab(t.key)}
+										key={tab.key}
+										onClick={() => setReviewTab(tab.key)}
 										className={`px-4 py-2 rounded-full text-sm font-cairo font-medium whitespace-nowrap transition-colors ${
-											reviewTab === t.key
+											reviewTab === tab.key
 												? 'bg-[#D4A853] text-[#1A1612]'
 												: 'bg-white text-[#6B6B6B] hover:bg-[#F3EDE4]'
 										}`}
 									>
-										{t.label}
+										{tab.label}
 									</button>
 								))}
 							</div>
@@ -281,7 +300,7 @@ export default function Reviews() {
 										strokeWidth={1}
 									/>
 									<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-										لا توجد تقييمات
+										{t('reviews.empty', 'No reviews')}
 									</h3>
 								</div>
 							) : (
@@ -369,7 +388,7 @@ export default function Reviews() {
 															strokeWidth={1.5}
 														/>
 														<span className="text-xs font-cairo font-semibold text-[#D4A853]">
-															رد التاجر
+															{t('reviews.merchantReply', 'Merchant reply')}
 														</span>
 													</div>
 													<p className="text-sm text-[#6B6B6B] font-cairo">
@@ -391,7 +410,7 @@ export default function Reviews() {
 				<DialogContent className="sm:max-w-lg rounded-2xl" dir="rtl">
 					<DialogHeader>
 						<DialogTitle className="font-amiri text-xl text-[#1A1612]">
-							كتابة تقييم
+							{t('reviews.dialogTitle', 'Write a review')}
 						</DialogTitle>
 					</DialogHeader>
 					{selectedPending && (
@@ -412,29 +431,32 @@ export default function Reviews() {
 
 							<div>
 								<label className="block text-sm font-cairo font-semibold text-[#111111] mb-2">
-									التقييم
+									{t('reviews.labelRating', 'Rating')}
 								</label>
-								<StarRatingInput rating={rating} onRate={setRating} />
+								<StarRatingInput rating={rating} onRate={setRating} ratingTexts={ratingTexts} />
 							</div>
 
 							<div>
 								<label className="block text-sm font-cairo font-semibold text-[#111111] mb-2">
-									تعليقك
+									{t('reviews.labelComment', 'Your comment')}
 								</label>
 								<Textarea
 									value={reviewText}
 									onChange={(e) => setReviewText(e.target.value)}
-									placeholder="شاركنا تجربتك مع هذا المنتج... (٥٠ حرف على الأقل)"
+									placeholder={t(
+										'reviews.commentPlaceholder',
+										'Share your experience with this product... (50 chars min)',
+									)}
 									className="min-h-[120px] rounded-xl font-cairo text-sm resize-none"
 								/>
 								<p className="text-[10px] text-[#AAAAAA] font-cairo mt-1">
-									{reviewText.length} حرف
+									{t('reviews.charCount', `${reviewText.length} chars`)}
 								</p>
 							</div>
 
 							<div>
 								<label className="block text-sm font-cairo font-semibold text-[#111111] mb-2">
-									الصور (اختياري)
+									{t('reviews.labelPhotos', 'Photos (optional)')}
 								</label>
 								<div className="flex gap-2 flex-wrap">
 									{photos.map((photo, idx) => (
@@ -466,7 +488,7 @@ export default function Reviews() {
 										>
 											<ImagePlus className="w-6 h-6" strokeWidth={1.5} />
 											<span className="text-[10px] font-cairo mt-1">
-												إضافة
+												{t('reviews.addPhoto', 'Add')}
 											</span>
 										</button>
 									)}
@@ -486,7 +508,7 @@ export default function Reviews() {
 								className="w-full bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl h-12"
 							>
 								<Send className="w-4 h-4 ml-1" strokeWidth={1.5} />
-								إرسال التقييم
+								{t('reviews.submit', 'Submit review')}
 							</Button>
 						</div>
 					)}

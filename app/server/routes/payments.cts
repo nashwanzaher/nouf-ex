@@ -46,7 +46,7 @@ paymentsRouter.post(
 			await db
 				.prepare(
 					`UPDATE payments SET status = ?, updated_at = NOW()
-					 WHERE transaction_id = ?`,
+					 WHERE provider_txn_id = ?`,
 				)
 				.run(verification.status, verification.transactionId);
 			sendSuccess(res, { updated: true, status: verification.status });
@@ -118,7 +118,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 
 		const result = await db
 			.prepare(
-				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, transaction_id, provider_meta, created_at, updated_at)
+				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, provider_txn_id, provider_meta, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, NOW(), NOW())`,
 			)
 			.run(

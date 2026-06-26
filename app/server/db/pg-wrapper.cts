@@ -256,7 +256,7 @@ class PgStatement {
 	}
 }
 
-class PgTxDb {
+export class PgTxDb {
 	private readonly client: {
 		query: (
 			sql: string,

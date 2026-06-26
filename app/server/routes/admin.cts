@@ -369,84 +369,73 @@ adminRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Response) 
 
 /** GET /api/admin/stats
  *  Returns a compact dashboard summary for the admin home page.
- *  Single round-trip per metric; cheap because every count uses
- *  the primary-key index.
+ *  Single CTE-based round-trip: 1 query, 14 metrics. Was previously
+ *  14 separate `SELECT COUNT(*)` calls (~14 round-trips). Each
+ *  count uses the primary-key index so the cost is identical to
+ *  the previous implementation; we just collapse the network
+ *  overhead.
  */
 adminRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => {
 	try {
-		const users = (await db.prepare('SELECT COUNT(*)::int AS c FROM users').get()) as {
-			c: number;
-		};
-		const stores = (await db.prepare('SELECT COUNT(*)::int AS c FROM stores').get()) as {
-			c: number;
-		};
-		const products = (await db.prepare('SELECT COUNT(*)::int AS c FROM products').get()) as {
-			c: number;
-		};
-		const orders = (await db.prepare('SELECT COUNT(*)::int AS c FROM orders').get()) as {
-			c: number;
-		};
-		const reviews = (await db.prepare('SELECT COUNT(*)::int AS c FROM reviews').get()) as {
-			c: number;
-		};
-		const disputes = (await db.prepare('SELECT COUNT(*)::int AS c FROM disputes').get()) as {
-			c: number;
-		};
-		const openDisputes = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM disputes WHERE status = 'open'`)
-			.get()) as { c: number };
-		const pendingOrders = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE status = 'pending'`)
-			.get()) as { c: number };
-		const paidOrders = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM orders WHERE payment_status = 'paid'`)
-			.get()) as { c: number };
-		const suspendedUsers = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM users WHERE status <> 'active'`)
-			.get()) as { c: number };
-		const inactiveStores = (await db
-			.prepare(`SELECT COUNT(*)::int AS c FROM stores WHERE is_active = FALSE`)
-			.get()) as { c: number };
-		const recentOrders = (await db
+		const row = (await db
 			.prepare(
-				`SELECT COUNT(*)::int AS c FROM orders
-					 WHERE created_at > NOW() - INTERVAL '7 days'`,
+				`SELECT
+					(SELECT COUNT(*)::int FROM users)                                        AS users,
+					(SELECT COUNT(*)::int FROM stores)                                       AS stores,
+					(SELECT COUNT(*)::int FROM products)                                     AS products,
+					(SELECT COUNT(*)::int FROM orders)                                       AS orders,
+					(SELECT COUNT(*)::int FROM reviews)                                      AS reviews,
+					(SELECT COUNT(*)::int FROM disputes)                                     AS disputes,
+					(SELECT COUNT(*)::int FROM disputes   WHERE status = 'open')            AS open_disputes,
+					(SELECT COUNT(*)::int FROM orders     WHERE status = 'pending')         AS pending_orders,
+					(SELECT COUNT(*)::int FROM orders     WHERE payment_status = 'paid')    AS paid_orders,
+					(SELECT COUNT(*)::int FROM users      WHERE status <> 'active')         AS suspended_users,
+					(SELECT COUNT(*)::int FROM stores     WHERE is_active = FALSE)          AS inactive_stores,
+					(SELECT COUNT(*)::int FROM orders
+						WHERE created_at > NOW() - INTERVAL '7 days')                      AS recent_orders,
+					(SELECT COUNT(*)::int FROM users
+						WHERE created_at > NOW() - INTERVAL '7 days')                      AS recent_users,
+					(SELECT COALESCE(SUM(total), 0)::numeric
+						FROM orders WHERE payment_status = 'paid')                        AS revenue_yer`,
 			)
-			.get()) as { c: number };
-		const recentUsers = (await db
-			.prepare(
-				`SELECT COUNT(*)::int AS c FROM users
-					 WHERE created_at > NOW() - INTERVAL '7 days'`,
-			)
-			.get()) as { c: number };
-		const revenueYer = (await db
-			.prepare(
-				`SELECT COALESCE(SUM(total), 0)::numeric AS s
-					 FROM orders WHERE payment_status = 'paid'`,
-			)
-			.get()) as { s: string };
+			.get()) as {
+			users: number;
+			stores: number;
+			products: number;
+			orders: number;
+			reviews: number;
+			disputes: number;
+			open_disputes: number;
+			pending_orders: number;
+			paid_orders: number;
+			suspended_users: number;
+			inactive_stores: number;
+			recent_orders: number;
+			recent_users: number;
+			revenue_yer: string;
+		};
 
 		return sendSuccess(res, {
 			counts: {
-				users: users.c,
-				stores: stores.c,
-				products: products.c,
-				orders: orders.c,
-				reviews: reviews.c,
-				disputes: disputes.c,
+				users: row.users,
+				stores: row.stores,
+				products: row.products,
+				orders: row.orders,
+				reviews: row.reviews,
+				disputes: row.disputes,
 			},
 			flags: {
-				openDisputes: openDisputes.c,
-				pendingOrders: pendingOrders.c,
-				paidOrders: paidOrders.c,
-				suspendedUsers: suspendedUsers.c,
-				inactiveStores: inactiveStores.c,
+				openDisputes: row.open_disputes,
+				pendingOrders: row.pending_orders,
+				paidOrders: row.paid_orders,
+				suspendedUsers: row.suspended_users,
+				inactiveStores: row.inactive_stores,
 			},
 			recent7d: {
-				orders: recentOrders.c,
-				users: recentUsers.c,
+				orders: row.recent_orders,
+				users: row.recent_users,
 			},
-			revenueYer: Number(revenueYer.s),
+			revenueYer: Number(row.revenue_yer),
 		});
 	} catch (err) {
 		return sendError(res, err);

@@ -13,6 +13,7 @@ import {
 	computeCouponDiscount,
 	type CouponRow,
 } from '../lib/shared.cts';
+import type { PgTxDb } from '../db/pg-wrapper.cts';
 
 export const ordersRouter = Router();
 
@@ -168,14 +169,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			finalDiscount,
 			finalTotal,
 		} = await db.tx(
-			async (txDb: {
-				prepare: (sql: string) => {
-					run: (
-						...args: unknown[]
-					) => Promise<{ lastInsertRowid: number | string | null; changes: number }>;
-					get: (...args: unknown[]) => Promise<unknown>;
-				};
-			}) => {
+			async (txDb: PgTxDb) => {
 				if (resolvedCouponCode) {
 					const coupon = (await txDb
 						.prepare(
@@ -243,9 +237,23 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				}
 				const newOrderId: number = result.lastInsertRowid;
 
-				const readProduct = txDb.prepare(
-					`SELECT name_ar, name_en FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL`,
-				);
+				// PERFORMANCE: fetch all products in a single query instead of
+				// one query per line item (N+1). Same correctness — we still
+				// error out for any unavailable product, just without the
+				// per-row round-trip latency.
+				const productIds = items.map((i) => i.productId);
+				const productRows = (await txDb
+					.prepare(
+						`SELECT id, name_ar, name_en FROM products
+						 WHERE id = ANY($1) AND is_active = TRUE AND deleted_at IS NULL`,
+					)
+					.all(productIds)) as Array<{
+					id: number;
+					name_ar: string;
+					name_en: string | null;
+				}>;
+				const productById = new Map<number, { name_ar: string; name_en: string | null }>();
+				for (const p of productRows) productById.set(p.id, p);
 
 				const insertItem = txDb.prepare(
 					`INSERT INTO order_items
@@ -260,9 +268,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 							`Invalid quantity ${item.quantity} for product ${item.productId}`,
 						);
 					}
-					const product = (await readProduct.get(item.productId)) as
-						| { name_ar: string; name_en: string | null }
-						| undefined;
+					const product = productById.get(item.productId);
 					if (!product) {
 						throw new Error(`Product ${item.productId} is unavailable`);
 					}

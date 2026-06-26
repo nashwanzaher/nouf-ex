@@ -3,7 +3,7 @@
  * Express + node-postgres (pg) via the PgDb wrapper
  */
 
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response, NextFunction, RequestHandler } from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import { PgDb } from './db/pg-wrapper.cts';
@@ -121,7 +121,7 @@ app.get('/api/ready', healthLimiter, async (_req: Request, res: Response) => {
 	});
 });
 
-// Background sweeper — evict expired rate-limit rows every minute
+// Background sweeper — evict expired rate-limit + used_jti rows every minute
 setInterval(async () => {
 	try {
 		const r = (await db.prepare('SELECT cleanup_rate_limits() AS n').get()) as
@@ -131,11 +131,39 @@ setInterval(async () => {
 	} catch {
 		/* ignore */
 	}
+	const j = (await db.prepare('SELECT cleanup_used_jtis() AS n').get()) as
+		| { n: number }
+		| undefined;
+	if (j && j.n > 0) log.debug({ msg: 'used_jtis_cleanup', deleted: j.n });
 }, 60 * 1000).unref();
 
 // ── Router mounts ─────────────────────────────────────────────────────────
+
+/**
+ * Attach a small `Cache-Control: public, max-age=N, stale-while-revalidate=N/2`
+ * header on the response (only when the handler hasn't already set one).
+ * Lets the browser + any CDN cache the payload for a few seconds. We
+ * deliberately keep the TTL short because catalog data changes often
+ * (admin PATCHes, new products, etc.) and longer max-age would mask
+ * those changes from end users.
+ */
+function cacheControl(seconds: number, router: express.Router) {
+	const cacheMw: RequestHandler = (req, res, next) => {
+		if (!res.getHeader('Cache-Control') && req.method === 'GET') {
+			res.setHeader(
+				'Cache-Control',
+				`public, max-age=${seconds}, stale-while-revalidate=${Math.floor(seconds / 2)}`,
+			);
+		}
+		next();
+	};
+	// Compose middleware + router into a single RequestHandler-like object
+	const composed = [cacheMw, router] as unknown as express.RequestHandler;
+	return composed;
+}
+
 app.use('/api/admin', adminRouter);
-app.use('/api', catalogRouter);
+app.use('/api', cacheControl(60, catalogRouter)); // catalog = 60s edge cache
 
 app.use('/api/auth', authRouter);
 app.use('/api/auth/2fa', auth2faRouter);
@@ -148,8 +176,8 @@ app.use('/api/payments', paymentsRouter);
 app.use('/api/coupons', couponsRouter);
 app.use('/api/refunds', refundsRouter);
 app.use('/api/reviews', reviewsRouter);
-app.use('/api/stats', statsRouter);
-app.use('/api/shipping', shippingRouter);
+app.use('/api/stats', cacheControl(30, statsRouter)); // stats = 30s edge cache
+app.use('/api/shipping', cacheControl(300, shippingRouter)); // shipping = 5min
 app.use('/api/store-followers', storeFollowersRouter);
 app.use('/api/addresses', addressesRouter);
 

@@ -248,7 +248,10 @@ export default function HeroSection() {
 						{t('hero.searchButton', 'Search')}
 					</Button>
 					<div className="hidden sm:flex items-center border-l border-[#e0d5c7] pl-3 ml-3 shrink-0">
-						<select className="bg-transparent text-sm font-cairo text-[#6B6B6B] outline-none cursor-pointer">
+						<select
+							aria-label={t('hero.searchCategoryLabel', 'Category')}
+							className="bg-transparent text-sm font-cairo text-[#6B6B6B] outline-none cursor-pointer"
+						>
 							<option>{t('hero.searchAllCategories', 'All Categories')}</option>
 							<option>{t('hero.searchElectronics', 'Electronics')}</option>
 							<option>{t('hero.searchFashion', 'Fashion')}</option>

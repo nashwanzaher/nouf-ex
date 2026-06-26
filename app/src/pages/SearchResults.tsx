@@ -230,6 +230,7 @@ export default function SearchResults() {
 						<select
 							value={catFilter}
 							onChange={(e) => setCatFilter(e.target.value)}
+							aria-label={t('search.ui.categoryLabel', 'Category')}
 							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50"
 						>
 							<option value="all">
@@ -254,6 +255,7 @@ export default function SearchResults() {
 						<select
 							value={priceRange}
 							onChange={(e) => setPriceRange(e.target.value)}
+							aria-label={t('search.ui.priceLabel', 'Price')}
 							className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer hover:border-[#FF6A00]/50"
 						>
 							{priceRanges.map((pr) => (
@@ -275,6 +277,7 @@ export default function SearchResults() {
 							<select
 								value={sort}
 								onChange={(e) => setSort(e.target.value as typeof sort)}
+								aria-label={t('search.ui.sortLabel', 'Sort')}
 								className="h-8 pl-3 pr-8 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00] appearance-none cursor-pointer"
 							>
 								{sortOptions.map((so) => (

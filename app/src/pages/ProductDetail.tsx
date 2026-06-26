@@ -373,6 +373,8 @@ export default function ProductDetail() {
 						<div className="flex items-center border border-[#E5E5E5] rounded bg-white">
 							<button
 								onClick={() => setQty(Math.max(1, qty - 1))}
+								title={t('product.decreaseQty', 'Decrease quantity')}
+								aria-label={t('product.decreaseQty', 'Decrease quantity')}
 								className="w-9 h-9 flex items-center justify-center hover:bg-[#F7F8FA] rounded-l transition-colors"
 							>
 								<Minus size={14} />
@@ -382,6 +384,8 @@ export default function ProductDetail() {
 							</span>
 							<button
 								onClick={() => setQty(Math.min(product.stock, qty + 1))}
+								title={t('product.increaseQty', 'Increase quantity')}
+								aria-label={t('product.increaseQty', 'Increase quantity')}
 								className="w-9 h-9 flex items-center justify-center hover:bg-[#F7F8FA] rounded-r transition-colors"
 							>
 								<Plus size={14} />
@@ -880,7 +884,11 @@ export default function ProductDetail() {
 					className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
 					onClick={() => setLightboxOpen(false)}
 				>
-					<button className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20">
+					<button
+						className="absolute top-4 right-4 text-white p-2 rounded-full bg-white/10 hover:bg-white/20"
+						title={t('product.closeLightbox', 'Close')}
+						aria-label={t('product.closeLightbox', 'Close')}
+					>
 						<X size={24} />
 					</button>
 					<img

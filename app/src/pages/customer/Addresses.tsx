@@ -326,6 +326,7 @@ export default function Addresses() {
 								onChange={(e) =>
 									setForm((f) => ({ ...f, governorate: e.target.value }))
 								}
+								aria-label={t('addresses.labelGovernorate', 'Governorate')}
 								className="w-full mt-1 rounded-xl border border-[#e4e4e7] px-3 py-2 text-sm font-cairo focus:outline-none focus:ring-2 focus:ring-[#D4A853]/30 focus:border-[#D4A853]"
 							>
 								<option value="">

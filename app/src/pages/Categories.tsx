@@ -368,6 +368,7 @@ export default function CategoriesPage() {
 							<select
 								value={sortBy}
 								onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+								aria-label={t('categories.ui.sortLabel', 'Sort by')}
 								className="h-9 px-3 rounded-lg border border-aliBorder text-sm text-aliText bg-white outline-none focus:border-aliOrange"
 							>
 								<option value="sold">

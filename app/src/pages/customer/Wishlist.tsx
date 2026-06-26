@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Heart, ShoppingCart, X, Package, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerSidebar from './CustomerSidebar';
@@ -38,6 +39,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Wishlist() {
+	const { t } = useTranslation();
 	const { user, isAuthenticated } = useAuth();
 	const userId = isAuthenticated && user ? Number(user.id) : null;
 
@@ -246,6 +248,8 @@ export default function Wishlist() {
 											<button
 												onClick={() => handleRemove(item.id)}
 												disabled={isRemoving || isAddingToCart}
+												title={t('common.remove', 'Remove')}
+												aria-label={t('common.remove', 'Remove')}
 												className="absolute top-3 left-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#EF4444] hover:text-white text-[#6B6B6B] disabled:opacity-50"
 											>
 												<X className="w-4 h-4" strokeWidth={1.5} />

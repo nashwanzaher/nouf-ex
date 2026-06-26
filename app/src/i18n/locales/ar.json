@@ -9,6 +9,7 @@
     "categories": "التصنيفات",
     "deals": "العروض",
     "search": "بحث",
+    "imageSearch": "بحث بالصورة",
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب",
     "cart": "سلة التسوق",
@@ -158,7 +159,10 @@
     "sellerReplyLabel": "رد التاجر:",
     "moqBadge": "الحد الأدنى: {count} قطع",
     "loadingReviews": "جاري تحميل المراجعات...",
-    "noReviewsYet": "لا توجد مراجعات بعد"
+    "noReviewsYet": "لا توجد مراجعات بعد",
+    "decreaseQty": "إنقاص الكمية",
+    "increaseQty": "زيادة الكمية",
+    "closeLightbox": "إغلاق"
   },
   "cart": {
     "cartTitle": "سلة التسوق",
@@ -497,7 +501,8 @@
     "searchElectronics": "إلكترونيات",
     "searchFashion": "أزياء",
     "searchFood": "غذائيات",
-    "searchPlaceholder": "ابحث عن منتجات، تجار، أو ماركات..."
+    "searchPlaceholder": "ابحث عن منتجات، تجار، أو ماركات...",
+    "searchCategoryLabel": "الفئة"
   },
   "search": {
     "ui": {
@@ -518,6 +523,9 @@
       "bestseller": "الأكثر مبيعاً",
       "soldSuffix": "مبيع",
       "contact": "تواصل",
+      "categoryLabel": "الفئة",
+      "priceLabel": "السعر",
+      "sortLabel": "ترتيب",
       "prev": "السابق",
       "next": "التالي"
     }

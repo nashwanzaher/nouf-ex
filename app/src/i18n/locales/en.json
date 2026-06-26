@@ -109,7 +109,10 @@
     "sellerReplyLabel": "Seller Reply:",
     "moqBadge": "MOQ: {count} pcs",
     "loadingReviews": "Loading reviews...",
-    "noReviewsYet": "No reviews yet"
+    "noReviewsYet": "No reviews yet",
+    "decreaseQty": "Decrease quantity",
+    "increaseQty": "Increase quantity",
+    "closeLightbox": "Close"
   },
   "cart": {
     "cartTitle": "Shopping Cart",
@@ -279,6 +282,7 @@
       "sortPriceAsc": "Price: Low to High",
       "sortPriceDesc": "Price: High to Low",
       "sortRating": "Rating",
+      "sortLabel": "Sort by",
       "noProducts": "No products found",
       "tryAdjustingFilters": "Try adjusting your filters"
     }
@@ -448,7 +452,8 @@
     "searchElectronics": "Electronics",
     "searchFashion": "Fashion",
     "searchFood": "Food",
-    "searchPlaceholder": "Search products, merchants, or brands..."
+    "searchPlaceholder": "Search products, merchants, or brands...",
+    "searchCategoryLabel": "Category"
   },
   "search": {
     "ui": {
@@ -469,6 +474,9 @@
       "bestseller": "BESTSELLER",
       "soldSuffix": "sold",
       "contact": "Contact",
+      "categoryLabel": "Category",
+      "priceLabel": "Price",
+      "sortLabel": "Sort",
       "prev": "Prev",
       "next": "Next"
     }

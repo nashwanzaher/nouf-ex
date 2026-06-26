@@ -167,7 +167,10 @@ export default function Checkout() {
 			});
 		} catch (err) {
 			addAppToast({
-				message: err instanceof Error ? err.message : t('checkout.addressSaveFailed', 'Failed to save address'),
+				message:
+					err instanceof Error
+						? err.message
+						: t('checkout.addressSaveFailed', 'Failed to save address'),
 				type: 'error',
 			});
 		}
@@ -315,7 +318,10 @@ export default function Checkout() {
 													label: e.target.value,
 												}))
 											}
-											placeholder={t('checkout.labelPlaceholder', 'Home / Work')}
+											placeholder={t(
+												'checkout.labelPlaceholder',
+												'Home / Work',
+											)}
 										/>
 									</div>
 									<div>
@@ -645,7 +651,9 @@ export default function Checkout() {
 							</span>
 						</div>
 						<div className="flex justify-between">
-							<span className="text-aliTextMute">{t('checkout.shipping', 'Shipping')}</span>
+							<span className="text-aliTextMute">
+								{t('checkout.shipping', 'Shipping')}
+							</span>
 							<span className="font-semibold text-aliText">
 								{shipping.toLocaleString()} YER
 							</span>

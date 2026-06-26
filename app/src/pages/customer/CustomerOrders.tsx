@@ -427,28 +427,43 @@ export default function CustomerOrders() {
 												<div className="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
 													<div>
 														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-															{t('orders.paymentMethod', 'Payment method')}
+															{t(
+																'orders.paymentMethod',
+																'Payment method',
+															)}
 														</p>
 														<p className="font-cairo text-[#111111]">
 															{order.payment_method === 'cod'
-																? t('orders.paymentCod', 'Cash on delivery')
+																? t(
+																		'orders.paymentCod',
+																		'Cash on delivery',
+																	)
 																: order.payment_method}
 														</p>
 													</div>
 													<div>
 														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-															{t('orders.paymentStatus', 'Payment status')}
+															{t(
+																'orders.paymentStatus',
+																'Payment status',
+															)}
 														</p>
 														<p className="font-cairo text-[#111111]">
 															{order.payment_status === 'paid'
 																? t('orders.paid', 'Paid')
-																: t('orders.pendingPayment', 'Pending payment')}
+																: t(
+																		'orders.pendingPayment',
+																		'Pending payment',
+																	)}
 														</p>
 													</div>
 													{order.shipping_address && (
 														<div className="sm:col-span-2">
 															<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-																{t('orders.shippingAddress', 'Shipping address')}
+																{t(
+																	'orders.shippingAddress',
+																	'Shipping address',
+																)}
 															</p>
 															<p className="font-cairo text-[#111111]">
 																{typeof order.shipping_address ===
@@ -469,7 +484,10 @@ export default function CustomerOrders() {
 														onClick={() => refetch()}
 													>
 														<RotateCcw className="w-4 h-4 me-1" />
-														{t('orders.refreshStatus', 'Refresh status')}
+														{t(
+															'orders.refreshStatus',
+															'Refresh status',
+														)}
 													</Button>
 												</div>
 											</div>

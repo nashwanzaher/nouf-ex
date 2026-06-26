@@ -70,7 +70,7 @@ export default function StorePage() {
 		return map;
 	}, [categories, lang]);
 	const getCategoryName = (catId: number): string =>
-		categoryNameById.get(catId) ?? (lang === 'ar' ? `فئة ${catId}` : `Cat ${catId}`);
+		categoryNameById.get(catId) ?? t('store.categoryFallback', 'Category {id}', { id: catId });
 
 	// Filter and sort products
 	let displayProducts = [...storeProducts];

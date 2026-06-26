@@ -406,7 +406,9 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 										</span>
 									</div>
 									<div className="border-t border-[#F3EDE4] pt-2 flex justify-between text-sm font-bold mt-2">
-										<span className="font-cairo text-[#111111]">{t('seller.total', 'Total')}</span>
+										<span className="font-cairo text-[#111111]">
+											{t('seller.total', 'Total')}
+										</span>
 										<span className="font-mono text-[#D4A853]">
 											{order.amount}
 										</span>
@@ -616,7 +618,10 @@ export default function SellerOrders() {
 							type="text"
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							placeholder={t('seller.searchOrderPlaceholder', 'Order number, customer name...')}
+							placeholder={t(
+								'seller.searchOrderPlaceholder',
+								'Order number, customer name...',
+							)}
 							aria-label={t('common.search', 'Search')}
 							className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 						/>

@@ -103,7 +103,7 @@ export default function Login() {
 					</div>
 
 					<h1 className={`text-3xl xl:text-4xl font-bold mb-4 ${styles.heroTitle}`}>
-						{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+						{t('authLogin.brandName', 'Nouf-ex')}
 					</h1>
 					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
 						{t('authLogin.heroMena', 'Your Gateway to MENA Commerce')}

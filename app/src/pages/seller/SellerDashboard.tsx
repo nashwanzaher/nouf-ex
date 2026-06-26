@@ -237,10 +237,14 @@ export default function SellerDashboard() {
 						</div>
 						<div>
 							<h1 className="text-white font-bold text-sm leading-tight">
-								{isRTL ? t('seller.brandName', 'نوف إكس') : t('seller.brandNameEn', 'Nouf-ex')}
+								{isRTL
+									? t('seller.brandName', 'نوف إكس')
+									: t('seller.brandNameEn', 'Nouf-ex')}
 							</h1>
 							<p className="text-white/50 text-[10px]">
-								{isRTL ? t('seller.panelTitle', 'لوحة التاجر') : t('seller.panelTitleEn', 'Seller Panel')}
+								{isRTL
+									? t('seller.panelTitle', 'لوحة التاجر')
+									: t('seller.panelTitleEn', 'Seller Panel')}
 							</p>
 						</div>
 					</div>
@@ -302,8 +306,8 @@ export default function SellerDashboard() {
 					</button>
 				) : (
 					<button
-						title={isRTL ? 'تسجيل الخروج' : 'Logout'}
-						aria-label={isRTL ? 'تسجيل الخروج' : 'Logout'}
+						title={t('seller.logout', 'Logout')}
+						aria-label={t('seller.logout', 'Logout')}
 						className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto"
 					>
 						<LogOut className="w-4 h-4 text-[#F44336]" strokeWidth={1.5} />
@@ -364,8 +368,8 @@ export default function SellerDashboard() {
 							</div>
 							<button
 								onClick={() => setMobileOpen(false)}
-								title={isRTL ? 'إغلاق' : 'Close'}
-								aria-label={isRTL ? 'إغلاق' : 'Close'}
+								title={t('common.close', 'Close')}
+								aria-label={t('common.close', 'Close')}
 								className="text-white/70"
 							>
 								<X className="w-5 h-5" />
@@ -428,8 +432,8 @@ export default function SellerDashboard() {
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => setMobileOpen(true)}
-							title={isRTL ? 'القائمة' : 'Menu'}
-							aria-label={isRTL ? 'القائمة' : 'Menu'}
+							title={t('common.menu', 'Menu')}
+							aria-label={t('common.menu', 'Menu')}
 							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
 						>
 							<Menu className="w-5 h-5" style={{ color: '#333' }} strokeWidth={1.5} />
@@ -437,10 +441,14 @@ export default function SellerDashboard() {
 						<button
 							onClick={() => setCollapsed(!collapsed)}
 							title={
-								collapsed ? (isRTL ? 'توسيع' : 'Expand') : isRTL ? 'طي' : 'Collapse'
+								collapsed
+									? t('common.expand', 'Expand')
+									: t('common.collapse', 'Collapse')
 							}
 							aria-label={
-								collapsed ? (isRTL ? 'توسيع' : 'Expand') : isRTL ? 'طي' : 'Collapse'
+								collapsed
+									? t('common.expand', 'Expand')
+									: t('common.collapse', 'Collapse')
 							}
 							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
 						>
@@ -480,8 +488,8 @@ export default function SellerDashboard() {
 						<div className="relative">
 							<button
 								onClick={() => setNotifOpen(!notifOpen)}
-								title={isRTL ? 'الإشعارات' : 'Notifications'}
-								aria-label={isRTL ? 'الإشعارات' : 'Notifications'}
+								title={t('seller.notifications', 'Notifications')}
+								aria-label={t('seller.notifications', 'Notifications')}
 								className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
 							>
 								<Bell
@@ -517,13 +525,13 @@ export default function SellerDashboard() {
 												className="font-semibold text-sm"
 												style={{ color: '#333' }}
 											>
-												{isRTL ? 'الإشعارات' : 'Notifications'}
+												{t('seller.notifications', 'Notifications')}
 											</h3>
 											<span
 												className="text-[10px] cursor-pointer"
 												style={{ color: '#FF6A00' }}
 											>
-												{isRTL ? 'تحديد الكل' : 'Mark all read'}
+												{t('seller.markAllRead', 'Mark all read')}
 											</span>
 										</div>
 										<div className="max-h-64 overflow-y-auto">
@@ -623,7 +631,7 @@ export default function SellerDashboard() {
 							<div className="lg:col-span-2 bg-white rounded p-5 shadow-sm">
 								<div className="flex items-center justify-between mb-4">
 									<h3 className="font-bold text-base" style={{ color: '#333' }}>
-										{isRTL ? 'أداء المنتجات' : 'Product Performance'}
+										{t('seller.productPerformance', 'Product Performance')}
 									</h3>
 									<div
 										className="flex items-center gap-1 rounded p-1"

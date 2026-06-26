@@ -770,7 +770,9 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 									)}
 								>
 									<span className="flex items-center gap-1">
-										{step === 6 ? t('seller.publishProduct', 'Publish Product') : t('seller.next', 'Next')}
+										{step === 6
+											? t('seller.publishProduct', 'Publish Product')
+											: t('seller.next', 'Next')}
 										{step < 6 && (
 											<ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
 										)}
@@ -913,7 +915,9 @@ export default function SellerProducts() {
 							className="px-3 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
 						>
 							<option value="newest">{t('seller.sortNewest', 'Newest')}</option>
-							<option value="orders">{t('seller.sortBestSelling', 'Best selling')}</option>
+							<option value="orders">
+								{t('seller.sortBestSelling', 'Best selling')}
+							</option>
 							<option value="price">{t('seller.sortPrice', 'Price')}</option>
 						</select>
 

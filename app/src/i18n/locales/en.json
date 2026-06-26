@@ -279,7 +279,16 @@
     "tableAmount": "Amount",
     "tableSeller": "Seller",
     "tableDispute": "Dispute",
-    "tableReason": "Reason"
+    "tableReason": "Reason",
+    "tableStore": "Store",
+    "tableProducts": "Products",
+    "tableSales": "Sales",
+    "tableJoinDate": "Join Date",
+    "tableDate": "Date",
+    "adminPanel": "Admin Panel",
+    "adminName": "Mohammed Al-Anasi",
+    "adminRole": "Super Admin",
+    "comingSoon": "Coming soon"
   },
   "footer": {
     "aboutUs": "About Nouf-ex",
@@ -684,6 +693,7 @@
     "viewMore": "View More"
   },
   "authLogin": {
+    "brandName": "Nouf-ex",
     "subtitle": "Welcome back to Nouf-ex",
     "signInSuccess": "Signed in successfully",
     "signInError": "Could not sign in. Please try again.",
@@ -695,6 +705,7 @@
     "heroMena": "Your Gateway to MENA Commerce"
   },
   "authRegister": {
+    "brandName": "Nouf-ex",
     "subtitle": "Create your account and start your journey",
     "accountCreated": "Account created successfully",
     "accountCreateError": "Could not create the account. Please try again.",
@@ -703,6 +714,9 @@
     "termsRequired": "You must agree to the terms",
     "phoneLabel": "Phone number",
     "phonePlaceholder": "+9677...",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "Password",
+    "confirmPasswordPlaceholder": "Confirm password",
     "heroJoin": "Join the largest e-commerce platform in the region"
   },
   "authForgot": {
@@ -787,7 +801,8 @@
     "countryQatar": "Qatar",
     "countryUs": "United States",
     "countryUk": "United Kingdom",
-    "countryMalaysia": "Malaysia"
+    "countryMalaysia": "Malaysia",
+    "categoryFallback": "Category {id}"
   },
   "reviews": {
     "title": "My Reviews",

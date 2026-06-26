@@ -214,7 +214,7 @@ export default function Navbar() {
 						<Link
 							to="/checkout"
 							className="relative p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
-							aria-label={t('nav.cartLabel', isRTL ? 'السلة' : 'Cart')}
+							aria-label={t('nav.cartLabel', 'Cart')}
 						>
 							<ShoppingCart size={20} />
 							{cartCount > 0 && (

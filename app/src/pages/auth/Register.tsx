@@ -120,7 +120,7 @@ export default function Register() {
 					</div>
 
 					<h1 className={`text-3xl xl:text-4xl font-bold mb-4 ${styles.heroTitle}`}>
-						{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+						{t('authRegister.brandName', 'Nouf-ex')}
 					</h1>
 					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
 						{t(
@@ -247,9 +247,10 @@ export default function Register() {
 												setEmail(e.target.value);
 												setErrors((p) => ({ ...p, email: '' }));
 											}}
-											placeholder={
-												isRTL ? 'your@email.com' : 'your@email.com'
-											}
+											placeholder={t(
+												'authRegister.emailPlaceholder',
+												'your@email.com',
+											)}
 											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
 										/>
 									</div>
@@ -279,7 +280,10 @@ export default function Register() {
 												setPassword(e.target.value);
 												setErrors((p) => ({ ...p, password: '' }));
 											}}
-											placeholder={isRTL ? 'كلمة المرور' : 'Password'}
+											placeholder={t(
+												'authRegister.passwordPlaceholder',
+												'Password',
+											)}
 											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.password ? styles.inputError : styles.input}`}
 										/>
 										<button
@@ -320,9 +324,10 @@ export default function Register() {
 												setConfirmPassword(e.target.value);
 												setErrors((p) => ({ ...p, confirmPassword: '' }));
 											}}
-											placeholder={
-												isRTL ? 'تأكيد كلمة المرور' : 'Confirm password'
-											}
+											placeholder={t(
+												'authRegister.confirmPasswordPlaceholder',
+												'Confirm password',
+											)}
 											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.confirmPassword ? styles.inputError : styles.input}`}
 										/>
 										<button

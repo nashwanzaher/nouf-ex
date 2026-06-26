@@ -180,7 +180,10 @@ export default function SellerAnalytics() {
 							{t('seller.analytics', 'Analytics')}
 						</h1>
 						<p className="text-sm text-[#6B6B6B] font-cairo">
-							{t('seller.analyticsSubtitle', 'Analyze your store performance and sales')}
+							{t(
+								'seller.analyticsSubtitle',
+								'Analyze your store performance and sales',
+							)}
 						</p>
 					</div>
 					<div className="flex items-center gap-1 bg-white rounded-xl p-1 shadow-sm overflow-x-auto">
@@ -381,7 +384,10 @@ export default function SellerAnalytics() {
 											fontFamily: 'Cairo',
 											fontSize: 12,
 										}}
-										formatter={(value: number) => [`${value}`, t('seller.orders', 'Orders')]}
+										formatter={(value: number) => [
+											`${value}`,
+											t('seller.orders', 'Orders'),
+										]}
 									/>
 									<Bar
 										dataKey="orders"
@@ -592,7 +598,10 @@ export default function SellerAnalytics() {
 											fontFamily: 'Cairo',
 											fontSize: 12,
 										}}
-										formatter={(value: number) => [`${value}`, t('seller.orders', 'Orders')]}
+										formatter={(value: number) => [
+											`${value}`,
+											t('seller.orders', 'Orders'),
+										]}
 									/>
 									<Bar dataKey="orders" fill="#2563EB" radius={[4, 4, 0, 0]} />
 								</BarChart>

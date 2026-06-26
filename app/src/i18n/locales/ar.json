@@ -602,7 +602,16 @@
       "tableAmount": "المبلغ",
       "tableSeller": "التاجر",
       "tableDispute": "النزاع",
-      "tableReason": "السبب"
+      "tableReason": "السبب",
+      "tableStore": "المتجر",
+      "tableProducts": "المنتجات",
+      "tableSales": "المبيعات",
+      "tableJoinDate": "تاريخ الانضمام",
+      "tableDate": "التاريخ",
+      "adminPanel": "لوحة الإدارة",
+      "adminName": "محمد العنسي",
+      "adminRole": "سوبر أدمن",
+      "comingSoon": "قريباً"
     },
     "justForYou": "مخصص لك",
     "bestsellersTab": "الأكثر مبيعاً",
@@ -788,6 +797,7 @@
     "viewMore": "اكتشف المزيد"
   },
   "authLogin": {
+    "brandName": "نوف إكس",
     "subtitle": "أهلاً بك مجدداً في نوف إكس",
     "signInSuccess": "تم تسجيل الدخول بنجاح",
     "signInError": "تعذّر تسجيل الدخول. حاول مرة أخرى.",
@@ -799,6 +809,7 @@
     "heroMena": "بوابتك للتجارة في الشرق الأوسط وشمال أفريقيا"
   },
   "authRegister": {
+    "brandName": "نوف إكس",
     "subtitle": "أنشئ حسابك وابدأ رحلتك",
     "accountCreated": "تم إنشاء حسابك بنجاح",
     "accountCreateError": "تعذّر إنشاء الحساب. حاول مرة أخرى.",
@@ -807,6 +818,9 @@
     "termsRequired": "يجب الموافقة على الشروط",
     "phoneLabel": "رقم الهاتف",
     "phonePlaceholder": "+9677...",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "كلمة المرور",
+    "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
     "heroJoin": "انضم إلى أكبر منصة تجارة إلكترونية في المنطقة"
   },
   "authForgot": {
@@ -891,7 +905,8 @@
     "countryQatar": "قطر",
     "countryUs": "الولايات المتحدة",
     "countryUk": "المملكة المتحدة",
-    "countryMalaysia": "ماليزيا"
+    "countryMalaysia": "ماليزيا",
+    "categoryFallback": "فئة {id}"
   },
   "reviews": {
     "title": "تقييماتي",

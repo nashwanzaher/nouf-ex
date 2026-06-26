@@ -554,7 +554,16 @@
       "tableAmount": "金额",
       "tableSeller": "卖家",
       "tableDispute": "争议",
-      "tableReason": "原因"
+      "tableReason": "原因",
+      "tableStore": "店铺",
+      "tableProducts": "商品",
+      "tableSales": "销售额",
+      "tableJoinDate": "加入日期",
+      "tableDate": "日期",
+      "adminPanel": "管理面板",
+      "adminName": "管理员",
+      "adminRole": "超级管理员",
+      "comingSoon": "敬请期待"
     },
     "justForYou": "为你推荐",
     "bestsellersTab": "热销商品",
@@ -739,6 +748,7 @@
     "viewMore": "查看更多"
   },
   "authLogin": {
+    "brandName": "Nouf-ex",
     "subtitle": "欢迎回到 Nouf-ex",
     "signInSuccess": "登录成功",
     "signInError": "无法登录，请重试。",
@@ -750,12 +760,16 @@
     "heroMena": "您通往中东及北非贸易的大门"
   },
   "authRegister": {
+    "brandName": "Nouf-ex",
     "subtitle": "创建您的账户并开始您的旅程",
     "accountCreated": "账户创建成功",
     "accountCreateError": "无法创建账户，请重试。",
     "buyerTab": "买家",
     "sellerTab": "卖家",
     "termsRequired": "您必须同意条款",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "密码",
+    "confirmPasswordPlaceholder": "确认密码",
     "phoneLabel": "电话号码",
     "phonePlaceholder": "+9677...",
     "heroJoin": "加入本地区最大的电商平台"
@@ -842,7 +856,7 @@
     "countryQatar": "卡塔尔",
     "countryUs": "美国",
     "countryUk": "英国",
-    "countryMalaysia": "马来西亚"
+    "countryMalaysia": "马来西亚", "categoryFallback": "分类 {id}"
   },
   "reviews": {
     "title": "我的评价",

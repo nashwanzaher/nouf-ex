@@ -33,10 +33,29 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-	{ id: 'overview', labelKey: 'admin.navDashboard', label: 'لوحة التحكم', labelEn: 'Dashboard', icon: LayoutDashboard },
+	{
+		id: 'overview',
+		labelKey: 'admin.navDashboard',
+		label: 'لوحة التحكم',
+		labelEn: 'Dashboard',
+		icon: LayoutDashboard,
+	},
 	{ id: 'users', labelKey: 'admin.navUsers', label: 'المستخدمون', labelEn: 'Users', icon: Users },
-	{ id: 'sellers', labelKey: 'admin.navSellers', label: 'التجار', labelEn: 'Sellers', icon: Store, badge: '5 pending' },
-	{ id: 'orders', labelKey: 'admin.navOrders', label: 'الطلبات', labelEn: 'Orders', icon: ShoppingBag },
+	{
+		id: 'sellers',
+		labelKey: 'admin.navSellers',
+		label: 'التجار',
+		labelEn: 'Sellers',
+		icon: Store,
+		badge: '5 pending',
+	},
+	{
+		id: 'orders',
+		labelKey: 'admin.navOrders',
+		label: 'الطلبات',
+		labelEn: 'Orders',
+		icon: ShoppingBag,
+	},
 	{
 		id: 'disputes',
 		labelKey: 'admin.navDisputes',
@@ -45,8 +64,20 @@ const navItems: NavItem[] = [
 		icon: AlertTriangle,
 		badge: '8 active',
 	},
-	{ id: 'analytics', labelKey: 'admin.navAnalytics', label: 'التقارير', labelEn: 'Reports', icon: BarChart3 },
-	{ id: 'settings', labelKey: 'admin.navSettings', label: 'الإعدادات', labelEn: 'Settings', icon: Settings },
+	{
+		id: 'analytics',
+		labelKey: 'admin.navAnalytics',
+		label: 'التقارير',
+		labelEn: 'Reports',
+		icon: BarChart3,
+	},
+	{
+		id: 'settings',
+		labelKey: 'admin.navSettings',
+		label: 'الإعدادات',
+		labelEn: 'Settings',
+		icon: Settings,
+	},
 ];
 
 /* ------------------------------------------------------------------ */
@@ -309,10 +340,10 @@ export default function AdminDashboard() {
 						</div>
 						<div>
 							<h1 className="text-white font-bold text-sm leading-tight">
-								{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+								{t('seller.brandName', 'Nouf-ex')}
 							</h1>
 							<p className="text-white/50 text-[10px]">
-								{isRTL ? 'لوحة الإدارة' : 'Admin Panel'}
+								{t('admin.adminPanel', 'Admin Panel')}
 							</p>
 						</div>
 					</div>
@@ -372,9 +403,11 @@ export default function AdminDashboard() {
 						</div>
 						<div className="flex-1 min-w-0">
 							<p className="text-white text-sm font-medium truncate">
-								{isRTL ? 'محمد العنسي' : 'Mohammed Al-Anasi'}
+								{t('admin.adminName', 'Mohammed Al-Anasi')}
 							</p>
-							<p className="text-white/50 text-[10px]">Super Admin</p>
+							<p className="text-white/50 text-[10px]">
+								{t('admin.adminRole', 'Super Admin')}
+							</p>
 						</div>
 					</div>
 				) : (
@@ -491,13 +524,13 @@ export default function AdminDashboard() {
 										)}
 										style={{ color: '#999' }}
 									>
-										{isRTL ? 'المستخدم' : 'User'}
+										{t('admin.tableUser', 'User')}
 									</th>
 									<th
 										className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 										style={{ color: '#999' }}
 									>
-										{isRTL ? 'الدور' : 'Role'}
+										{t('admin.tableRole', 'Role')}
 									</th>
 									<th
 										className={cn(
@@ -506,7 +539,7 @@ export default function AdminDashboard() {
 										)}
 										style={{ color: '#999' }}
 									>
-										{isRTL ? 'الحالة' : 'Status'}
+										{t('admin.tableStatus', 'Status')}
 									</th>
 								</tr>
 							</thead>
@@ -587,13 +620,13 @@ export default function AdminDashboard() {
 										)}
 										style={{ color: '#999' }}
 									>
-										{isRTL ? 'الطلب' : 'Order'}
+										{t('admin.tableOrder', 'Order')}
 									</th>
 									<th
 										className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 										style={{ color: '#999' }}
 									>
-										{isRTL ? 'المبلغ' : 'Amount'}
+										{t('admin.tableAmount', 'Amount')}
 									</th>
 									<th
 										className={cn(
@@ -602,7 +635,7 @@ export default function AdminDashboard() {
 										)}
 										style={{ color: '#999' }}
 									>
-										{isRTL ? 'الحالة' : 'Status'}
+										{t('admin.tableStatus', 'Status')}
 									</th>
 								</tr>
 							</thead>
@@ -665,7 +698,7 @@ export default function AdminDashboard() {
 				style={{ borderColor: '#F0F2F5' }}
 			>
 				<h3 className="font-bold text-base" style={{ color: '#333' }}>
-					{isRTL ? 'المستخدمون' : 'Users'}
+					{t('admin.navUsers', 'Users')}
 				</h3>
 				<div
 					className="flex items-center rounded px-3 py-1.5 w-48"
@@ -674,7 +707,7 @@ export default function AdminDashboard() {
 					<Search className="w-4 h-4" style={{ color: '#999' }} strokeWidth={1.5} />
 					<input
 						type="text"
-						placeholder={isRTL ? 'بحث...' : 'Search...'}
+						placeholder={t('common.search', 'Search...')}
 						className="bg-transparent border-none outline-none text-xs w-full ml-2"
 						style={{ color: '#333' }}
 					/>
@@ -691,19 +724,19 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'المستخدم' : 'User'}
+								{t('admin.tableUser', 'User')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'الدور' : 'Role'}
+								{t('admin.tableRole', 'Role')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left hidden md:table-cell"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'تاريخ الانضمام' : 'Join Date'}
+								{t('admin.tableJoinDate', 'Join Date')}
 							</th>
 							<th
 								className={cn(
@@ -712,7 +745,7 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'الحالة' : 'Status'}
+								{t('admin.tableStatus', 'Status')}
 							</th>
 						</tr>
 					</thead>
@@ -783,7 +816,7 @@ export default function AdminDashboard() {
 		<div className="bg-white rounded shadow-sm overflow-hidden">
 			<div className="p-5 border-b" style={{ borderColor: '#F0F2F5' }}>
 				<h3 className="font-bold text-base" style={{ color: '#333' }}>
-					{isRTL ? 'التجار' : 'Sellers'}
+					{t('admin.navSellers', 'Sellers')}
 				</h3>
 			</div>
 			<div className="overflow-x-auto">
@@ -797,19 +830,19 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'المتجر' : 'Store'}
+								{t('admin.tableStore', 'Store')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'المنتجات' : 'Products'}
+								{t('admin.tableProducts', 'Products')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'المبيعات' : 'Sales'}
+								{t('admin.tableSales', 'Sales')}
 							</th>
 							<th
 								className={cn(
@@ -818,7 +851,7 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'الحالة' : 'Status'}
+								{t('admin.tableStatus', 'Status')}
 							</th>
 						</tr>
 					</thead>
@@ -872,7 +905,7 @@ export default function AdminDashboard() {
 		<div className="bg-white rounded shadow-sm overflow-hidden">
 			<div className="p-5 border-b" style={{ borderColor: '#F0F2F5' }}>
 				<h3 className="font-bold text-base" style={{ color: '#333' }}>
-					{isRTL ? 'الطلبات' : 'Orders'}
+					{t('admin.navOrders', 'Orders')}
 				</h3>
 			</div>
 			<div className="overflow-x-auto">
@@ -886,7 +919,7 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'الطلب' : 'Order'}
+								{t('admin.tableOrder', 'Order')}
 							</th>
 							<th
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
@@ -898,7 +931,7 @@ export default function AdminDashboard() {
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'المبلغ' : 'Amount'}
+								{t('admin.tableAmount', 'Amount')}
 							</th>
 							<th
 								className={cn(
@@ -907,7 +940,7 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'الحالة' : 'Status'}
+								{t('admin.tableStatus', 'Status')}
 							</th>
 						</tr>
 					</thead>
@@ -991,7 +1024,7 @@ export default function AdminDashboard() {
 								className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left hidden md:table-cell"
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'التاريخ' : 'Date'}
+								{t('admin.tableDate', 'Date')}
 							</th>
 							<th
 								className={cn(
@@ -1000,7 +1033,7 @@ export default function AdminDashboard() {
 								)}
 								style={{ color: '#999' }}
 							>
-								{isRTL ? 'الحالة' : 'Status'}
+								{t('admin.tableStatus', 'Status')}
 							</th>
 						</tr>
 					</thead>
@@ -1071,10 +1104,10 @@ export default function AdminDashboard() {
 							strokeWidth={1.5}
 						/>
 						<h3 className="font-bold text-lg mb-2" style={{ color: '#333' }}>
-							{isRTL ? 'التقارير والتحليلات' : 'Reports & Analytics'}
+							{t('admin.navAnalytics', 'Reports & Analytics')}
 						</h3>
 						<p className="text-sm" style={{ color: '#999' }}>
-							{isRTL ? 'قريباً' : 'Coming soon'}
+							{t('admin.comingSoon', 'Coming soon')}
 						</p>
 					</div>
 				);
@@ -1087,10 +1120,10 @@ export default function AdminDashboard() {
 							strokeWidth={1.5}
 						/>
 						<h3 className="font-bold text-lg mb-2" style={{ color: '#333' }}>
-							{isRTL ? 'الإعدادات' : 'Settings'}
+							{t('admin.navSettings', 'Settings')}
 						</h3>
 						<p className="text-sm" style={{ color: '#999' }}>
-							{isRTL ? 'قريباً' : 'Coming soon'}
+							{t('admin.comingSoon', 'Coming soon')}
 						</p>
 					</div>
 				);
@@ -1141,10 +1174,10 @@ export default function AdminDashboard() {
 								</div>
 								<div>
 									<h1 className="text-white font-bold text-sm">
-										{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+										{t('seller.brandName', 'Nouf-ex')}
 									</h1>
 									<p className="text-white/50 text-[10px]">
-										{isRTL ? 'لوحة الإدارة' : 'Admin Panel'}
+										{t('admin.adminPanel', 'Admin Panel')}
 									</p>
 								</div>
 							</div>
@@ -1262,7 +1295,7 @@ export default function AdminDashboard() {
 							/>
 							<input
 								type="text"
-								placeholder={isRTL ? 'بحث...' : 'Search...'}
+								placeholder={t('common.search', 'Search...')}
 								className="bg-transparent border-none outline-none text-sm w-full ml-2"
 								style={{ color: '#333' }}
 							/>

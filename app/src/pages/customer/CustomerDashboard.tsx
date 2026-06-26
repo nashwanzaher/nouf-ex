@@ -227,7 +227,7 @@ export default function CustomerDashboard() {
 							<Globe className="w-5 h-5 text-white" strokeWidth={1.5} />
 						</div>
 						<span className="text-white font-bold text-sm">
-							{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+							{t('seller.brandName', 'Nouf-ex')}
 						</span>
 					</div>
 				)}
@@ -318,7 +318,7 @@ export default function CustomerDashboard() {
 									<Globe className="w-5 h-5 text-white" strokeWidth={1.5} />
 								</div>
 								<span className="text-white font-bold text-sm">
-									{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+									{t('seller.brandName', 'Nouf-ex')}
 								</span>
 							</div>
 							<button onClick={() => setMobileOpen(false)} className="text-white/70">

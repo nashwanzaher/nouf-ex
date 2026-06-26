@@ -301,7 +301,11 @@ export default function SellerDashboard() {
 						</span>
 					</button>
 				) : (
-					<button className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto">
+					<button
+						title={isRTL ? 'تسجيل الخروج' : 'Logout'}
+						aria-label={isRTL ? 'تسجيل الخروج' : 'Logout'}
+						className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto"
+					>
 						<LogOut className="w-4 h-4 text-[#F44336]" strokeWidth={1.5} />
 					</button>
 				)}
@@ -358,7 +362,12 @@ export default function SellerDashboard() {
 									</p>
 								</div>
 							</div>
-							<button onClick={() => setMobileOpen(false)} className="text-white/70">
+							<button
+								onClick={() => setMobileOpen(false)}
+								title={isRTL ? 'إغلاق' : 'Close'}
+								aria-label={isRTL ? 'إغلاق' : 'Close'}
+								className="text-white/70"
+							>
 								<X className="w-5 h-5" />
 							</button>
 						</div>
@@ -419,12 +428,16 @@ export default function SellerDashboard() {
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => setMobileOpen(true)}
+							title={isRTL ? 'القائمة' : 'Menu'}
+							aria-label={isRTL ? 'القائمة' : 'Menu'}
 							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
 						>
 							<Menu className="w-5 h-5" style={{ color: '#333' }} strokeWidth={1.5} />
 						</button>
 						<button
 							onClick={() => setCollapsed(!collapsed)}
+							title={collapsed ? (isRTL ? 'توسيع' : 'Expand') : (isRTL ? 'طي' : 'Collapse')}
+							aria-label={collapsed ? (isRTL ? 'توسيع' : 'Expand') : (isRTL ? 'طي' : 'Collapse')}
 							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
 						>
 							{collapsed ? (
@@ -463,6 +476,8 @@ export default function SellerDashboard() {
 						<div className="relative">
 							<button
 								onClick={() => setNotifOpen(!notifOpen)}
+								title={isRTL ? 'الإشعارات' : 'Notifications'}
+								aria-label={isRTL ? 'الإشعارات' : 'Notifications'}
 								className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
 							>
 								<Bell

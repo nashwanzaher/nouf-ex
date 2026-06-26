@@ -294,6 +294,7 @@ export default function DisputesManagement() {
 									setStatusFilter(e.target.value);
 									setCurrentPage(1);
 								}}
+								aria-label="Status filter"
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
 								<option value="all">جميع الحالات</option>
@@ -427,6 +428,8 @@ export default function DisputesManagement() {
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 								disabled={currentPage === 1}
+								title="Previous page"
+								aria-label="Previous page"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30"
 							>
 								<ChevronRight className="w-4 h-4" />
@@ -447,6 +450,8 @@ export default function DisputesManagement() {
 							<button
 								onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 								disabled={currentPage === totalPages}
+								title="Next page"
+								aria-label="Next page"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30"
 							>
 								<ChevronLeft className="w-4 h-4" />
@@ -463,6 +468,8 @@ export default function DisputesManagement() {
 						<div className="flex items-center gap-3">
 							<button
 								onClick={() => setSelectedDispute(null)}
+								title="Back"
+								aria-label="Back"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] text-[#6B6B6B] transition-colors"
 							>
 								<ArrowLeft className="w-4 h-4" strokeWidth={1.5} />

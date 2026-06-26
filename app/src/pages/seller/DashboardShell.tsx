@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
 	LayoutDashboard,
@@ -22,22 +23,65 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navItems = [
-	{ icon: LayoutDashboard, label: 'لوحة المعلومات', path: '/seller', badge: null },
-	{ icon: Package, label: 'المنتجات', path: '/seller/products', badge: '٣٤٢' },
-	{ icon: ShoppingBag, label: 'الطلبات', path: '/seller/orders', badge: '١٢', badgeColor: 'red' },
-	{ icon: BarChart3, label: 'الإحصائيات', path: '/seller/analytics', badge: null },
-	{ icon: MessageSquare, label: 'التقييمات', path: '/seller/reviews', badge: '٨ جديد' },
-	{ icon: Settings, label: 'إعدادات المتجر', path: '/seller/settings', badge: null },
-	{ icon: CreditCard, label: 'الاشتراك', path: '/seller/subscription', badge: null },
+type NavItem = {
+	icon: typeof LayoutDashboard;
+	labelKey: string;
+	path: string;
+	badge?: string | null;
+	badgeKey?: string;
+	badgeParams?: Record<string, string | number>;
+	badgeColor?: 'red';
+};
+
+type MobileTab = {
+	icon: typeof LayoutDashboard;
+	labelKey: string;
+	path: string | null;
+};
+
+const navItems: NavItem[] = [
+	{ icon: LayoutDashboard, labelKey: 'seller.dashboard', path: '/seller', badge: null },
+	{
+		icon: Package,
+		labelKey: 'seller.products',
+		path: '/seller/products',
+		badgeKey: '342',
+	},
+	{
+		icon: ShoppingBag,
+		labelKey: 'seller.orders',
+		path: '/seller/orders',
+		badgeKey: '12',
+		badgeColor: 'red',
+	},
+	{ icon: BarChart3, labelKey: 'seller.analytics', path: '/seller/analytics', badge: null },
+	{
+		icon: MessageSquare,
+		labelKey: 'seller.reviews',
+		path: '/seller/reviews',
+		badgeKey: 'seller.newReviewsBadge',
+		badgeParams: { count: 8 },
+	},
+	{
+		icon: Settings,
+		labelKey: 'seller.storeSettings',
+		path: '/seller/settings',
+		badge: null,
+	},
+	{
+		icon: CreditCard,
+		labelKey: 'seller.subscription',
+		path: '/seller/subscription',
+		badge: null,
+	},
 ];
 
-const mobileTabs = [
-	{ icon: LayoutDashboard, label: 'الرئيسية', path: '/seller' },
-	{ icon: Package, label: 'المنتجات', path: '/seller/products' },
-	{ icon: ShoppingBag, label: 'الطلبات', path: '/seller/orders' },
-	{ icon: MessageSquare, label: 'التقييمات', path: '/seller/reviews' },
-	{ icon: Menu, label: 'المزيد', path: null },
+const mobileTabs: MobileTab[] = [
+	{ icon: LayoutDashboard, labelKey: 'seller.home', path: '/seller' },
+	{ icon: Package, labelKey: 'seller.products', path: '/seller/products' },
+	{ icon: ShoppingBag, labelKey: 'seller.orders', path: '/seller/orders' },
+	{ icon: MessageSquare, labelKey: 'seller.reviews', path: '/seller/reviews' },
+	{ icon: Menu, labelKey: 'seller.more', path: null },
 ];
 
 interface DashboardShellProps {
@@ -47,6 +91,7 @@ interface DashboardShellProps {
 }
 
 export default function DashboardShell({ children, title, breadcrumb }: DashboardShellProps) {
+	const { t } = useTranslation();
 	const location = useLocation();
 	const [collapsed, setCollapsed] = useState(false);
 	const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -87,6 +132,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 					)}
 					<button
 						onClick={() => setCollapsed(!collapsed)}
+						title={collapsed ? t('common.expand', 'Expand') : t('common.collapse', 'Collapse')}
+						aria-label={collapsed ? t('common.expand', 'Expand') : t('common.collapse', 'Collapse')}
 						className="w-7 h-7 rounded-lg bg-[rgba(212,168,83,0.15)] hover:bg-[rgba(212,168,83,0.25)] flex items-center justify-center transition-colors"
 					>
 						{collapsed ? (
@@ -127,7 +174,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 								{!collapsed && (
 									<>
 										<span className="text-sm font-cairo font-medium flex-1">
-											{item.label}
+											{t(item.labelKey)}
 										</span>
 										{item.badge && (
 											<span
@@ -138,7 +185,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 														: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]',
 												)}
 											>
-												{item.badge}
+												{item.badgeKey
+													? t(item.badgeKey, item.badgeParams ?? {})
+													: item.badge}
 											</span>
 										)}
 									</>
@@ -160,14 +209,18 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							</div>
 							<div className="flex-1 min-w-0">
 								<p className="text-xs font-cairo font-semibold text-[#F5F5F0] truncate">
-									متجر الأصالة
+									{t('seller.storeNameDefault', 'Al-Asalah Store')}
 								</p>
-								<p className="text-[10px] text-[#AAAAAA]">عرض المتجر</p>
+								<p className="text-[10px] text-[#AAAAAA]">
+									{t('seller.viewStore', 'View Store')}
+								</p>
 							</div>
 						</Link>
 						<button className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[rgba(255,255,255,0.06)] transition-colors w-full text-right">
 							<LogOut className="w-4 h-4 text-[#EF4444] shrink-0" strokeWidth={1.5} />
-							<span className="text-xs font-cairo text-[#EF4444]">تسجيل الخروج</span>
+							<span className="text-xs font-cairo text-[#EF4444]">
+								{t('seller.logout', 'Logout')}
+							</span>
 						</button>
 					</div>
 				) : (
@@ -175,7 +228,11 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 						<div className="w-8 h-8 rounded-full bg-[#D4A853] flex items-center justify-center">
 							<Store className="w-4 h-4 text-[#1A1612]" strokeWidth={1.5} />
 						</div>
-						<button className="w-8 h-8 rounded-lg hover:bg-[rgba(255,255,255,0.06)] flex items-center justify-center">
+						<button
+							title={t('seller.logout', 'Logout')}
+							aria-label={t('seller.logout', 'Logout')}
+							className="w-8 h-8 rounded-lg hover:bg-[rgba(255,255,255,0.06)] flex items-center justify-center"
+						>
 							<LogOut className="w-4 h-4 text-[#EF4444]" strokeWidth={1.5} />
 						</button>
 					</div>
@@ -197,7 +254,11 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 						)}
 					</div>
 					<div className="flex items-center gap-2">
-						<button className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors">
+						<button
+							title={t('common.search', 'Search')}
+							aria-label={t('common.search', 'Search')}
+							className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors"
+						>
 							<Search
 								className="w-[18px] h-[18px] text-[#6B6B6B]"
 								strokeWidth={1.5}
@@ -232,10 +293,10 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 										>
 											<div className="p-4 border-b border-[#F3EDE4] flex items-center justify-between">
 												<h3 className="font-cairo font-semibold text-sm text-[#111111]">
-													الإشعارات
+													{t('seller.notifications', 'Notifications')}
 												</h3>
 												<span className="text-[10px] text-[#D4A853] cursor-pointer">
-													تحديد الكل كمقروء
+													{t('seller.markAllRead', 'Mark all read')}
 												</span>
 											</div>
 											<div className="max-h-72 overflow-y-auto">
@@ -307,13 +368,19 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 			<header className="fixed top-0 left-0 right-0 h-14 bg-white shadow-sm z-30 flex md:hidden items-center px-4 justify-between">
 				<button
 					onClick={() => setMobileDrawerOpen(true)}
+					title={t('common.menu', 'Menu')}
+					aria-label={t('common.menu', 'Menu')}
 					className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center"
 				>
 					<Menu className="w-5 h-5 text-[#111111]" strokeWidth={1.5} />
 				</button>
 				<h1 className="text-base font-amiri font-bold text-[#1A1612]">{title}</h1>
 				<div className="flex items-center gap-1">
-					<button className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center relative">
+					<button
+						title={t('seller.notifications', 'Notifications')}
+						aria-label={t('seller.notifications', 'Notifications')}
+						className="w-9 h-9 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center relative"
+					>
 						<Bell className="w-[18px] h-[18px] text-[#6B6B6B]" strokeWidth={1.5} />
 						<span className="absolute -top-0.5 -left-0.5 w-3.5 h-3.5 bg-[#EF4444] text-white text-[8px] font-bold rounded-full flex items-center justify-center">
 							٣
@@ -347,6 +414,8 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 								<img src="/noufex-logo.svg" alt="نوف-إكس" className="h-8" />
 								<button
 									onClick={() => setMobileDrawerOpen(false)}
+									title={t('common.close', 'Close')}
+									aria-label={t('common.close', 'Close')}
 									className="w-8 h-8 rounded-lg hover:bg-[rgba(255,255,255,0.06)] flex items-center justify-center"
 								>
 									<X className="w-5 h-5 text-[#AAAAAA]" strokeWidth={1.5} />
@@ -372,7 +441,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 										>
 											<item.icon className="w-5 h-5" strokeWidth={1.5} />
 											<span className="text-sm font-cairo font-medium flex-1">
-												{item.label}
+												{t(item.labelKey)}
 											</span>
 											{item.badge && (
 												<span
@@ -383,7 +452,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 															: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]',
 													)}
 												>
-													{item.badge}
+													{item.badgeKey
+														? t(item.badgeKey, item.badgeParams ?? {})
+														: item.badge}
 												</span>
 											)}
 										</Link>
@@ -394,7 +465,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 								<button className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[rgba(255,255,255,0.06)] transition-colors w-full text-right">
 									<LogOut className="w-4 h-4 text-[#EF4444]" strokeWidth={1.5} />
 									<span className="text-sm font-cairo text-[#EF4444]">
-										تسجيل الخروج
+										{t('seller.logout', 'Logout')}
 									</span>
 								</button>
 							</div>
@@ -417,10 +488,10 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 			<nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#F3EDE4] z-30 flex md:hidden items-center justify-around pb-safe">
 				{mobileTabs.map((tab) => {
 					const active = tab.path ? isActive(tab.path) : mobileMoreOpen;
-					if (tab.label === 'المزيد') {
+					if (tab.labelKey === 'seller.more') {
 						return (
 							<button
-								key={tab.label}
+								key={tab.labelKey}
 								onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
 								className={cn(
 									'flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors',
@@ -429,7 +500,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							>
 								<tab.icon className="w-5 h-5" strokeWidth={1.5} />
 								<span className="text-[10px] font-cairo font-medium">
-									{tab.label}
+									{t(tab.labelKey)}
 								</span>
 							</button>
 						);
@@ -444,7 +515,9 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 							)}
 						>
 							<tab.icon className="w-5 h-5" strokeWidth={1.5} />
-							<span className="text-[10px] font-cairo font-medium">{tab.label}</span>
+							<span className="text-[10px] font-cairo font-medium">
+								{t(tab.labelKey)}
+							</span>
 							{tab.path === '/seller/orders' && (
 								<span className="absolute top-2 mr-4 w-2 h-2 rounded-full bg-[#EF4444]" />
 							)}
@@ -486,7 +559,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 										strokeWidth={1.5}
 									/>
 									<span className="text-sm font-cairo font-medium">
-										{item.label}
+										{t(item.labelKey)}
 									</span>
 								</Link>
 							))}

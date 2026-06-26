@@ -253,6 +253,8 @@ export default function Addresses() {
 										</button>
 										<button
 											onClick={() => deleteAddress(addr.id)}
+											title={t('addresses.delete', 'Delete')}
+											aria-label={t('addresses.delete', 'Delete')}
 											className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#EF4444]/20 text-sm text-[#EF4444] hover:bg-[#EF4444]/10 font-cairo transition-colors"
 										>
 											<Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -414,6 +416,7 @@ export default function Addresses() {
 							<input
 								type="checkbox"
 								checked={form.isDefault || false}
+								aria-label={t('addresses.setAsDefault', 'Set as default')}
 								onChange={(e) =>
 									setForm((f) => ({ ...f, isDefault: e.target.checked }))
 								}

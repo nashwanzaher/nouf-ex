@@ -343,6 +343,7 @@ export default function UsersManagement() {
 									setRoleFilter(e.target.value);
 									setCurrentPage(1);
 								}}
+								aria-label="Role filter"
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
 								{roles.map((r) => (
@@ -358,6 +359,7 @@ export default function UsersManagement() {
 									setStatusFilter(e.target.value);
 									setCurrentPage(1);
 								}}
+								aria-label="Status filter"
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
 								{statuses.map((s) => (
@@ -373,6 +375,7 @@ export default function UsersManagement() {
 									setGovFilter(e.target.value);
 									setCurrentPage(1);
 								}}
+								aria-label="Governorate filter"
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
 								{governorates.map((g) => (
@@ -544,6 +547,7 @@ export default function UsersManagement() {
 									setPageSize(Number(e.target.value));
 									setCurrentPage(1);
 								}}
+								aria-label="Page size"
 								className="text-xs font-cairo px-2 py-1 rounded-lg border border-[#e5e5e5]"
 							>
 								<option value={5}>٥</option>
@@ -555,6 +559,8 @@ export default function UsersManagement() {
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 								disabled={currentPage === 1}
+								title="Previous page"
+								aria-label="Previous page"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30 transition-opacity"
 							>
 								<ChevronRight className="w-4 h-4" />
@@ -575,6 +581,8 @@ export default function UsersManagement() {
 							<button
 								onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 								disabled={currentPage === totalPages}
+								title="Next page"
+								aria-label="Next page"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30 transition-opacity"
 							>
 								<ChevronLeft className="w-4 h-4" />

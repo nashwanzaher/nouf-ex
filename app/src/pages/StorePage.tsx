@@ -95,9 +95,7 @@ export default function StorePage() {
 		return (
 			<div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
 				<div className="w-10 h-10 border-3 border-[#FF6A00] border-t-transparent rounded-full animate-spin mb-4" />
-				<p className="text-[#666]">
-					{t('store.loading', 'Loading...')}
-				</p>
+				<p className="text-[#666]">{t('store.loading', 'Loading...')}</p>
 			</div>
 		);
 	}
@@ -197,8 +195,7 @@ export default function StorePage() {
 									<MapPin size={12} /> {store.location}
 								</span>
 								<span className="text-xs text-[#999] flex items-center gap-1">
-									<Clock size={12} /> {yearsActive}{' '}
-										{t('store.yearsUnit', 'yrs')}
+									<Clock size={12} /> {yearsActive} {t('store.yearsUnit', 'yrs')}
 								</span>
 							</div>
 							{/* Badges */}
@@ -328,7 +325,10 @@ export default function StorePage() {
 										type="text"
 										value={searchQuery}
 										onChange={(e) => setSearchQuery(e.target.value)}
-										placeholder={t('store.searchPlaceholder', 'Search in store...')}
+										placeholder={t(
+											'store.searchPlaceholder',
+											'Search in store...',
+										)}
 										className="w-full h-9 pl-9 pr-3 rounded border border-[#E5E5E5] bg-white text-sm text-[#333] focus:outline-none focus:border-[#FF6A00]"
 									/>
 									<Search
@@ -510,7 +510,10 @@ export default function StorePage() {
 								</h3>
 								<div className="space-y-3">
 									{[
-										t('store.capShipping', 'Shipping to 50+ countries worldwide'),
+										t(
+											'store.capShipping',
+											'Shipping to 50+ countries worldwide',
+										),
 										t('store.capOem', 'OEM/ODM Manufacturing Available'),
 										t('store.capSupport', '24/7 Technical Support Team'),
 										t(

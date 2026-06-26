@@ -389,7 +389,11 @@ export default function AdminDashboard() {
 						<span className="text-xs text-red-400">{t('nav.logout')}</span>
 					</button>
 				) : (
-					<button className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto">
+					<button
+						title={t('nav.logout', 'Logout')}
+						aria-label={t('nav.logout', 'Logout')}
+						className="w-9 h-9 rounded hover:bg-white/5 flex items-center justify-center mx-auto"
+					>
 						<LogOut className="w-4 h-4 text-red-400" strokeWidth={1.5} />
 					</button>
 				)}
@@ -1142,7 +1146,12 @@ export default function AdminDashboard() {
 									</p>
 								</div>
 							</div>
-							<button onClick={() => setMobileOpen(false)} className="text-white/70">
+							<button
+								onClick={() => setMobileOpen(false)}
+								title={t('common.close', 'Close')}
+								aria-label={t('common.close', 'Close')}
+								className="text-white/70"
+							>
 								<X className="w-5 h-5" />
 							</button>
 						</div>
@@ -1206,12 +1215,24 @@ export default function AdminDashboard() {
 					<div className="flex items-center gap-3">
 						<button
 							onClick={() => setMobileOpen(true)}
+							title={t('common.menu', 'Menu')}
+							aria-label={t('common.menu', 'Menu')}
 							className="lg:hidden w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
 						>
 							<Menu className="w-5 h-5" style={{ color: '#333' }} strokeWidth={1.5} />
 						</button>
 						<button
 							onClick={() => setCollapsed(!collapsed)}
+							title={
+								collapsed
+									? t('common.expand', 'Expand')
+									: t('common.collapse', 'Collapse')
+							}
+							aria-label={
+								collapsed
+									? t('common.expand', 'Expand')
+									: t('common.collapse', 'Collapse')
+							}
 							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
 						>
 							{collapsed ? (
@@ -1246,7 +1267,11 @@ export default function AdminDashboard() {
 								style={{ color: '#333' }}
 							/>
 						</div>
-						<button className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
+						<button
+							title={t('seller.notifications', 'Notifications')}
+							aria-label={t('seller.notifications', 'Notifications')}
+							className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+						>
 							<Bell className="w-5 h-5" style={{ color: '#666' }} strokeWidth={1.5} />
 							<span
 								className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"

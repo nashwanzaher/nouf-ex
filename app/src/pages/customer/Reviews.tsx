@@ -86,6 +86,8 @@ function StarRatingInput({
 					onMouseEnter={() => setHover(s)}
 					onMouseLeave={() => setHover(0)}
 					onClick={() => onRate(s)}
+					title={`${s} star${s > 1 ? 's' : ''}`}
+					aria-label={`${s} star${s > 1 ? 's' : ''}`}
 					className="transition-transform hover:scale-110 focus:outline-none"
 				>
 					<Star
@@ -99,7 +101,7 @@ function StarRatingInput({
 				</button>
 			))}
 			<span className="text-sm text-[#6B6B6B] font-cairo mr-2">
-				{rating > 0 ? ratingTexts[rating] ?? '' : ''}
+				{rating > 0 ? (ratingTexts[rating] ?? '') : ''}
 			</span>
 		</div>
 	);
@@ -229,7 +231,10 @@ export default function Reviews() {
 										{t('reviews.emptyPendingTitle', 'No products to review')}
 									</h3>
 									<p className="text-[#6B6B6B] font-cairo text-sm">
-										{t('reviews.emptyPendingSubtitle', "You've reviewed all your products")}
+										{t(
+											'reviews.emptyPendingSubtitle',
+											"You've reviewed all your products",
+										)}
 									</p>
 								</div>
 							) : (
@@ -253,7 +258,8 @@ export default function Reviews() {
 												<span>·</span>
 												<Clock className="w-3 h-3" strokeWidth={1.5} />
 												<span>
-													{t('reviews.purchaseDate', 'Purchase date')}: {item.purchaseDate}
+													{t('reviews.purchaseDate', 'Purchase date')}:{' '}
+													{item.purchaseDate}
 												</span>
 											</div>
 										</div>
@@ -276,8 +282,14 @@ export default function Reviews() {
 							<div className="flex gap-2 overflow-x-auto">
 								{[
 									{ key: 'all', label: t('reviews.subTabAll', 'All') },
-									{ key: 'positive', label: t('reviews.subTabPositive', 'Positive') },
-									{ key: 'negative', label: t('reviews.subTabNegative', 'Negative') },
+									{
+										key: 'positive',
+										label: t('reviews.subTabPositive', 'Positive'),
+									},
+									{
+										key: 'negative',
+										label: t('reviews.subTabNegative', 'Negative'),
+									},
 								].map((tab) => (
 									<button
 										key={tab.key}
@@ -338,7 +350,11 @@ export default function Reviews() {
 												</div>
 												<div className="flex items-center gap-1 shrink-0">
 													{review.canEdit && (
-														<button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F8F8F8] text-[#6B6B6B]">
+														<button
+															title={t('common.edit', 'Edit')}
+															aria-label={t('common.edit', 'Edit')}
+															className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#F8F8F8] text-[#6B6B6B]"
+														>
 															<Edit3
 																className="w-4 h-4"
 																strokeWidth={1.5}
@@ -349,6 +365,8 @@ export default function Reviews() {
 														onClick={() =>
 															handleDeleteReview(review.id)
 														}
+														title={t('common.delete', 'Delete')}
+														aria-label={t('common.delete', 'Delete')}
 														className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#EF4444]/10 text-[#6B6B6B] hover:text-[#EF4444]"
 													>
 														<Trash2
@@ -388,7 +406,10 @@ export default function Reviews() {
 															strokeWidth={1.5}
 														/>
 														<span className="text-xs font-cairo font-semibold text-[#D4A853]">
-															{t('reviews.merchantReply', 'Merchant reply')}
+															{t(
+																'reviews.merchantReply',
+																'Merchant reply',
+															)}
 														</span>
 													</div>
 													<p className="text-sm text-[#6B6B6B] font-cairo">
@@ -433,7 +454,11 @@ export default function Reviews() {
 								<label className="block text-sm font-cairo font-semibold text-[#111111] mb-2">
 									{t('reviews.labelRating', 'Rating')}
 								</label>
-								<StarRatingInput rating={rating} onRate={setRating} ratingTexts={ratingTexts} />
+								<StarRatingInput
+									rating={rating}
+									onRate={setRating}
+									ratingTexts={ratingTexts}
+								/>
 							</div>
 
 							<div>
@@ -475,6 +500,8 @@ export default function Reviews() {
 														prev.filter((_, i) => i !== idx),
 													)
 												}
+												title={t('common.remove', 'Remove')}
+												aria-label={t('common.remove', 'Remove')}
 												className="absolute top-1 left-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center text-white"
 											>
 												<X className="w-3 h-3" strokeWidth={2} />
@@ -496,6 +523,7 @@ export default function Reviews() {
 										ref={fileInputRef}
 										type="file"
 										accept="image/*"
+										aria-label={t('reviews.labelPhotos', 'Upload photos')}
 										onChange={handlePhotoUpload}
 										className="hidden"
 									/>

@@ -341,6 +341,7 @@ export default function CategoriesPage() {
 									max={200000}
 									step={1000}
 									value={priceRange[1]}
+									aria-label={t('categories.ui.priceMax', 'Maximum price')}
 									onChange={(e) =>
 										setPriceRange([priceRange[0], Number(e.target.value)])
 									}

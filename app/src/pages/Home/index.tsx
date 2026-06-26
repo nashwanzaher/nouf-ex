@@ -294,6 +294,8 @@ export default function Home() {
 									/>
 									<button
 										type="button"
+										title={t('nav.imageSearch', 'Search by image')}
+										aria-label={t('nav.imageSearch', 'Search by image')}
 										className="h-full px-3 text-aliTextMute hover:text-aliOrange transition-colors"
 									>
 										<Camera size={20} />

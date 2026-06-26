@@ -566,5 +566,71 @@
     "statusShipped": "Shipped",
     "statusDelivered": "Delivered",
     "statusCancelled": "Cancelled"
+  },
+  "authCommon": {
+    "fieldRequired": "This field is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "invalidEmail": "Invalid email",
+    "statSellers": "10K+ Sellers",
+    "statProducts": "500K+ Products",
+    "statSecurePayment": "Secure Payment",
+    "viewMore": "View More"
+  },
+  "authLogin": {
+    "subtitle": "Welcome back to Nouf-ex",
+    "signInSuccess": "Signed in successfully",
+    "signInError": "Could not sign in. Please try again.",
+    "signInMobile": "Mobile number sign in",
+    "signInWith": "Sign in with",
+    "newUser": "New user?",
+    "emailOrPhonePlaceholder": "Your email or phone number",
+    "passwordPlaceholder": "Password",
+    "heroMena": "Your Gateway to MENA Commerce"
+  },
+  "authRegister": {
+    "subtitle": "Create your account and start your journey",
+    "accountCreated": "Account created successfully",
+    "accountCreateError": "Could not create the account. Please try again.",
+    "buyerTab": "Buyer",
+    "sellerTab": "Seller",
+    "termsRequired": "You must agree to the terms",
+    "phoneLabel": "Phone number",
+    "phonePlaceholder": "+9677...",
+    "heroJoin": "Join the largest e-commerce platform in the region"
+  },
+  "authForgot": {
+    "title": "Recover password",
+    "subtitle": "Enter your email and we'll send you a reset link",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Your email",
+    "sendButton": "Send reset link",
+    "sentTitle": "Sent!",
+    "sentSubtitle": "Check your email",
+    "sentTo": "We've sent the password reset link to {email}",
+    "resendIn": "Resend in {seconds} seconds",
+    "resend": "Resend",
+    "backToLogin": "Back to login",
+    "layoutBackLabel": "Back"
+  },
+  "authReset": {
+    "title": "Set a new password",
+    "subtitle": "Enter your new password below",
+    "newPasswordLabel": "New password",
+    "newPasswordPlaceholder": "New password",
+    "confirmPasswordLabel": "Confirm password",
+    "confirmPasswordPlaceholder": "Re-enter password",
+    "submitButton": "Set password",
+    "changedTitle": "Password changed!",
+    "changedBody": "Password updated successfully. You can now sign in with your new password.",
+    "signInCta": "Sign in",
+    "layoutBackLabel": "Back"
+  },
+  "authPasswordStrength": {
+    "weak": "Weak",
+    "medium": "Medium",
+    "good": "Good",
+    "strong": "Strong",
+    "excellent": "Excellent"
   }
 }

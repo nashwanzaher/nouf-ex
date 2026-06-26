@@ -615,5 +615,71 @@
     "statusShipped": "قيد الشحن",
     "statusDelivered": "تم التوصيل",
     "statusCancelled": "ملغي"
+  },
+  "authCommon": {
+    "fieldRequired": "هذا الحقل مطلوب",
+    "passwordMinLength": "كلمة المرور يجب أن تكون ٦ أحرف على الأقل",
+    "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
+    "invalidEmail": "بريد إلكتروني غير صالح",
+    "statSellers": "10K+ تاجر",
+    "statProducts": "500K+ منتج",
+    "statSecurePayment": "دفع آمن",
+    "viewMore": "اكتشف المزيد"
+  },
+  "authLogin": {
+    "subtitle": "أهلاً بك مجدداً في نوف إكس",
+    "signInSuccess": "تم تسجيل الدخول بنجاح",
+    "signInError": "تعذّر تسجيل الدخول. حاول مرة أخرى.",
+    "signInMobile": "تسجيل الدخول برقم الجوال",
+    "signInWith": "أو سجل دخول باستخدام",
+    "newUser": "مستخدم جديد؟",
+    "emailOrPhonePlaceholder": "بريدك الإلكتروني أو رقم الهاتف",
+    "passwordPlaceholder": "كلمة المرور",
+    "heroMena": "بوابتك للتجارة في الشرق الأوسط وشمال أفريقيا"
+  },
+  "authRegister": {
+    "subtitle": "أنشئ حسابك وابدأ رحلتك",
+    "accountCreated": "تم إنشاء حسابك بنجاح",
+    "accountCreateError": "تعذّر إنشاء الحساب. حاول مرة أخرى.",
+    "buyerTab": "مشتري",
+    "sellerTab": "تاجر",
+    "termsRequired": "يجب الموافقة على الشروط",
+    "phoneLabel": "رقم الهاتف",
+    "phonePlaceholder": "+9677...",
+    "heroJoin": "انضم إلى أكبر منصة تجارة إلكترونية في المنطقة"
+  },
+  "authForgot": {
+    "title": "استعادة كلمة المرور",
+    "subtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة التعيين",
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "بريدك الإلكتروني",
+    "sendButton": "إرسال رابط الاستعادة",
+    "sentTitle": "تم الإرسال!",
+    "sentSubtitle": "تحقق من بريدك الإلكتروني",
+    "sentTo": "لقد أرسلنا رابط استعادة كلمة المرور إلى {email}",
+    "resendIn": "إعادة الإرسال بعد {seconds} ثانية",
+    "resend": "إعادة الإرسال",
+    "backToLogin": "العودة لتسجيل الدخول",
+    "layoutBackLabel": "العودة"
+  },
+  "authReset": {
+    "title": "تعيين كلمة مرور جديدة",
+    "subtitle": "أدخل كلمة المرور الجديدة أدناه",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "كلمة المرور الجديدة",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+    "submitButton": "تعيين كلمة المرور",
+    "changedTitle": "تم تغيير كلمة المرور!",
+    "changedBody": "تم تحديث كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة.",
+    "signInCta": "تسجيل الدخول",
+    "layoutBackLabel": "العودة"
+  },
+  "authPasswordStrength": {
+    "weak": "ضعيف",
+    "medium": "متوسط",
+    "good": "جيد",
+    "strong": "قوي",
+    "excellent": "ممتاز"
   }
 }

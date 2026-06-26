@@ -38,15 +38,15 @@ export default function Register() {
 
 	const validate = () => {
 		const errs: Record<string, string> = {};
-		if (!email.trim()) errs.email = isRTL ? 'هذا الحقل مطلوب' : 'This field is required';
+		if (!email.trim()) errs.email = t('authCommon.fieldRequired', 'This field is required');
 		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-			errs.email = isRTL ? 'بريد إلكتروني غير صالح' : 'Invalid email';
-		if (!password.trim()) errs.password = isRTL ? 'هذا الحقل مطلوب' : 'This field is required';
+			errs.email = t('authCommon.invalidEmail', 'Invalid email');
+		if (!password.trim()) errs.password = t('authCommon.fieldRequired', 'This field is required');
 		else if (password.length < 6)
-			errs.password = isRTL ? '٦ أحرف على الأقل' : 'At least 6 characters';
+			errs.password = t('authCommon.passwordMinLength', 'Password must be at least 6 characters');
 		if (password !== confirmPassword)
-			errs.confirmPassword = isRTL ? 'كلمات المرور غير متطابقة' : 'Passwords do not match';
-		if (!terms) errs.terms = isRTL ? 'يجب الموافقة على الشروط' : 'You must agree to the terms';
+			errs.confirmPassword = t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
+		if (!terms) errs.terms = t('authRegister.termsRequired', 'You must agree to the terms');
 		setErrors(errs);
 		return Object.keys(errs).length === 0;
 	};
@@ -74,7 +74,7 @@ export default function Register() {
 			};
 			authLogin(authUser, result.token);
 			addToast({
-				message: isRTL ? 'تم إنشاء حسابك بنجاح' : 'Account created successfully',
+				message: t('authRegister.accountCreated', 'Account created successfully'),
 				type: 'success',
 			});
 			navigate('/customer', { replace: true });
@@ -82,9 +82,7 @@ export default function Register() {
 			const message =
 				err instanceof ApiError
 					? err.message
-					: isRTL
-						? 'تعذّر إنشاء الحساب. حاول مرة أخرى.'
-						: 'Could not create the account. Please try again.';
+					: t('authRegister.accountCreateError', 'Could not create the account. Please try again.');
 			setErrors({ form: message });
 			addToast({ message, type: 'error' });
 		} finally {
@@ -118,26 +116,24 @@ export default function Register() {
 						{isRTL ? 'نوف إكس' : 'Nouf-ex'}
 					</h1>
 					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
-						{isRTL
-							? 'انضم إلى أكبر منصة تجارة إلكترونية في المنطقة'
-							: 'Join the largest e-commerce platform in the region'}
+						{t('authRegister.heroJoin', 'Join the largest e-commerce platform in the region')}
 					</p>
 
 					<div className="grid grid-cols-3 gap-4 mb-8">
 						{[
 							{
 								icon: Users,
-								label: isRTL ? '10K+ تاجر' : '10K+ Sellers',
+								label: t('authCommon.statSellers', '10K+ Sellers'),
 								iconClass: styles.statIconOrange,
 							},
 							{
 								icon: TrendingUp,
-								label: isRTL ? '500K+ منتج' : '500K+ Products',
+								label: t('authCommon.statProducts', '500K+ Products'),
 								iconClass: styles.statIconBlue,
 							},
 							{
 								icon: Shield,
-								label: isRTL ? 'دفع آمن' : 'Secure Payment',
+								label: t('authCommon.statSecurePayment', 'Secure Payment'),
 								iconClass: styles.statIconGreen,
 							},
 						].map((stat, i) => (
@@ -160,7 +156,7 @@ export default function Register() {
 						to="/"
 						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}
 					>
-						{isRTL ? 'اكتشف المزيد' : 'View More'}
+						{t('authCommon.viewMore', 'View More')}
 						<TrendingUp className="w-4 h-4" strokeWidth={1.5} />
 					</Link>
 				</div>
@@ -177,9 +173,7 @@ export default function Register() {
 									{t('auth.registerTitle')}
 								</h1>
 								<p className={`text-sm ${styles.formSubtitle}`}>
-									{isRTL
-										? 'أنشئ حسابك وابدأ رحلتك'
-										: 'Create your account and start your journey'}
+									{t('authRegister.subtitle', 'Create your account and start your journey')}
 								</p>
 							</div>
 
@@ -196,7 +190,7 @@ export default function Register() {
 										strokeWidth={1.5}
 									/>
 									<span className={`text-sm font-semibold ${styles.formLabel}`}>
-										{isRTL ? 'مشتري' : 'Buyer'}
+										{t('authRegister.buyerTab', 'Buyer')}
 									</span>
 								</button>
 								<button
@@ -207,7 +201,7 @@ export default function Register() {
 								>
 									<Store className={`w-6 h-6 ${styles.icon}`} strokeWidth={1.5} />
 									<span className={`text-sm font-semibold ${styles.formLabel}`}>
-										{isRTL ? 'بائع' : 'Seller'}
+										{t('authRegister.sellerTab', 'Seller')}
 									</span>
 								</button>
 							</div>
@@ -361,9 +355,10 @@ export default function Register() {
 										<span
 											className={`text-xs leading-relaxed ${styles.formSubtitle}`}
 										>
-											{isRTL
-												? 'أوافق على شروط الخدمة وسياسة الخصوصية'
-												: 'I agree to the Terms of Service and Privacy Policy'}
+										{t(
+											'auth.iAgree',
+											'I agree to the Terms of Service and Privacy Policy',
+										)}
 										</span>
 									</button>
 									{errors.terms && (

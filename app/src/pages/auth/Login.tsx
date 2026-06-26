@@ -24,12 +24,10 @@ export default function Login() {
 
 	const validate = () => {
 		const errs: Record<string, string> = {};
-		if (!email.trim()) errs.email = isRTL ? 'هذا الحقل مطلوب' : 'This field is required';
-		if (!password.trim()) errs.password = isRTL ? 'هذا الحقل مطلوب' : 'This field is required';
+		if (!email.trim()) errs.email = t('authCommon.fieldRequired', 'This field is required');
+		if (!password.trim()) errs.password = t('authCommon.fieldRequired', 'This field is required');
 		else if (password.length < 6)
-			errs.password = isRTL
-				? 'كلمة المرور يجب أن تكون ٦ أحرف على الأقل'
-				: 'Password must be at least 6 characters';
+			errs.password = t('authCommon.passwordMinLength', 'Password must be at least 6 characters');
 		setErrors(errs);
 		return Object.keys(errs).length === 0;
 	};
@@ -56,7 +54,7 @@ export default function Login() {
 			// "signed in" toast — that's the more important signal.
 			await authLogin(authUser, result.token);
 			addToast({
-				message: isRTL ? 'تم تسجيل الدخول بنجاح' : 'Signed in successfully',
+				message: t('authLogin.signInSuccess', 'Signed in successfully'),
 				type: 'success',
 			});
 			// Send the user to where they came from, or to the customer dashboard.
@@ -66,9 +64,7 @@ export default function Login() {
 			const message =
 				err instanceof ApiError
 					? err.message
-					: isRTL
-						? 'تعذّر تسجيل الدخول. حاول مرة أخرى.'
-						: 'Could not sign in. Please try again.';
+					: t('authLogin.signInError', 'Could not sign in. Please try again.');
 			setErrors({ form: message });
 			addToast({ message, type: 'error' });
 		} finally {
@@ -106,9 +102,7 @@ export default function Login() {
 						{isRTL ? 'نوف إكس' : 'Nouf-ex'}
 					</h1>
 					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
-						{isRTL
-							? 'بوابتك للتجارة في الشرق الأوسط وشمال أفريقيا'
-							: 'Your Gateway to MENA Commerce'}
+						{t('authLogin.heroMena', 'Your Gateway to MENA Commerce')}
 					</p>
 
 					{/* Hero stats */}
@@ -116,17 +110,17 @@ export default function Login() {
 						{[
 							{
 								icon: Users,
-								label: isRTL ? '10K+ تاجر' : '10K+ Sellers',
+								label: t('authCommon.statSellers', '10K+ Sellers'),
 								iconClass: styles.statIconOrange,
 							},
 							{
 								icon: TrendingUp,
-								label: isRTL ? '500K+ منتج' : '500K+ Products',
+								label: t('authCommon.statProducts', '500K+ Products'),
 								iconClass: styles.statIconBlue,
 							},
 							{
 								icon: Shield,
-								label: isRTL ? 'دفع آمن' : 'Secure Payment',
+								label: t('authCommon.statSecurePayment', 'Secure Payment'),
 								iconClass: styles.statIconGreen,
 							},
 						].map((stat, i) => (
@@ -149,7 +143,7 @@ export default function Login() {
 						to="/"
 						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}
 					>
-						{isRTL ? 'اكتشف المزيد' : 'View More'}
+						{t('authCommon.viewMore', 'View More')}
 						<TrendingUp className="w-4 h-4" strokeWidth={1.5} />
 					</Link>
 				</div>
@@ -167,9 +161,7 @@ export default function Login() {
 									{t('auth.loginTitle')}
 								</h1>
 								<p className={`text-sm ${styles.formSubtitle}`}>
-									{isRTL
-										? 'أهلاً بك مجدداً في نوف إكس'
-										: 'Welcome back to Nouf-ex'}
+									{t('authLogin.subtitle', 'Welcome back to Nouf-ex')}
 								</p>
 							</div>
 
@@ -201,11 +193,10 @@ export default function Login() {
 												setEmail(e.target.value);
 												setErrors((p) => ({ ...p, email: '' }));
 											}}
-											placeholder={
-												isRTL
-													? 'بريدك الإلكتروني أو رقم الهاتف'
-													: 'Your email or phone number'
-											}
+											placeholder={t(
+											'authLogin.emailOrPhonePlaceholder',
+											'Your email or phone number',
+										)}
 											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
 										/>
 									</div>
@@ -235,7 +226,7 @@ export default function Login() {
 												setPassword(e.target.value);
 												setErrors((p) => ({ ...p, password: '' }));
 											}}
-											placeholder={isRTL ? 'كلمة المرور' : 'Password'}
+											placeholder={t('authLogin.passwordPlaceholder', 'Password')}
 											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.password ? styles.inputError : styles.input}`}
 										/>
 										<button
@@ -287,7 +278,7 @@ export default function Login() {
 									type="button"
 									className={`text-sm hover:underline ${styles.link}`}
 								>
-									{isRTL ? 'تسجيل الدخول برقم الجوال' : 'Mobile number sign in'}
+									{t('authLogin.signInMobile', 'Mobile number sign in')}
 								</button>
 							</div>
 
@@ -301,7 +292,7 @@ export default function Login() {
 										<span
 											className={`bg-white px-4 text-xs ${styles.dividerLabel}`}
 										>
-											{isRTL ? 'أو سجل دخول باستخدام' : 'Sign in with'}
+											{t('authLogin.signInWith', 'Sign in with')}
 										</span>
 									</div>
 								</div>
@@ -343,7 +334,7 @@ export default function Login() {
 
 							{/* Create account */}
 							<p className={`mt-6 text-center text-sm ${styles.formSubtitle}`}>
-								{isRTL ? 'مستخدم جديد؟' : 'New user?'}{' '}
+								{t('authLogin.newUser', 'New user?')}{' '}
 								<Link
 									to="/auth/register"
 									className={`font-semibold hover:underline ${styles.ctaLink}`}

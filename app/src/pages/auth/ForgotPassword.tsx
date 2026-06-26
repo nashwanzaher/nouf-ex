@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import AuthLayout from './AuthLayout';
 
 export default function ForgotPassword() {
+	const { t } = useTranslation();
 	const [email, setEmail] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
@@ -17,11 +19,11 @@ export default function ForgotPassword() {
 		e.preventDefault();
 		setError('');
 		if (!email.trim()) {
-			setError('هذا الحقل مطلوب');
+			setError(t('authCommon.fieldRequired', 'This field is required'));
 			return;
 		}
 		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-			setError('يرجى إدخال بريد إلكتروني صحيح');
+			setError(t('authCommon.invalidEmail', 'Invalid email'));
 			return;
 		}
 		setIsLoading(true);
@@ -52,24 +54,27 @@ export default function ForgotPassword() {
 	};
 
 	return (
-		<AuthLayout backLink="/auth/login" backLabel="العودة لتسجيل الدخول">
+		<AuthLayout
+			backLink="/auth/login"
+			backLabel={t('authForgot.backToLogin', 'Back to login')}
+		>
 			<div className="animate-in slide-in-from-left-4 duration-500">
 				{!submitted ? (
 					<>
 						{/* Header */}
 						<div className="mb-8">
 							<h1 className="text-3xl font-amiri font-bold text-[#1A1612] mb-2">
-								استعادة كلمة المرور
+								{t('authForgot.title', 'Recover password')}
 							</h1>
 							<p className="text-[#6B6B6B] font-cairo text-sm leading-relaxed">
-								أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة التعيين
+								{t('authForgot.subtitle', "Enter your email and we'll send you a reset link")}
 							</p>
 						</div>
 
 						<form onSubmit={handleSubmit} className="space-y-5">
 							<div>
 								<Label className="font-cairo text-sm text-[#111111]">
-									البريد الإلكتروني
+									{t('authForgot.emailLabel', 'Email')}
 								</Label>
 								<div className="relative mt-1.5">
 									<Mail
@@ -83,7 +88,7 @@ export default function ForgotPassword() {
 											setEmail(e.target.value);
 											setError('');
 										}}
-										placeholder="بريدك الإلكتروني"
+										placeholder={t('authForgot.emailPlaceholder', 'Your email')}
 										className={`pr-10 rounded-xl h-12 font-cairo text-sm ${error ? 'border-[#EF4444]' : ''}`}
 									/>
 								</div>
@@ -102,7 +107,7 @@ export default function ForgotPassword() {
 								{isLoading ? (
 									<div className="w-5 h-5 border-2 border-[#1A1612] border-t-transparent rounded-full animate-spin" />
 								) : (
-									'إرسال رابط الاستعادة'
+									t('authForgot.sendButton', 'Send reset link')
 								)}
 							</Button>
 						</form>
@@ -114,20 +119,23 @@ export default function ForgotPassword() {
 							<CheckCircle className="w-10 h-10 text-[#10B981]" strokeWidth={1.5} />
 						</div>
 						<h2 className="text-2xl font-amiri font-bold text-[#1A1612] mb-3">
-							تم الإرسال!
+							{t('authForgot.sentTitle', 'Sent!')}
 						</h2>
 						<p className="text-[#6B6B6B] font-cairo text-sm leading-relaxed mb-2">
-							تحقق من بريدك الإلكتروني
+							{t('authForgot.sentSubtitle', 'Check your email')}
 						</p>
 						<p className="text-xs text-[#AAAAAA] font-cairo mb-8">
-							لقد أرسلنا رابط استعادة كلمة المرور إلى{' '}
-							<span className="font-semibold text-[#6B6B6B]">{email}</span>
+							{t('authForgot.sentTo', "We've sent the password reset link to {email}", {
+								email,
+							})}
 						</p>
 
 						<div className="space-y-4">
 							{countdown > 0 ? (
 								<p className="text-sm text-[#AAAAAA] font-cairo">
-									إعادة الإرسال بعد {countdown} ثانية
+									{t('authForgot.resendIn', 'Resend in {seconds} seconds', {
+										seconds: countdown,
+									})}
 								</p>
 							) : (
 								<Button
@@ -139,7 +147,7 @@ export default function ForgotPassword() {
 									{isLoading ? (
 										<div className="w-4 h-4 border-2 border-[#D4A853] border-t-transparent rounded-full animate-spin" />
 									) : (
-										'إعادة الإرسال'
+										t('authForgot.resend', 'Resend')
 									)}
 								</Button>
 							)}
@@ -150,7 +158,7 @@ export default function ForgotPassword() {
 									className="inline-flex items-center gap-1 text-sm text-[#D4A853] font-cairo hover:underline"
 								>
 									<ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-									العودة لتسجيل الدخول
+									{t('authForgot.backToLogin', 'Back to login')}
 								</Link>
 							</div>
 						</div>
@@ -165,7 +173,7 @@ export default function ForgotPassword() {
 							className="inline-flex items-center gap-1 text-sm text-[#D4A853] font-cairo hover:underline"
 						>
 							<ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-							العودة لتسجيل الدخول
+							{t('authForgot.backToLogin', 'Back to login')}
 						</Link>
 					</div>
 				)}

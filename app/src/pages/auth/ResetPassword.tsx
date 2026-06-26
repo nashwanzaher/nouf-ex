@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from './AuthLayout';
 
-function PasswordStrength({ password }: { password: string }) {
+function PasswordStrength({ password, t }: { password: string; t: TFunction }) {
 	let score = 0;
 	if (password.length >= 8) score++;
 	if (/[A-Z]/.test(password)) score++;
@@ -14,7 +16,13 @@ function PasswordStrength({ password }: { password: string }) {
 	if (/[0-9]/.test(password)) score++;
 	if (/[^A-Za-z0-9]/.test(password)) score++;
 
-	const labels = ['ضعيف', 'متوسط', 'جيد', 'قوي', 'ممتاز'];
+	const labels = [
+		t('authPasswordStrength.weak', 'Weak'),
+		t('authPasswordStrength.medium', 'Medium'),
+		t('authPasswordStrength.good', 'Good'),
+		t('authPasswordStrength.strong', 'Strong'),
+		t('authPasswordStrength.excellent', 'Excellent'),
+	];
 	const colors = ['bg-[#EF4444]', 'bg-[#F59E0B]', 'bg-[#D4A853]', 'bg-[#10B981]', 'bg-[#2563EB]'];
 	const textColors = [
 		'text-[#EF4444]',
@@ -44,6 +52,7 @@ function PasswordStrength({ password }: { password: string }) {
 }
 
 export default function ResetPassword() {
+	const { t } = useTranslation();
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
@@ -54,9 +63,11 @@ export default function ResetPassword() {
 
 	const validate = () => {
 		const errs: Record<string, string> = {};
-		if (!password.trim()) errs.password = 'هذا الحقل مطلوب';
-		else if (password.length < 6) errs.password = 'كلمة المرور يجب أن تكون ٦ أحرف على الأقل';
-		if (password !== confirmPassword) errs.confirmPassword = 'كلمات المرور غير متطابقة';
+		if (!password.trim()) errs.password = t('authCommon.fieldRequired', 'This field is required');
+		else if (password.length < 6)
+			errs.password = t('authCommon.passwordMinLength', 'Password must be at least 6 characters');
+		if (password !== confirmPassword)
+			errs.confirmPassword = t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
 		setErrors(errs);
 		return Object.keys(errs).length === 0;
 	};
@@ -78,15 +89,14 @@ export default function ResetPassword() {
 						<CheckCircle className="w-10 h-10 text-[#10B981]" strokeWidth={1.5} />
 					</div>
 					<h2 className="text-2xl font-amiri font-bold text-[#1A1612] mb-3">
-						تم تغيير كلمة المرور!
+						{t('authReset.changedTitle', 'Password changed!')}
 					</h2>
 					<p className="text-[#6B6B6B] font-cairo text-sm leading-relaxed mb-8">
-						تم تحديث كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول باستخدام كلمة المرور
-						الجديدة.
+						{t('authReset.changedBody', 'Password updated successfully.')}
 					</p>
 					<Link to="/auth/login">
 						<Button className="w-full h-[52px] bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-bold text-base rounded-xl transition-transform active:scale-[0.98]">
-							تسجيل الدخول
+							{t('authReset.signInCta', 'Sign in')}
 						</Button>
 					</Link>
 				</div>
@@ -95,15 +105,18 @@ export default function ResetPassword() {
 	}
 
 	return (
-		<AuthLayout backLink="/auth/forgot-password" backLabel="العودة">
+		<AuthLayout
+			backLink="/auth/forgot-password"
+			backLabel={t('authReset.layoutBackLabel', 'Back')}
+		>
 			<div className="animate-in slide-in-from-left-4 duration-500">
 				{/* Header */}
 				<div className="mb-8">
 					<h1 className="text-3xl font-amiri font-bold text-[#1A1612] mb-2">
-						تعيين كلمة مرور جديدة
+						{t('authReset.title', 'Set a new password')}
 					</h1>
 					<p className="text-[#6B6B6B] font-cairo text-sm">
-						أدخل كلمة المرور الجديدة أدناه
+						{t('authReset.subtitle', 'Enter your new password below')}
 					</p>
 				</div>
 
@@ -111,7 +124,7 @@ export default function ResetPassword() {
 					{/* New Password */}
 					<div>
 						<Label className="font-cairo text-sm text-[#111111]">
-							كلمة المرور الجديدة
+							{t('authReset.newPasswordLabel', 'New password')}
 						</Label>
 						<div className="relative mt-1.5">
 							<Lock
@@ -125,7 +138,7 @@ export default function ResetPassword() {
 									setPassword(e.target.value);
 									setErrors((p) => ({ ...p, password: '' }));
 								}}
-								placeholder="كلمة المرور الجديدة"
+								placeholder={t('authReset.newPasswordPlaceholder', 'New password')}
 								className={`pr-10 pl-10 rounded-xl h-12 font-cairo text-sm ${errors.password ? 'border-[#EF4444]' : ''}`}
 							/>
 							<button
@@ -140,7 +153,7 @@ export default function ResetPassword() {
 								)}
 							</button>
 						</div>
-						<PasswordStrength password={password} />
+						<PasswordStrength password={password} t={t} />
 						{errors.password && (
 							<p className="text-[#EF4444] text-xs font-cairo mt-1">
 								{errors.password}
@@ -151,7 +164,7 @@ export default function ResetPassword() {
 					{/* Confirm Password */}
 					<div>
 						<Label className="font-cairo text-sm text-[#111111]">
-							تأكيد كلمة المرور
+							{t('authReset.confirmPasswordLabel', 'Confirm password')}
 						</Label>
 						<div className="relative mt-1.5">
 							<Lock
@@ -165,7 +178,7 @@ export default function ResetPassword() {
 									setConfirmPassword(e.target.value);
 									setErrors((p) => ({ ...p, confirmPassword: '' }));
 								}}
-								placeholder="أعد إدخال كلمة المرور"
+								placeholder={t('authReset.confirmPasswordPlaceholder', 'Re-enter password')}
 								className={`pr-10 pl-10 rounded-xl h-12 font-cairo text-sm ${errors.confirmPassword ? 'border-[#EF4444]' : ''}`}
 							/>
 							<button
@@ -196,7 +209,7 @@ export default function ResetPassword() {
 						{isLoading ? (
 							<div className="w-5 h-5 border-2 border-[#1A1612] border-t-transparent rounded-full animate-spin" />
 						) : (
-							'تعيين كلمة المرور'
+							t('authReset.submitButton', 'Set password')
 						)}
 					</Button>
 				</form>

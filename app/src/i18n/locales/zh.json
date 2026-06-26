@@ -565,5 +565,71 @@
     "statusShipped": "已发货",
     "statusDelivered": "已送达",
     "statusCancelled": "已取消"
+  },
+  "authCommon": {
+    "fieldRequired": "此字段为必填项",
+    "passwordMinLength": "密码至少需要 6 个字符",
+    "passwordsDoNotMatch": "两次输入的密码不一致",
+    "invalidEmail": "邮箱格式无效",
+    "statSellers": "10K+ 商家",
+    "statProducts": "500K+ 商品",
+    "statSecurePayment": "安全支付",
+    "viewMore": "查看更多"
+  },
+  "authLogin": {
+    "subtitle": "欢迎回到 Nouf-ex",
+    "signInSuccess": "登录成功",
+    "signInError": "无法登录，请重试。",
+    "signInMobile": "使用手机号登录",
+    "signInWith": "使用以下方式登录",
+    "newUser": "新用户？",
+    "emailOrPhonePlaceholder": "您的邮箱或手机号",
+    "passwordPlaceholder": "密码",
+    "heroMena": "您通往中东及北非贸易的大门"
+  },
+  "authRegister": {
+    "subtitle": "创建您的账户并开始您的旅程",
+    "accountCreated": "账户创建成功",
+    "accountCreateError": "无法创建账户，请重试。",
+    "buyerTab": "买家",
+    "sellerTab": "卖家",
+    "termsRequired": "您必须同意条款",
+    "phoneLabel": "电话号码",
+    "phonePlaceholder": "+9677...",
+    "heroJoin": "加入本地区最大的电商平台"
+  },
+  "authForgot": {
+    "title": "找回密码",
+    "subtitle": "输入您的邮箱，我们将向您发送重置链接",
+    "emailLabel": "电子邮箱",
+    "emailPlaceholder": "您的邮箱",
+    "sendButton": "发送重置链接",
+    "sentTitle": "已发送！",
+    "sentSubtitle": "请检查您的邮箱",
+    "sentTo": "我们已将密码重置链接发送至 {email}",
+    "resendIn": "{seconds} 秒后可重新发送",
+    "resend": "重新发送",
+    "backToLogin": "返回登录",
+    "layoutBackLabel": "返回"
+  },
+  "authReset": {
+    "title": "设置新密码",
+    "subtitle": "请在下方输入您的新密码",
+    "newPasswordLabel": "新密码",
+    "newPasswordPlaceholder": "新密码",
+    "confirmPasswordLabel": "确认密码",
+    "confirmPasswordPlaceholder": "重新输入密码",
+    "submitButton": "设置密码",
+    "changedTitle": "密码已更改！",
+    "changedBody": "密码更新成功。您现在可以使用新密码登录。",
+    "signInCta": "登录",
+    "layoutBackLabel": "返回"
+  },
+  "authPasswordStrength": {
+    "weak": "弱",
+    "medium": "中等",
+    "good": "良好",
+    "strong": "强",
+    "excellent": "极强"
   }
 }

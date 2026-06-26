@@ -17,6 +17,8 @@
 
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
 	Package,
 	ChevronDown,
@@ -36,15 +38,6 @@ import type { Order, OrderWithItems } from '@/hooks/useApi';
 
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
-const statusFilters: Array<{ key: 'all' | OrderStatus; label: string }> = [
-	{ key: 'all', label: 'الكل' },
-	{ key: 'pending', label: 'قيد الانتظار' },
-	{ key: 'processing', label: 'قيد المعالجة' },
-	{ key: 'shipped', label: 'قيد الشحن' },
-	{ key: 'delivered', label: 'تم التوصيل' },
-	{ key: 'cancelled', label: 'ملغي' },
-];
-
 const statusColors: Record<OrderStatus, string> = {
 	pending: 'bg-[#F59E0B] text-white',
 	processing: 'bg-[#2563EB] text-white',
@@ -53,28 +46,29 @@ const statusColors: Record<OrderStatus, string> = {
 	cancelled: 'bg-[#EF4444] text-white',
 };
 
-const statusLabels: Record<OrderStatus, string> = {
-	pending: 'قيد الانتظار',
-	processing: 'قيد المعالجة',
-	shipped: 'قيد الشحن',
-	delivered: 'تم التوصيل',
-	cancelled: 'ملغي',
-};
-
-const timelineSteps: Array<{ key: OrderStatus; label: string; icon: typeof Clock }> = [
-	{ key: 'pending', label: 'تم الطلب', icon: Clock },
-	{ key: 'processing', label: 'قيد المعالجة', icon: Package },
-	{ key: 'shipped', label: 'تم الشحن', icon: Truck },
-	{ key: 'delivered', label: 'تم التوصيل', icon: CheckCircle },
+const timelineSteps: Array<{ key: OrderStatus; icon: typeof Clock }> = [
+	{ key: 'pending', icon: Clock },
+	{ key: 'processing', icon: Package },
+	{ key: 'shipped', icon: Truck },
+	{ key: 'delivered', icon: CheckCircle },
 ];
 
-function OrderTimeline({ status }: { status: OrderStatus }) {
+function OrderTimeline({ status, t }: { status: OrderStatus; t: TFunction }) {
 	if (status === 'cancelled') return null;
 	const activeIndex = timelineSteps.findIndex((s) => s.key === status);
+	const stepLabels: Record<OrderStatus, string> = {
+		pending: t('orders.timelinePlaced', 'Order placed'),
+		processing: t('customer.processing', 'Processing'),
+		shipped: t('orders.statusShipped', 'Shipped'),
+		delivered: t('orders.statusDelivered', 'Delivered'),
+		cancelled: '',
+	};
 
 	return (
 		<div className="mt-6 p-5 bg-[#F8F8F8] rounded-xl">
-			<p className="text-sm font-cairo font-semibold text-[#111111] mb-4">تتبع الطلب</p>
+			<p className="text-sm font-cairo font-semibold text-[#111111] mb-4">
+				{t('customer.tracking', 'Order tracking')}
+			</p>
 			<div className="flex items-start justify-between relative">
 				<div className="absolute top-4 right-6 left-6 h-0.5 bg-[#F3EDE4] z-0" />
 				<div
@@ -101,7 +95,7 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
 							<span
 								className={`text-[10px] font-cairo font-medium ${isActive ? 'text-[#111111]' : 'text-[#AAAAAA]'}`}
 							>
-								{step.label}
+								{stepLabels[step.key]}
 							</span>
 						</div>
 					);
@@ -144,12 +138,29 @@ function formatYer(amount: number | string): string {
 }
 
 export default function CustomerOrders() {
+	const { t } = useTranslation();
 	const { isAuthenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [activeFilter, setActiveFilter] = useState<'all' | OrderStatus>('all');
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 
 	const { data: orders = [], loading, error, refetch } = useOrders();
+
+	const statusFilters: Array<{ key: 'all' | OrderStatus; label: string }> = [
+		{ key: 'all', label: t('orders.statusAll', 'All') },
+		{ key: 'pending', label: t('orders.statusPending', 'Pending') },
+		{ key: 'processing', label: t('orders.statusProcessing', 'Processing') },
+		{ key: 'shipped', label: t('orders.statusShipped', 'Shipped') },
+		{ key: 'delivered', label: t('orders.statusDelivered', 'Delivered') },
+		{ key: 'cancelled', label: t('orders.statusCancelled', 'Cancelled') },
+	];
+	const statusLabels: Record<OrderStatus, string> = {
+		pending: t('orders.statusPending', 'Pending'),
+		processing: t('orders.statusProcessing', 'Processing'),
+		shipped: t('orders.statusShipped', 'Shipped'),
+		delivered: t('orders.statusDelivered', 'Delivered'),
+		cancelled: t('orders.statusCancelled', 'Cancelled'),
+	};
 
 	// If the user just placed an order from /checkout, the URL has
 	// `?just=N`. Auto-expand that order on first load. We do the
@@ -188,10 +199,10 @@ export default function CustomerOrders() {
 							strokeWidth={1.5}
 						/>
 						<h2 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-							سجّل الدخول لعرض طلباتك
+							{t('orders.guestTitle', 'Sign in to view your orders')}
 						</h2>
 						<p className="text-sm text-[#6B6B6B] font-cairo mb-4">
-							طلباتك محفوظة في حسابك. سجّل الدخول للوصول إليها.
+							{t('orders.guestBody', 'Your orders are saved in your account.')}
 						</p>
 						<Button
 							asChild
@@ -212,8 +223,12 @@ export default function CustomerOrders() {
 			<div className="md:mr-60 min-h-[100dvh]">
 				<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30 flex items-center justify-between">
 					<div>
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">طلباتي</h1>
-						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">تتبع وإدارة طلباتك</p>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+							{t('customer.orders', 'My Orders')}
+						</h1>
+						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
+							{t('orders.subtitle', 'Track and manage your orders')}
+						</p>
 					</div>
 					{searchParams.get('just') && (
 						<button
@@ -224,7 +239,7 @@ export default function CustomerOrders() {
 								setSearchParams(searchParams, { replace: true });
 							}}
 						>
-							تم استلام الطلب الجديد
+							{t('orders.justReceived', 'New order received')}
 						</button>
 					)}
 				</div>
@@ -251,21 +266,23 @@ export default function CustomerOrders() {
 					{loading && (
 						<div className="bg-white rounded-2xl p-10 text-center shadow-sm">
 							<Loader2 className="w-8 h-8 mx-auto text-[#D4A853] animate-spin" />
-							<p className="mt-3 text-sm text-[#6B6B6B] font-cairo">جاري التحميل…</p>
+							<p className="mt-3 text-sm text-[#6B6B6B] font-cairo">
+								{t('orders.loading', 'Loading...')}
+							</p>
 						</div>
 					)}
 					{!loading && error && (
 						<div className="bg-white rounded-2xl p-10 text-center shadow-sm">
 							<XCircle className="w-10 h-10 mx-auto text-[#EF4444] mb-3" />
 							<h3 className="text-lg font-amiri font-bold text-[#1A1612] mb-2">
-								تعذّر تحميل الطلبات
+								{t('orders.errorTitle', 'Failed to load orders')}
 							</h3>
 							<p className="text-sm text-[#6B6B6B] font-cairo mb-4">{error}</p>
 							<Button
 								onClick={() => refetch()}
 								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 							>
-								حاول مرة أخرى
+								{t('orders.errorRetry', 'Try again')}
 							</Button>
 						</div>
 					)}
@@ -275,16 +292,16 @@ export default function CustomerOrders() {
 								<Package className="w-10 h-10 text-[#AAAAAA]" strokeWidth={1.5} />
 							</div>
 							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-								لا توجد طلبات
+								{t('customer.noOrders', 'No orders yet')}
 							</h3>
 							<p className="text-[#6B6B6B] font-cairo text-sm mb-4">
-								لا توجد طلبات في هذه الحالة حالياً
+								{t('orders.emptyBody', 'No orders in this status currently')}
 							</p>
 							<Button
 								asChild
 								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 							>
-								<Link to="/">تصفح المنتجات</Link>
+								<Link to="/">{t('orders.emptyBrowse', 'Browse products')}</Link>
 							</Button>
 						</div>
 					)}
@@ -327,7 +344,11 @@ export default function CustomerOrders() {
 														</div>
 														<p className="text-xs text-[#6B6B6B] font-cairo mt-0.5">
 															{formatDate(order.created_at)} ·{' '}
-															{items.length} منتج
+															{t(
+																'orders.itemsCount',
+																'{count} product',
+																{ count: items.length },
+															)}
 														</p>
 													</div>
 												</div>
@@ -388,7 +409,11 @@ export default function CustomerOrders() {
 													))}
 													{items.length > 3 && (
 														<span className="text-xs text-[#6B6B6B] font-cairo self-center">
-															+{items.length - 3} أكثر
+															{t(
+																'orders.moreItems',
+																'+{count} more',
+																{ count: items.length - 3 },
+															)}
 														</span>
 													)}
 												</div>
@@ -398,32 +423,32 @@ export default function CustomerOrders() {
 										{/* Expanded body */}
 										{expanded && (
 											<div className="border-t border-[#F3EDE4] bg-[#FCFAF6] p-5">
-												<OrderTimeline status={status} />
+												<OrderTimeline status={status} t={t} />
 												<div className="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
 													<div>
 														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-															طريقة الدفع
+															{t('orders.paymentMethod', 'Payment method')}
 														</p>
 														<p className="font-cairo text-[#111111]">
 															{order.payment_method === 'cod'
-																? 'الدفع عند الاستلام'
+																? t('orders.paymentCod', 'Cash on delivery')
 																: order.payment_method}
 														</p>
 													</div>
 													<div>
 														<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-															حالة الدفع
+															{t('orders.paymentStatus', 'Payment status')}
 														</p>
 														<p className="font-cairo text-[#111111]">
 															{order.payment_status === 'paid'
-																? 'مدفوع'
-																: 'قيد السداد'}
+																? t('orders.paid', 'Paid')
+																: t('orders.pendingPayment', 'Pending payment')}
 														</p>
 													</div>
 													{order.shipping_address && (
 														<div className="sm:col-span-2">
 															<p className="text-xs text-[#6B6B6B] font-cairo mb-1">
-																عنوان الشحن
+																{t('orders.shippingAddress', 'Shipping address')}
 															</p>
 															<p className="font-cairo text-[#111111]">
 																{typeof order.shipping_address ===
@@ -444,7 +469,7 @@ export default function CustomerOrders() {
 														onClick={() => refetch()}
 													>
 														<RotateCcw className="w-4 h-4 me-1" />
-														تحديث الحالة
+														{t('orders.refreshStatus', 'Refresh status')}
 													</Button>
 												</div>
 											</div>

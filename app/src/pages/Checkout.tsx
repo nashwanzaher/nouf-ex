@@ -46,7 +46,7 @@ import type { Address, CouponValidation, ShippingMethod } from '@/hooks/useApi';
 const COUNTRY_DEFAULT = 'YE';
 
 export default function Checkout() {
-	const { i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const isRTL = i18n.language === 'ar';
 	const { state: cartState, dispatch, cartTotal } = useCart();
@@ -138,7 +138,7 @@ export default function Checkout() {
 			!newAddress.street
 		) {
 			addAppToast({
-				message: isRTL ? 'يرجى تعبئة الحقول المطلوبة' : 'Please fill the required fields',
+				message: t('checkout.fillRequired', 'Please fill the required fields'),
 				type: 'warning',
 			});
 			return;
@@ -162,12 +162,12 @@ export default function Checkout() {
 			setNewAddress({});
 			refetchAddresses();
 			addAppToast({
-				message: isRTL ? 'تم حفظ العنوان' : 'Address saved',
+				message: t('checkout.addressSaved', 'Address saved'),
 				type: 'success',
 			});
 		} catch (err) {
 			addAppToast({
-				message: err instanceof Error ? err.message : 'Failed to save address',
+				message: err instanceof Error ? err.message : t('checkout.addressSaveFailed', 'Failed to save address'),
 				type: 'error',
 			});
 		}
@@ -177,14 +177,14 @@ export default function Checkout() {
 		if (!user) return;
 		if (cartState.items.length === 0) {
 			addAppToast({
-				message: isRTL ? 'السلة فارغة' : 'Your cart is empty',
+				message: t('checkout.emptyCart', 'Your cart is empty'),
 				type: 'warning',
 			});
 			return;
 		}
 		if (selectedAddressId == null) {
 			addAppToast({
-				message: isRTL ? 'اختر عنوانًا للشحن' : 'Pick a shipping address',
+				message: t('checkout.pickAddress', 'Pick a shipping address'),
 				type: 'warning',
 			});
 			return;
@@ -237,9 +237,9 @@ export default function Checkout() {
 				console.warn('[Checkout] server cart clear failed', err);
 			});
 			addAppToast({
-				message: isRTL
-					? `تم الطلب ${result.orderNumber}`
-					: `Order ${result.orderNumber} placed`,
+				message: t('checkout.orderPlaced', 'Order {number} placed', {
+					number: result.orderNumber,
+				}),
 				type: 'success',
 			});
 			navigate(`/customer/orders?just=${result.id}`, { replace: true });
@@ -256,24 +256,22 @@ export default function Checkout() {
 				<div className="max-w-md w-full bg-white border border-aliBorder rounded-2xl p-8 text-center">
 					<ShoppingBag className="w-12 h-12 mx-auto text-aliOrange" strokeWidth={1.5} />
 					<h1 className="mt-4 text-xl font-bold text-aliText">
-						{isRTL ? 'سجّل الدخول للمتابعة' : 'Sign in to checkout'}
+						{t('checkout.guestTitle', 'Sign in to checkout')}
 					</h1>
 					<p className="mt-2 text-sm text-aliTextMute">
-						{isRTL
-							? 'لديك ' +
-								cartState.items.length +
-								' منتج في السلة. سجّل الدخول لإكمال الطلب.'
-							: `You have ${cartState.items.length} item(s) in your cart. Sign in to complete the order.`}
+						{t('checkout.guestBody', 'You have {count} item(s) in your cart.', {
+							count: cartState.items.length,
+						})}
 					</p>
 					<div className="mt-6 flex flex-col gap-2">
 						<Button asChild>
 							<Link to="/auth/login?next=/checkout">
-								{isRTL ? 'تسجيل الدخول' : 'Sign in'}
+								{t('checkout.signIn', 'Sign in')}
 							</Link>
 						</Button>
 						<Button variant="outline" asChild>
 							<Link to="/auth/register">
-								{isRTL ? 'إنشاء حساب' : 'Create account'}
+								{t('checkout.createAccount', 'Create account')}
 							</Link>
 						</Button>
 					</div>
@@ -292,7 +290,7 @@ export default function Checkout() {
 						<header className="flex items-center justify-between mb-4">
 							<h2 className="font-bold text-aliText flex items-center gap-2">
 								<MapPin className="w-4 h-4 text-aliOrange" />
-								{isRTL ? 'عنوان الشحن' : 'Shipping address'}
+								{t('checkout.addressTitle', 'Shipping address')}
 							</h2>
 							<Button
 								type="button"
@@ -301,14 +299,14 @@ export default function Checkout() {
 								onClick={() => setNewAddressOpen((v) => !v)}
 							>
 								<Plus className="w-4 h-4 me-1" />
-								{isRTL ? 'عنوان جديد' : 'New address'}
+								{t('checkout.newAddress', 'New address')}
 							</Button>
 						</header>
 						{newAddressOpen && (
 							<div className="mb-4 border border-aliBorder rounded-lg p-4 bg-aliSurface/40 space-y-3">
 								<div className="grid grid-cols-2 gap-3">
 									<div>
-										<Label>{isRTL ? 'ملصق' : 'Label'}</Label>
+										<Label>{t('checkout.label', 'Label')}</Label>
 										<Input
 											value={newAddress.label ?? ''}
 											onChange={(e) =>
@@ -317,11 +315,11 @@ export default function Checkout() {
 													label: e.target.value,
 												}))
 											}
-											placeholder={isRTL ? 'المنزل / العمل' : 'Home / Work'}
+											placeholder={t('checkout.labelPlaceholder', 'Home / Work')}
 										/>
 									</div>
 									<div>
-										<Label>{isRTL ? 'الاسم الكامل' : 'Full name'}</Label>
+										<Label>{t('checkout.fullName', 'Full name')}</Label>
 										<Input
 											value={newAddress.full_name ?? ''}
 											onChange={(e) =>
@@ -333,7 +331,7 @@ export default function Checkout() {
 										/>
 									</div>
 									<div>
-										<Label>{isRTL ? 'الهاتف' : 'Phone'}</Label>
+										<Label>{t('checkout.phone', 'Phone')}</Label>
 										<Input
 											value={newAddress.phone ?? ''}
 											onChange={(e) =>
@@ -342,11 +340,11 @@ export default function Checkout() {
 													phone: e.target.value,
 												}))
 											}
-											placeholder="+9677..."
+											placeholder={t('checkout.phonePlaceholder', '+9677...')}
 										/>
 									</div>
 									<div>
-										<Label>{isRTL ? 'المحافظة' : 'Governorate'}</Label>
+										<Label>{t('checkout.governorate', 'Governorate')}</Label>
 										<Input
 											value={newAddress.governorate ?? ''}
 											onChange={(e) =>
@@ -358,7 +356,7 @@ export default function Checkout() {
 										/>
 									</div>
 									<div>
-										<Label>{isRTL ? 'المدينة' : 'City'}</Label>
+										<Label>{t('checkout.city', 'City')}</Label>
 										<Input
 											value={newAddress.city ?? ''}
 											onChange={(e) =>
@@ -370,7 +368,7 @@ export default function Checkout() {
 										/>
 									</div>
 									<div>
-										<Label>{isRTL ? 'الحي' : 'District'}</Label>
+										<Label>{t('checkout.district', 'District')}</Label>
 										<Input
 											value={newAddress.district ?? ''}
 											onChange={(e) =>
@@ -382,7 +380,7 @@ export default function Checkout() {
 										/>
 									</div>
 									<div className="col-span-2">
-										<Label>{isRTL ? 'الشارع' : 'Street'}</Label>
+										<Label>{t('checkout.street', 'Street')}</Label>
 										<Input
 											value={newAddress.street ?? ''}
 											onChange={(e) =>
@@ -394,7 +392,7 @@ export default function Checkout() {
 										/>
 									</div>
 									<div className="col-span-2">
-										<Label>{isRTL ? 'ملاحظات' : 'Notes'}</Label>
+										<Label>{t('checkout.notes', 'Notes')}</Label>
 										<Textarea
 											value={newAddress.notes ?? ''}
 											onChange={(e) =>
@@ -416,7 +414,7 @@ export default function Checkout() {
 												}))
 											}
 										/>
-										{isRTL ? 'اجعله العنوان الافتراضي' : 'Make it the default'}
+										{t('checkout.isDefault', 'Make it the default')}
 									</label>
 								</div>
 								<div className="flex justify-end gap-2">
@@ -424,17 +422,17 @@ export default function Checkout() {
 										variant="ghost"
 										onClick={() => setNewAddressOpen(false)}
 									>
-										{isRTL ? 'إلغاء' : 'Cancel'}
+										{t('checkout.cancel', 'Cancel')}
 									</Button>
 									<Button onClick={handleNewAddress}>
-										{isRTL ? 'حفظ' : 'Save'}
+										{t('checkout.save', 'Save')}
 									</Button>
 								</div>
 							</div>
 						)}
 						{addresses.length === 0 ? (
 							<p className="text-sm text-aliTextMute">
-								{isRTL ? 'لا توجد عناوين محفوظة.' : 'No saved addresses yet.'}
+								{t('checkout.noAddresses', 'No saved addresses yet.')}
 							</p>
 						) : (
 							<div className="space-y-2">
@@ -460,7 +458,7 @@ export default function Checkout() {
 												{a.label}
 												{Number(a.is_default ?? 0) === 1 && (
 													<span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-aliOrange/15 text-aliOrange">
-														{isRTL ? 'افتراضي' : 'Default'}
+														{t('checkout.defaultBadge', 'Default')}
 													</span>
 												)}
 											</div>
@@ -481,7 +479,7 @@ export default function Checkout() {
 					<section className="bg-white border border-aliBorder rounded-2xl p-5">
 						<h2 className="font-bold text-aliText flex items-center gap-2 mb-4">
 							<CreditCard className="w-4 h-4 text-aliOrange" />
-							{isRTL ? 'طريقة الدفع' : 'Payment method'}
+							{t('checkout.paymentTitle', 'Payment method')}
 						</h2>
 						<div className="grid grid-cols-3 gap-2">
 							{(['cod', 'card', 'wallet'] as const).map((m) => (
@@ -502,16 +500,10 @@ export default function Checkout() {
 										className="sr-only"
 									/>
 									{m === 'cod'
-										? isRTL
-											? 'الدفع عند الاستلام'
-											: 'Cash on delivery'
+										? t('checkout.paymentCod', 'Cash on delivery')
 										: m === 'card'
-											? isRTL
-												? 'بطاقة'
-												: 'Card'
-											: isRTL
-												? 'محفظة'
-												: 'Wallet'}
+											? t('checkout.paymentCard', 'Card')
+											: t('checkout.paymentWallet', 'Wallet')}
 								</label>
 							))}
 						</div>
@@ -520,16 +512,15 @@ export default function Checkout() {
 					{/* Notes */}
 					<section className="bg-white border border-aliBorder rounded-2xl p-5">
 						<h2 className="font-bold text-aliText mb-2">
-							{isRTL ? 'ملاحظات الطلب' : 'Order notes'}
+							{t('checkout.notesTitle', 'Order notes')}
 						</h2>
 						<Textarea
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
-							placeholder={
-								isRTL
-									? 'تعليمات التسليم، طلبات خاصة، إلخ.'
-									: 'Delivery instructions, special requests, etc.'
-							}
+							placeholder={t(
+								'checkout.notesPlaceholder',
+								'Delivery instructions, special requests, etc.',
+							)}
 						/>
 					</section>
 				</div>
@@ -539,13 +530,13 @@ export default function Checkout() {
 					<section className="bg-white border border-aliBorder rounded-2xl p-5">
 						<h2 className="font-bold text-aliText flex items-center gap-2 mb-4">
 							<ShoppingBag className="w-4 h-4 text-aliOrange" />
-							{isRTL ? 'ملخص الطلب' : 'Order summary'}
+							{t('checkout.summaryTitle', 'Order summary')}
 						</h2>
 						{cartState.items.length === 0 ? (
 							<p className="text-sm text-aliTextMute">
-								{isRTL ? 'السلة فارغة.' : 'Your cart is empty.'}{' '}
+								{t('checkout.summaryEmpty', 'Your cart is empty.')}{' '}
 								<Link to="/" className="text-aliOrange hover:underline">
-									{isRTL ? 'تسوّق الآن' : 'Shop now'}
+									{t('checkout.summaryShopNow', 'Shop now')}
 								</Link>
 							</p>
 						) : (
@@ -580,7 +571,7 @@ export default function Checkout() {
 												dispatch({ type: 'REMOVE', payload: i.productId })
 											}
 										>
-											{isRTL ? 'حذف' : 'Remove'}
+											{t('checkout.summaryRemove', 'Remove')}
 										</button>
 									</li>
 								))}
@@ -593,7 +584,7 @@ export default function Checkout() {
 						<section className="bg-white border border-aliBorder rounded-2xl p-5">
 							<h2 className="font-bold text-aliText flex items-center gap-2 mb-3">
 								<Tag className="w-4 h-4 text-aliOrange" />
-								{isRTL ? 'كوبون خصم' : 'Coupon'}
+								{t('checkout.couponTitle', 'Coupon')}
 							</h2>
 							{couponApplied ? (
 								<div className="flex items-center justify-between p-3 rounded bg-aliOrange/10 text-sm">
@@ -609,14 +600,14 @@ export default function Checkout() {
 											className="text-xs text-aliTextMute hover:text-aliOrange"
 											onClick={handleRemoveCoupon}
 										>
-											{isRTL ? 'إزالة' : 'Remove'}
+											{t('checkout.couponRemove', 'Remove')}
 										</button>
 									</div>
 								</div>
 							) : (
 								<div className="flex gap-2">
 									<Input
-										placeholder={isRTL ? 'كود الكوبون' : 'Coupon code'}
+										placeholder={t('checkout.couponPlaceholder', 'Coupon code')}
 										value={couponCode}
 										onChange={(e) =>
 											setCouponCode(e.target.value.toUpperCase())
@@ -629,10 +620,8 @@ export default function Checkout() {
 									>
 										{validating ? (
 											<Loader2 className="w-4 h-4 animate-spin" />
-										) : isRTL ? (
-											'تطبيق'
 										) : (
-											'Apply'
+											t('checkout.couponApply', 'Apply')
 										)}
 									</Button>
 								</div>
@@ -649,21 +638,21 @@ export default function Checkout() {
 					<section className="bg-white border border-aliBorder rounded-2xl p-5 space-y-2 text-sm">
 						<div className="flex justify-between">
 							<span className="text-aliTextMute">
-								{isRTL ? 'المجموع الفرعي' : 'Subtotal'}
+								{t('checkout.subtotal', 'Subtotal')}
 							</span>
 							<span className="font-semibold text-aliText">
 								{subtotal.toLocaleString()} YER
 							</span>
 						</div>
 						<div className="flex justify-between">
-							<span className="text-aliTextMute">{isRTL ? 'الشحن' : 'Shipping'}</span>
+							<span className="text-aliTextMute">{t('checkout.shipping', 'Shipping')}</span>
 							<span className="font-semibold text-aliText">
 								{shipping.toLocaleString()} YER
 							</span>
 						</div>
 						{discount > 0 && (
 							<div className="flex justify-between text-aliOrange">
-								<span>{isRTL ? 'الخصم' : 'Discount'}</span>
+								<span>{t('checkout.discount', 'Discount')}</span>
 								<span className="font-semibold">
 									− {discount.toLocaleString()} YER
 								</span>
@@ -671,7 +660,7 @@ export default function Checkout() {
 						)}
 						<div className="flex justify-between pt-2 border-t border-aliBorder text-base">
 							<span className="font-bold text-aliText">
-								{isRTL ? 'الإجمالي' : 'Total'}
+								{t('checkout.total', 'Total')}
 							</span>
 							<span className="font-bold text-aliOrange">
 								{total.toLocaleString()} YER
@@ -698,12 +687,8 @@ export default function Checkout() {
 								<CheckCircle2 className="w-4 h-4 me-2" />
 							)}
 							{submitting
-								? isRTL
-									? '... جارٍ تأكيد الطلب'
-									: 'Placing order...'
-								: isRTL
-									? 'تأكيد الطلب'
-									: 'Place order'}
+								? t('checkout.placingOrder', 'Placing order...')
+								: t('checkout.placeOrder', 'Place order')}
 						</Button>
 					</section>
 				</aside>

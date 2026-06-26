@@ -39,7 +39,12 @@ messagesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const parsed = sendMessageSchema.safeParse(req.body);
 		if (!parsed.success) {
-			return sendError(res, 'Invalid input: ' + parsed.error.issues.map((i) => i.path.join('.') + ': ' + i.message).join('; '), 400);
+			return sendError(
+				res,
+				'Invalid input: ' +
+					parsed.error.issues.map((i) => i.path.join('.') + ': ' + i.message).join('; '),
+				400,
+			);
 		}
 		const input = parsed.data;
 
@@ -59,7 +64,9 @@ messagesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Optional context: validate the linked entity exists if provided.
 		if (input.product_id) {
 			const product = (await db
-				.prepare('SELECT id FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
+				.prepare(
+					'SELECT id FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL',
+				)
 				.get(input.product_id)) as { id: number } | undefined;
 			if (!product) return sendError(res, 'Product not found or inactive', 404);
 		}
@@ -76,7 +83,7 @@ messagesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			if (!order) return sendError(res, 'Order not found', 404);
 			// Only the customer or an admin can attach a message to an order.
 			if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
-				return sendError(res, 'Cannot attach message to another user\'s order', 403);
+				return sendError(res, "Cannot attach message to another user's order", 403);
 			}
 		}
 
@@ -96,11 +103,7 @@ messagesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				JSON.stringify(input.attachments ?? []),
 			)) as { id: number; created_at: string };
 
-		sendSuccess(
-			res,
-			{ id: result.id, created_at: result.created_at },
-			'Message sent',
-		);
+		sendSuccess(res, { id: result.id, created_at: result.created_at }, 'Message sent');
 	} catch (err) {
 		return sendError(res, err);
 	}
@@ -128,7 +131,7 @@ messagesRouter.get('/inbox', requireAuth, async (req: Request, res: Response) =>
 			.prepare(
 				`SELECT m.id, m.sender_id, m.receiver_id, m.store_id, m.product_id, m.order_id,
 				        m.body, m.attachments, m.is_read, m.read_at, m.created_at,
-				        u.email AS sender_email, u.name AS sender_name
+				        u.email AS sender_email, u.full_name AS sender_name
 				 FROM messages m
 				 JOIN users u ON u.id = m.sender_id
 				 WHERE ${where}
@@ -154,12 +157,15 @@ messagesRouter.get('/inbox', requireAuth, async (req: Request, res: Response) =>
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments: typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
+			attachments:
+				typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
 		}));
 
 		// Compute unread count for the badge.
 		const unread = (await db
-			.prepare('SELECT COUNT(*)::int AS c FROM messages WHERE receiver_id = ? AND is_read = FALSE')
+			.prepare(
+				'SELECT COUNT(*)::int AS c FROM messages WHERE receiver_id = ? AND is_read = FALSE',
+			)
 			.get(req.user!.id)) as { c: number };
 
 		sendSuccess(res, {
@@ -192,7 +198,7 @@ messagesRouter.get('/sent', requireAuth, async (req: Request, res: Response) => 
 			.prepare(
 				`SELECT m.id, m.sender_id, m.receiver_id, m.store_id, m.product_id, m.order_id,
 				        m.body, m.attachments, m.is_read, m.read_at, m.created_at,
-				        u.email AS receiver_email, u.name AS receiver_name
+				        u.email AS receiver_email, u.full_name AS receiver_name
 				 FROM messages m
 				 JOIN users u ON u.id = m.receiver_id
 				 WHERE ${where}
@@ -212,7 +218,8 @@ messagesRouter.get('/sent', requireAuth, async (req: Request, res: Response) => 
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments: typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
+			attachments:
+				typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
 		}));
 
 		sendSuccess(res, {
@@ -231,7 +238,12 @@ messagesRouter.get('/conversation', requireAuth, async (req: Request, res: Respo
 	try {
 		const parsed = conversationQuerySchema.safeParse(req.query);
 		if (!parsed.success) {
-			return sendError(res, 'Invalid query: ' + parsed.error.issues.map((i) => i.path.join('.') + ': ' + i.message).join('; '), 400);
+			return sendError(
+				res,
+				'Invalid query: ' +
+					parsed.error.issues.map((i) => i.path.join('.') + ': ' + i.message).join('; '),
+				400,
+			);
 		}
 		const { peer_id, limit, before_id } = parsed.data;
 
@@ -270,7 +282,8 @@ messagesRouter.get('/conversation', requireAuth, async (req: Request, res: Respo
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments: typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
+			attachments:
+				typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
 		}));
 
 		// Best-effort: mark all messages from peer to me as read in this thread.
@@ -302,7 +315,9 @@ messagesRouter.get('/conversation', requireAuth, async (req: Request, res: Respo
 messagesRouter.get('/unread-count', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const row = (await db
-			.prepare('SELECT COUNT(*)::int AS c FROM messages WHERE receiver_id = ? AND is_read = FALSE')
+			.prepare(
+				'SELECT COUNT(*)::int AS c FROM messages WHERE receiver_id = ? AND is_read = FALSE',
+			)
 			.get(req.user!.id)) as { c: number };
 		sendSuccess(res, { unread_count: row.c });
 	} catch (err) {
@@ -333,9 +348,9 @@ messagesRouter.put('/:id/read', requireAuth, async (req: Request, res: Response)
 
 		if (!updated) {
 			// Either doesn't exist, not yours, or already read. Distinguish.
-			const exists = (await db
-				.prepare('SELECT id FROM messages WHERE id = ?')
-				.get(id)) as { id: number } | undefined;
+			const exists = (await db.prepare('SELECT id FROM messages WHERE id = ?').get(id)) as
+				| { id: number }
+				| undefined;
 			if (!exists) return sendError(res, 'Message not found', 404);
 			// Already read — return current state (idempotent).
 			return sendSuccess(res, { id, read_at: null, already_read: true }, 'Already read');

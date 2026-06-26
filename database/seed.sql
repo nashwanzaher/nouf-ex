@@ -1,6 +1,19 @@
 -- =====================================================================
 -- Nouf-ex — Seed data (noufex_db)
 -- =====================================================================
+-- SAFETY: This file contains demo credentials with KNOWN PASSWORDS
+-- (admin123, customer123, merchant123) and must NEVER run against a
+-- production database.
+--
+-- Gate: the scripts/db-setup.cjs runner sets
+--   noufex.allow_seed = 'true'
+-- only when NODE_ENV !== 'production', and only immediately before
+-- applying this file. Production deploys skip seed.sql entirely.
+-- =====================================================================
+
+-- =====================================================================
+-- Nouf-ex — Seed data (noufex_db)
+-- =====================================================================
 -- Idempotent: every INSERT uses ON CONFLICT DO NOTHING (or DO UPDATE
 -- for the wallet). Re-running db-setup on an existing DB is safe.
 --

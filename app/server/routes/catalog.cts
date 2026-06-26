@@ -24,7 +24,7 @@ export const catalogRouter = Router();
 
 // ─── Product helpers ──────────────────────────────────────────────────────
 /** Get all product images sorted by `sort_order`. */
-const getProductImages = (productId: number) => {
+const getProductImages = async (productId: number) => {
 	return db
 		.prepare('SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order')
 		.all(productId);
@@ -224,8 +224,7 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 			.all(Number(id))) as Record<string, unknown>[];
 
 		// Get images
-		const images = getProductImages(Number(id));
-
+		const images = await getProductImages(Number(id));
 		const productParsed = getProductWithParsedFields(product);
 
 		return sendSuccess(res, {

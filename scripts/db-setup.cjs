@@ -36,121 +36,136 @@ const path = require('path');
 // run `npm install` from the app/ directory.
 let Client, dotenv;
 try {
-    ({ Client } = require(path.join(__dirname, '..', 'app', 'node_modules', 'pg')));
-    dotenv = require(path.join(__dirname, '..', 'app', 'node_modules', 'dotenv'));
+	({ Client } = require(path.join(__dirname, '..', 'app', 'node_modules', 'pg')));
+	dotenv = require(path.join(__dirname, '..', 'app', 'node_modules', 'dotenv'));
 } catch (err) {
-    throw new Error(
-        'Cannot resolve `pg` / `dotenv` from app/node_modules. ' +
-        'Run `cd app && npm install` first, then re-run this script.',
-    );
+	throw new Error(
+		'Cannot resolve `pg` / `dotenv` from app/node_modules. ' +
+			'Run `cd app && npm install` first, then re-run this script.'
+	);
 }
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const DB_DIR       = path.resolve(__dirname, '..', 'database');
-const MIGRATIONS   = path.join(DB_DIR, 'migrations');
+const DB_DIR = path.resolve(__dirname, '..', 'database');
+const MIGRATIONS = path.join(DB_DIR, 'migrations');
 
 const PIPELINE = [
-    ['0001_baseline',   'migrations/0001_baseline.sql'],
-    ['schema',          'schema.sql'],
-    ['schema-extra',    'schema-extra.sql'],
-    ['views',           'views.sql'],
-    ['functions',       'functions.sql'],
-    ['triggers',        'triggers.sql'],
-    ['roles',           'roles.sql'],
-    ['seed',            'seed.sql'],
+	['0001_baseline', 'migrations/0001_baseline.sql'],
+	['schema', 'schema.sql'],
+	['schema-extra', 'schema-extra.sql'],
+	['views', 'views.sql'],
+	['functions', 'functions.sql'],
+	['triggers', 'triggers.sql'],
+	['roles', 'roles.sql'],
+	['seed', 'seed.sql'],
 ];
 
 function resolveDatabaseUrl() {
-    if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-    const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = process.env;
-    if (DB_HOST && DB_NAME && DB_USER && DB_PASSWORD) {
-        return `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT || 5432}/${DB_NAME}`;
-    }
-    throw new Error(
-        'DATABASE_URL is not set. Copy .env.example to .env and fill in ' +
-        'DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).',
-    );
+	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+	const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = process.env;
+	if (DB_HOST && DB_NAME && DB_USER && DB_PASSWORD) {
+		return `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT || 5432}/${DB_NAME}`;
+	}
+	throw new Error(
+		'DATABASE_URL is not set. Copy .env.example to .env and fill in ' +
+			'DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).'
+	);
 }
 
 async function applyFile(client, label, relPath) {
-    const file = path.join(DB_DIR, relPath);
-    if (!fs.existsSync(file)) {
-        console.warn(`[db:setup] (skip) ${label}: ${relPath} not found`);
-        return;
-    }
-    const sql = fs.readFileSync(file, 'utf8');
-    console.log(`[db:setup] applying ${label}  (${relPath}, ${sql.length} bytes)…`);
-    await client.query(sql);
+	const file = path.join(DB_DIR, relPath);
+	if (!fs.existsSync(file)) {
+		console.warn(`[db:setup] (skip) ${label}: ${relPath} not found`);
+		return;
+	}
+	const sql = fs.readFileSync(file, 'utf8');
+	console.log(`[db:setup] applying ${label}  (${relPath}, ${sql.length} bytes)…`);
+	await client.query(sql);
 }
 
 async function applyPendingMigrations(client) {
-    if (!fs.existsSync(MIGRATIONS)) return;
-    const files = fs
-        .readdirSync(MIGRATIONS)
-        .filter((f) => /^\d{4}_.+\.sql$/.test(f))
-        .sort();
+	if (!fs.existsSync(MIGRATIONS)) return;
+	const files = fs
+		.readdirSync(MIGRATIONS)
+		.filter((f) => /^\d{4}_.+\.sql$/.test(f))
+		.sort();
 
-    for (const file of files) {
-        // Use the full filename minus the .sql extension as the
-        // version key. The PK on schema_migrations.version is a
-        // VARCHAR(20) so a 4-digit number AND a longer descriptive
-        // string both fit. The descriptive form (`0007_pi_unique_pair`
-        // rather than just `0007`) is what the live DB currently
-        // holds; using the short form here would create a 13th
-        // row on every `npm run db:setup` run because the PK
-        // wouldn't conflict.
-        const version = file.replace(/\.sql$/, '');
-        const { rows } = await client.query(
-            'SELECT 1 FROM schema_migrations WHERE version = $1',
-            [version],
-        );
-        if (rows.length > 0) {
-            console.log(`[db:setup]   migration ${file} — already applied, skipping`);
-            continue;
-        }
-        const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
-        console.log(`[db:setup]   applying migration ${file} (${sql.length} bytes)…`);
-        await client.query('BEGIN');
-        try {
-            await client.query(sql);
-            // Description matches the format the live DB uses:
-            // `Migration 0007_pi_unique_pair`. The ON CONFLICT
-            // clause is defensive: if a future re-derivation of
-            // `version` collides with an existing row, the second
-            // INSERT is silently dropped instead of erroring.
-            await client.query(
-                'INSERT INTO schema_migrations (version, description) VALUES ($1, $2) ON CONFLICT (version) DO NOTHING',
-                [version, `Migration ${version}`],
-            );
-            await client.query('COMMIT');
-            console.log(`[db:setup]   ✓ migration ${file} applied`);
-        } catch (err) {
-            await client.query('ROLLBACK');
-            throw new Error(`migration ${file} failed: ${err.message}`);
-        }
-    }
+	for (const file of files) {
+		// Use the full filename minus the .sql extension as the
+		// version key. The PK on schema_migrations.version is a
+		// VARCHAR(20) so a 4-digit number AND a longer descriptive
+		// string both fit. The descriptive form (`0007_pi_unique_pair`
+		// rather than just `0007`) is what the live DB currently
+		// holds; using the short form here would create a 13th
+		// row on every `npm run db:setup` run because the PK
+		// wouldn't conflict.
+		const version = file.replace(/\.sql$/, '');
+		const { rows } = await client.query('SELECT 1 FROM schema_migrations WHERE version = $1', [
+			version,
+		]);
+		if (rows.length > 0) {
+			console.log(`[db:setup]   migration ${file} — already applied, skipping`);
+			continue;
+		}
+		const sql = fs.readFileSync(path.join(MIGRATIONS, file), 'utf8');
+		console.log(`[db:setup]   applying migration ${file} (${sql.length} bytes)…`);
+		await client.query('BEGIN');
+		try {
+			await client.query(sql);
+			// Description matches the format the live DB uses:
+			// `Migration 0007_pi_unique_pair`. The ON CONFLICT
+			// clause is defensive: if a future re-derivation of
+			// `version` collides with an existing row, the second
+			// INSERT is silently dropped instead of erroring.
+			await client.query(
+				'INSERT INTO schema_migrations (version, description) VALUES ($1, $2) ON CONFLICT (version) DO NOTHING',
+				[version, `Migration ${version}`]
+			);
+			await client.query('COMMIT');
+			console.log(`[db:setup]   ✓ migration ${file} applied`);
+		} catch (err) {
+			await client.query('ROLLBACK');
+			throw new Error(`migration ${file} failed: ${err.message}`);
+		}
+	}
 }
 
 async function main() {
-    const url = resolveDatabaseUrl();
-    console.log('[db:setup] target:', url.replace(/:[^:@/]+@/, ':***@'));
+	const url = resolveDatabaseUrl();
+	console.log('[db:setup] target:', url.replace(/:[^:@/]+@/, ':***@'));
 
-    const client = new Client({ connectionString: url });
-    await client.connect();
+	const client = new Client({ connectionString: url });
+	await client.connect();
 
-    try {
-        for (const [label, relPath] of PIPELINE) {
-            await applyFile(client, label, relPath);
-        }
-        await applyPendingMigrations(client);
-        console.log('[db:setup] done.');
-    } finally {
-        await client.end();
-    }
+	try {
+		for (const [label, relPath] of PIPELINE) {
+			// seed.sql is gated by a GUC and is dev/test only.
+			// Production deploys skip this step because the file
+			// contains demo credentials (admin123, customer123, etc.).
+			if (label === 'seed') {
+				if (process.env.NODE_ENV === 'production') {
+					console.warn(
+						'[db:setup] (skip) seed: NODE_ENV=production ' +
+							'— seed.sql contains demo credentials and will not run.'
+					);
+					continue;
+				}
+				// Latch the GUC that seed.sql's safety check looks for.
+				// SET LOCAL is bound to the current transaction, so the
+				// GUC cannot leak into a later session.
+				await client.query("SET LOCAL noufex.allow_seed = 'true'");
+			}
+			await applyFile(client, label, relPath);
+		}
+		await applyPendingMigrations(client);
+		console.log('[db:setup] done.');
+	} finally {
+		await client.end();
+	}
 }
 
 main().catch((err) => {
-    console.error('[db:setup] FAILED:', err.message);
-    process.exit(1);
+	console.error('[db:setup] FAILED:', err.message);
+	process.exit(1);
 });

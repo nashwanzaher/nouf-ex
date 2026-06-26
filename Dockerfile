@@ -91,6 +91,15 @@ COPY --from=build /build/app/dist ./dist
 COPY docker/entrypoint.sh /usr/local/bin/noufex-entrypoint.sh
 RUN chmod +x /usr/local/bin/noufex-entrypoint.sh
 
+# Drop root: the official `node:20-alpine` image already ships a
+# `node` user (uid=1000). We just need to make /app writable for
+# that user. The `node` user is a system account (no password, no
+# shell), which is the right shape for a long-running service.
+RUN chown -R node:node /app
+RUN chmod +x /usr/local/bin/noufex-entrypoint.sh
+
+USER node
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \

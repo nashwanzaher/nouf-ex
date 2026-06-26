@@ -39,8 +39,10 @@ services:
       DB_USER: ${DB_USER:-noufex_app}
       DB_PASSWORD: ${DB_PASSWORD}
       DATABASE_URL: ${DATABASE_URL}
-      # Set DB_SSL=true in production when Postgres requires TLS.
-      DB_SSL: ${DB_SSL:-false}
+      # DB_SSL defaults to true (secure-by-default). The noufex_db
+      # server already accepts TLS via the standard `sslmode=require`
+      # in DATABASE_URL; to opt out locally set DB_SSL=false in .env.
+      DB_SSL: ${DB_SSL:-true}
       SERVE_STATIC: 'true'
       # SPA bundle is copied to /app/dist in the build stage. The
       # server's __dirname inside the esbuild bundle is /app/server

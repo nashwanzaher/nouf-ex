@@ -41,9 +41,9 @@ import {
 // that could leak secrets into git history.
 const _databaseUrl = process.env.DATABASE_URL;
 if (!_databaseUrl) {
-    throw new Error(
-        'DATABASE_URL is not set. Configure it in .env (local) or via docker-compose env_file (container).',
-    );
+	throw new Error(
+		'DATABASE_URL is not set. Configure it in .env (local) or via docker-compose env_file (container).',
+	);
 }
 export const db = new PgDb(_databaseUrl);
 // `import { requireAuth, sendError, ... } from '../lib/shared.js'`
@@ -151,7 +151,13 @@ export function buildUpdateSet(fields: Record<string, unknown>): {
 }
 
 /** Persist a single admin action into the audit log. Failures are
- *  logged but never block the actual mutation. */
+ *  logged but never block the actual mutation.
+ *
+ * Implementation note: the actual INSERT goes through a
+ * SECURITY DEFINER PL/pgSQL function (write_audit_log) that is owned
+ * by noufex_owner. The application role (noufex_app) only has
+ * EXECUTE on the function — never INSERT on the table — so it can
+ * log legitimate admin actions but cannot forge entries directly. */
 export async function writeAuditLog(
 	req: Request,
 	action: string,
@@ -162,11 +168,7 @@ export async function writeAuditLog(
 ): Promise<void> {
 	try {
 		await db
-			.prepare(
-				`INSERT INTO admin_audit_log
-				 (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-				 VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`,
-			)
+			.prepare(`SELECT write_audit_log($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`)
 			.run(
 				req.user!.id,
 				action,

@@ -6,10 +6,26 @@
 -- production database.
 --
 -- Gate: the scripts/db-setup.cjs runner sets
---   noufex.allow_seed = 'true'
+--   noufex.allow_seed = 'on'
 -- only when NODE_ENV !== 'production', and only immediately before
--- applying this file. Production deploys skip seed.sql entirely.
+-- applying this file. The DO $$ block below checks the GUC and
+-- raises an exception if seed is invoked without the gate. Any
+-- other entry point (psql -f, a CI script, a misconfigured
+-- migration) will fail loudly.
 -- =====================================================================
+
+DO $$
+BEGIN
+    IF current_setting('noufex.allow_seed', true) IS DISTINCT FROM 'on' THEN
+        RAISE EXCEPTION
+            'seed.sql: refused because noufex.allow_seed is not ''on''. '
+            'This file contains demo credentials (admin123, customer123, '
+            'merchant123) and is unsafe for production. The db-setup runner '
+            'sets the gate when NODE_ENV is not production. To run this file '
+            'manually: SET LOCAL noufex.allow_seed = ''on'';' USING ERRCODE = '42501';
+    END IF;
+END
+$$;
 
 -- =====================================================================
 -- Nouf-ex — Seed data (noufex_db)

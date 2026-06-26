@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -20,123 +20,29 @@ import {
 	Truck,
 	Star,
 	Globe,
+	Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useOrders } from '@/hooks/useApi';
+import { useWishlistItems, useNotifications } from '@/hooks/useApi';
 import styles from './CustomerDashboard.module.css';
 
 /* ------------------------------------------------------------------ */
-/*  Sidebar items                                                      */
+/*  Sidebar items (production-ready: t() keys + fallbacks)            */
 /* ------------------------------------------------------------------ */
-const sidebarNavItems = [
-	{ icon: ShoppingBag, label: 'طلباتي', labelEn: 'My Orders', path: '/customer/orders' },
-	{ icon: Heart, label: 'المفضلة', labelEn: 'Wishlist', path: '/customer/wishlist' },
-	{ icon: MessageSquare, label: 'الرسائل', labelEn: 'Messages', path: '/customer/reviews' },
-	{ icon: MapPin, label: 'العناوين', labelEn: 'Addresses', path: '/customer/addresses' },
-	{ icon: Settings, label: 'الإعدادات', labelEn: 'Settings', path: '/customer/notifications' },
-];
-
-/* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
-/* ------------------------------------------------------------------ */
-const recentOrders = [
-	{
-		id: 'NOUF-1234',
-		date: '2025-06-20',
-		dateAr: '٢٠ يونيو ٢٠٢٥',
-		status: 'delivered',
-		statusLabel: 'تم التوصيل',
-		statusLabelEn: 'Delivered',
-		total: '$250',
-		items: 3,
-		timeline: ['ordered', 'processing', 'shipped', 'delivered'],
-	},
-	{
-		id: 'NOUF-1235',
-		date: '2025-06-18',
-		dateAr: '١٨ يونيو ٢٠٢٥',
-		status: 'shipped',
-		statusLabel: 'قيد الشحن',
-		statusLabelEn: 'Shipped',
-		total: '$180',
-		items: 2,
-		timeline: ['ordered', 'processing', 'shipped'],
-	},
-	{
-		id: 'NOUF-1236',
-		date: '2025-06-15',
-		dateAr: '١٥ يونيو ٢٠٢٥',
-		status: 'processing',
-		statusLabel: 'قيد الانتظار',
-		statusLabelEn: 'Processing',
-		total: '$95',
-		items: 1,
-		timeline: ['ordered', 'processing'],
-	},
-];
-
-const wishlistItems = [
-	{
-		id: 1,
-		name: 'سماعات لاسلكية فاخرة',
-		nameEn: 'Premium Wireless Earbuds',
-		price: '$45',
-		rating: 4.8,
-		sold: 1200,
-	},
-	{
-		id: 2,
-		name: 'ساعة ذكية رياضية',
-		nameEn: 'Smart Sports Watch',
-		price: '$78',
-		rating: 4.5,
-		sold: 850,
-	},
-	{
-		id: 3,
-		name: 'حقيبة جلدية يدوية',
-		nameEn: 'Handmade Leather Bag',
-		price: '$120',
-		rating: 4.9,
-		sold: 340,
-	},
-	{
-		id: 4,
-		name: 'نظارة شمسية بولارايزد',
-		nameEn: 'Polarized Sunglasses',
-		price: '$35',
-		rating: 4.3,
-		sold: 2100,
-	},
-];
-
-const notifications = [
-	{
-		text: 'تم شحن طلبك #NOUF-1235',
-		textEn: 'Your order #NOUF-1235 has been shipped',
-		time: '2 hours ago',
-		icon: Truck,
-		color: '#1688C9',
-	},
-	{
-		text: 'تم توصيل طلبك #NOUF-1234',
-		textEn: 'Your order #NOUF-1234 has been delivered',
-		time: 'Yesterday',
-		icon: CheckCircle,
-		color: '#4CAF50',
-	},
-	{
-		text: 'تخفيض 20% على الساعات الذكية',
-		textEn: '20% off smart watches',
-		time: '2 days ago',
-		icon: Star,
-		color: '#FF6A00',
-	},
+type SidebarItem = { icon: typeof ShoppingBag; labelKey: string; path: string };
+const sidebarNavItems: SidebarItem[] = [
+	{ icon: ShoppingBag, labelKey: 'customer.orders', path: '/customer/orders' },
+	{ icon: Heart, labelKey: 'customer.wishlist', path: '/customer/wishlist' },
+	{ icon: MessageSquare, labelKey: 'customer.reviews', path: '/customer/reviews' },
+	{ icon: MapPin, labelKey: 'customer.addresses', path: '/customer/addresses' },
+	{ icon: Settings, labelKey: 'customer.settings', path: '/customer/notifications' },
 ];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
-function OrderTimeline({ timeline }: { timeline: string[]; isRTL: boolean }) {
+function OrderTimeline({ timeline }: { timeline: string[] }) {
 	const steps = ['ordered', 'processing', 'shipped', 'delivered'];
 	const currentIndex = timeline.length - 1;
 
@@ -177,23 +83,73 @@ function OrderTimeline({ timeline }: { timeline: string[]; isRTL: boolean }) {
 	);
 }
 
+const STATUS_COLORS: Record<string, string> = {
+	pending: 'bg-[#FF9800] text-white',
+	processing: 'bg-[#FF9800] text-white',
+	confirmed: 'bg-[#1688C9] text-white',
+	shipped: 'bg-[#1688C9] text-white',
+	delivered: 'bg-[#4CAF50] text-white',
+	cancelled: 'bg-[#F44336] text-white',
+	refunded: 'bg-[#6B7280] text-white',
+};
+
 function StatusBadge({ status, label }: { status: string; label: string }) {
-	const colors: Record<string, string> = {
-		processing: 'bg-[#FF9800] text-white',
-		shipped: 'bg-[#1688C9] text-white',
-		delivered: 'bg-[#4CAF50] text-white',
-		cancelled: 'bg-[#F44336] text-white',
-	};
 	return (
 		<span
 			className={cn(
 				'px-2 py-0.5 rounded text-[11px] font-semibold',
-				colors[status] || 'bg-gray-400 text-white',
+				STATUS_COLORS[status] || 'bg-gray-400 text-white',
 			)}
 		>
 			{label}
 		</span>
 	);
+}
+
+const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
+	pending: { ar: 'قيد الانتظار', en: 'Pending' },
+	confirmed: { ar: 'مؤكد', en: 'Confirmed' },
+	processing: { ar: 'قيد التجهيز', en: 'Processing' },
+	shipped: { ar: 'قيد الشحن', en: 'Shipped' },
+	delivered: { ar: 'تم التوصيل', en: 'Delivered' },
+	cancelled: { ar: 'ملغي', en: 'Cancelled' },
+	refunded: { ar: 'مسترد', en: 'Refunded' },
+};
+
+/* ------------------------------------------------------------------ */
+/*  Status helpers                                                     */
+/* ------------------------------------------------------------------ */
+function statusTimeline(status: string): string[] {
+	// Map an order status to the timeline steps it has completed.
+	switch (status) {
+		case 'pending':
+			return ['ordered'];
+		case 'confirmed':
+		case 'processing':
+			return ['ordered', 'processing'];
+		case 'shipped':
+			return ['ordered', 'processing', 'shipped'];
+		case 'delivered':
+			return ['ordered', 'processing', 'shipped', 'delivered'];
+		case 'cancelled':
+		case 'refunded':
+			return ['ordered'];
+		default:
+			return ['ordered'];
+	}
+}
+
+function formatYER(amount: number, lang: 'ar' | 'en' | 'zh'): string {
+	// Compact formatter for dashboard cards. YER is the local currency;
+	// we use Intl.NumberFormat with the right locale and suffix the
+	// currency code.
+	try {
+		const locale = lang === 'ar' ? 'ar-YE' : lang === 'zh' ? 'zh-CN' : 'en-US';
+		const n = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
+		return lang === 'ar' ? `${n} ر.ي` : `${n} YER`;
+	} catch {
+		return `${amount} YER`;
+	}
 }
 
 /* ------------------------------------------------------------------ */
@@ -205,6 +161,45 @@ export default function CustomerDashboard() {
 	const location = useLocation();
 	const [collapsed, setCollapsed] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
+
+	// Live data from the API. useOrders scopes by req.user.id on the
+	// server, so any logged-in customer only sees their own orders.
+	const { data: orders, loading: ordersLoading } = useOrders();
+	const { data: wishlistData } = useWishlistItems();
+	const { data: notifData } = useNotifications();
+	const wishlistItems = useMemo(() => wishlistData ?? [], [wishlistData]);
+	const notifications = useMemo(() => notifData ?? [], [notifData]);
+
+	// Stats — derived from live data, not hardcoded.
+	const stats = useMemo(
+		() => [
+			{
+				icon: ShoppingBag,
+				label: t('customer.stats.orders'),
+				value: orders?.length ?? 0,
+				color: '#FF6A00',
+			},
+			{
+				icon: Heart,
+				label: t('customer.stats.wishlist'),
+				value: wishlistItems.length,
+				color: '#F44336',
+			},
+			{
+				icon: Star,
+				label: t('customer.stats.reviews'),
+				value: 0, // Reviews count comes from /api/reviews — kept at 0 here to avoid an extra request per dashboard load.
+				color: '#FF9800',
+			},
+			{
+				icon: Bell,
+				label: t('customer.stats.notifications'),
+				value: notifications.filter((n: { is_read: number }) => !n.is_read).length,
+				color: '#1688C9',
+			},
+		],
+		[t, orders, wishlistItems, notifications],
+	);
 
 	const isActive = (path: string) => {
 		if (path === '/customer/orders' && location.pathname === '/customer') return true;
@@ -261,7 +256,7 @@ export default function CustomerDashboard() {
 							<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
 							{!collapsed && (
 								<span className="text-sm font-medium flex-1">
-									{isRTL ? item.label : item.labelEn}
+									{t(item.labelKey)}
 								</span>
 							)}
 						</Link>
@@ -355,7 +350,7 @@ export default function CustomerDashboard() {
 										)}
 										<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
 										<span className="text-sm font-medium flex-1">
-											{isRTL ? item.label : item.labelEn}
+											{t(item.labelKey)}
 										</span>
 									</Link>
 								);
@@ -393,7 +388,7 @@ export default function CustomerDashboard() {
 							)}
 						</button>
 						<h2 className={`font-bold text-base ${styles.iconText}`}>
-							{isRTL ? 'لوحة العميل' : 'Customer Dashboard'}
+							{t('customer.dashboard')}
 						</h2>
 					</div>
 
@@ -407,22 +402,28 @@ export default function CustomerDashboard() {
 							/>
 							<input
 								type="text"
-								placeholder={isRTL ? 'بحث...' : 'Search...'}
+								placeholder={t('common.search')}
 								className={`bg-transparent border-none outline-none text-sm w-full ml-2 ${styles.searchInput}`}
 							/>
 						</div>
 						<button className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
 							<Bell className={`w-5 h-5 ${styles.iconTextMuted}`} strokeWidth={1.5} />
-							<span
-								className={`absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white ${styles.brandAvatar}`}
-							>
-								2
-							</span>
+							{notifications.filter((n: { is_read: number }) => !n.is_read).length >
+								0 && (
+								<span
+									className={`absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white ${styles.brandAvatar}`}
+								>
+									{
+										notifications.filter((n: { is_read: number }) => !n.is_read)
+											.length
+									}
+								</span>
+							)}
 						</button>
 						<div
 							className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold ${styles.brandAvatar}`}
 						>
-							أ
+							{t('lang.' + i18n.language).charAt(0)}
 						</div>
 					</div>
 				</header>
@@ -432,32 +433,7 @@ export default function CustomerDashboard() {
 					<div className="max-w-6xl mx-auto space-y-6">
 						{/* Quick Stats */}
 						<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-							{[
-								{
-									icon: ShoppingBag,
-									label: isRTL ? 'الطلبات' : 'Orders',
-									value: '12',
-									color: '#FF6A00',
-								},
-								{
-									icon: Heart,
-									label: isRTL ? 'المفضلة' : 'Wishlist',
-									value: '24',
-									color: '#F44336',
-								},
-								{
-									icon: Star,
-									label: isRTL ? 'التقييمات' : 'Reviews',
-									value: '8',
-									color: '#FF9800',
-								},
-								{
-									icon: Bell,
-									label: isRTL ? 'الإشعارات' : 'Notifications',
-									value: '3',
-									color: '#1688C9',
-								},
-							].map((stat, i) => (
+							{stats.map((stat, i) => (
 								<div
 									key={i}
 									className="bg-white rounded p-4 shadow-sm flex items-center gap-4"
@@ -486,153 +462,229 @@ export default function CustomerDashboard() {
 						<div className="bg-white rounded p-5 shadow-sm">
 							<div className="flex items-center justify-between mb-4">
 								<h3 className={`font-bold text-base ${styles.sectionTitle}`}>
-									{isRTL ? 'تتبع الطلبات' : 'Order Tracking'}
+									{t('customer.tracking')}
 								</h3>
 								<Link
 									to="/customer/orders"
 									className={`text-xs font-semibold hover:underline ${styles.linkOrange}`}
 								>
-									{isRTL ? 'عرض الكل' : 'View All'}
+									{t('common.viewAll')}
 								</Link>
 							</div>
-							<div className="space-y-4">
-								{recentOrders.map((order) => (
-									<div
-										key={order.id}
-										className={`p-4 rounded border ${styles.orderCard}`}
-									>
-										<div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-											<div className="flex items-center gap-3">
-												<div
-													className={`w-12 h-12 rounded flex items-center justify-center ${styles.iconTileSoft}`}
-												>
-													<Package
-														className={`w-6 h-6 ${styles.iconTileOrange}`}
-														strokeWidth={1.5}
-													/>
-												</div>
-												<div>
-													<div className="flex items-center gap-2">
-														<p
-															className={`text-sm font-semibold ${styles.iconText}`}
+							{ordersLoading ? (
+								<div className="flex items-center justify-center py-8">
+									<Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+								</div>
+							) : !orders || orders.length === 0 ? (
+								<p className={`text-sm text-center py-6 ${styles.mutedTextFaint}`}>
+									{t('customer.noOrders')}
+								</p>
+							) : (
+								<div className="space-y-4">
+									{orders.slice(0, 3).map((order) => {
+										const labels = STATUS_LABELS[order.status] ?? {
+											ar: order.status,
+											en: order.status,
+										};
+										return (
+											<div
+												key={order.id}
+												className={`p-4 rounded border ${styles.orderCard}`}
+											>
+												<div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+													<div className="flex items-center gap-3">
+														<div
+															className={`w-12 h-12 rounded flex items-center justify-center ${styles.iconTileSoft}`}
 														>
-															#{order.id}
-														</p>
-														<StatusBadge
-															status={order.status}
-															label={
-																isRTL
-																	? order.statusLabel
-																	: order.statusLabelEn
-															}
-														/>
+															<Package
+																className={`w-6 h-6 ${styles.iconTileOrange}`}
+																strokeWidth={1.5}
+															/>
+														</div>
+														<div>
+															<div className="flex items-center gap-2">
+																<p
+																	className={`text-sm font-semibold ${styles.iconText}`}
+																>
+																	#
+																	{order.order_number ?? order.id}
+																</p>
+																<StatusBadge
+																	status={order.status}
+																	label={
+																		isRTL
+																			? labels.ar
+																			: labels.en
+																	}
+																/>
+															</div>
+															<p
+																className={`text-xs mt-0.5 ${styles.mutedText}`}
+															>
+																{order.created_at?.slice(0, 10) ??
+																	''}{' '}
+																·{' '}
+																{(order as { items_count?: number })
+																	.items_count ?? '–'}{' '}
+																{t('common.items')}
+															</p>
+														</div>
 													</div>
 													<p
-														className={`text-xs mt-0.5 ${styles.mutedText}`}
+														className={`text-sm font-bold ${styles.priceOrange}`}
 													>
-														{isRTL ? order.dateAr : order.date} ·{' '}
-														{order.items} {isRTL ? 'منتجات' : 'items'}
+														{formatYER(
+															Number(order.total ?? 0),
+															i18n.language as 'ar' | 'en' | 'zh',
+														)}
 													</p>
 												</div>
+												<OrderTimeline
+													timeline={statusTimeline(order.status)}
+												/>
 											</div>
-											<p
-												className={`text-sm font-bold ${styles.priceOrange}`}
-											>
-												{order.total}
-											</p>
-										</div>
-										<OrderTimeline timeline={order.timeline} isRTL={isRTL} />
-									</div>
-								))}
-							</div>
+										);
+									})}
+								</div>
+							)}
 						</div>
 
 						{/* Wishlist Grid */}
 						<div className="bg-white rounded p-5 shadow-sm">
 							<div className="flex items-center justify-between mb-4">
 								<h3 className={`font-bold text-base ${styles.sectionTitle}`}>
-									{isRTL ? 'المفضلة' : 'Wishlist'}
+									{t('customer.wishlist')}
 								</h3>
 								<Link
 									to="/customer/wishlist"
 									className={`text-xs font-semibold hover:underline ${styles.linkOrange}`}
 								>
-									{isRTL ? 'عرض الكل' : 'View All'}
+									{t('common.viewAll')}
 								</Link>
 							</div>
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-								{wishlistItems.map((item) => (
-									<div
-										key={item.id}
-										className={`border rounded p-4 hover:shadow-md transition-shadow ${styles.wishlistCard}`}
-									>
-										<div
-											className={`w-full h-28 rounded flex items-center justify-center mb-3 ${styles.wishlistImage}`}
-										>
-											<Heart
-												className={`w-8 h-8 ${styles.iconDanger}`}
-												strokeWidth={1.5}
-											/>
-										</div>
-										<p
-											className={`text-sm font-medium truncate ${styles.iconText}`}
-										>
-											{isRTL ? item.name : item.nameEn}
-										</p>
-										<div className="flex items-center gap-2 mt-1">
-											<Star
-												className={`w-3 h-3 ${styles.ratingStar}`}
-												strokeWidth={1.5}
-											/>
-											<span className={`text-xs ${styles.mutedText}`}>
-												{item.rating}
-											</span>
-											<span className={`text-xs ${styles.mutedTextFaint}`}>
-												({item.sold} {isRTL ? 'مباع' : 'sold'})
-											</span>
-										</div>
-										<p
-											className={`text-sm font-bold mt-2 ${styles.priceOrange}`}
-										>
-											{item.price}
-										</p>
-									</div>
-								))}
-							</div>
+							{wishlistItems.length === 0 ? (
+								<p className={`text-sm text-center py-6 ${styles.mutedTextFaint}`}>
+									{t('customer.noWishlist')}
+								</p>
+							) : (
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+									{wishlistItems.slice(0, 4).map((item) => {
+										// WishlistItem carries the localized name in one of
+										// name_en / name_ar / name_zh. Pick the right one
+										// for the current i18n.language. The product_id
+										// is used as the key (NOT id — id is the wishlist row id).
+										const wn = item as unknown as {
+											product_id: number;
+											price?: number;
+											rating?: number;
+											name_ar?: string;
+											name_en?: string;
+											name_zh?: string;
+										};
+										const wname = isRTL
+											? (wn.name_ar ?? wn.name_en ?? wn.name_zh ?? '—')
+											: (wn.name_en ?? wn.name_zh ?? wn.name_ar ?? '—');
+										return (
+											<div
+												key={wn.product_id}
+												className={`border rounded p-4 hover:shadow-md transition-shadow ${styles.wishlistCard}`}
+											>
+												<div
+													className={`w-full h-28 rounded flex items-center justify-center mb-3 ${styles.wishlistImage}`}
+												>
+													<Heart
+														className={`w-8 h-8 ${styles.iconDanger}`}
+														strokeWidth={1.5}
+													/>
+												</div>
+												<p
+													className={`text-sm font-medium truncate ${styles.iconText}`}
+												>
+													{wname}
+												</p>
+												<div className="flex items-center gap-2 mt-1">
+													<Star
+														className={`w-3 h-3 ${styles.ratingStar}`}
+														strokeWidth={1.5}
+													/>
+													<span className={`text-xs ${styles.mutedText}`}>
+														{wn.rating ?? '–'}
+													</span>
+												</div>
+												<p
+													className={`text-sm font-bold mt-2 ${styles.priceOrange}`}
+												>
+													{formatYER(
+														wn.price ?? 0,
+														i18n.language as 'ar' | 'en' | 'zh',
+													)}
+												</p>
+											</div>
+										);
+									})}
+								</div>
+							)}
 						</div>
 
 						{/* Notifications */}
 						<div className="bg-white rounded p-5 shadow-sm">
 							<h3 className={`font-bold text-base mb-4 ${styles.sectionTitle}`}>
-								{isRTL ? 'آخر الإشعارات' : 'Recent Notifications'}
+								{t('customer.recentNotifications')}
 							</h3>
-							<div className="space-y-3">
-								{notifications.map((n, i) => (
-									<div
-										key={i}
-										className="flex items-start gap-3 p-3 rounded hover:bg-gray-50 transition-colors"
-									>
-										<div
-											className={`w-9 h-9 rounded flex items-center justify-center shrink-0 ${styles.tile}`}
-											style={
-												{ '--tile-color': n.color } as React.CSSProperties
-											}
-										>
-											<n.icon className="w-4 h-4" strokeWidth={1.5} />
-										</div>
-										<div className="flex-1">
-											<p className={`text-xs ${styles.iconText}`}>
-												{isRTL ? n.text : n.textEn}
-											</p>
-											<p
-												className={`text-[10px] mt-0.5 ${styles.mutedTextFaint}`}
+							{notifications.length === 0 ? (
+								<p className={`text-sm text-center py-6 ${styles.mutedTextFaint}`}>
+									{t('customer.noNotifications')}
+								</p>
+							) : (
+								<div className="space-y-3">
+									{notifications.slice(0, 5).map((n) => {
+										const typeColor: Record<string, string> = {
+											order: '#1688C9',
+											refund: '#F44336',
+											review: '#FF9800',
+											promo: '#FF6A00',
+											dispute: '#F44336',
+											system: '#6B7280',
+											message: '#1688C9',
+										};
+										return (
+											<div
+												key={n.id}
+												className="flex items-start gap-3 p-3 rounded hover:bg-gray-50 transition-colors"
 											>
-												{n.time}
-											</p>
-										</div>
-									</div>
-								))}
-							</div>
+												<div
+													className={`w-9 h-9 rounded flex items-center justify-center shrink-0 ${styles.tile}`}
+													style={
+														{
+															'--tile-color':
+																typeColor[n.type] ?? '#6B7280',
+														} as React.CSSProperties
+													}
+												>
+													<Bell className="w-4 h-4" strokeWidth={1.5} />
+												</div>
+												<div className="flex-1">
+													<p className={`text-xs ${styles.iconText}`}>
+														{n.title}
+													</p>
+													{n.body && (
+														<p
+															className={`text-xs mt-0.5 ${styles.mutedTextFaint}`}
+														>
+															{n.body}
+														</p>
+													)}
+													<p
+														className={`text-[10px] mt-0.5 ${styles.mutedTextFaint}`}
+													>
+														{n.created_at?.slice(0, 10) ?? ''}
+													</p>
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							)}
 						</div>
 					</div>
 				</main>

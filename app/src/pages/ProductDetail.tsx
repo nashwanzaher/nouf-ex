@@ -138,9 +138,7 @@ export default function ProductDetail() {
 		return (
 			<div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
 				<div className="w-10 h-10 border-3 border-[#FF6A00] border-t-transparent rounded-full animate-spin mb-4" />
-				<p className="text-[#666]">
-					{lang === 'ar' ? 'جاري التحميل...' : lang === 'zh' ? '加载中...' : 'Loading...'}
-				</p>
+				<p className="text-[#666]">{t('product.loading', 'Loading...')}</p>
 			</div>
 		);
 	}
@@ -187,14 +185,7 @@ export default function ProductDetail() {
 			},
 		});
 		setAdded(true);
-		addToast(
-			lang === 'ar'
-				? 'تمت الإضافة للسلة!'
-				: lang === 'zh'
-					? '已加入购物车！'
-					: 'Added to cart!',
-			'success',
-		);
+		addToast(t('product.addedToCart', 'Added to cart!'), 'success');
 		setTimeout(() => setAdded(false), 2000);
 	};
 
@@ -222,7 +213,7 @@ export default function ProductDetail() {
 				</Link>
 				<ChevronRight size={14} className={isRTL ? 'rotate-180' : ''} />
 				<Link to="/categories" className="hover:text-[#FF6A00] capitalize">
-					{lang === 'ar' ? 'المنتجات' : 'Products'}
+					{t('product.breadcrumbProducts', 'Products')}
 				</Link>
 				<ChevronRight size={14} className={isRTL ? 'rotate-180' : ''} />
 				<span className="text-[#333] font-medium truncate max-w-[200px]">
@@ -253,12 +244,12 @@ export default function ProductDetail() {
 							<div className="absolute top-3 right-3 flex flex-col gap-1">
 								{product.badges?.includes('bestseller') && (
 									<span className="bg-[#FF6A00] text-white text-xs font-bold px-2 py-0.5 rounded">
-										{lang === 'ar' ? 'الأكثر مبيعاً' : 'BESTSELLER'}
+										{t('product.bestsellerBadge', 'BESTSELLER')}
 									</span>
 								)}
 								{product.badges?.includes('new') && (
 									<span className="bg-[#1688C9] text-white text-xs font-bold px-2 py-0.5 rounded">
-										{lang === 'ar' ? 'جديد' : 'NEW'}
+										{t('product.newBadge', 'NEW')}
 									</span>
 								)}
 							</div>
@@ -311,7 +302,7 @@ export default function ProductDetail() {
 						</span>
 						<span className="text-sm text-[#999]">|</span>
 						<span className="text-sm text-[#666]">
-							{product.sold_count} {lang === 'ar' ? 'مبيع' : 'sold'}
+							{product.sold_count} {t('product.soldSuffix', 'sold')}
 						</span>
 					</div>
 
@@ -319,7 +310,7 @@ export default function ProductDetail() {
 					<div className="mt-4 p-4 bg-[#FFF8F3] rounded border border-[#FFE8D6]">
 						<div className="flex items-baseline gap-2 flex-wrap">
 							<span className="text-[#FF6A00] text-sm font-medium">
-								{lang === 'ar' ? 'السعر:' : 'Price:'}
+								{t('product.priceLabel', 'Price:')}
 							</span>
 							<span className="text-2xl font-bold text-[#FF6A00]">
 								{minPrice.toLocaleString()} - {maxPrice.toLocaleString()}
@@ -340,7 +331,7 @@ export default function ProductDetail() {
 							</span>
 							<span className="text-xs bg-[#E8F5E9] text-[#4CAF50] px-2 py-0.5 rounded font-medium flex items-center gap-1">
 								<ShieldCheck size={10} />{' '}
-								{lang === 'ar' ? 'ضمان التجارة' : 'Trade Assurance'}
+								{t('nav.tradeAssurance', 'Trade Assurance')}
 							</span>
 						</div>
 					</div>
@@ -348,7 +339,7 @@ export default function ProductDetail() {
 					{/* Variants - Colors */}
 					<div className="mt-4">
 						<span className="text-sm font-medium text-[#333]">
-							{lang === 'ar' ? 'اللون:' : 'Color:'}
+							{t('product.colorLabel', 'Color:')}
 						</span>
 						<div className="flex flex-wrap gap-2 mt-1.5">
 							{colors.map((c) => (
@@ -366,7 +357,7 @@ export default function ProductDetail() {
 					{/* Variants - Sizes */}
 					<div className="mt-3">
 						<span className="text-sm font-medium text-[#333]">
-							{lang === 'ar' ? 'المقاس:' : 'Size:'}
+							{t('product.sizeLabel', 'Size:')}
 						</span>
 						<div className="flex flex-wrap gap-2 mt-1.5">
 							{sizes.map((s) => (
@@ -404,7 +395,7 @@ export default function ProductDetail() {
 							</button>
 						</div>
 						<span className="text-sm text-[#999]">
-							{product.stock} {lang === 'ar' ? 'متاح' : 'available'}
+							{product.stock} {t('product.availableSuffix', 'available')}
 						</span>
 					</div>
 
@@ -417,16 +408,12 @@ export default function ProductDetail() {
 						>
 							<ShoppingCart size={16} />
 							{added
-								? lang === 'ar'
-									? 'تمت الإضافة!'
-									: 'Added!'
-								: lang === 'ar'
-									? 'ابدأ الطلب'
-									: 'Start Order'}
+								? t('product.addedShort', 'Added!')
+								: t('product.startOrder', 'Start Order')}
 						</button>
 						<button className="h-11 rounded font-bold border-2 border-[#FF6A00] text-[#FF6A00] hover:bg-[#FFF8F3] transition-all text-sm flex items-center justify-center gap-2">
 							<MessageCircle size={16} />
-							{lang === 'ar' ? 'تواصل مع المورد' : 'Contact Supplier'}
+							{t('product.contactSupplier', 'Contact Supplier')}
 						</button>
 					</div>
 
@@ -466,7 +453,7 @@ export default function ProductDetail() {
 								<div className="py-3 space-y-2 border-b border-[#E5E5E5]">
 									<div className="flex items-center justify-between text-sm">
 										<span className="text-[#999]">
-											{lang === 'ar' ? 'التقييم' : 'Rating'}
+											{t('product.storeRatingLabel', 'Rating')}
 										</span>
 										<div className="flex items-center gap-1">
 											<Star
@@ -480,19 +467,19 @@ export default function ProductDetail() {
 									</div>
 									<div className="flex items-center justify-between text-sm">
 										<span className="text-[#999]">
-											{lang === 'ar' ? 'سنوات' : 'Years'}
+											{t('product.storeYearsLabel', 'Years')}
 										</span>
 										<span className="font-bold text-[#333]">
 											{store.since_year
 												? new Date().getFullYear() -
 													parseInt(store.since_year)
 												: 0}{' '}
-											{lang === 'ar' ? 'سنة' : 'yrs'}
+											{t('product.storeYearUnit', 'yrs')}
 										</span>
 									</div>
 									<div className="flex items-center justify-between text-sm">
 										<span className="text-[#999]">
-											{lang === 'ar' ? 'المبيعات' : 'Transactions'}
+											{t('product.storeTransactionsLabel', 'Transactions')}
 										</span>
 										<span className="font-bold text-[#333]">
 											{(store.sales_count ?? 0).toLocaleString()}+
@@ -505,13 +492,13 @@ export default function ProductDetail() {
 									{store.trust_level === 'gold' && (
 										<span className="flex items-center gap-1 text-xs bg-[#FFF8E1] text-[#FF8F00] px-2 py-0.5 rounded font-medium">
 											<Award size={12} />{' '}
-											{lang === 'ar' ? 'مورد ذهبي' : 'Gold Supplier'}
+											{t('product.goldSupplier', 'Gold Supplier')}
 										</span>
 									)}
 									{store.is_verified === 1 && (
 										<span className="flex items-center gap-1 text-xs bg-[#E3F2FD] text-[#1688C9] px-2 py-0.5 rounded font-medium">
 											<BadgeCheck size={12} />{' '}
-											{lang === 'ar' ? 'موثق' : 'Verified'}
+											{t('nav.verified', 'Verified')}
 										</span>
 									)}
 								</div>
@@ -521,11 +508,11 @@ export default function ProductDetail() {
 										to={`/store/${store.id}`}
 										className="h-9 rounded bg-[#FF6A00] text-white font-bold text-sm flex items-center justify-center hover:bg-[#E55F00] transition-colors"
 									>
-										{lang === 'ar' ? 'زيارة المتجر' : 'Visit Store'}
+										{t('product.visitStore', 'Visit Store')}
 									</Link>
 									<button className="h-9 rounded border border-[#E5E5E5] text-[#666] font-medium text-sm flex items-center justify-center hover:border-[#FF6A00] hover:text-[#FF6A00] transition-colors">
 										<Heart size={14} className="mr-1" />
-										{lang === 'ar' ? 'متابعة' : 'Follow'}
+										{t('product.followStore', 'Follow')}
 									</button>
 								</div>
 							</>
@@ -535,15 +522,15 @@ export default function ProductDetail() {
 						<div className="mt-4 pt-3 border-t border-[#E5E5E5] space-y-2">
 							<div className="flex items-center gap-2 text-xs text-[#666]">
 								<ShieldCheck size={14} className="text-[#4CAF50]" />
-								<span>{lang === 'ar' ? 'ضمان التجارة' : 'Trade Assurance'}</span>
+								<span>{t('nav.tradeAssurance', 'Trade Assurance')}</span>
 							</div>
 							<div className="flex items-center gap-2 text-xs text-[#666]">
 								<Clock size={14} className="text-[#1688C9]" />
-								<span>{lang === 'ar' ? 'شحن سريع' : 'Fast Shipping'}</span>
+								<span>{t('product.fastShipping', 'Fast Shipping')}</span>
 							</div>
 							<div className="flex items-center gap-2 text-xs text-[#666]">
 								<RefreshCw size={14} className="text-[#FF6A00]" />
-								<span>{lang === 'ar' ? 'إرجاع خلال 7 أيام' : '7-Day Returns'}</span>
+								<span>{t('product.returns7Days', '7-Day Returns')}</span>
 							</div>
 						</div>
 					</div>
@@ -557,15 +544,15 @@ export default function ProductDetail() {
 					{[
 						{
 							key: 'details' as const,
-							label: lang === 'ar' ? 'تفاصيل المنتج' : 'Product Details',
+							label: t('product.tabDetails', 'Product Details'),
 						},
 						{
 							key: 'company' as const,
-							label: lang === 'ar' ? 'ملف الشركة' : 'Company Profile',
+							label: t('product.tabCompany', 'Company Profile'),
 						},
 						{
 							key: 'reviews' as const,
-							label: `${lang === 'ar' ? 'المراجعات' : 'Reviews'} (${product.review_count})`,
+							label: `${t('product.tabReviews', 'Reviews')} (${product.review_count})`,
 						},
 					].map((tab) => (
 						<button
@@ -584,7 +571,7 @@ export default function ProductDetail() {
 						<div className="grid md:grid-cols-2 gap-8">
 							<div>
 								<h3 className="text-base font-bold text-[#333] mb-3">
-									{lang === 'ar' ? 'وصف المنتج' : 'Product Description'}
+									{t('product.sectionDescription', 'Product Description')}
 								</h3>
 								<p className="text-sm text-[#666] leading-relaxed">
 									{getDesc(product)}
@@ -636,13 +623,13 @@ export default function ProductDetail() {
 						<div className="grid md:grid-cols-2 gap-8">
 							<div className="space-y-4">
 								<h3 className="text-base font-bold text-[#333] mb-3">
-									{lang === 'ar' ? 'معلومات الشركة' : 'Company Information'}
+									{t('product.sectionCompanyInfo', 'Company Information')}
 								</h3>
 								<div className="space-y-3">
 									<div className="flex items-center gap-3 text-sm">
 										<Store size={16} className="text-[#FF6A00]" />
 										<span className="text-[#666]">
-											{lang === 'ar' ? 'اسم المتجر:' : 'Store Name:'}
+											{t('product.storeNameLabel', 'Store Name:')}
 										</span>
 										<span className="text-[#333] font-medium">
 											{getStoreName(store)}
@@ -651,7 +638,7 @@ export default function ProductDetail() {
 									<div className="flex items-center gap-3 text-sm">
 										<MapPin size={16} className="text-[#FF6A00]" />
 										<span className="text-[#666]">
-											{lang === 'ar' ? 'الموقع:' : 'Location:'}
+											{t('product.storeLocationLabel', 'Location:')}
 										</span>
 										<span className="text-[#333] font-medium">
 											{store.location}
@@ -660,7 +647,7 @@ export default function ProductDetail() {
 									<div className="flex items-center gap-3 text-sm">
 										<CalendarIcon size={16} className="text-[#FF6A00]" />
 										<span className="text-[#666]">
-											{lang === 'ar' ? 'منذ:' : 'Established:'}
+											{t('product.storeEstablishedLabel', 'Established:')}
 										</span>
 										<span className="text-[#333] font-medium">
 											{store.since_year}
@@ -669,7 +656,7 @@ export default function ProductDetail() {
 									<div className="flex items-center gap-3 text-sm">
 										<PackageIcon size={16} className="text-[#FF6A00]" />
 										<span className="text-[#666]">
-											{lang === 'ar' ? 'المنتجات:' : 'Products:'}
+											{t('product.storeProductsLabel', 'Products:')}
 										</span>
 										<span className="text-[#333] font-medium">
 											{store.products_count}
@@ -679,22 +666,14 @@ export default function ProductDetail() {
 							</div>
 							<div>
 								<h3 className="text-base font-bold text-[#333] mb-3">
-									{lang === 'ar' ? 'القدرات' : 'Capabilities'}
+									{t('product.sectionCapabilities', 'Capabilities')}
 								</h3>
 								<div className="space-y-2">
 									{[
-										lang === 'ar'
-											? 'شحن إلى أكثر من 50 دولة'
-											: 'Shipping to 50+ countries',
-										lang === 'ar'
-											? 'تصنيع حسب الطلب متاح'
-											: 'OEM/ODM Available',
-										lang === 'ar'
-											? 'دعم فني على مدار الساعة'
-											: '24/7 Customer Support',
-										lang === 'ar'
-											? 'شهادات جودة دولية'
-											: 'International Quality Certifications',
+										t('product.capShipping', 'Shipping to 50+ countries'),
+										t('product.capOem', 'OEM/ODM Available'),
+										t('product.capSupport247', '24/7 Customer Support'),
+										t('product.capQuality', 'International Quality Certifications'),
 									].map((cap, i) => (
 										<div
 											key={i}
@@ -821,24 +800,19 @@ export default function ProductDetail() {
 											<div className="flex items-center gap-3 mt-2">
 												<button className="flex items-center gap-1 text-xs text-[#999] hover:text-[#FF6A00] transition-colors">
 													<ThumbsUp size={12} />{' '}
-													{lang === 'ar' ? 'مفيد' : 'Helpful'} (
-													{r.helpful_count})
+													{t('product.helpful', 'Helpful')} ({r.helpful_count})
 												</button>
 												{r.is_verified === 1 && (
 													<span className="flex items-center gap-1 text-xs text-[#4CAF50]">
 														<BadgeCheck size={12} />{' '}
-														{lang === 'ar'
-															? 'مشتري موثق'
-															: 'Verified Buyer'}
+														{t('product.verifiedBuyer', 'Verified Buyer')}
 													</span>
 												)}
 											</div>
 											{r.merchant_reply && (
 												<div className="mt-2 p-3 bg-[#F7F8FA] rounded text-sm">
 													<span className="font-semibold text-[#333]">
-														{lang === 'ar'
-															? 'رد التاجر:'
-															: 'Seller Reply:'}
+														{t('product.sellerReplyLabel', 'Seller Reply:')}
 													</span>
 													<p className="text-[#666] mt-0.5">
 														{r.merchant_reply}
@@ -858,7 +832,7 @@ export default function ProductDetail() {
 			{related.length > 0 && (
 				<div className="mt-10">
 					<h2 className="text-lg font-bold text-[#333] mb-4">
-						{lang === 'ar' ? 'منتجات ذات صلة' : 'Related Products'}
+						{t('product.relatedProducts', 'Related Products')}
 					</h2>
 					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
 						{related.map((p) => (
@@ -892,7 +866,7 @@ export default function ProductDetail() {
 										</span>
 										<span className="text-xs text-[#999]">|</span>
 										<span className="text-xs text-[#999]">
-											{p.sold_count} {lang === 'ar' ? 'مبيع' : 'sold'}
+											{p.sold_count} {t('product.soldSuffix', 'sold')}
 										</span>
 									</div>
 								</div>

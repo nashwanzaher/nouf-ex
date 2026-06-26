@@ -587,13 +587,29 @@ export async function removeFromWishlist(id: number): Promise<void> {
 
 // ─── Notifications API ──────────────────────────────────────
 
-export async function getNotifications(userId: number): Promise<Notification[]> {
-	return apiRequest(`/notifications/${userId}`);
+/**
+ * Fetch the authenticated user's notifications.
+ *
+ * The route handler ignores the `:userId` URL parameter — it derives
+ * the user from `req.user.id` (set by `optionalAuth` from the bearer
+ * token). We keep `userId` in the signature because the URL pattern
+ * requires a value, and because the test suite (and any future
+ * admin-style "view another user's notifications" code) may pass one.
+ */
+export async function getNotifications(
+	userId: number,
+	options?: RequestOptions,
+): Promise<Notification[]> {
+	return apiRequest(`/notifications/${userId}`, { signal: options?.signal });
 }
 
-export async function markNotificationAsRead(id: number): Promise<void> {
+export async function markNotificationAsRead(
+	id: number,
+	options?: RequestOptions,
+): Promise<void> {
 	return apiRequest(`/notifications/${id}/read`, {
 		method: 'PUT',
+		signal: options?.signal,
 	});
 }
 

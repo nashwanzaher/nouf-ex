@@ -29,6 +29,7 @@ import {
 	getAddresses,
 	getShippingMethods,
 	validateCoupon,
+	getNotifications,
 	ApiError,
 } from '../lib/api';
 import type {
@@ -380,19 +381,26 @@ export function useWishlistItems(): HookResult<WishlistItem[]> {
 	return { data, loading, error, refetch: load };
 }
 
-// ─── Notifications (localStorage) ───────────────────────────
-
+// ─── Notifications (server-backed) ──────────────────────────
+//
+// P1-7 (real notifications): replaced the localStorage read with a
+// live call to GET /api/notifications/:userId. The server derives the
+// user from the bearer token (see `notifications.cts`) and ignores the
+// URL param, so we pass 0 as a placeholder. When the user is not
+// signed in, the API returns 401 — we swallow that and surface an
+// empty array so the page renders a sensible "log in to see your
+// notifications" state instead of an error toast on every visit.
 export function useNotifications(): HookResult<Notification[]> {
-	const [data, setData] = useState<Notification[]>(() =>
-		readLocalStorage<Notification[]>('noufex_notifications'),
-	);
-	const loading = false;
-
-	const load = useCallback(() => {
-		setData(readLocalStorage<Notification[]>('noufex_notifications'));
-	}, []);
-
-	return { data, loading, error: null, refetch: load };
+	return useDataHook(async (signal) => {
+		try {
+			return await getNotifications(0, { signal });
+		} catch (err) {
+			if (err instanceof ApiError && err.status === 401) {
+				return [] as Notification[];
+			}
+			throw err;
+		}
+	});
 }
 
 // ─── Users ──────────────────────────────────────────────────

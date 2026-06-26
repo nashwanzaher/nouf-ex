@@ -99,7 +99,10 @@ export default function Wishlist() {
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh] flex items-center justify-center p-6">
 					<div className="bg-white rounded-2xl p-10 text-center shadow-sm max-w-md">
-						<Heart className="w-12 h-12 mx-auto text-[#D4A853] mb-3" strokeWidth={1.5} />
+						<Heart
+							className="w-12 h-12 mx-auto text-[#D4A853] mb-3"
+							strokeWidth={1.5}
+						/>
 						<h2 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
 							سجّل الدخول لعرض المفضلة
 						</h2>
@@ -127,7 +130,9 @@ export default function Wishlist() {
 				<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30">
 					<div className="flex items-center justify-between">
 						<div>
-							<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">المفضلة</h1>
+							<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+								المفضلة
+							</h1>
 							<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
 								المنتجات التي حفظتها
 							</p>
@@ -150,7 +155,10 @@ export default function Wishlist() {
 					{/* ── Error ── */}
 					{!loading && error && (
 						<div className="bg-white rounded-2xl p-10 text-center shadow-sm">
-							<AlertCircle className="w-10 h-10 mx-auto text-[#EF4444] mb-3" strokeWidth={1.5} />
+							<AlertCircle
+								className="w-10 h-10 mx-auto text-[#EF4444] mb-3"
+								strokeWidth={1.5}
+							/>
 							<h3 className="text-lg font-amiri font-bold text-[#1A1612] mb-2">
 								تعذّر تحميل المفضلة
 							</h3>
@@ -175,13 +183,19 @@ export default function Wishlist() {
 					{/* ── Empty ── */}
 					{!loading && !error && items.length === 0 && (
 						<div className="bg-white rounded-2xl p-12 text-center shadow-sm">
-							<Heart className="w-20 h-20 text-[#AAAAAA] mx-auto mb-4" strokeWidth={1} />
+							<Heart
+								className="w-20 h-20 text-[#AAAAAA] mx-auto mb-4"
+								strokeWidth={1}
+							/>
 							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
 								قائمة المفضلة فارغة
 							</h3>
 							<p className="text-[#6B6B6B] font-cairo text-sm mb-6">
 								اضغط على{' '}
-								<Heart className="w-4 h-4 inline text-[#AAAAAA]" strokeWidth={1.5} />{' '}
+								<Heart
+									className="w-4 h-4 inline text-[#AAAAAA]"
+									strokeWidth={1.5}
+								/>{' '}
 								أثناء التسوق لحفظ المنتجات هنا
 							</p>
 							<Button
@@ -222,7 +236,10 @@ export default function Wishlist() {
 													className="w-full h-full object-cover"
 												/>
 											) : (
-												<Package className="w-12 h-12 text-[#AAAAAA]" strokeWidth={1} />
+												<Package
+													className="w-12 h-12 text-[#AAAAAA]"
+													strokeWidth={1}
+												/>
 											)}
 
 											{/* Remove button */}
@@ -283,10 +300,16 @@ export default function Wishlist() {
 												className="w-full mt-3 bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl h-10 text-sm disabled:opacity-50"
 											>
 												{isAddingToCart ? (
-													<Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+													<Loader2
+														className="w-4 h-4 animate-spin"
+														strokeWidth={1.5}
+													/>
 												) : (
 													<>
-														<ShoppingCart className="w-4 h-4 ml-1" strokeWidth={1.5} />
+														<ShoppingCart
+															className="w-4 h-4 ml-1"
+															strokeWidth={1.5}
+														/>
 														أضف إلى السلة
 													</>
 												)}

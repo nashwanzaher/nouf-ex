@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
 	Search,
@@ -217,17 +218,18 @@ const statusFilters = [
 /* ------------------------------------------------------------------ */
 
 function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => void }) {
+	const { t } = useTranslation();
 	const [step, setStep] = useState<WizardStep>(1);
 	const [images, setImages] = useState<string[]>([]);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const steps = [
-		{ num: 1, label: 'المعلومات الأساسية', icon: FileText },
-		{ num: 2, label: 'الصور', icon: Camera },
-		{ num: 3, label: 'التسعير والمخزون', icon: Tag },
-		{ num: 4, label: 'المتغيرات', icon: Box },
-		{ num: 5, label: 'الشحن', icon: Truck },
-		{ num: 6, label: 'المراجعة', icon: Check },
+		{ num: 1, label: t('seller.stepBasics', 'Basic Info'), icon: FileText },
+		{ num: 2, label: t('seller.stepImages', 'Images'), icon: Camera },
+		{ num: 3, label: t('seller.stepPricing', 'Pricing & Stock'), icon: Tag },
+		{ num: 4, label: t('seller.stepVariants', 'Variants'), icon: Box },
+		{ num: 5, label: t('seller.stepShipping', 'Shipping'), icon: Truck },
+		{ num: 6, label: t('seller.stepReview', 'Review'), icon: Check },
 	];
 
 	const handleImageUpload = () => {
@@ -275,10 +277,12 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 						{/* Wizard Header */}
 						<div className="shrink-0 px-6 py-4 border-b border-[#F3EDE4] flex items-center justify-between">
 							<h2 className="text-lg font-amiri font-bold text-[#1A1612]">
-								إضافة منتج جديد
+								{t('seller.addNewProduct', 'Add New Product')}
 							</h2>
 							<button
 								onClick={onClose}
+								title={t('common.close', 'Close')}
+								aria-label={t('common.close', 'Close')}
 								className="w-8 h-8 rounded-xl hover:bg-[#F8F8F8] flex items-center justify-center transition-colors"
 							>
 								<X className="w-5 h-5 text-[#6B6B6B]" strokeWidth={1.5} />
@@ -657,7 +661,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</div>
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														العرض (سم)
+														{t('seller.widthCm', 'Width (cm)')}
 													</label>
 													<input
 														type="number"
@@ -669,7 +673,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														الارتفاع (سم)
+														{t('seller.heightCm', 'Height (cm)')}
 													</label>
 													<input
 														type="number"
@@ -746,7 +750,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 							>
 								<span className="flex items-center gap-1">
 									<ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-									السابق
+									{t('seller.prevStep', 'Previous')}
 								</span>
 							</button>
 							<div className="flex items-center gap-2">
@@ -754,7 +758,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 									onClick={onClose}
 									className="px-4 py-2.5 rounded-xl border border-[#F3EDE4] text-sm font-cairo font-semibold text-[#6B6B6B] hover:bg-[#F8F8F8] transition-colors hidden sm:block"
 								>
-									حفظ كمسودة
+									{t('seller.saveDraft', 'Save Draft')}
 								</button>
 								<button
 									onClick={handleNext}
@@ -766,7 +770,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 									)}
 								>
 									<span className="flex items-center gap-1">
-										{step === 6 ? 'نشر المنتج' : 'التالي'}
+										{step === 6 ? t('seller.publishProduct', 'Publish Product') : t('seller.next', 'Next')}
 										{step < 6 && (
 											<ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
 										)}
@@ -786,18 +790,20 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 /* ------------------------------------------------------------------ */
 
 export default function SellerProducts() {
+	const { t } = useTranslation();
 	const [view, setView] = useState<'grid' | 'list'>('grid');
 	const [search, setSearch] = useState('');
-	const [category, setCategory] = useState('الكل');
+	const [category, setCategory] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
 	const [sortBy, setSortBy] = useState('newest');
 	const [wizardOpen, setWizardOpen] = useState(false);
 	const [products, setProducts] = useState<Product[]>(mockProducts);
 
+	const allCategoryLabel = t('seller.allCategories', 'All Categories');
 	const filtered = products.filter((p) => {
 		const matchesSearch =
 			p.name.toLowerCase().includes(search.toLowerCase()) || p.price.includes(search);
-		const matchesCategory = category === 'الكل' || p.category === category;
+		const matchesCategory = category === allCategoryLabel || p.category === category;
 		const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
 		return matchesSearch && matchesCategory && matchesStatus;
 	});
@@ -817,14 +823,19 @@ export default function SellerProducts() {
 	};
 
 	return (
-		<DashboardShell title="المنتجات" breadcrumb="لوحة التحكم / إدارة المنتجات">
+		<DashboardShell
+			title={t('seller.products', 'Products')}
+			breadcrumb={t('seller.breadcrumbProducts', 'Dashboard / Products')}
+		>
 			<div className="space-y-6">
 				{/* Page Header */}
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 					<div>
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">المنتجات</h1>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
+							{t('seller.products', 'Products')}
+						</h1>
 						<p className="text-sm text-[#6B6B6B] font-cairo">
-							إدارة وإضافة منتجات متجرك
+							{t('seller.productsSubtitle', 'Manage and add products to your store')}
 						</p>
 					</div>
 					<div className="flex items-center gap-2 flex-wrap">
@@ -833,15 +844,15 @@ export default function SellerProducts() {
 							className="flex items-center gap-2 px-4 py-2.5 bg-[#D4A853] hover:bg-[#c49a48] text-[#1A1612] rounded-xl text-sm font-cairo font-semibold transition-colors"
 						>
 							<Plus className="w-4 h-4" strokeWidth={1.5} />
-							إضافة منتج جديد
+							{t('seller.addNewProduct', 'Add New Product')}
 						</button>
 						<button className="flex items-center gap-2 px-4 py-2.5 border border-[#D4A853] text-[#D4A853] hover:bg-[#F3EDE4] rounded-xl text-sm font-cairo font-semibold transition-colors">
 							<Upload className="w-4 h-4" strokeWidth={1.5} />
-							تصدير
+							{t('seller.export', 'Export')}
 						</button>
 						<button className="flex items-center gap-2 px-4 py-2.5 border border-[#D4A853] text-[#D4A853] hover:bg-[#F3EDE4] rounded-xl text-sm font-cairo font-semibold transition-colors">
 							<Download className="w-4 h-4" strokeWidth={1.5} />
-							استيراد
+							{t('seller.import', 'Import')}
 						</button>
 					</div>
 				</div>
@@ -868,6 +879,7 @@ export default function SellerProducts() {
 						<select
 							value={category}
 							onChange={(e) => setCategory(e.target.value)}
+							aria-label={t('seller.categoryLabel', 'Category')}
 							className="px-3 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
 						>
 							{categories.map((c) => (
@@ -897,17 +909,20 @@ export default function SellerProducts() {
 						<select
 							value={sortBy}
 							onChange={(e) => setSortBy(e.target.value)}
+							aria-label={t('common.sortBy', 'Sort by')}
 							className="px-3 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
 						>
-							<option value="newest">الأحدث</option>
-							<option value="orders">الأكثر مبيعاً</option>
-							<option value="price">السعر</option>
+							<option value="newest">{t('seller.sortNewest', 'Newest')}</option>
+							<option value="orders">{t('seller.sortBestSelling', 'Best selling')}</option>
+							<option value="price">{t('seller.sortPrice', 'Price')}</option>
 						</select>
 
 						{/* View Toggle */}
 						<div className="flex items-center gap-1 bg-[#F8F8F8] rounded-xl p-1 mr-auto">
 							<button
 								onClick={() => setView('grid')}
+								title={t('seller.viewGrid', 'Grid view')}
+								aria-label={t('seller.viewGrid', 'Grid view')}
 								className={cn(
 									'w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
 									view === 'grid'
@@ -919,6 +934,8 @@ export default function SellerProducts() {
 							</button>
 							<button
 								onClick={() => setView('list')}
+								title={t('seller.viewList', 'List view')}
+								aria-label={t('seller.viewList', 'List view')}
 								className={cn(
 									'w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
 									view === 'list'

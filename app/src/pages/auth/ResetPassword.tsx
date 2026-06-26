@@ -63,9 +63,13 @@ export default function ResetPassword() {
 
 	const validate = () => {
 		const errs: Record<string, string> = {};
-		if (!password.trim()) errs.password = t('authCommon.fieldRequired', 'This field is required');
+		if (!password.trim())
+			errs.password = t('authCommon.fieldRequired', 'This field is required');
 		else if (password.length < 6)
-			errs.password = t('authCommon.passwordMinLength', 'Password must be at least 6 characters');
+			errs.password = t(
+				'authCommon.passwordMinLength',
+				'Password must be at least 6 characters',
+			);
 		if (password !== confirmPassword)
 			errs.confirmPassword = t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
 		setErrors(errs);
@@ -178,7 +182,10 @@ export default function ResetPassword() {
 									setConfirmPassword(e.target.value);
 									setErrors((p) => ({ ...p, confirmPassword: '' }));
 								}}
-								placeholder={t('authReset.confirmPasswordPlaceholder', 'Re-enter password')}
+								placeholder={t(
+									'authReset.confirmPasswordPlaceholder',
+									'Re-enter password',
+								)}
 								className={`pr-10 pl-10 rounded-xl h-12 font-cairo text-sm ${errors.confirmPassword ? 'border-[#EF4444]' : ''}`}
 							/>
 							<button

@@ -41,9 +41,13 @@ export default function Register() {
 		if (!email.trim()) errs.email = t('authCommon.fieldRequired', 'This field is required');
 		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
 			errs.email = t('authCommon.invalidEmail', 'Invalid email');
-		if (!password.trim()) errs.password = t('authCommon.fieldRequired', 'This field is required');
+		if (!password.trim())
+			errs.password = t('authCommon.fieldRequired', 'This field is required');
 		else if (password.length < 6)
-			errs.password = t('authCommon.passwordMinLength', 'Password must be at least 6 characters');
+			errs.password = t(
+				'authCommon.passwordMinLength',
+				'Password must be at least 6 characters',
+			);
 		if (password !== confirmPassword)
 			errs.confirmPassword = t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
 		if (!terms) errs.terms = t('authRegister.termsRequired', 'You must agree to the terms');
@@ -82,7 +86,10 @@ export default function Register() {
 			const message =
 				err instanceof ApiError
 					? err.message
-					: t('authRegister.accountCreateError', 'Could not create the account. Please try again.');
+					: t(
+							'authRegister.accountCreateError',
+							'Could not create the account. Please try again.',
+						);
 			setErrors({ form: message });
 			addToast({ message, type: 'error' });
 		} finally {
@@ -116,7 +123,10 @@ export default function Register() {
 						{isRTL ? 'نوف إكس' : 'Nouf-ex'}
 					</h1>
 					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
-						{t('authRegister.heroJoin', 'Join the largest e-commerce platform in the region')}
+						{t(
+							'authRegister.heroJoin',
+							'Join the largest e-commerce platform in the region',
+						)}
 					</p>
 
 					<div className="grid grid-cols-3 gap-4 mb-8">
@@ -173,7 +183,10 @@ export default function Register() {
 									{t('auth.registerTitle')}
 								</h1>
 								<p className={`text-sm ${styles.formSubtitle}`}>
-									{t('authRegister.subtitle', 'Create your account and start your journey')}
+									{t(
+										'authRegister.subtitle',
+										'Create your account and start your journey',
+									)}
 								</p>
 							</div>
 
@@ -355,10 +368,10 @@ export default function Register() {
 										<span
 											className={`text-xs leading-relaxed ${styles.formSubtitle}`}
 										>
-										{t(
-											'auth.iAgree',
-											'I agree to the Terms of Service and Privacy Policy',
-										)}
+											{t(
+												'auth.iAgree',
+												'I agree to the Terms of Service and Privacy Policy',
+											)}
 										</span>
 									</button>
 									{errors.terms && (

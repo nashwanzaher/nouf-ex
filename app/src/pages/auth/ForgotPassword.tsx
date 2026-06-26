@@ -54,10 +54,7 @@ export default function ForgotPassword() {
 	};
 
 	return (
-		<AuthLayout
-			backLink="/auth/login"
-			backLabel={t('authForgot.backToLogin', 'Back to login')}
-		>
+		<AuthLayout backLink="/auth/login" backLabel={t('authForgot.backToLogin', 'Back to login')}>
 			<div className="animate-in slide-in-from-left-4 duration-500">
 				{!submitted ? (
 					<>
@@ -67,7 +64,10 @@ export default function ForgotPassword() {
 								{t('authForgot.title', 'Recover password')}
 							</h1>
 							<p className="text-[#6B6B6B] font-cairo text-sm leading-relaxed">
-								{t('authForgot.subtitle', "Enter your email and we'll send you a reset link")}
+								{t(
+									'authForgot.subtitle',
+									"Enter your email and we'll send you a reset link",
+								)}
 							</p>
 						</div>
 
@@ -125,9 +125,13 @@ export default function ForgotPassword() {
 							{t('authForgot.sentSubtitle', 'Check your email')}
 						</p>
 						<p className="text-xs text-[#AAAAAA] font-cairo mb-8">
-							{t('authForgot.sentTo', "We've sent the password reset link to {email}", {
-								email,
-							})}
+							{t(
+								'authForgot.sentTo',
+								"We've sent the password reset link to {email}",
+								{
+									email,
+								},
+							)}
 						</p>
 
 						<div className="space-y-4">

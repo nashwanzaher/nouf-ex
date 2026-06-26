@@ -25,9 +25,13 @@ export default function Login() {
 	const validate = () => {
 		const errs: Record<string, string> = {};
 		if (!email.trim()) errs.email = t('authCommon.fieldRequired', 'This field is required');
-		if (!password.trim()) errs.password = t('authCommon.fieldRequired', 'This field is required');
+		if (!password.trim())
+			errs.password = t('authCommon.fieldRequired', 'This field is required');
 		else if (password.length < 6)
-			errs.password = t('authCommon.passwordMinLength', 'Password must be at least 6 characters');
+			errs.password = t(
+				'authCommon.passwordMinLength',
+				'Password must be at least 6 characters',
+			);
 		setErrors(errs);
 		return Object.keys(errs).length === 0;
 	};
@@ -194,9 +198,9 @@ export default function Login() {
 												setErrors((p) => ({ ...p, email: '' }));
 											}}
 											placeholder={t(
-											'authLogin.emailOrPhonePlaceholder',
-											'Your email or phone number',
-										)}
+												'authLogin.emailOrPhonePlaceholder',
+												'Your email or phone number',
+											)}
 											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
 										/>
 									</div>
@@ -226,7 +230,10 @@ export default function Login() {
 												setPassword(e.target.value);
 												setErrors((p) => ({ ...p, password: '' }));
 											}}
-											placeholder={t('authLogin.passwordPlaceholder', 'Password')}
+											placeholder={t(
+												'authLogin.passwordPlaceholder',
+												'Password',
+											)}
 											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.password ? styles.inputError : styles.input}`}
 										/>
 										<button

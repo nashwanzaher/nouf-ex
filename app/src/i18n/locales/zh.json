@@ -18,7 +18,10 @@
         "admin": "管理后台",
         "logout": "退出登录",
         "products": "商品",
-        "orders": "订单"
+        "orders": "订单",
+        "searchPlaceholder": "搜索产品...",
+        "allCategories": "全部分类",
+        "cartLabel": "购物车"
     },
     "auth": {
         "loginTitle": "登录",
@@ -245,5 +248,54 @@
         "browseCategories": "浏览分类",
         "viewAll": "查看全部",
         "newArrivals": "新品上市"
+    },
+    "footer": {
+        "brand": {
+            "tagline": "也门和中东地区领先的B2B贸易平台。连接您与数千个值得信赖的供应商。"
+        },
+        "column": {
+            "about": "关于Nouf-ex",
+            "buyers": "买家中心",
+            "sellers": "卖家中心",
+            "help": "帮助中心"
+        },
+        "link": {
+            "about": "关于我们",
+            "careers": "招聘",
+            "press": "媒体",
+            "blog": "博客",
+            "howToBuy": "如何购买",
+            "myOrders": "我的订单",
+            "howToSell": "如何销售",
+            "subscriptions": "订阅",
+            "helpCenter": "帮助中心",
+            "contact": "联系我们",
+            "terms": "服务条款",
+            "privacy": "隐私政策",
+            "faq": "常见问题"
+        },
+        "trust": {
+            "tradeAssurance": {
+                "desc": "买家保护"
+            },
+            "shipping": {
+                "title": "可靠运输",
+                "desc": "可追踪配送"
+            },
+            "returns": {
+                "title": "轻松退货",
+                "desc": "30天退货"
+            },
+            "support": {
+                "title": "24/7支持",
+                "desc": "随时为您提供帮助"
+            }
+        },
+        "copyright": "版权所有",
+        "bottomLinks": {
+            "terms": "条款",
+            "privacy": "隐私",
+            "cookies": "Cookie"
+        }
     }
 }

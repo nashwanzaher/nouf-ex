@@ -18,7 +18,10 @@
         "admin": "Admin",
         "logout": "Logout",
         "products": "Products",
-        "orders": "Orders"
+        "orders": "Orders",
+        "searchPlaceholder": "Search products...",
+        "allCategories": "All Categories",
+        "cartLabel": "Cart"
     },
     "auth": {
         "loginTitle": "Login",
@@ -245,5 +248,54 @@
         "browseCategories": "Browse Categories",
         "viewAll": "View All",
         "newArrivals": "New Arrivals"
+    },
+    "footer": {
+        "brand": {
+            "tagline": "The leading B2B trade platform in Yemen & MENA. Connecting you to thousands of verified suppliers."
+        },
+        "column": {
+            "about": "About Nouf-ex",
+            "buyers": "For Buyers",
+            "sellers": "For Sellers",
+            "help": "Help"
+        },
+        "link": {
+            "about": "About Us",
+            "careers": "Careers",
+            "press": "Press",
+            "blog": "Blog",
+            "howToBuy": "How to Buy",
+            "myOrders": "My Orders",
+            "howToSell": "How to Sell",
+            "subscriptions": "Subscriptions",
+            "helpCenter": "Help Center",
+            "contact": "Contact Us",
+            "terms": "Terms of Service",
+            "privacy": "Privacy Policy",
+            "faq": "FAQ"
+        },
+        "trust": {
+            "tradeAssurance": {
+                "desc": "Buyer protection"
+            },
+            "shipping": {
+                "title": "Reliable Shipping",
+                "desc": "Trackable delivery"
+            },
+            "returns": {
+                "title": "Easy Returns",
+                "desc": "30-day returns"
+            },
+            "support": {
+                "title": "24/7 Support",
+                "desc": "Always here to help"
+            }
+        },
+        "copyright": "All rights reserved.",
+        "bottomLinks": {
+            "terms": "Terms",
+            "privacy": "Privacy",
+            "cookies": "Cookies"
+        }
     }
 }

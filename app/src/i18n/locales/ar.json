@@ -67,7 +67,10 @@
         "years": "سنوات",
         "productsAvailable": "منتجات متوفرة",
         "stores": "متاجر",
-        "happyBuyers": "عملاء سعداء"
+        "happyBuyers": "عملاء سعداء",
+        "searchPlaceholder": "ابحث عن منتجات...",
+        "allCategories": "كل التصنيفات",
+        "cartLabel": "السلة"
     },
     "auth": {
         "loginTitle": "تسجيل الدخول",
@@ -294,5 +297,54 @@
         "browseCategories": "تصفح التصنيفات",
         "viewAll": "عرض الكل",
         "newArrivals": "وصل حديثاً"
+    },
+    "footer": {
+        "brand": {
+            "tagline": "منصة التجارة B2B الرائدة في اليمن والشرق الأوسط. نوصلك بآلاف الموردين الموثوقين."
+        },
+        "column": {
+            "about": "عن Nouf-ex",
+            "buyers": "للمشترين",
+            "sellers": "للبائعين",
+            "help": "الدعم"
+        },
+        "link": {
+            "about": "عن الشركة",
+            "careers": "الوظائف",
+            "press": "الصحافة",
+            "blog": "مدونة",
+            "howToBuy": "كيفية الشراء",
+            "myOrders": "المشتريات",
+            "howToSell": "كيفية البيع",
+            "subscriptions": "الاشتراكات",
+            "helpCenter": "مركز المساعدة",
+            "contact": "اتصل بنا",
+            "terms": "الشروط والأحكام",
+            "privacy": "سياسة الخصوصية",
+            "faq": "الأسئلة الشائعة"
+        },
+        "trust": {
+            "tradeAssurance": {
+                "desc": "حماية مشترياتك"
+            },
+            "shipping": {
+                "title": "شحن موثوق",
+                "desc": "تتبع الشحن"
+            },
+            "returns": {
+                "title": "سياسة الإرجاع",
+                "desc": "إرجاع خلال 30 يوم"
+            },
+            "support": {
+                "title": "دعم 24/7",
+                "desc": "مساعدة دائمة"
+            }
+        },
+        "copyright": "جميع الحقوق محفوظة",
+        "bottomLinks": {
+            "terms": "الشروط",
+            "privacy": "الخصوصية",
+            "cookies": "الكوكيز"
+        }
     }
 }

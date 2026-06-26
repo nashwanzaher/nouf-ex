@@ -129,7 +129,7 @@ export default function Navbar() {
 								>
 									<span className="truncate max-w-[80px]">
 										{searchCat === 'all'
-											? 'All Categories'
+											? t('nav.allCategories', 'All Categories')
 											: getCatName(
 													categories.find(
 														(c) => String(c.id) === searchCat,
@@ -148,7 +148,7 @@ export default function Navbar() {
 											}}
 											className={`w-full text-left px-3 py-2 text-sm hover:bg-aliSurface transition-colors ${searchCat === 'all' ? 'text-aliOrange font-semibold' : 'text-aliText'}`}
 										>
-											All Categories
+											{t('nav.allCategories', 'All Categories')}
 										</button>
 										{categories.map((cat) => (
 											<button
@@ -171,13 +171,7 @@ export default function Navbar() {
 								type="text"
 								value={searchQ}
 								onChange={(e) => setSearchQ(e.target.value)}
-								placeholder={
-									i18n.language === 'ar'
-										? 'ابحث عن منتجات...'
-										: i18n.language === 'zh'
-											? '搜索产品...'
-											: 'Search products...'
-								}
+								placeholder={t('nav.searchPlaceholder', 'Search products...')}
 								className="flex-1 h-full px-3 text-sm text-aliText placeholder-aliTextMute outline-none bg-transparent"
 								dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
 							/>
@@ -218,7 +212,7 @@ export default function Navbar() {
 						<Link
 							to="/checkout"
 							className="relative p-2 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
-							aria-label={isRTL ? 'السلة' : 'Cart'}
+							aria-label={t('nav.cartLabel', isRTL ? 'السلة' : 'Cart')}
 						>
 							<ShoppingCart size={20} />
 							{cartCount > 0 && (

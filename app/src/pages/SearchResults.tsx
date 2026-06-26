@@ -424,8 +424,28 @@ export default function SearchResults() {
 												</button>
 												<button
 													onClick={() => toggleCompare(p.id)}
-													title={compareList.includes(p.id) ? t('search.ui.compareRemove', 'Remove from compare') : t('search.ui.compareAdd', 'Add to compare')}
-													aria-label={compareList.includes(p.id) ? t('search.ui.compareRemove', 'Remove from compare') : t('search.ui.compareAdd', 'Add to compare')}
+													title={
+														compareList.includes(p.id)
+															? t(
+																	'search.ui.compareRemove',
+																	'Remove from compare',
+																)
+															: t(
+																	'search.ui.compareAdd',
+																	'Add to compare',
+																)
+													}
+													aria-label={
+														compareList.includes(p.id)
+															? t(
+																	'search.ui.compareRemove',
+																	'Remove from compare',
+																)
+															: t(
+																	'search.ui.compareAdd',
+																	'Add to compare',
+																)
+													}
 													className={`h-7 px-2 rounded border text-xs font-medium transition-colors flex items-center gap-1 ${compareList.includes(p.id) ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#999] hover:border-[#FF6A00]'}`}
 												>
 													<CheckSquare size={12} />
@@ -522,8 +542,28 @@ export default function SearchResults() {
 													</button>
 													<button
 														onClick={() => toggleCompare(p.id)}
-														title={compareList.includes(p.id) ? t('search.ui.compareRemove', 'Remove from compare') : t('search.ui.compareAdd', 'Add to compare')}
-														aria-label={compareList.includes(p.id) ? t('search.ui.compareRemove', 'Remove from compare') : t('search.ui.compareAdd', 'Add to compare')}
+														title={
+															compareList.includes(p.id)
+																? t(
+																		'search.ui.compareRemove',
+																		'Remove from compare',
+																	)
+																: t(
+																		'search.ui.compareAdd',
+																		'Add to compare',
+																	)
+														}
+														aria-label={
+															compareList.includes(p.id)
+																? t(
+																		'search.ui.compareRemove',
+																		'Remove from compare',
+																	)
+																: t(
+																		'search.ui.compareAdd',
+																		'Add to compare',
+																	)
+														}
 														className={`h-8 px-2 rounded border text-xs font-medium transition-colors ${compareList.includes(p.id) ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#999]'}`}
 													>
 														<CheckSquare size={14} />

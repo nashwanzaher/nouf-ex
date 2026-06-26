@@ -132,8 +132,16 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 					)}
 					<button
 						onClick={() => setCollapsed(!collapsed)}
-						title={collapsed ? t('common.expand', 'Expand') : t('common.collapse', 'Collapse')}
-						aria-label={collapsed ? t('common.expand', 'Expand') : t('common.collapse', 'Collapse')}
+						title={
+							collapsed
+								? t('common.expand', 'Expand')
+								: t('common.collapse', 'Collapse')
+						}
+						aria-label={
+							collapsed
+								? t('common.expand', 'Expand')
+								: t('common.collapse', 'Collapse')
+						}
 						className="w-7 h-7 rounded-lg bg-[rgba(212,168,83,0.15)] hover:bg-[rgba(212,168,83,0.25)] flex items-center justify-center transition-colors"
 					>
 						{collapsed ? (

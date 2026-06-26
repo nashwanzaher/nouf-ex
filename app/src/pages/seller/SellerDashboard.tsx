@@ -200,7 +200,7 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 export default function SellerDashboard() {
-	const { i18n } = useTranslation();
+	const { i18n, t } = useTranslation();
 	const isRTL = i18n.language === 'ar';
 	const location = useLocation();
 	const [collapsed, setCollapsed] = useState(false);
@@ -237,10 +237,10 @@ export default function SellerDashboard() {
 						</div>
 						<div>
 							<h1 className="text-white font-bold text-sm leading-tight">
-								{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+								{isRTL ? t('seller.brandName', 'نوف إكس') : t('seller.brandNameEn', 'Nouf-ex')}
 							</h1>
 							<p className="text-white/50 text-[10px]">
-								{isRTL ? 'لوحة التاجر' : 'Seller Panel'}
+								{isRTL ? t('seller.panelTitle', 'لوحة التاجر') : t('seller.panelTitleEn', 'Seller Panel')}
 							</p>
 						</div>
 					</div>
@@ -297,7 +297,7 @@ export default function SellerDashboard() {
 					<button className="flex items-center gap-3 px-3 py-2 rounded hover:bg-white/5 transition-colors w-full text-left">
 						<LogOut className="w-4 h-4 text-[#F44336] shrink-0" strokeWidth={1.5} />
 						<span className="text-xs text-[#F44336]">
-							{isRTL ? 'تسجيل الخروج' : 'Logout'}
+							{t('seller.logout', 'Logout')}
 						</span>
 					</button>
 				) : (
@@ -355,10 +355,10 @@ export default function SellerDashboard() {
 								</div>
 								<div>
 									<h1 className="text-white font-bold text-sm">
-										{isRTL ? 'نوف إكس' : 'Nouf-ex'}
+										{t('seller.brandName', 'Nouf-ex')}
 									</h1>
 									<p className="text-white/50 text-[10px]">
-										{isRTL ? 'لوحة التاجر' : 'Seller Panel'}
+										{t('seller.panelTitle', 'Seller Panel')}
 									</p>
 								</div>
 							</div>
@@ -436,8 +436,12 @@ export default function SellerDashboard() {
 						</button>
 						<button
 							onClick={() => setCollapsed(!collapsed)}
-							title={collapsed ? (isRTL ? 'توسيع' : 'Expand') : (isRTL ? 'طي' : 'Collapse')}
-							aria-label={collapsed ? (isRTL ? 'توسيع' : 'Expand') : (isRTL ? 'طي' : 'Collapse')}
+							title={
+								collapsed ? (isRTL ? 'توسيع' : 'Expand') : isRTL ? 'طي' : 'Collapse'
+							}
+							aria-label={
+								collapsed ? (isRTL ? 'توسيع' : 'Expand') : isRTL ? 'طي' : 'Collapse'
+							}
 							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
 						>
 							{collapsed ? (
@@ -448,7 +452,7 @@ export default function SellerDashboard() {
 						</button>
 						<div>
 							<h2 className="font-bold text-base" style={{ color: '#333' }}>
-								{isRTL ? 'لوحة المعلومات' : 'Dashboard'}
+								{t('seller.dashboard', 'Dashboard')}
 							</h2>
 						</div>
 					</div>
@@ -466,7 +470,7 @@ export default function SellerDashboard() {
 							/>
 							<input
 								type="text"
-								placeholder={isRTL ? 'بحث...' : 'Search...'}
+								placeholder={t('common.search', 'Search...')}
 								className="bg-transparent border-none outline-none text-sm w-full ml-2"
 								style={{ color: '#333' }}
 							/>
@@ -636,16 +640,10 @@ export default function SellerDashboard() {
 												}}
 											>
 												{p === 'week'
-													? isRTL
-														? 'أسبوع'
-														: 'Week'
+													? t('seller.week', 'Week')
 													: p === 'month'
-														? isRTL
-															? 'شهر'
-															: 'Month'
-														: isRTL
-															? 'سنة'
-															: 'Year'}
+														? t('seller.month', 'Month')
+														: t('seller.year', 'Year')}
 											</button>
 										))}
 									</div>
@@ -683,7 +681,7 @@ export default function SellerDashboard() {
 							{/* Notifications List */}
 							<div className="bg-white rounded p-5 shadow-sm">
 								<h3 className="font-bold text-base mb-4" style={{ color: '#333' }}>
-									{isRTL ? 'الإشعارات' : 'Notifications'}
+									{t('seller.notifications', 'Notifications')}
 								</h3>
 								<div className="space-y-3">
 									{notifications.map((n, i) => (
@@ -724,14 +722,14 @@ export default function SellerDashboard() {
 								style={{ borderColor: '#F0F2F5' }}
 							>
 								<h3 className="font-bold text-base" style={{ color: '#333' }}>
-									{isRTL ? 'أحدث الطلبات' : 'Recent Orders'}
+									{t('seller.recentOrders', 'Recent Orders')}
 								</h3>
 								<Link
 									to="/seller/orders"
 									className="flex items-center gap-1 text-xs font-semibold hover:underline"
 									style={{ color: '#FF6A00' }}
 								>
-									{isRTL ? 'عرض الكل' : 'View All'}
+									{t('seller.viewAll', 'View All')}
 									<ArrowLeft className="w-3 h-3" strokeWidth={1.5} />
 								</Link>
 							</div>
@@ -746,25 +744,25 @@ export default function SellerDashboard() {
 												)}
 												style={{ color: '#999' }}
 											>
-												{isRTL ? 'رقم الطلب' : 'Order #'}
+												{t('seller.orderNumber', 'Order #')}
 											</th>
 											<th
 												className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 												style={{ color: '#999' }}
 											>
-												{isRTL ? 'العميل' : 'Customer'}
+												{t('seller.customer', 'Customer')}
 											</th>
 											<th
 												className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left hidden md:table-cell"
 												style={{ color: '#999' }}
 											>
-												{isRTL ? 'التاريخ' : 'Date'}
+												{t('seller.date', 'Date')}
 											</th>
 											<th
 												className="pb-3 pt-3 px-3 text-[11px] font-semibold text-left"
 												style={{ color: '#999' }}
 											>
-												{isRTL ? 'المبلغ' : 'Amount'}
+												{t('seller.amount', 'Amount')}
 											</th>
 											<th
 												className={cn(
@@ -773,7 +771,7 @@ export default function SellerDashboard() {
 												)}
 												style={{ color: '#999' }}
 											>
-												{isRTL ? 'الحالة' : 'Status'}
+												{t('seller.status', 'Status')}
 											</th>
 										</tr>
 									</thead>

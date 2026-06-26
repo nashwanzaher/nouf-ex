@@ -603,10 +603,7 @@ export async function getNotifications(
 	return apiRequest(`/notifications/${userId}`, { signal: options?.signal });
 }
 
-export async function markNotificationAsRead(
-	id: number,
-	options?: RequestOptions,
-): Promise<void> {
+export async function markNotificationAsRead(id: number, options?: RequestOptions): Promise<void> {
 	return apiRequest(`/notifications/${id}/read`, {
 		method: 'PUT',
 		signal: options?.signal,

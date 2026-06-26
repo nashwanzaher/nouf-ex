@@ -42,14 +42,7 @@ import CustomerSidebar from './CustomerSidebar';
 //   - `is_read` (0/1)   → `read` (boolean)
 //   - `created_at`      → `time` (formatted relative string)
 //   - `data` (JSONB)    → `link` (extracted if present)
-type NotificationType =
-	| 'order'
-	| 'message'
-	| 'review'
-	| 'promo'
-	| 'system'
-	| 'dispute'
-	| 'refund';
+type NotificationType = 'order' | 'message' | 'review' | 'promo' | 'system' | 'dispute' | 'refund';
 
 interface NotificationView {
 	id: number;
@@ -230,10 +223,7 @@ export default function Notifications() {
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh] flex items-center justify-center p-6">
 					<div className="bg-white rounded-2xl p-12 text-center shadow-sm max-w-md w-full">
-						<Bell
-							className="w-16 h-16 text-[#AAAAAA] mx-auto mb-4"
-							strokeWidth={1}
-						/>
+						<Bell className="w-16 h-16 text-[#AAAAAA] mx-auto mb-4" strokeWidth={1} />
 						<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
 							يرجى تسجيل الدخول
 						</h3>
@@ -259,9 +249,7 @@ export default function Notifications() {
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh]">
 					<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30">
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
-							الإشعارات
-						</h1>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">الإشعارات</h1>
 						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">جاري التحميل…</p>
 					</div>
 					<div className="p-6 max-w-3xl mx-auto">

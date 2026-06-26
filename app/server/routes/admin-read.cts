@@ -334,42 +334,45 @@ adminReadRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response)
 		// across the rest of the schema. The response keeps its existing
 		// nested shape (counts/flags/recent7d/revenueYer) so the SPA's
 		// AdminDashboard does not need to change.
-		const row = (await db.prepare(
-			`SELECT
-				(SELECT COUNT(*)::int FROM users)                                  AS users,
-				(SELECT COUNT(*)::int FROM stores)                                 AS stores,
-				(SELECT COUNT(*)::int FROM products)                               AS products,
-				(SELECT COUNT(*)::int FROM orders)                                 AS orders,
-				(SELECT COUNT(*)::int FROM reviews)                                AS reviews,
-				(SELECT COUNT(*)::int FROM disputes)                               AS disputes,
-				(SELECT COUNT(*)::int FROM disputes WHERE status = 'open')         AS open_disputes,
-				(SELECT COUNT(*)::int FROM orders  WHERE status = 'pending')       AS pending_orders,
-				(SELECT COUNT(*)::int FROM orders  WHERE payment_status = 'paid')  AS paid_orders,
-				(SELECT COUNT(*)::int FROM users   WHERE status <> 'active')       AS suspended_users,
-				(SELECT COUNT(*)::int FROM stores  WHERE is_active = FALSE)        AS inactive_stores,
-				(SELECT COUNT(*)::int FROM orders  WHERE created_at > NOW() - INTERVAL '7 days') AS recent_orders,
-				(SELECT COUNT(*)::int FROM users   WHERE created_at > NOW() - INTERVAL '7 days') AS recent_users,
-				COALESCE(
-					(SELECT SUM(total)::numeric FROM orders WHERE payment_status = 'paid'),
-					0
-				)                                                                 AS revenue_yer`,
-		).get()) as
+		//
+		// The SQL is held in a separate const so the call chain stays
+		// short enough to keep the source readable (and so the
+		// regression suite's regex can find the single call site).
+		const statsSql = `SELECT
+			(SELECT COUNT(*)::int FROM users)                                  AS users,
+			(SELECT COUNT(*)::int FROM stores)                                 AS stores,
+			(SELECT COUNT(*)::int FROM products)                               AS products,
+			(SELECT COUNT(*)::int FROM orders)                                 AS orders,
+			(SELECT COUNT(*)::int FROM reviews)                                AS reviews,
+			(SELECT COUNT(*)::int FROM disputes)                               AS disputes,
+			(SELECT COUNT(*)::int FROM disputes WHERE status = 'open')         AS open_disputes,
+			(SELECT COUNT(*)::int FROM orders  WHERE status = 'pending')       AS pending_orders,
+			(SELECT COUNT(*)::int FROM orders  WHERE payment_status = 'paid')  AS paid_orders,
+			(SELECT COUNT(*)::int FROM users   WHERE status <> 'active')       AS suspended_users,
+			(SELECT COUNT(*)::int FROM stores  WHERE is_active = FALSE)        AS inactive_stores,
+			(SELECT COUNT(*)::int FROM orders  WHERE created_at > NOW() - INTERVAL '7 days') AS recent_orders,
+			(SELECT COUNT(*)::int FROM users   WHERE created_at > NOW() - INTERVAL '7 days') AS recent_users,
+			COALESCE(
+				(SELECT SUM(total)::numeric FROM orders WHERE payment_status = 'paid'),
+				0
+			)                                                                 AS revenue_yer`;
+		const row = (await db.prepare(statsSql).get()) as
 			| {
-				users: number;
-				stores: number;
-				products: number;
-				orders: number;
-				reviews: number;
-				disputes: number;
-				open_disputes: number;
-				pending_orders: number;
-				paid_orders: number;
-				suspended_users: number;
-				inactive_stores: number;
-				recent_orders: number;
-				recent_users: number;
-				revenue_yer: string | number;
-			}
+					users: number;
+					stores: number;
+					products: number;
+					orders: number;
+					reviews: number;
+					disputes: number;
+					open_disputes: number;
+					pending_orders: number;
+					paid_orders: number;
+					suspended_users: number;
+					inactive_stores: number;
+					recent_orders: number;
+					recent_users: number;
+					revenue_yer: string | number;
+			  }
 			| undefined;
 
 		// Empty / fresh DB (or the global pg mock in tests) yields `undefined`.

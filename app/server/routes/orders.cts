@@ -168,47 +168,45 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			orderNumber,
 			finalDiscount,
 			finalTotal,
-		} = await db.tx(
-			async (txDb: PgTxDb) => {
-				if (resolvedCouponCode) {
-					const coupon = (await txDb
-						.prepare(
-							`SELECT ${COUPON_COLUMNS}
+		} = await db.tx(async (txDb: PgTxDb) => {
+			if (resolvedCouponCode) {
+				const coupon = (await txDb
+					.prepare(
+						`SELECT ${COUPON_COLUMNS}
                              FROM coupons
                             WHERE code = ? AND is_active = TRUE
                             FOR UPDATE`,
-						)
-						.get(resolvedCouponCode)) as CouponRow | undefined;
-					if (!coupon) {
-						throw new Error('Coupon not found or inactive.');
-					}
-					if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-						throw new Error('Coupon has expired.');
-					}
-					if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
-						throw new Error('Coupon is not yet active.');
-					}
-					if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
-						throw new Error('Coupon usage limit reached.');
-					}
-					if (coupon.min_order != null && resolvedSubtotal < coupon.min_order) {
-						throw new Error(
-							`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`,
-						);
-					}
-					resolvedDiscount = await computeCouponDiscount(coupon, resolvedSubtotal);
+					)
+					.get(resolvedCouponCode)) as CouponRow | undefined;
+				if (!coupon) {
+					throw new Error('Coupon not found or inactive.');
 				}
-				const finalDiscount = Math.round(resolvedDiscount * 100) / 100;
-				const finalTotal = Math.max(
-					0,
-					Math.round((resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100) /
-						100,
-				);
+				if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+					throw new Error('Coupon has expired.');
+				}
+				if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
+					throw new Error('Coupon is not yet active.');
+				}
+				if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
+					throw new Error('Coupon usage limit reached.');
+				}
+				if (coupon.min_order != null && resolvedSubtotal < coupon.min_order) {
+					throw new Error(
+						`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`,
+					);
+				}
+				resolvedDiscount = await computeCouponDiscount(coupon, resolvedSubtotal);
+			}
+			const finalDiscount = Math.round(resolvedDiscount * 100) / 100;
+			const finalTotal = Math.max(
+				0,
+				Math.round((resolvedSubtotal + resolvedShippingCost - finalDiscount) * 100) / 100,
+			);
 
-				const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
-				const result = (await txDb
-					.prepare(
-						`INSERT INTO orders
+			const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
+			const result = (await txDb
+				.prepare(
+					`INSERT INTO orders
 			        (customer_id, store_id, order_number, status, payment_method,
 			         payment_status, subtotal, shipping_cost, discount,
 			         coupon_code, discount_amount, total, currency,
@@ -217,75 +215,74 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			               ?, ?, ?, ?, ?, ?, 'YER',
 			               ?, ?)
 			       RETURNING id`,
-					)
-					.run(
-						customerId,
-						resolvedStoreId,
-						orderNumber,
-						normalisedPaymentMethod,
-						resolvedSubtotal,
-						resolvedShippingCost,
-						finalDiscount,
-						resolvedCouponCode,
-						finalDiscount,
-						finalTotal,
-						JSON.stringify(shippingAddress),
-						notes || null,
-					)) as { lastInsertRowid: number | null };
-				if (result.lastInsertRowid == null) {
-					throw new HttpError(500, 'Failed to create order', { code: 'INSERT_FAILED' });
-				}
-				const newOrderId: number = result.lastInsertRowid;
+				)
+				.run(
+					customerId,
+					resolvedStoreId,
+					orderNumber,
+					normalisedPaymentMethod,
+					resolvedSubtotal,
+					resolvedShippingCost,
+					finalDiscount,
+					resolvedCouponCode,
+					finalDiscount,
+					finalTotal,
+					JSON.stringify(shippingAddress),
+					notes || null,
+				)) as { lastInsertRowid: number | null };
+			if (result.lastInsertRowid == null) {
+				throw new HttpError(500, 'Failed to create order', { code: 'INSERT_FAILED' });
+			}
+			const newOrderId: number = result.lastInsertRowid;
 
-				// PERFORMANCE: fetch all products in a single query instead of
-				// one query per line item (N+1). Same correctness — we still
-				// error out for any unavailable product, just without the
-				// per-row round-trip latency.
-				const productIds = items.map((i) => i.productId);
-				const productRows = (await txDb
-					.prepare(
-						`SELECT id, name_ar, name_en FROM products
+			// PERFORMANCE: fetch all products in a single query instead of
+			// one query per line item (N+1). Same correctness — we still
+			// error out for any unavailable product, just without the
+			// per-row round-trip latency.
+			const productIds = items.map((i) => i.productId);
+			const productRows = (await txDb
+				.prepare(
+					`SELECT id, name_ar, name_en FROM products
 						 WHERE id = ANY($1) AND is_active = TRUE AND deleted_at IS NULL`,
-					)
-					.all(productIds)) as Array<{
-					id: number;
-					name_ar: string;
-					name_en: string | null;
-				}>;
-				const productById = new Map<number, { name_ar: string; name_en: string | null }>();
-				for (const p of productRows) productById.set(p.id, p);
+				)
+				.all(productIds)) as Array<{
+				id: number;
+				name_ar: string;
+				name_en: string | null;
+			}>;
+			const productById = new Map<number, { name_ar: string; name_en: string | null }>();
+			for (const p of productRows) productById.set(p.id, p);
 
-				const insertItem = txDb.prepare(
-					`INSERT INTO order_items
+			const insertItem = txDb.prepare(
+				`INSERT INTO order_items
 			        (order_id, product_id, variant_id, product_name, quantity,
 			         unit_price, total_price)
 			       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-				);
+			);
 
-				for (const item of items) {
-					if (item.quantity <= 0) {
-						throw new Error(
-							`Invalid quantity ${item.quantity} for product ${item.productId}`,
-						);
-					}
-					const product = productById.get(item.productId);
-					if (!product) {
-						throw new Error(`Product ${item.productId} is unavailable`);
-					}
-					const unitPrice = item.unitPrice;
-					await insertItem.run(
-						newOrderId,
-						item.productId,
-						item.variantId ?? null,
-						product.name_en || product.name_ar,
-						item.quantity,
-						unitPrice,
-						unitPrice * item.quantity,
+			for (const item of items) {
+				if (item.quantity <= 0) {
+					throw new Error(
+						`Invalid quantity ${item.quantity} for product ${item.productId}`,
 					);
 				}
-				return { id: newOrderId, orderNumber, finalDiscount, finalTotal };
-			},
-		);
+				const product = productById.get(item.productId);
+				if (!product) {
+					throw new Error(`Product ${item.productId} is unavailable`);
+				}
+				const unitPrice = item.unitPrice;
+				await insertItem.run(
+					newOrderId,
+					item.productId,
+					item.variantId ?? null,
+					product.name_en || product.name_ar,
+					item.quantity,
+					unitPrice,
+					unitPrice * item.quantity,
+				);
+			}
+			return { id: newOrderId, orderNumber, finalDiscount, finalTotal };
+		});
 
 		sendSuccess(
 			res,

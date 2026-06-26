@@ -100,17 +100,59 @@ export default function App() {
 								<Route path="/store/:id" element={<StorePage />} />
 								<Route path="/categories" element={<Categories />} />
 								<Route path="/deals" element={<Deals />} />
-								<Route path="/checkout" element={guard(['customer', 'merchant', 'admin'], Checkout)} />
-								<Route path="/seller" element={guard(['merchant', 'admin'], SellerDashboard)} />
-								<Route path="/seller/products" element={guard(['merchant', 'admin'], SellerProducts)} />
-								<Route path="/seller/orders" element={guard(['merchant', 'admin'], SellerOrders)} />
-								<Route path="/seller/analytics" element={guard(['merchant', 'admin'], SellerAnalytics)} />
-								<Route path="/customer" element={guard(['customer', 'merchant', 'admin'], CustomerDashboard)} />
-								<Route path="/customer/orders" element={guard(['customer', 'merchant', 'admin'], CustomerOrders)} />
-								<Route path="/customer/wishlist" element={guard(['customer', 'merchant', 'admin'], Wishlist)} />
-								<Route path="/customer/reviews" element={guard(['customer', 'merchant', 'admin'], Reviews)} />
-								<Route path="/customer/addresses" element={guard(['customer', 'merchant', 'admin'], Addresses)} />
-								<Route path="/customer/notifications" element={guard(['customer', 'merchant', 'admin'], Notifications)} />
+								<Route
+									path="/checkout"
+									element={guard(['customer', 'merchant', 'admin'], Checkout)}
+								/>
+								<Route
+									path="/seller"
+									element={guard(['merchant', 'admin'], SellerDashboard)}
+								/>
+								<Route
+									path="/seller/products"
+									element={guard(['merchant', 'admin'], SellerProducts)}
+								/>
+								<Route
+									path="/seller/orders"
+									element={guard(['merchant', 'admin'], SellerOrders)}
+								/>
+								<Route
+									path="/seller/analytics"
+									element={guard(['merchant', 'admin'], SellerAnalytics)}
+								/>
+								<Route
+									path="/customer"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerDashboard,
+									)}
+								/>
+								<Route
+									path="/customer/orders"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerOrders,
+									)}
+								/>
+								<Route
+									path="/customer/wishlist"
+									element={guard(['customer', 'merchant', 'admin'], Wishlist)}
+								/>
+								<Route
+									path="/customer/reviews"
+									element={guard(['customer', 'merchant', 'admin'], Reviews)}
+								/>
+								<Route
+									path="/customer/addresses"
+									element={guard(['customer', 'merchant', 'admin'], Addresses)}
+								/>
+								<Route
+									path="/customer/notifications"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										Notifications,
+									)}
+								/>
 								<Route path="/admin" element={guard(['admin'], AdminDashboard)} />
 								<Route path="/auth/login" element={<Login />} />
 								<Route path="/auth/register" element={<Register />} />

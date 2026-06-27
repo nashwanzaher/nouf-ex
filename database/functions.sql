@@ -97,10 +97,17 @@ $$;
 -- trg_order_items_decrement_stock — atomic stock decrement + inventory log
 --   Validates stock availability BEFORE insert; decrements product.stock
 --   and product_variants.stock on success; appends to inventory_log.
+--
+--   SECURITY DEFINER: this function inserts into inventory_log, but the
+--   application role (noufex_app) only has SELECT on that table — see
+--   roles.sql. Without DEFINER, the INSERT inside the trigger runs as
+--   the calling user and is denied, breaking order placement with a
+--   `permission denied for table inventory_log` error.
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION trg_order_items_decrement_stock()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $$
 DECLARE

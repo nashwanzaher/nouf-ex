@@ -86,7 +86,9 @@ export default function Wishlist() {
 			setAddedToCart(item.id);
 			setActionError(null);
 			try {
-				await apiAddToCart({ userId, productId: item.product_id, quantity: 1 });
+				// Server identifies the user from the bearer token, so we
+				// don't pass `userId` (cartAddSchema is `.strict()`).
+				await apiAddToCart({ productId: item.product_id, quantity: 1 });
 				// Remove from wishlist after successful cart add
 				await apiRemoveFromWishlist(item.id);
 				refetch();

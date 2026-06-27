@@ -134,8 +134,9 @@ export async function syncLocalCartToServer(
 		try {
 			// addToCart doesn't accept RequestOptions (no signal passthrough
 			// today), so we only honour the abort BETWEEN items, not during.
+			// The server identifies the user from the bearer token (set
+			// by the auth flow), so we don't pass `userId` here.
 			await addToCart({
-				userId,
 				productId: Number(item.productId),
 				quantity: item.quantity,
 			});

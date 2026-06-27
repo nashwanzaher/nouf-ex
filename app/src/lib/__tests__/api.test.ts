@@ -174,10 +174,18 @@ describe('Cart API', () => {
 
 	it('addToCart POSTs to /api/cart with the body', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
-		await addToCart({ userId: 5, productId: 1, quantity: 1 });
+		// userId intentionally NOT passed: the server identifies the user
+		// from the bearer token, and the cartAddSchema is `.strict()` so
+		// any unknown key returns 400.
+		await addToCart({ productId: 1, quantity: 1 });
 		const call = fetchSpy.mock.calls[0];
 		expect(call?.[1]?.method).toBe('POST');
 		expect(String(call?.[0])).toContain('/api/cart');
+		// Verify the JSON body does not include userId
+		const sent = JSON.parse(String(call?.[1]?.body ?? '{}'));
+		expect(sent.userId).toBeUndefined();
+		expect(sent.productId).toBe(1);
+		expect(sent.quantity).toBe(1);
 		fetchSpy.mockRestore();
 	});
 
@@ -208,10 +216,15 @@ describe('Wishlist API', () => {
 
 	it('addToWishlist POSTs to /api/wishlist', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
-		await addToWishlist({ userId: 5, productId: 1 });
+		// userId intentionally NOT passed: the server identifies the
+		// user from the bearer token, and wishlistAddSchema is `.strict()`.
+		await addToWishlist({ productId: 1 });
 		const call = fetchSpy.mock.calls[0];
 		expect(call?.[1]?.method).toBe('POST');
 		expect(String(call?.[0])).toContain('/api/wishlist');
+		const sent = JSON.parse(String(call?.[1]?.body ?? '{}'));
+		expect(sent.userId).toBeUndefined();
+		expect(sent.productId).toBe(1);
 		fetchSpy.mockRestore();
 	});
 

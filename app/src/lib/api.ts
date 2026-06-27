@@ -536,8 +536,11 @@ export async function getCart(userId: number, options?: RequestOptions): Promise
 	return apiRequest(`/cart/${userId}`, { signal: options?.signal });
 }
 
+/** Add a product to the server cart. The server identifies the user
+ *  from the bearer token (via `requireAuth`), so we deliberately do
+ *  NOT include `userId` in the request body — the route's Zod schema
+ *  is `.strict()` and would otherwise reject the request. */
 export async function addToCart(body: {
-	userId: number;
 	productId: number;
 	quantity: number;
 	variant?: Record<string, string>;
@@ -569,10 +572,11 @@ export async function getWishlist(
 	return apiRequest(`/wishlist/${userId}`, { signal: options?.signal });
 }
 
-export async function addToWishlist(body: {
-	userId: number;
-	productId: number;
-}): Promise<{ id: number }> {
+/** Add a product to the server wishlist. The server identifies the
+ *  user from the bearer token (via `requireAuth`), so we deliberately
+ *  do NOT include `userId` in the request body — the route's Zod
+ *  schema is `.strict()` and would otherwise reject the request. */
+export async function addToWishlist(body: { productId: number }): Promise<{ id: number }> {
 	return apiRequest('/wishlist', {
 		method: 'POST',
 		body: JSON.stringify(body),

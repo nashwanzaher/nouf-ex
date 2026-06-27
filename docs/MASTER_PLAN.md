@@ -142,7 +142,7 @@
 | **B.1.15** | PHASE_13_NOTIFICATIONS_MESSAGES.md | `docs/testing/phases/PHASE_13_NOTIFICATIONS_MESSAGES.md` | ✅ **Done (2026-06-28)** — 21 TC + 11 REQ · live 19 PASS / 2 FAIL (script contract drift, documented) · 14,832 bytes | 30 دقيقة |
 | **B.1.16** | PHASE_14_SHIPPING_METHODS.md | `docs/testing/phases/PHASE_14_SHIPPING_METHODS.md` | ✅ **Done (2026-06-28)** — 19 TC + 6 REQ · live 19/19 PASS · 12,711 bytes | 30 دقيقة |
 | **B.1.17** | PHASE_15_AUDIT_LOGS.md | `docs/testing/phases/PHASE_15_AUDIT_LOGS.md` | ✅ **Done (2026-06-28)** — 7 TC + 6 REQ · live 2 PASS / 5 FAIL (rate-limit cascade, documented) · 13,438 bytes | 30 دقيقة |
-| **B.1.18** | PHASE_16 + PHASE_17 (مجمعة — frontend + regression) | `docs/testing/phases/PHASE_16_FRONTEND_SPA.md` + `PHASE_17_FULL_REGRESSION.md` | ⏳ TODO | 1 ساعة |
+| **B.1.18** | PHASE_16 + PHASE_17 (مجمعة — frontend + regression) | `docs/testing/phases/PHASE_16_FRONTEND_SPA.md` + `PHASE_17_FULL_REGRESSION.md` | ✅ **Done (2026-06-28)** — PHASE 16: 21 TC / live 21/21 PASS · PHASE 17: orchestrator (~5 min) · 11,720 bytes | 1 ساعة |
 
 ### B.2: توثيق معماري وعمليات (5 مهام)
 

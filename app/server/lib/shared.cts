@@ -331,18 +331,46 @@ export const reviewSchema = z.object({
 });
 
 // ── Addresses ────────────────────────────────────────────
-export const addressSchema = z.object({
-	label: z.string().trim().min(1).max(50),
-	full_name: z.string().trim().min(2).max(100),
-	phone: z.string().trim().min(5).max(20),
-	governorate: z.string().trim().min(2).max(50),
-	city: z.string().trim().min(1).max(50),
-	district: z.string().trim().max(80).optional(),
-	street: z.string().trim().min(2).max(200),
-	building: z.string().trim().max(50).optional(),
-	notes: z.string().trim().max(500).optional(),
-	is_default: z.boolean().optional(),
-});
+export const addressSchema = z
+	.object({
+		label: z.string().trim().min(1).max(50),
+		full_name: z.string().trim().min(2).max(100),
+		phone: z.string().trim().min(5).max(20),
+		governorate: z.string().trim().min(2).max(50),
+		city: z.string().trim().min(1).max(50),
+		district: z.string().trim().max(80).optional(),
+		street: z.string().trim().min(2).max(200),
+		building: z.string().trim().max(50).optional(),
+		notes: z.string().trim().max(500).optional(),
+		is_default: z.boolean().optional(),
+	})
+	.strict();
+
+/** Self-service profile update. Customers can change their own
+ *  name, phone, language, gender, and avatar. Email and role
+ *  intentionally NOT updatable here — email changes need a
+ *  re-verification flow, and role changes are admin-only
+ *  via /api/admin/users/:id. */
+export const profileUpdateSchema = z
+	.object({
+		full_name: z.string().trim().min(2).max(100).optional(),
+		phone: z.string().trim().min(5).max(20).optional(),
+		avatar: z.string().trim().url().max(500).optional().nullable(),
+		preferred_language: z.enum(['ar', 'en', 'zh']).optional(),
+		gender: z.enum(['male', 'female', 'other']).nullable().optional(),
+	})
+	.strict();
+
+/** Self-service password change. The user must send their current
+ *  password for verification, and the new password must clear the
+ *  standard password policy (8+ chars). Returns 200 on success;
+ *  400 on validation failure; 401 on wrong current password. */
+export const passwordChangeSchema = z
+	.object({
+		current_password: z.string().min(1).max(128),
+		new_password: passwordSchema,
+	})
+	.strict();
 
 // ── Payments ─────────────────────────────────────────────
 export const paymentCreateSchema = z.object({

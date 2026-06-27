@@ -647,6 +647,36 @@ export async function getCurrentUser(): Promise<User> {
 	return apiRequest('/auth/me');
 }
 
+/** Body for PATCH /api/auth/me — self-service profile update.
+ *  All fields optional; only supplied fields are written. */
+export interface UpdateProfileBody {
+	full_name?: string;
+	phone?: string;
+	avatar?: string | null;
+	preferred_language?: 'ar' | 'en' | 'zh';
+	gender?: 'male' | 'female' | 'other' | null;
+}
+
+export async function updateProfile(body: UpdateProfileBody): Promise<User> {
+	return apiRequest('/auth/me', {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+/** Change the current user's password. Requires the existing
+ *  password as proof of identity. Returns { updated: true } on
+ *  success, 401 on wrong current password. */
+export async function changePassword(body: {
+	current_password: string;
+	new_password: string;
+}): Promise<{ updated: true }> {
+	return apiRequest('/auth/change-password', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
 // ─── Stats API ──────────────────────────────────────────────
 
 export async function getHomeStats(options?: RequestOptions): Promise<HomeStats> {

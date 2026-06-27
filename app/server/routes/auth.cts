@@ -10,6 +10,8 @@ import {
 	verifyPassword,
 	registerSchema,
 	loginSchema,
+	profileUpdateSchema,
+	passwordChangeSchema,
 	HttpError,
 	type AuthRole,
 } from '../lib/shared.cts';
@@ -67,7 +69,7 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, password_hash, last_login, created_at FROM users WHERE email = ?',
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at FROM users WHERE email = ?',
 		)
 		.get(email)) as
 		| (Record<string, unknown> & { id: number; password_hash: string; role: AuthRole })
@@ -109,7 +111,7 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
 	const userId = req.user!.id;
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, last_login, created_at FROM users WHERE id = ?',
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, last_login, created_at FROM users WHERE id = ?',
 		)
 		.get(userId)) as Record<string, unknown> | undefined;
 
@@ -117,4 +119,107 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
 		throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
 	}
 	sendSuccess(res, user);
+});
+
+/** Self-service profile update. Users edit their own name / phone /
+ *  language / gender / avatar. Email, role, and verification flags
+ *  intentionally NOT updatable here (admin-only). Missing fields
+ *  keep their existing value — the route does NOT require the user
+ *  to re-send every column. */
+authRouter.patch('/me', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(profileUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		const updates = v.data;
+		const userId = req.user!.id;
+
+		// Build a dynamic SET clause with only the provided fields.
+		// `undefined` = keep current value, `null` = set to NULL.
+		const fields: string[] = [];
+		const params: unknown[] = [];
+		if (updates.full_name !== undefined) {
+			fields.push('full_name = ?');
+			params.push(updates.full_name);
+		}
+		if (updates.phone !== undefined) {
+			fields.push('phone = ?');
+			params.push(updates.phone);
+		}
+		if (updates.avatar !== undefined) {
+			fields.push('avatar = ?');
+			params.push(updates.avatar);
+		}
+		if (updates.preferred_language !== undefined) {
+			fields.push('preferred_language = ?');
+			params.push(updates.preferred_language);
+		}
+		if (updates.gender !== undefined) {
+			fields.push('gender = ?');
+			params.push(updates.gender);
+		}
+
+		if (fields.length === 0) {
+			return sendError(res, 'No updatable fields supplied', 400, 'EMPTY_UPDATE');
+		}
+
+		fields.push('updated_at = CURRENT_TIMESTAMP');
+		params.push(userId);
+		const updated = (await db
+			.prepare(
+				`UPDATE users SET ${fields.join(', ')} WHERE id = ? RETURNING id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, last_login, created_at`,
+			)
+			.get(...params)) as Record<string, unknown> | undefined;
+		if (!updated) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		sendSuccess(res, updated, 'Profile updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/** Self-service password change. Verifies the current password
+ *  (so a stolen JWT alone is not enough), then re-hashes the new
+ *  password with the same scrypt settings as registration. */
+authRouter.post('/change-password', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(passwordChangeSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		const { current_password, new_password } = v.data;
+		const userId = req.user!.id;
+
+		const row = (await db
+			.prepare('SELECT password_hash FROM users WHERE id = ?')
+			.get(userId)) as { password_hash: string } | undefined;
+		if (!row) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+
+		const ok = await verifyPassword(current_password, row.password_hash);
+		if (!ok) {
+			return sendError(res, 'Current password is incorrect', 401, 'WRONG_PASSWORD');
+		}
+
+		// Defense in depth: block no-op password changes. Even though
+		// scrypt hash + salt make a literal "same password" match
+		// astronomically unlikely, refusing an identical new password
+		// signals to the client that they probably mistyped the
+		// current password, and avoids an unnecessary DB write.
+		const sameAsCurrent = await verifyPassword(new_password, row.password_hash);
+		if (sameAsCurrent) {
+			return sendError(
+				res,
+				'New password must be different from the current password',
+				400,
+				'SAME_AS_CURRENT',
+			);
+		}
+
+		const newHash = await hashPassword(new_password);
+		await db
+			.prepare(
+				'UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+			)
+			.run(newHash, userId);
+
+		sendSuccess(res, { updated: true }, 200, 'Password changed');
+	} catch (err) {
+		return sendError(res, err);
+	}
 });

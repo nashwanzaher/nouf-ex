@@ -40,7 +40,7 @@ Daily commands. All of them assume your shell is in `app/` unless noted.
 - Config: `app/tsconfig.json` references three sub-projects:
   - `tsconfig.app.json` — browser/DOM (frontend)
   - `tsconfig.node.json` — Node tooling (`vite.config.ts`, `vitest.config.ts`)
-  - `tsconfig.server.json` — backend (`app/server/**`, including `pg-wrapper.cjs`)
+  - `tsconfig.server.json` — backend (`app/server/**`, including `pg-wrapper.cts`)
 - Run: `npx tsc -b` (checks everything) or
   `npx tsc --noEmit -p tsconfig.app.json` (frontend only).
 - All aliases are routed through `@/*` → `app/src/*`.

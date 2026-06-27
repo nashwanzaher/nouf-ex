@@ -10,7 +10,7 @@ process when `app/dist/` is present.
 app/server/
 ├── index.ts                  # Express entrypoint (run via `tsx`)
 ├── db/
-│   └── pg-wrapper.cjs        # async wrapper around pg.Pool
+│   └── pg-wrapper.cts        # async wrapper around pg.Pool
 │                             # (mimics the better-sqlite3 API the
 │                             #  route handlers were written against)
 └── tests/

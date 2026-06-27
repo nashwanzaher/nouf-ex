@@ -52,7 +52,7 @@ app/
 │   │   ├── fetch-spy.ts    # Spy wrapper around window.fetch
 │   │   └── fixtures/       # Static JSON fixtures (categories, orders, products, …)
 │   └── README.md           # this file (now lives at docs/testing.md)
-└── server/db/pg-wrapper.cjs  # the PgDb wrapper under test
+└── server/db/pg-wrapper.cts  # the PgDb wrapper under test
 ```
 
 Component / hook / context tests live **next to the code they cover**:

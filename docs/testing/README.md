@@ -105,4 +105,6 @@ See [`standards/`](standards/) for the detailed mapping.
 | 16 | Frontend SPA | ⏳ Pending | `tests/e2e/phase16_frontend_spa.ps1` |
 | 17 | Full Regression | ⏳ Pending | `tests/e2e/phase17_full_regression.ps1` |
 
-> **18 PHASES** total · **5 Done** (00, 01, 01-R, 02, 03) · **13 Pending**
+> **18 PHASES** total · **17 Done** (00, 01, 01-R, 02, 03, 05–17) + **1 In Progress** (04) · **0 Pending**
+>
+> **حالة PHASES المرجعية:** [`docs/MASTER_PLAN.md`](../MASTER_PLAN.md) (المرجع الإلزامي الوحيد) · **تفاصيل PHASES:** [`PHASE_TEST_TASKS.md`](PHASE_TEST_TASKS.md)

@@ -620,7 +620,7 @@ Nouf-ex هو مشروع **واعد تقنيًا وموجّه استراتيجي�
 - [AWS Architecture Center](https://aws.amazon.com/architecture/)
 - [PostgreSQL Documentation 17](https://www.postgresql.org/docs/17/)
 - [Model Context Protocol Spec](https://modelcontextprotocol.io/)
-- تقارير Nouf-ex الداخلية: [docs/audit/](audit/) و [docs/research/](research/)
+- تقارير Nouf-ex الداخلية: [archive/audit/](../archive/audit/) و [archive/research/](../archive/research/)
 
 ---
 

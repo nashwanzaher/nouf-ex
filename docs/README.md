@@ -41,6 +41,7 @@ The documentation is split by intent to make navigation intuitive:
 docs/
 ├── README.md                 ← (this file) — documentation index
 ├── STRUCTURE.md              ← repository map
+├── MASTER_PLAN.md            ← Master execution plan + consolidation plan
 │
 ├── architecture/             ← ⟦Explanation⟧
 │   ├── overview.md
@@ -70,11 +71,10 @@ docs/
 │   │   └── ISTQB-CTFL.md
 │   ├── phases/              ← per-PHASE test design specs
 │   └── templates/
-│
-├── audit/                    ← ⟦Historical⟧
-├── research/                 ← ⟦Historical⟧
-├── assets/                   ← images, screenshots
-└── workflows/                ← workflow diagrams
+
+archive/                     ← ⟦Historical⟧ (moved 2026-06-28)
+├── audit/                    ← Past code audits (11 files)
+└── research/                 ← Past research docs (11 files)
 ```
 
 ---

@@ -4,8 +4,8 @@
 **Status:** MVP hardening ✅ — production-ready, P0/P1 backlog trimmed
 
 This document consolidates the original plans, reviews, and audit reports
-(now archived under [`docs/research/`](research/) and
-[`docs/audit/`](audit/)) into a single prioritised backlog.
+(now archived under [`archive/research/`](../archive/research/) and
+[`archive/audit/`](../archive/audit/)) into a single prioritised backlog.
 
 ---
 
@@ -52,7 +52,7 @@ This document consolidates the original plans, reviews, and audit reports
 | **VS Code**       | 34 → 13 recommended extensions, debug configurations, test runner, lint task, Vitest tasks.                                                    |
 
 For the full audit of code-quality fixes, see
-[`docs/audit/code-audit-2026-06-21.md`](audit/code-audit-2026-06-21.md).
+[`archive/audit/code-audit-2026-06-21.md`](../archive/audit/code-audit-2026-06-21.md).
 
 ### 2.1 Completed in the 2026-06-24 Passes
 
@@ -213,6 +213,6 @@ short version:
   - See [`database/migrations/README.md`](database/migrations/README.md)
     for the full workflow.
 - After every audit pass, append the diff summary to the relevant file in
-  `docs/audit/` (don't overwrite history).
+  `archive/audit/` (don't overwrite history).
 - VS Code configuration changes belong in `.vscode/` + a corresponding entry
-  in [`docs/audit/extensions.md`](audit/extensions.md).
+  in [`archive/audit/extensions.md`](../archive/audit/extensions.md).

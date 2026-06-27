@@ -17,7 +17,8 @@ maintained alongside the code and is the authoritative reference for
 ```
 Nouf-ex/
 ├── README.md                       ← Project entry point
-├── CONTRIBUTING.md                 ← Contribution guide (TBD)
+├── CONTRIBUTING.md                 ← Contribution guide
+├── CHANGELOG.md                    ← Recent changes
 ├── Dockerfile                      ← Container image definition
 ├── docker-compose.yml              ← Local stack orchestration
 ├── LICENSE                         ← (TBD — not yet published)
@@ -25,9 +26,23 @@ Nouf-ex/
 ├── app/                            ← Single npm package: frontend + backend
 ├── database/                       ← PostgreSQL schema + migrations
 ├── docker/                         ← Docker support files
-├── docs/                           ← All documentation
+├── docs/                           ← Active documentation (Diátaxis-organized)
 ├── tests/                          ← All test code (cross-cutting)
 ├── scripts/                        ← Project-level utility scripts
+├── mcp-server/                     ← MCP server package
+│
+├── archive/                        ← Historical files (moved 2026-06-28)
+│   ├── audit/                      ← Past code audits
+│   └── research/                   ← Past research docs
+│
+├── .env.example                    ← Environment template (committed)
+├── .env                            ← Live secrets (gitignored)
+├── .gitignore
+├── .vscode/                        ← Editor config (tasks, launch, settings)
+├── .github/                        ← GitHub Actions workflows + Copilot config
+│
+└── .prettierrc.json
+```
 ├── mcp-server/                     ← MCP server package
 │
 ├── archive/                        ← Historical/moved files

@@ -1,3 +1,4 @@
+-- Active: 1782575256272@@127.0.0.1@5432@noufex_db
 Set-Location "D:\source\Nouf-ex"
 docker rm -f Nouf-ex 2>&1 | Out-Null
 $envFileArgs = @()

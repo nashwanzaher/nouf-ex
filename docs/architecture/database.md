@@ -43,7 +43,7 @@ From inside the Docker container, `localhost` is the container itself, so
 | Demo seed data         | [`database/seed.sql`](../database/seed.sql)                     |
 | Incremental migrations | [`database/migrations/`](../database/migrations/)               |
 | One-time setup CLI     | [`scripts/db-setup.cjs`](../scripts/db-setup.cjs)               |
-| PgDb wrapper           | [`app/server/db/pg-wrapper.cjs`](../app/server/db/pg-wrapper.cjs) |
+| PgDb wrapper           | [`app/server/db/pg-wrapper.cts`](../app/server/db/pg-wrapper.cts) |
 | API server             | [`app/server/index.ts`](../app/server/index.ts)                 |
 | Schema README          | [`database/README.md`](../database/README.md)                   |
 
@@ -226,7 +226,7 @@ Passwords are stored as `scrypt$<salt_b64>$<hash_b64>` (regenerate via
 
 ## 10. PgDb wrapper
 
-`app/server/db/pg-wrapper.cjs` is a thin async wrapper around `pg.Pool` that mimics
+`app/server/db/pg-wrapper.cts` is a thin async wrapper around `pg.Pool` that mimics
 the parts of the old `better-sqlite3` API the API code was written against.
 Callers should treat `?` placeholders as `$1, $2, ...` rewriting transparently
 handled by the wrapper, and remember all methods are `async`:

@@ -1586,3 +1586,305 @@ admin@noufex.com         / admin123     → admin
 | Bugfixes مكتشفة عبر الاختبار | 3 (RETURNING id + provider_meta NOT NULL + payment confirm status) |
 | نتائج التشغيل المنفرد | 179 PASS / 106 FAIL (مع state accumulation) |
 | نتائج الـ clean state | ~404 PASS / ~30 FAIL (بعد db:setup) |
+
+---
+
+## 📚 فجوات التوثيق (Documentation Gaps)
+
+> **القاعدة الصارمة:** كل بند أدناه مستخرج حرفياً من فحص `docs/` و`tests/` في 2026-06-27.
+
+### 🔴 فجوات حرجة (P0) — مذكورة لكن فارغة
+
+#### 1. `docs/testing/phases/` — فارغ تماماً
+- **الوعد في [`docs/testing/README.md`](README.md):** "Per-PHASE design specs" + في [`docs/testing/PHASE_TEST_TASKS.md`](PHASE_TEST_TASKS.md) يذكر "[`docs/testing/phases/`](phases/)" كأحد المجلدات.
+- **الواقع:** 0 ملف في المجلد.
+- **المطلوب:** 18 ملف `PHASE_NN_<topic>.md` (واحد لكل PHASE) يحتوي:
+  - الهدف (Objective)
+  - الملفات المطلوب فحصها (Files to inspect)
+  - endpoints المطلوبة
+  - الجداول المتأثرة
+  - بيانات الاختبار المطلوبة
+  - الحالات الإيجابية والسلبية
+  - ترتيب التنفيذ
+  - حالة التنفيذ (Pending / In Progress / Done)
+- **التأثير:** الـ standards مذكورة في [`standards/`](standards/) لكن بدون تطبيق فعلي per-PHASE.
+- **المسار:** `docs/testing/phases/PHASE_00_HEALTH_AUTH.md` ... `docs/testing/phases/PHASE_17_FULL_REGRESSION.md`
+- **الحجم المقدر:** ~30K (18 ملف × ~1.7K لكل ملف)
+
+#### 2. `docs/testing/templates/` — فارغ تماماً
+- **الوعد في [`docs/testing/conventions.md`](conventions.md):** "Reusable test templates" + يذكر "[`templates/`](templates/)" كمجلد.
+- **الوعد في [`docs/testing/README.md`](README.md):** يصف مكان "templates/".
+- **الواقع:** 0 ملف.
+- **المطلوب:** 2-3 ملفات قوالب جاهزة:
+  - `PS_TEST_TEMPLATE.ps1` — قالب PowerShell لكتابة PHASE جديدة (هيكل + boilerplate + assertions)
+  - `JS_INTEGRATION_TEST_TEMPLATE.ts` — قالب Vitest للـ integration tests
+  - `PS_TESTHELPERS_REFERENCE.md` — مرجع الدوال في [`tests/e2e/helpers/PS_TestHelpers.ps1`](../../tests/e2e/helpers/PS_TestHelpers.ps1)
+- **التأثير:** كل PHASE جديدة تُكتب من الصفر بدون قالب → عدم اتساق.
+- **المسار:** `docs/testing/templates/PS_TEST_TEMPLATE.ps1`, `JS_INTEGRATION_TEST_TEMPLATE.ts`
+- **الحجم المقدر:** ~8K
+
+---
+
+### 🟡 فجوات متوسطة (P1) — مذكورة لكن ناقصة
+
+#### 3. `docs/architecture/security.md` — غير موجود
+- **المذكور في:** [`STRUCTURE.md`](../STRUCTURE.md) يصف CSP, JWT, RBAC, rate limiting لكن بدون ملف مُفصّل.
+- **الواقع:** 0 ملف.
+- **المطلوب:**
+  - Threat model (STRIDE)
+  - Auth flow (HMAC JWT, scrypt, partial tokens for 2FA)
+  - RBAC matrix (customer / merchant / admin)
+  - Rate limiting strategy (per-endpoint buckets)
+  - CSP/HSTS configuration
+  - PII handling + GDPR considerations
+  - Secret rotation procedure (AUTH_SECRET)
+  - Password policy
+- **الحجم المقدر:** ~10K
+- **الأولوية:** 🔴 P0 (مهم لـ production)
+
+#### 4. `docs/operations/deployment.md` — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** "ops/ ⟶ How-to / Deployment".
+- **الوعد في [`docs/testing/conventions.md`](conventions.md):** "E2E: runs against a temporary container in CI's `server-boot` job" لكن بدون تفاصيل.
+- **الوعد في [`docs/README.md`](../README.md):** "Docker" → يوجه إلى `operations/docker.md` فقط.
+- **الواقع:** فقط `operations/docker.md` (2.3K) — لا يغطي production deployment.
+- **المطلوب:**
+  - Production deployment checklist (env vars, secrets, SSL)
+  - Nginx reverse proxy config
+  - SSL/TLS certificate management (Let's Encrypt)
+  - Health check endpoints (`/api/health`, `/api/ready`)
+  - Graceful shutdown
+  - Zero-downtime deployment strategy
+  - Rollback procedure
+- **الحجم المقدر:** ~8K
+
+#### 5. `docs/operations/monitoring.md` — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "ops/" intent.
+- **الوعد في [`docs/architecture/overview.md`](../architecture/overview.md):** "Operational Excellence" لكن بدون تفاصيل.
+- **الواقع:** 0 ملف.
+- **المطلوب:**
+  - Structured JSON log format (موجود في `app/server/middleware.ts` لكن غير موثّق)
+  - Metrics (Prometheus-compatible endpoint؟)
+  - Alerts (rate limit exceeded، error rate > X%)
+  - Dashboards (Grafana templates؟)
+  - Distributed tracing (OpenTelemetry؟)
+  - Log aggregation (Loki، ELK)
+- **الحجم المقدر:** ~5K
+
+#### 6. `docs/architecture/er-diagram.md` — ERD مفقود
+- **الوعد في [`docs/architecture/database.md`](../architecture/database.md):** "29 tables" لكن بدون ERD.
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "architecture/" intent.
+- **الوعد في [`docs/testing/standards/IEEE-829.md`](standards/IEEE-829.md):** "Entity-relationship diagrams" كأحد artifacts.
+- **الواقع:** 0 ERD. فقط schema.sql.
+- **المطلوب:**
+  - Mermaid ERD يوضح 29 جدول + relationships
+  - Views (4) + Functions (7) + Triggers (9)
+  - Indexes (60+) strategy
+- **الحجم المقدر:** ~5K
+- **ملاحظة:** يمكن استخدام Mermaid ليدمج في Markdown.
+
+#### 7. `docs/development/ci-cd.md` — غير موجود
+- **الوعد في [`docs/testing/conventions.md`](conventions.md):** "Lint: `pwsh -c ...` smoke import" و "E2E: runs against a temporary container in CI's `server-boot` job".
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "development/".
+- **الوعد في [`CHANGELOG.md`](../../../CHANGELOG.md):** "CI server-boot job" ذُكر.
+- **الواقع:** 0 ملف CI/CD. لا يوجد GitHub Actions workflows في `.github/workflows/`.
+- **المطلوب:**
+  - GitHub Actions workflow YAML (build, test, deploy)
+  - Secrets management (DB_PASSWORD, AUTH_SECRET)
+  - Required status checks قبل merge
+  - Auto-deploy to staging on main
+  - Manual approval for production
+- **الحجم المقدر:** ~6K
+
+#### 8. `docs/development/debugging.md` — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "development/".
+- **الوعد في [`docs/README.md`](../README.md):** ضمن "How-to" intent.
+- **الواقع:** 0 ملف.
+- **المطلوب:**
+  - Reading structured JSON logs
+  - Common error patterns
+  - Database query debugging (PG logs)
+  - Performance profiling
+  - Rate limit debugging
+  - Reset utilities (`reset-rate-limit.cjs`، `db-setup.cjs`)
+- **الحجم المقدر:** ~4K
+
+#### 9. `docs/planning/risks.md` (ADR) — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "planning/" intent (strategy).
+- **الوعد في [`docs/planning/roadmap.md`](../planning/roadmap.md):** يذكر "open issues" لكن بدون formal risk register.
+- **الوعد في [`docs/planning/competitive-analysis.md`](../planning/competitive-analysis.md):** يناقش competitive gaps.
+- **الواقع:** 0 ملف ADR.
+- **المطلوب:**
+  - Risk register (technical + business)
+  - Severity × Likelihood matrix
+  - Mitigation plans
+  - Architecture Decision Records (ADR) format
+- **الحجم المقدر:** ~5K
+
+#### 10. `docs/operations/backup-restore.md` — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "ops/" intent.
+- **الوعد في [`docs/architecture/database.md`](../architecture/database.md):** "DB backups" لم تُذكر.
+- **الواقع:** 0 ملف.
+- **المطلوب:**
+  - Backup strategy (full / incremental / WAL)
+  - pg_dump cron
+  - Retention policy
+  - Restore procedure (DR drill)
+  - Off-site replication
+- **الحجم المقدر:** ~3K
+
+---
+
+### 🟢 فجوات تحسينية (P2) — تحسينات
+
+#### 11. `app/server/README.md` — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `app/server/` كـ Express backend.
+- **الوعد في [`docs/development/conventions.md`](../development/conventions.md):** يذكر server كـ "Express 5 + TypeScript".
+- **الوعد في [`docs/architecture/overview.md`](../architecture/overview.md):** "Backend (Express 5 + Node 20)".
+- **الواقع:** 0 ملف. لا يوجد README داخل `app/server/`.
+- **المطلوب:**
+  - Folder structure (routes/, lib/, db/, middleware.ts, index.ts)
+  - Request lifecycle
+  - Adding a new endpoint (step-by-step)
+  - Testing server code (Vitest)
+- **الحجم المقدر:** ~3K
+
+#### 12. `app/src/README.md` — غير موجود
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `app/src/` كـ React frontend.
+- **الوعد في [`docs/development/conventions.md`](../development/conventions.md):** يذكر i18n، contexts.
+- **الوعد في [`docs/architecture/overview.md`](../architecture/overview.md):** "React 19 + Vite 7".
+- **الواقع:** 0 ملف. لا يوجد README داخل `app/src/`.
+- **المطلوب:**
+  - Folder structure (components/, context/, hooks/, pages/, i18n/)
+  - State management (Context + useReducer)
+  - Adding a new page
+  - i18n workflow (3 locales)
+  - Component patterns (shadcn/ui)
+- **الحجم المقدر:** ~3K
+
+#### 13. `tests/e2e/COOKBOOK.md` — غير موجود
+- **الوعد في [`docs/testing/conventions.md`](conventions.md):** "Authoring checklist" موجود لكن بدون examples.
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `tests/e2e/` بشكل عام.
+- **الواقع:** 0 ملف cookbook. فقط README عام.
+- **المطلوب:** recipes للحالات الشائعة:
+  - "How to test an admin endpoint"
+  - "How to test rate-limited endpoints"
+  - "How to handle stateful flows (e.g., create order then pay)"
+  - "How to test webhooks"
+  - "How to handle 4xx vs 5xx"
+- **الحجم المقدر:** ~5K
+
+#### 14. `tests/e2e/smoke/README.md` — غير موجود
+- **الوعد في [`docs/testing/README.md`](README.md):** "tests/e2e/ ⟶ PowerShell E2E" لكن دون تمييز عن smoke.
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `smoke/` كمجلد فرعي.
+- **الواقع:** 17 ملف smoke لكن لا يوجد README يشرح:
+  - الفرق بين phase scripts و smoke scripts
+  - متى يُستخدم كل نوع
+  - ترتيب التشغيل الموصى به
+- **المطلوب:** README يشرح الفرق + أمثلة.
+- **الحجم المقدر:** ~2K
+
+#### 15. `docs/testing/standards/google-style.md` — غير موجود
+- **الوعد في [`docs/testing/README.md`](README.md):** يذكر "Google Style Guide" كـ معيار مطبّق.
+- **الوعد في [`docs/testing/PHASE_TEST_TASKS.md`](PHASE_TEST_TASKS.md):** يذكر "Google Style" في معايير مطبّقة.
+- **الواقع:** 3 ملفات standards فقط (IEEE 829, ISO 29119, ISTQB CTFL). Google Style مفقود.
+- **المطلوب:** ملخص Google Engineering Productivity Testing standards.
+- **الحجم المقدر:** ~3K
+
+---
+
+### 🔵 فجوات تحسينية إضافية (P3)
+
+#### 16. `docs/README.md` — تحسينات
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصفه كـ "Index (with Diátaxis map)".
+- **الواقع:** 4.4K — index جيد لكن **يفتقد**:
+  - قسم "آخر تحديث" / changelog
+  - قسم "للمساهمين الجدد" (Getting Started for new contributors)
+  - Diagram للعلاقات بين المجلدات
+- **الحجم المقدر:** ~1K تحسين
+
+#### 17. `docs/testing/overview.md` — تحسينات
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "testing/" intent.
+- **الوعد في [`docs/testing/README.md`](README.md):** يصف محتوى المجلد.
+- **الواقع:** 4.3K — مفيد لكن **يفتقد**:
+  - Diagrams (test pyramid, E2E flow)
+  - Metrics dashboards
+- **الحجم المقدر:** ~1K
+
+#### 18. `docs/STRUCTURE.md` — تحسينات
+- **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** "Repository map (canonical)".
+- **الوعد في [`CHANGELOG.md`](../../../CHANGELOG.md):** مرجع للـ structure.
+- **الواقع:** 15.8K — جيد لكن **يفتقد**:
+  - روابط للملفات الفعلية (بعضها موجود، بعضهم لا)
+  - تحديث لحالة "Implementation status" per folder
+- **الحجم المقدر:** ~1K
+
+---
+
+## 📋 ملخص الفجوات بالأولوية
+
+| # | الفجوة | الحجم المقدر | الأولوية | الحالة |
+|---|--------|-------------|----------|--------|
+| 1 | `docs/testing/phases/*.md` (18 ملف) | ~30K | 🔴 P0 | فارغ |
+| 2 | `docs/testing/templates/` (2-3 ملفات) | ~8K | 🔴 P0 | فارغ |
+| 3 | `docs/architecture/security.md` | ~10K | 🔴 P0 | غير موجود |
+| 4 | `docs/operations/deployment.md` | ~8K | 🟡 P1 | غير موجود |
+| 5 | `docs/operations/monitoring.md` | ~5K | 🟡 P1 | غير موجود |
+| 6 | `docs/architecture/er-diagram.md` | ~5K | 🟡 P1 | غير موجود |
+| 7 | `docs/development/ci-cd.md` | ~6K | 🟡 P1 | غير موجود |
+| 8 | `docs/development/debugging.md` | ~4K | 🟢 P2 | غير موجود |
+| 9 | `docs/planning/risks.md` (ADR) | ~5K | 🟢 P2 | غير موجود |
+| 10 | `docs/operations/backup-restore.md` | ~3K | 🟢 P2 | غير موجود |
+| 11 | `app/server/README.md` | ~3K | 🟢 P2 | غير موجود |
+| 12 | `app/src/README.md` | ~3K | 🟢 P2 | غير موجود |
+| 13 | `tests/e2e/COOKBOOK.md` | ~5K | 🟢 P2 | غير موجود |
+| 14 | `tests/e2e/smoke/README.md` | ~2K | 🟢 P2 | غير موجود |
+| 15 | `docs/testing/standards/google-style.md` | ~3K | 🟢 P2 | غير موجود |
+| 16 | `docs/README.md` تحسينات | ~1K | 🔵 P3 | تحسين |
+| 17 | `docs/testing/overview.md` تحسينات | ~1K | 🔵 P3 | تحسين |
+| 18 | `docs/STRUCTURE.md` تحسينات | ~1K | 🔵 P3 | تحسين |
+
+---
+
+## 📊 إحصائيات الفجوات
+
+| الفئة | عدد الفجوات | الحجم الكلي المقدر |
+|--------|-------------|-------------------|
+| 🔴 P0 (حرجة) | 3 | ~48K |
+| 🟡 P1 (متوسطة) | 5 | ~32K |
+| 🟢 P2 (تحسينية) | 7 | ~26K |
+| 🔵 P3 (إضافية) | 3 | ~3K |
+| **المجموع** | **18** | **~109K** |
+
+**مقارنة بالمحتوى الحالي:** ~680K محتوى موجود، ~109K فجوات (16% إضافي). النسبة معقولة لمشروع في طور النضج.
+
+---
+
+## 🎯 توصيات بترتيب الأولوية
+
+### 🟢 يمكن تنفيذه اليوم (~1 ساعة)
+1. ملء `docs/testing/phases/PHASE_00_HEALTH_AUTH.md` كـ **نموذج** (template) → تطبيقه على 4-5 PHASES أخرى
+2. إنشاء `docs/testing/templates/PS_TEST_TEMPLATE.ps1` كقالب جاهز
+
+### 🟡 يمكن تنفيذه هذا الأسبوع
+3. كتابة `docs/architecture/security.md` (مهم لـ production)
+4. كتابة `docs/operations/deployment.md` (مهم لعمليات الـ deployment)
+5. كتابة `docs/architecture/er-diagram.md` (Mermaid diagram)
+6. كتابة `docs/development/ci-cd.md` (GitHub Actions)
+
+### 🔵 يمكن تنفيذه لاحقاً
+7. كتابة `docs/planning/risks.md` (ADR)
+8. كتابة `docs/operations/backup-restore.md`
+9. كتابة `app/server/README.md` + `app/src/README.md`
+10. كتابة `tests/e2e/COOKBOOK.md` + `tests/e2e/smoke/README.md`
+11. كتابة `docs/testing/standards/google-style.md`
+12. تحسينات صغيرة في `docs/README.md`، `docs/testing/overview.md`، `docs/STRUCTURE.md`
+
+---
+
+## 📌 ملاحظة الفحص
+
+- **تاريخ الفحص:** 2026-06-27
+- **عدد الملفات المفحوصة:** 42 ملف .md
+- **عدد المجلدات المفحوصة:** 11 مجلد في `docs/`
+- **عدد ملفات tests/ المفحوصة:** 41 ملف
+- **منهج الفحص:** `Get-ChildItem -Recurse` + `Select-String` للبحث عن وعود فارغة

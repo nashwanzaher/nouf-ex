@@ -58,7 +58,7 @@
   See [`database.md`](database.md) and
   [`database/migrations/README.md`](database/migrations/README.md).
   [`database.md`](database.md).
-- **Use the PgDb wrapper** (`app/server/db/pg-wrapper.cjs`) — do not import `pg`
+- **Use the PgDb wrapper** (`app/server/db/pg-wrapper.cts`) — do not import `pg`
   directly from route handlers.
 - **Wrap multi-write endpoints in `db.tx(...)`** so they commit together.
 - **Money in `NUMERIC(12,2)`**, never `FLOAT`/`DOUBLE`.
@@ -80,7 +80,7 @@
   - `fix/<scope>` — bug fix.
   - `chore/<scope>` — tooling / docs / housekeeping.
   - `audit/<date>` — periodic cleanup passes (matches
-    `docs/audit/code-audit-YYYY-MM-DD.md`).
+    `archive/audit/code-audit-YYYY-MM-DD.md`).
 - **Commit messages:** imperative mood, ≤ 72 chars on the subject line.
   Body explains *why*. Reference roadmap IDs when applicable:
   `P0-1: cart→order pipeline E2E`
@@ -102,6 +102,6 @@
 - **Update docs in the same PR as the code.** If you change an endpoint,
   update [`api.md`](api.md). If you change the schema, update
   [`database.md`](database.md).
-- **Long-form research** lives under `docs/research/`. **Audits and
-  reviews** live under `docs/audit/`. Never overwrite — append a dated
+- **Long-form research** lives under `archive/research/`. **Audits and
+  reviews** live under `archive/audit/`. Never overwrite — append a dated
   file.

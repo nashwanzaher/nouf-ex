@@ -51,7 +51,7 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 - اقرأ [app/server/lib/shared.cts](../../app/server/lib/shared.cts).
 - استعرض **كل** المسارات في [app/server/routes/](../../app/server/routes/) (18 ملف).
 - حدد: نقاط النهاية، المصادقة، الصلاحيات، rate limiting، مخططات التحقق (zod).
-- اقرأ [app/server/db/pg-wrapper.cjs](../../app/server/db/pg-wrapper.cjs).
+- اقرأ [app/server/db/pg-wrapper.cts](../../app/server/db/pg-wrapper.cts).
 
 ### المرحلة 4 — الواجهة الأمامية (15 دقيقة)
 
@@ -65,7 +65,7 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 ### المرحلة 5 — الجودة والمخاطر (10 دقائق)
 
 - اقرأ [docs/testing.md](../../docs/testing.md) و [docs/conventions.md](../../docs/conventions.md).
-- اقرأ [docs/audit/](../../docs/audit/) (code-audit, review-code, review-database, review-features, review-ux, ops-verification).
+- اقرأ [archive/audit/](../../archive/audit/) (code-audit, review-code, review-database, review-features, review-ux, ops-verification).
 - اقرأ [docs/roadmap.md](../../docs/roadmap.md) و [docs/competitive-analysis-2026.md](../../docs/competitive-analysis-2026.md).
 - ابحث في الكود عن: `TODO`, `FIXME`, `HACK`, `XXX`, `console.log`, `mockData`, `dummyData`, `placeholder`.
 - افحص ملف `app/src/pages/customer/Notifications.tsx` (مثال على بيانات وهمية في P1-7).

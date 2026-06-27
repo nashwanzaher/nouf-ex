@@ -53,7 +53,7 @@ $authCust = @{ Authorization = "Bearer $tokCust" }
 Write-Host "  Customer token obtained"
 
 # Get two products from the same store (cart rule: same store_id)
-$prod = (Call GET '/api/products?limit=10' @{} $null).body | ConvertFrom-Json
+$prod = (Call GET '/api/products?limit=10' @{}).body | ConvertFrom-Json
 $products = $prod.data.products
 $p1 = $products[0]
 $p2 = $products | Where-Object { $_.store_id -eq $p1.store_id } | Select-Object -First 1
@@ -65,17 +65,17 @@ Write-Host "  Using products: p1=$($p1.id) (store=$($p1.store_id)) p2=$($p2.id)"
 # ============================================================================
 Write-Host ''
 Write-Host '----- 1. Negative: missing auth -----'
-$r = Call GET '/api/cart/2' @{} $null
+$r = Call GET '/api/cart/2' @{}
 Assert 'GET /api/cart/2 (no auth)' 401 $r
 $r = Call POST '/api/cart' @{} @{ productId = $p1.id; quantity = 1 }
 Assert 'POST /api/cart (no auth)' 401 $r
 $r = Call PATCH '/api/cart/1' @{} @{ quantity = 2 }
 Assert 'PATCH /api/cart/1 (no auth)' 401 $r
-$r = Call DELETE '/api/cart/1' @{} $null
+$r = Call DELETE '/api/cart/1' @{}
 Assert 'DELETE /api/cart/1 (no auth)' 401 $r
-$r = Call DELETE '/api/cart/clear/2' @{} $null
+$r = Call DELETE '/api/cart/clear/2' @{}
 Assert 'DELETE /api/cart/clear/2 (no auth)' 401 $r
-$r = Call GET '/api/cart/count/2' @{} $null
+$r = Call GET '/api/cart/count/2' @{}
 Assert 'GET /api/cart/count/2 (no auth)' 401 $r
 
 # ============================================================================
@@ -84,7 +84,7 @@ Assert 'GET /api/cart/count/2 (no auth)' 401 $r
 Write-Host ''
 Write-Host '----- 2. Clear cart (fresh start) -----'
 # Get customer user_id from /me
-$me = (Call GET '/api/auth/me' $authCust @{} $null).body | ConvertFrom-Json
+$me = (Call GET '/api/auth/me' $authCust).body | ConvertFrom-Json
 $userId = $me.data.id
 Write-Host "  Customer user_id=$userId"
 
@@ -199,8 +199,8 @@ Assert "DELETE /api/cart/clear/$userId (final clear)" 200 $r
 
 $r = Call GET "/api/cart/count/$userId" $authCust $null
 $countData = ($r.body | ConvertFrom-Json).data
-if ($countData -eq 0) { Pass "count=0 after clear"; $script:passCount++ }
-else { Fail 'count after clear' 0 $countData }
+if ($countData.count -eq 0) { Pass "count=0 after clear"; $script:passCount++ }
+else { Fail 'count after clear' 0 $countData.count }
 
 # ============================================================================
 # Summary

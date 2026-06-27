@@ -24,7 +24,7 @@
 │   │       ├── admin/  auth/  customer/  seller/  Home/
 │   ├── server/                   # Express 5 API (extracted from app/)
 │   │   ├── index.ts              # Express entrypoint
-│   │   ├── db/pg-wrapper.cjs     # async pg.Pool wrapper
+│   │   ├── db/pg-wrapper.cts     # async pg.Pool wrapper
 │   │   └── tests/                # api-server.test.ts, schema.test.ts
 │   ├── tests/                    # Frontend setup + MSW mocks
 │   ├── public/                   # Static assets + JSON snapshots
@@ -104,10 +104,10 @@ Full instructions in [docs/getting-started.md](docs/getting-started.md).
 | Write or run tests                       | [docs/testing.md](docs/testing.md)                    |
 | Day-to-day dev workflow                  | [docs/development.md](docs/development.md)            |
 | Code style / i18n / git workflow         | [docs/conventions.md](docs/conventions.md)            |
-| Look up an endpoint                      | [docs/api.md](docs/api.md)                            |
-| See what's planned                       | [docs/roadmap.md](docs/roadmap.md)                    |
-| Read the original Alibaba/Taobao research | [docs/research/](docs/research/)                      |
-| Read past code/UX reviews                | [docs/audit/](docs/audit/)                            |
+| Look up an endpoint                      | [docs/architecture/api.md](docs/architecture/api.md)    |
+| See what's planned                       | [docs/planning/roadmap.md](docs/planning/roadmap.md)    |
+| Read the original Alibaba/Taobao research | [archive/research/](archive/research/)                |
+| Read past code/UX reviews                | [archive/audit/](archive/audit/)                      |
 
 ## Contributing
 

@@ -502,7 +502,7 @@ export const adminDisputeUpdateSchema = z
 export const cartAddSchema = z
 	.object({
 		productId: z.number().int().positive(),
-		quantity: z.number().int().min(1).max(100).default(1),
+		quantity: z.number().int().min(1).max(100),
 		variant: z.record(z.string(), z.unknown()).optional(),
 	})
 	.strict();

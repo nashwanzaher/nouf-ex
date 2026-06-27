@@ -10,7 +10,7 @@ simple. The Docker image is built from this directory.
 app/
 ├── server/                    # Express 5 backend (extracted from app/)
 │   ├── index.ts               # Express entrypoint
-│   ├── db/pg-wrapper.cjs      # async pg.Pool wrapper
+│   ├── db/pg-wrapper.cts      # async pg.Pool wrapper
 │   └── tests/                 # api-server.test.ts, schema.test.ts
 │
 ├── src/                       # React 19 + Vite 7 frontend

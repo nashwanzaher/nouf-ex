@@ -288,4 +288,4 @@ payload signed with `AUTH_SECRET`.
 
 For end-to-end user-flow diagrams (login, cart, checkout, 2FA, …) see
 [Architecture → User flows](architecture.md#user-flows) or the audit
-files in `docs/audit/`.
+files in `archive/audit/`.

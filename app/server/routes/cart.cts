@@ -12,8 +12,62 @@ import {
 
 export const cartRouter = Router();
 
+// Routes are ordered from MOST SPECIFIC to MOST GENERAL so that
+// Express matches specific paths (/count/:userId, /clear/:userId)
+// before the general /:userId catch-all. Previously the catch-all
+// was registered first, which shadowed the count/clear endpoints
+// (Phase 4 test failure: 7 assertions failing because
+// GET /api/cart/count/N returned cart items instead of count).
+
+cartRouter.delete('/clear/:userId', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const userId = req.user!.id;
+		const result = await db
+			.prepare('DELETE FROM cart_items WHERE user_id = ? RETURNING id')
+			.run(userId);
+		const removed = Number((result as unknown as { changes: number }).changes ?? 0);
+		return sendSuccess(res, { removed }, 'Cart cleared');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+cartRouter.get('/count/:userId', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const userId = Number(req.params.userId);
+		if (!Number.isInteger(userId) || userId <= 0) {
+			return sendError(res, 'Invalid user id', 400);
+		}
+		if (req.user!.id !== userId && req.user!.role !== 'admin') {
+			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
+		}
+		const row = (await db
+			.prepare(
+				'SELECT COALESCE(SUM(quantity), 0)::int AS c FROM cart_items WHERE user_id = $1',
+			)
+			.get(userId)) as { c: number } | undefined;
+		// `get()` returns undefined when no row matches; the COALESCE
+		// in the SQL means an empty cart should still produce 0, but
+		// the mock + a fresh database both yield undefined. Default to 0.
+		return sendSuccess(res, { user_id: userId, count: row?.c ?? 0 });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
 cartRouter.get('/:userId', requireAuth, async (req: Request, res: Response) => {
 	try {
+		const urlUserId = Number(req.params.userId);
+		if (!Number.isInteger(urlUserId) || urlUserId <= 0) {
+			return sendError(res, 'Invalid user id', 400);
+		}
+		// Ownership guard: only the owner or an admin may read this cart.
+		// Previously the URL :userId was silently ignored (the handler
+		// always used req.user.id), which made the URL parameter
+		// misleading and could obscure tampering attempts.
+		if (req.user!.id !== urlUserId && req.user!.role !== 'admin') {
+			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
+		}
 		const userId = req.user!.id;
 		const cartItems = await db
 			.prepare(
@@ -119,42 +173,6 @@ cartRouter.delete('/:id', requireAuth, async (req: Request, res: Response) => {
 			.get(cartItemId, userId)) as { id: number } | undefined;
 		if (!result) return sendError(res, 'Cart item not found', 404);
 		return sendSuccess(res, { id: result.id }, 'Item removed from cart');
-	} catch (err) {
-		return sendError(res, err);
-	}
-});
-
-cartRouter.delete('/clear/:userId', requireAuth, async (req: Request, res: Response) => {
-	try {
-		const userId = req.user!.id;
-		const result = await db
-			.prepare('DELETE FROM cart_items WHERE user_id = ? RETURNING id')
-			.run(userId);
-		const removed = Number((result as unknown as { changes: number }).changes ?? 0);
-		return sendSuccess(res, { removed }, 'Cart cleared');
-	} catch (err) {
-		return sendError(res, err);
-	}
-});
-
-cartRouter.get('/count/:userId', requireAuth, async (req: Request, res: Response) => {
-	try {
-		const userId = Number(req.params.userId);
-		if (!Number.isInteger(userId) || userId <= 0) {
-			return sendError(res, 'Invalid user id', 400);
-		}
-		if (req.user!.id !== userId && req.user!.role !== 'admin') {
-			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
-		}
-		const row = (await db
-			.prepare(
-				'SELECT COALESCE(SUM(quantity), 0)::int AS c FROM cart_items WHERE user_id = $1',
-			)
-			.get(userId)) as { c: number } | undefined;
-		// `get()` returns undefined when no row matches; the COALESCE
-		// in the SQL means an empty cart should still produce 0, but
-		// the mock + a fresh database both yield undefined. Default to 0.
-		return sendSuccess(res, { user_id: userId, count: row?.c ?? 0 });
 	} catch (err) {
 		return sendError(res, err);
 	}

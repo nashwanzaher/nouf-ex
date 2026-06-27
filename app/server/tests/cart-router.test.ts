@@ -67,6 +67,24 @@ describe('cartRouter — GET /api/cart/:userId', () => {
 		const res = await request(app).get('/api/cart/7').set(bearer);
 		expect(res.headers['content-type']).toMatch(/json/);
 	});
+
+	it('returns 403 when a customer asks for another user cart (ownership guard)', async () => {
+		const res = await request(app).get('/api/cart/99').set(bearer);
+		expect(res.status).toBe(403);
+		expect(res.body.code).toBe('FORBIDDEN');
+	});
+
+	it('returns 200 when an admin asks for another user cart', async () => {
+		const res = await request(app)
+			.get('/api/cart/99')
+			.set('Authorization', `Bearer ${ADMIN_TOKEN}`);
+		expect(res.status).toBe(200);
+	});
+
+	it('returns 400 on a non-integer userId', async () => {
+		const res = await request(app).get('/api/cart/abc').set(bearer);
+		expect(res.status).toBe(400);
+	});
 });
 
 describe('cartRouter — POST /api/cart', () => {

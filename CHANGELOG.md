@@ -2,7 +2,7 @@
 
 > **Format:** [Keep a Changelog v1.1.0](https://keepachangelog.com/en/1.1.0/) ·
 > **Versioning:** [Semantic Versioning 2.0.0](https://semver.org/) ·
-> **Last updated:** 2026-06-27
+> **Last updated:** 2026-06-28
 
 All notable changes to **Nouf-ex** are documented in this file.
 
@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ---
 
 ## [Unreleased]
+
+### Fixed
+- **2026-06-28** — `app/server/routes/cart.cts` — Fixed route shadowing where
+  the general `GET /:userId` catch-all was registered first, blocking
+  `GET /count/:userId` and `DELETE /clear/:userId` (Phase 4 E2E:
+  7 failing assertions). Routes are now ordered specific → general.
+  Added ownership guard on `GET /:userId` (URL param now enforced
+  against `req.user.id`; admin bypass preserved). Added 3 Vitest
+  regression tests for the guard.
+- **2026-06-28** — Docs contradictions cleanup (Wave 1). Unified 11
+  references of `pg-wrapper.cjs` → `pg-wrapper.cts` (C1); aligned
+  `docs/testing/README.md` PHASES status with `MASTER_PLAN.md`
+  (17 Done + 1 In Progress, was 5 Done + 13 Pending) (C12+N2);
+  converted 10 stale `docs/audit/*` and `docs/research/*` links
+  to `archive/` (N3); deleted empty `docs/audit/` and
+  `docs/research/` directories (N1); moved `git_commit.log` and
+  `git_push.log` to `logs/`, deleted root screenshots (N4+N5+N6).
 
 ### Changed
 - **2026-06-27** — Repository restructured into an academic Diátaxis-aligned

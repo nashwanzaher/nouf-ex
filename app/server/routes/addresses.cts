@@ -38,13 +38,15 @@ addressesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		const userId = req.user!.id;
 
 		if (data.is_default) {
-			await db.prepare('UPDATE addresses SET is_default = 0 WHERE user_id = ?').run(userId);
+			await db
+				.prepare('UPDATE addresses SET is_default = FALSE WHERE user_id = ?')
+				.run(userId);
 		}
 		const result = await db
 			.prepare(
 				`INSERT INTO addresses (user_id, label, full_name, phone, governorate, city, district,
            street, building, notes, is_default, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, 0), NOW(), NOW())
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, FALSE), NOW(), NOW())
          RETURNING *`,
 			)
 			.get(
@@ -58,7 +60,7 @@ addressesRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				data.street,
 				data.building ?? null,
 				data.notes ?? null,
-				data.is_default ? 1 : 0,
+				data.is_default ?? false,
 			);
 		sendSuccess(res, result, 'Address created');
 	} catch (err) {

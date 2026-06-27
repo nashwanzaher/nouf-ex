@@ -66,6 +66,18 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.get(customerId, productId)) as { found: 1 } | undefined;
 		const isVerified = Boolean(purchased);
 
+		// Look up the product's store_id. reviews.store_id is NOT NULL, so we
+		// must derive it server-side from the product. The client-supplied
+		// storeId (if any) is only used as a sanity check.
+		const productRow = (await db
+			.prepare('SELECT store_id FROM products WHERE id = ? AND deleted_at IS NULL')
+			.get(productId)) as { store_id: number } | undefined;
+		if (!productRow) return sendError(res, 'Product not found', 404);
+		const resolvedStoreId = productRow.store_id;
+		if (storeId !== undefined && storeId !== resolvedStoreId) {
+			return sendError(res, 'storeId does not match product', 400, 'STORE_MISMATCH');
+		}
+
 		const result = (await db
 			.prepare(
 				`INSERT INTO reviews (product_id, store_id, customer_id, rating, title, comment, helpful_count, is_verified, created_at, updated_at)
@@ -74,12 +86,12 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			)
 			.run(
 				productId,
-				storeId ?? null,
+				resolvedStoreId,
 				customerId,
 				rating,
 				title ?? null,
 				comment ?? null,
-				isVerified ? 1 : 0,
+				isVerified,
 			)) as {
 			lastInsertRowid: number | null;
 		};
@@ -90,13 +102,16 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Refresh product rating. Visible reviews only.
 		const ratingData = (await db
 			.prepare(
-				'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE product_id = ? AND is_visible = TRUE',
+				'SELECT AVG(rating)::numeric as avg_rating, COUNT(*) as count FROM reviews WHERE product_id = ? AND is_visible = TRUE',
 			)
-			.get(productId)) as { avg_rating: number; count: number };
+			.get(productId)) as { avg_rating: number | string; count: number };
 
+		// pg returns AVG() as a string by default; coerce to a JS number for
+		// toFixed() and the products.rating column.
+		const avg = Number(ratingData.avg_rating) || 0;
 		await db
 			.prepare('UPDATE products SET rating = ?, review_count = ? WHERE id = ?')
-			.run(ratingData.avg_rating.toFixed(1), ratingData.count, productId);
+			.run(avg.toFixed(1), ratingData.count, productId);
 
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Review submitted successfully');
 	} catch (err) {

@@ -32,7 +32,7 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 			const result = (await db
 				.prepare(
 					`INSERT INTO users (email, password_hash, full_name, role, status, is_verified, created_at, updated_at)
-           VALUES (?, ?, ?, ?, 'active', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+           VALUES (?, ?, ?, ?, 'active', FALSE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
            RETURNING id`,
 				)
 				.run(email, passwordHash, name, role)) as { lastInsertRowid: number | null };

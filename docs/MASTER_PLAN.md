@@ -107,7 +107,7 @@
 |----|--------|----------------|-------------|--------|-------|
 | **A.1** | إصلاح PHASE 4 cart assertions (7 failures: route يتجاهل URL `:userId` — security issue) | PHASE_TEST_TASKS.md | `app/server/routes/cart.cts` + `tests/e2e/phase04_cart.ps1` | ✅ Done (2026-06-28) | 1 ساعة |
 | **A.2** | إنشاء قالب PowerShell للـ PHASE scripts | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TEST_TEMPLATE.ps1` | ✅ **Done (2026-06-28)** — 8/8 smoke PASS | 1 ساعة |
-| **A.3** | إنشاء قالب Vitest للـ integration tests | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/JS_INTEGRATION_TEST_TEMPLATE.ts` | ⏳ TODO | 30 دقيقة |
+| **A.3** | إنشاء قالب Vitest للـ integration tests | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/JS_INTEGRATION_TEST_TEMPLATE.ts` | ✅ **Done (2026-06-28)** — 14/23 proof tests PASS, 9 كشف فجوات في wishlist | 30 دقيقة |
 | **A.4** | إنشاء مرجع دوال `PS_TestHelpers.ps1` | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TESTHELPERS_REFERENCE.md` | ⏳ TODO | 30 دقيقة |
 | **A.5** | إنشاء COOKBOOK للحالات الشائعة في الاختبار | PHASE_TEST_TASKS.md gap #13 | `tests/e2e/COOKBOOK.md` | ⏳ TODO | 1-2 ساعة |
 | **A.6** | إنشاء README لـ `tests/e2e/smoke/` | PHASE_TEST_TASKS.md gap #14 | `tests/e2e/smoke/README.md` | ⏳ TODO | 1 ساعة |

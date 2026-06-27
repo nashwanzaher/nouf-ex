@@ -138,7 +138,7 @@
 | **B.1.11** | PHASE_09_WISHLIST_FOLLOWERS.md | `docs/testing/phases/PHASE_09_WISHLIST_FOLLOWERS.md` | ✅ **Done (2026-06-28)** — 24 TC + 11 REQ · live 24/24 PASS · 14,463 bytes | 30 دقيقة |
 | **B.1.12** | PHASE_10_MERCHANT_FLOW.md | `docs/testing/phases/PHASE_10_MERCHANT_FLOW.md` | ✅ **Done (2026-06-28)** — 8 PASS / 12 SKIP (gap inventory) · live 8/0/12 · 12,889 bytes | 30 دقيقة |
 | **B.1.13** | PHASE_11_ADMIN_RBAC.md | `docs/testing/phases/PHASE_11_ADMIN_RBAC.md` | ✅ **Done (2026-06-28)** — 41 TC + 10 REQ · live 41/41 PASS · 16,547 bytes | 30 دقيقة |
-| **B.1.14** | PHASE_12_2FA_BACKUP.md | `docs/testing/phases/PHASE_12_2FA_BACKUP.md` | ⏳ TODO | 30 دقيقة |
+| **B.1.14** | PHASE_12_2FA_BACKUP.md | `docs/testing/phases/PHASE_12_2FA_BACKUP.md` | ✅ **Done (2026-06-28)** — 23 TC + 10 REQ · live 19 PASS / 4 FAIL (rate-limit collisions, documented) · 15,143 bytes | 30 دقيقة |
 | **B.1.15** | PHASE_13_NOTIFICATIONS_MESSAGES.md | `docs/testing/phases/PHASE_13_NOTIFICATIONS_MESSAGES.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.16** | PHASE_14_SHIPPING_METHODS.md | `docs/testing/phases/PHASE_14_SHIPPING_METHODS.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.17** | PHASE_15_AUDIT_LOGS.md | `docs/testing/phases/PHASE_15_AUDIT_LOGS.md` | ⏳ TODO | 30 دقيقة |

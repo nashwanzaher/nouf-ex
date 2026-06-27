@@ -130,7 +130,7 @@
 | **B.1.3** | PHASE_01_PROFILE_ADDRESSES_RETEST.md | `docs/testing/phases/PHASE_01_PROFILE_ADDRESSES_RETEST.md` | ✅ **Done (2026-06-28)** — 16 TC + 10 REQ + 4 OWASP refs · 14,696 bytes · +1 script bug documented | 30 دقيقة |
 | **B.1.4** | PHASE_02_PUBLIC_CATALOG.md | `docs/testing/phases/PHASE_02_PUBLIC_CATALOG.md` | ✅ **Done (2026-06-28)** — 42 TC + 10 REQ · live 42/42 PASS · 14,558 bytes | 30 دقيقة |
 | **B.1.5** | PHASE_03_SEARCH_FILTERS.md | `docs/testing/phases/PHASE_03_SEARCH_FILTERS.md` | ✅ **Done (2026-06-28)** — 24 TC + 10 REQ · live 24/24 PASS · 13,518 bytes | 30 دقيقة |
-| **B.1.6** | PHASE_04_CART.md | `docs/testing/phases/PHASE_04_CART.md` | ⏳ TODO | 30 دقيقة |
+| **B.1.6** | PHASE_04_CART.md | `docs/testing/phases/PHASE_04_CART.md` | ✅ **Done (2026-06-28)** — 27 TC + 11 REQ · live 27/27 PASS (after A.1 + ahmed reset) · 16,546 bytes | 30 دقيقة |
 | **B.1.7** | PHASE_05_ORDERS_INVENTORY.md | `docs/testing/phases/PHASE_05_ORDERS_INVENTORY.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.8** | PHASE_06_COUPONS_DISCOUNTS.md | `docs/testing/phases/PHASE_06_COUPONS_DISCOUNTS.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.9** | PHASE_07_PAYMENTS_REFUNDS.md | `docs/testing/phases/PHASE_07_PAYMENTS_REFUNDS.md` | ⏳ TODO | 30 دقيقة |

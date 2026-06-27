@@ -80,7 +80,7 @@ export type {
 // ─── Generic Hook Result Type ───────────────────────────────
 
 export interface HookResult<T> {
-	data: T | null;
+	data: T | undefined;
 	loading: boolean;
 	error: string | null;
 	refetch: () => void;
@@ -97,7 +97,13 @@ export interface HookResult<T> {
 // `AbortError` results are silently swallowed — they are an
 // expected part of the cleanup lifecycle, not a real failure.
 function useDataHook<T>(fetcher: (signal: AbortSignal | undefined) => Promise<T>): HookResult<T> {
-	const [data, setData] = useState<T | null>(null);
+	// Start as `undefined` (not `null`) so that callers using the
+	// destructuring default pattern — `const { data: x = [] } = hook()`
+	// — get the fallback on the first render too. With `null` the
+	// default only fires for `undefined`, which masks the loading
+	// state and produces `Cannot read properties of null (reading 'map')`
+	// when callers iterate over the result before the fetch resolves.
+	const [data, setData] = useState<T | undefined>(undefined);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 

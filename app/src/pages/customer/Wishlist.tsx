@@ -22,18 +22,23 @@ function getName(item: ApiWishlistItem, lang: string): string {
 	return item.name_ar || item.name_en || `منتج #${item.product_id}`;
 }
 
-function StarRating({ rating }: { rating: number }) {
-	const r = rating ?? 0;
+function StarRating({ rating }: { rating: number | string | undefined }) {
+	// The wishlist API returns numeric columns as strings (Postgres
+	// NUMERIC casts via pg). Coerce to a finite number before calling
+	// `toFixed`, otherwise we hit `c.toFixed is not a function` for
+	// every wishlist card.
+	const r = Number(rating);
+	const safe = Number.isFinite(r) ? r : 0;
 	return (
 		<div className="flex items-center gap-0.5">
 			{[1, 2, 3, 4, 5].map((s) => (
 				<Heart
 					key={s}
-					className={`w-3 h-3 ${s <= Math.floor(r) ? 'text-[#D4A853] fill-[#D4A853]' : 'text-[#AAAAAA]'}`}
+					className={`w-3 h-3 ${s <= Math.floor(safe) ? 'text-[#D4A853] fill-[#D4A853]' : 'text-[#AAAAAA]'}`}
 					strokeWidth={1.5}
 				/>
 			))}
-			<span className="text-[10px] text-[#6B6B6B] font-cairo mr-1">{r.toFixed(1)}</span>
+			<span className="text-[10px] text-[#6B6B6B] font-cairo mr-1">{safe.toFixed(1)}</span>
 		</div>
 	);
 }

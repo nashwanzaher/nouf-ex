@@ -191,10 +191,22 @@ const mockProducts: Product[] = [
 function StatusBadge({ status }: { status: Product['status'] }) {
 	const { t } = useTranslation();
 	const config = {
-		active: { label: t('seller.statusActive', 'Active'), className: 'bg-[rgba(16,185,129,0.12)] text-[#10B981]' },
-		low: { label: t('seller.statusLow', 'Low'), className: 'bg-[rgba(245,158,11,0.12)] text-[#F59E0B]' },
-		out: { label: t('seller.statusOut', 'Out'), className: 'bg-[rgba(239,68,68,0.12)] text-[#EF4444]' },
-		disabled: { label: t('seller.statusDisabled', 'Disabled'), className: 'bg-[rgba(170,170,170,0.12)] text-[#AAAAAA]' },
+		active: {
+			label: t('seller.statusActive', 'Active'),
+			className: 'bg-[rgba(16,185,129,0.12)] text-[#10B981]',
+		},
+		low: {
+			label: t('seller.statusLow', 'Low'),
+			className: 'bg-[rgba(245,158,11,0.12)] text-[#F59E0B]',
+		},
+		out: {
+			label: t('seller.statusOut', 'Out'),
+			className: 'bg-[rgba(239,68,68,0.12)] text-[#EF4444]',
+		},
+		disabled: {
+			label: t('seller.statusDisabled', 'Disabled'),
+			className: 'bg-[rgba(170,170,170,0.12)] text-[#AAAAAA]',
+		},
 	};
 	const c = config[status];
 	return (
@@ -410,7 +422,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													</label>
 													<input
 														type="text"
-														placeholder={t('seller.brandPlaceholder', 'Brand')}
+														placeholder={t(
+															'seller.brandPlaceholder',
+															'Brand',
+														)}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 													/>
 												</div>
@@ -593,7 +608,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														{t('seller.variantNameLabel', 'Variant name')}
+														{t(
+															'seller.variantNameLabel',
+															'Variant name',
+														)}
 													</label>
 													<select
 														aria-label={t(
@@ -641,7 +659,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													<thead className="bg-[#F8F8F8]">
 														<tr>
 															<th className="px-3 py-2 font-cairo font-semibold text-[#6B6B6B]">
-																{t('seller.variantNameLabel', 'Variant')}
+																{t(
+																	'seller.variantNameLabel',
+																	'Variant',
+																)}
 															</th>
 															<th className="px-3 py-2 font-cairo font-semibold text-[#6B6B6B]">
 																{t('seller.priceLabel', 'Price')}
@@ -764,13 +785,31 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 														فئة الشحن
 													</label>
 													<select
-													aria-label={t('seller.shippingClassLabel', 'Shipping class')}
-													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
-												>
-													<option>{t('seller.shippingStandard', 'Standard shipping')}</option>
-													<option>{t('seller.shippingExpress', 'Express shipping')}</option>
-													<option>{t('seller.shippingFree', 'Free shipping')}</option>
-												</select>
+														aria-label={t(
+															'seller.shippingClassLabel',
+															'Shipping class',
+														)}
+														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
+													>
+														<option>
+															{t(
+																'seller.shippingStandard',
+																'Standard shipping',
+															)}
+														</option>
+														<option>
+															{t(
+																'seller.shippingExpress',
+																'Express shipping',
+															)}
+														</option>
+														<option>
+															{t(
+																'seller.shippingFree',
+																'Free shipping',
+															)}
+														</option>
+													</select>
 												</div>
 											</div>
 										</div>

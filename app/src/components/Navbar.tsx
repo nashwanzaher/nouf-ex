@@ -27,7 +27,7 @@ export default function Navbar() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [catDropdownOpen, setCatDropdownOpen] = useState(false);
 	const [searchCat, setSearchCat] = useState('all');
-	const isRTL = i18n.language === 'ar';
+	const _isRTL = i18n.language === 'ar';
 	// C8 fix: declare all useState hooks BEFORE any useEffect. Rules of Hooks require consistent order.
 	const [userOpen, setUserOpen] = useState(false);
 	const userRef = useRef<HTMLDivElement>(null);

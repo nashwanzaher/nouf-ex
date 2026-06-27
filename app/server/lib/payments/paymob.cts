@@ -11,7 +11,12 @@
 // missing the webhook is rejected.
 // =============================================================================
 import { createHmac, timingSafeEqual } from 'crypto';
-import type { InitiateInput, InitiateResult, PaymentProvider, WebhookVerification } from './types.cts';
+import type {
+	InitiateInput,
+	InitiateResult,
+	PaymentProvider,
+	WebhookVerification,
+} from './types.cts';
 
 const PAYMOB_API = 'https://accept.paymob.com/api';
 

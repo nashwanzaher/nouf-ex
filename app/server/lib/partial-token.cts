@@ -44,7 +44,7 @@ function getAuthSecret(): string {
 	if (!s || s.length < 32) {
 		throw new Error(
 			'AUTH_SECRET env var is required (>=32 random chars). ' +
-				'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64url\'))"',
+				"Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('base64url'))\"",
 		);
 	}
 	return s;

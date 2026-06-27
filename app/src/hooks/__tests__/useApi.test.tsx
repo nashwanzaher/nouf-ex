@@ -27,7 +27,7 @@ describe('useHomeStats', () => {
 		const { result } = renderHook(() => useHomeStats());
 
 		expect(result.current.loading).toBe(true);
-		expect(result.current.data).toBeNull();
+		expect(result.current.data).toBeUndefined();
 		expect(result.current.error).toBeNull();
 
 		await waitFor(() => expect(result.current.loading).toBe(false));
@@ -77,12 +77,12 @@ describe('useProduct', () => {
 		expect(result.current.data).toMatchObject({ id: 1 });
 	});
 
-	it('returns null for an unknown id (no crash)', async () => {
+	it('returns undefined for an unknown id (no crash)', async () => {
 		const { result } = renderHook(() => useProduct(99_999));
 
 		await waitFor(() => expect(result.current.loading).toBe(false));
 
-		expect(result.current.data).toBeNull();
+		expect(result.current.data).toBeUndefined();
 	});
 
 	it('does not fetch when id is null', async () => {

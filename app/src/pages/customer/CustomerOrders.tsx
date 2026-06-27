@@ -144,7 +144,13 @@ export default function CustomerOrders() {
 	const [activeFilter, setActiveFilter] = useState<'all' | OrderStatus>('all');
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 
-	const { data: orders = [], loading, error, refetch } = useOrders();
+	const { data: ordersData, loading, error, refetch } = useOrders();
+	// `ordersData` is `T | null` per HookResult. The destructure
+	// default `= []` only fires for `undefined`, so guard against
+	// `null` explicitly — otherwise the `.map` below throws
+	// `Cannot read properties of null` on the first render while
+	// the fetch is still in flight (or after an auth error).
+	const orders = useMemo<Order[]>(() => ordersData ?? ([] as Order[]), [ordersData]);
 
 	const statusFilters: Array<{ key: 'all' | OrderStatus; label: string }> = [
 		{ key: 'all', label: t('orders.statusAll', 'All') },

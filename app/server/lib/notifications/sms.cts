@@ -44,14 +44,20 @@ export const smsChannel: NotificationChannel = {
 	},
 	async send(ctx: DispatchContext): Promise<DispatchResult> {
 		if (!ctx.user.phone) {
-			return { channel: 'sms', ok: false, providerMessageId: null, error: 'user has no phone' };
+			return {
+				channel: 'sms',
+				ok: false,
+				providerMessageId: null,
+				error: 'user has no phone',
+			};
 		}
 		const url = process.env.SMS_WEBHOOK_URL!;
 		const from = process.env.SMS_FROM!;
-		const text = `${ctx.notification.title}${ctx.notification.body ? `: ${ctx.notification.body}` : ''}`.slice(
-			0,
-			320,
-		); // GSM-7 limit
+		const text =
+			`${ctx.notification.title}${ctx.notification.body ? `: ${ctx.notification.body}` : ''}`.slice(
+				0,
+				320,
+			); // GSM-7 limit
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
 		};

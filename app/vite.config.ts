@@ -58,23 +58,42 @@ export default defineConfig({
 				categories: ['shopping', 'business'],
 			},
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,svg,png,jpg,webp,woff,woff2}'],
+				// NOTE: HTML is intentionally excluded from the precache.
+				// The server injects a per-request CSP nonce into the
+				// index.html shell, so serving a cached (non-nonced)
+				// copy would break every script on a hard navigation.
+				// JS/CSS/SVG/font/image assets are versioned by their
+				// hashed filename and are safe to precache forever.
+				globPatterns: ['**/*.{js,css,svg,png,jpg,webp,woff,woff2}'],
 				// Bump precache limit above the 2 MiB default — hero/showcase PNGs
 				// and other marketing assets can easily exceed that.
 				maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
 				// SPA routing: any navigation that doesn't match a precached file
-				// falls back to /index.html (the React Router entry point).
-				navigateFallback: '/index.html',
+				// falls back to the network (see the document runtime-cache
+				// rule below). We do NOT precache or name a static
+				// navigateFallback file because the server injects a
+				// per-request CSP nonce into the SPA shell.
+				navigateFallback: null,
 				// API requests are always sent to the network — never cache stale
 				// product data. Failed requests fall back to a small offline page.
 				navigateFallbackDenylist: [/^\/api\//],
 				runtimeCaching: [
 					{
+						// HTML documents — always go to the network first
+						// because the server injects a per-request CSP
+						// nonce into index.html. Caching the SPA shell
+						// would break the nonce. The handler keeps the
+						// response unpushed into the cache (we use
+						// `expiration.maxEntries: 0` to disable cache
+						// writes for this rule entirely — Workbox will
+						// still return the live network response and
+						// never serve a stale copy on a hard reload).
 						urlPattern: ({ request }) => request.destination === 'document',
 						handler: 'NetworkFirst',
 						options: {
 							cacheName: 'noufex-pages',
 							networkTimeoutSeconds: 3,
+							expiration: { maxEntries: 0, maxAgeSeconds: 0 },
 						},
 					},
 					{

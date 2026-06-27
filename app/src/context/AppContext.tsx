@@ -188,6 +188,19 @@ export function useAuth() {
 	const isAuthenticated = Boolean(state.user && state.token);
 	const login = useCallback(
 		async (user: User, token: string): Promise<void> => {
+			// Write the token + user to localStorage IMMEDIATELY (and
+			// synchronously) so the API client (`apiRequest`) can read
+			// them on the very next fetch — e.g. the cart-sync call
+			// below. Without this, React 18 may batch the reducer runs
+			// and the subsequent fetch fires before localStorage is
+			// populated, producing a 401 race even though the user is
+			// already "logged in" by every other measure.
+			try {
+				localStorage.setItem('noufex_user', JSON.stringify(user));
+				localStorage.setItem('noufex_token', token);
+			} catch {
+				/* localStorage may be unavailable in private mode */
+			}
 			setUser(user);
 			setToken(token);
 			// Best-effort: if the sync fails, the local cart is
@@ -214,6 +227,14 @@ export function useAuth() {
 		[setUser, setToken, addToast],
 	);
 	const logout = useCallback(() => {
+		// Same race-prevention as `login`: clear localStorage first
+		// so any concurrent fetch sees the post-logout state.
+		try {
+			localStorage.removeItem('noufex_user');
+			localStorage.removeItem('noufex_token');
+		} catch {
+			/* noop */
+		}
 		setUser(null);
 		setToken(null);
 		// Local cart belongs to the (now-gone) user; clear it so the

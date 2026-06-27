@@ -19,12 +19,7 @@ function isConfigured(): boolean {
 	return !!process.env.SMTP_HOST && !!process.env.SMTP_FROM;
 }
 
-function buildMime(opts: {
-	from: string;
-	to: string;
-	subject: string;
-	text: string;
-}): string {
+function buildMime(opts: { from: string; to: string; subject: string; text: string }): string {
 	const headers = [
 		`From: ${opts.from}`,
 		`To: ${opts.to}`,
@@ -146,7 +141,14 @@ export const emailChannel: NotificationChannel = {
 		// review replies, system (password reset etc.), and promos only
 		// when the user opted in (caller decides via user.preferred_language
 		// and the `data.opt_in_promo` flag).
-		const transactional = new Set(['order', 'refund', 'dispute', 'review', 'system', 'message']);
+		const transactional = new Set([
+			'order',
+			'refund',
+			'dispute',
+			'review',
+			'system',
+			'message',
+		]);
 		if (transactional.has(notification.type)) return true;
 		if (notification.type === 'promo') {
 			return Boolean((notification.data as { opt_in_promo?: boolean } | null)?.opt_in_promo);
@@ -155,10 +157,17 @@ export const emailChannel: NotificationChannel = {
 	},
 	async send(ctx: DispatchContext): Promise<DispatchResult> {
 		if (!ctx.user.email) {
-			return { channel: 'email', ok: false, providerMessageId: null, error: 'user has no email' };
+			return {
+				channel: 'email',
+				ok: false,
+				providerMessageId: null,
+				error: 'user has no email',
+			};
 		}
 		const host = process.env.SMTP_HOST!;
-		const port = Number(process.env.SMTP_PORT || (process.env.SMTP_SECURE === 'true' ? 465 : 587));
+		const port = Number(
+			process.env.SMTP_PORT || (process.env.SMTP_SECURE === 'true' ? 465 : 587),
+		);
 		const secure = process.env.SMTP_SECURE === 'true';
 		const from = process.env.SMTP_FROM!;
 		const mail = buildMime({

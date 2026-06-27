@@ -19,7 +19,12 @@
 // route through this stub — the registry will pick `stripe.cts` instead.
 // =============================================================================
 import { randomUUID } from 'crypto';
-import type { InitiateInput, InitiateResult, PaymentProvider, WebhookVerification } from './types.cts';
+import type {
+	InitiateInput,
+	InitiateResult,
+	PaymentProvider,
+	WebhookVerification,
+} from './types.cts';
 
 export const stubProvider: PaymentProvider = {
 	method: 'stripe', // overridden per-method in the registry

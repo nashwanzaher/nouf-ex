@@ -36,7 +36,12 @@ const REGISTRY: Record<PaymentMethod, PaymentProvider | null> = {
  * handles inline.
  */
 export function selectProvider(method: PaymentMethod): PaymentProvider | null {
-	if (method === 'cod' || method === 'card' || method === 'wallet' || method === 'bank_transfer') {
+	if (
+		method === 'cod' ||
+		method === 'card' ||
+		method === 'wallet' ||
+		method === 'bank_transfer'
+	) {
 		return null;
 	}
 	const provider = REGISTRY[method];

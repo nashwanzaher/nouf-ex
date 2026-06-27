@@ -248,7 +248,7 @@ export default function StorePage() {
 					{
 						icon: TrendingUp,
 						label: t('store.stats.transactions', 'Transactions'),
-						value: `${((store.sales_count ?? 0) / 1000).toFixed(1)}K+`,
+						value: `${((Number(store.sales_count) || 0) / 1000).toFixed(1)}K+`,
 						color: 'text-[#4CAF50]',
 					},
 					{
@@ -613,7 +613,7 @@ export default function StorePage() {
 								<p className="text-sm text-[#666]">
 									{t(
 										'store.totalExportDesc',
-										`${getStoreName(store)} has exported products to over 25 countries worldwide, with ${((store.sales_count ?? 0) / 1000).toFixed(1)}K+ successful transactions.`,
+										`${getStoreName(store)} has exported products to over 25 countries worldwide, with ${((Number(store.sales_count) || 0) / 1000).toFixed(1)}K+ successful transactions.`,
 									)}
 								</p>
 							</div>

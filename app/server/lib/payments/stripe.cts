@@ -11,7 +11,12 @@
 // =============================================================================
 import { createHmac, timingSafeEqual } from 'crypto';
 import { randomUUID } from 'crypto';
-import type { InitiateInput, InitiateResult, PaymentProvider, WebhookVerification } from './types.cts';
+import type {
+	InitiateInput,
+	InitiateResult,
+	PaymentProvider,
+	WebhookVerification,
+} from './types.cts';
 
 const STRIPE_API = 'https://api.stripe.com/v1';
 
@@ -48,10 +53,10 @@ export const stripeProvider: PaymentProvider = {
 		const amountMinor = Math.round(input.amount * 100); // Stripe wants minor units (cents).
 		const session = (await stripeFetch('/checkout/sessions', {
 			'payment_method_types[0]': 'card',
-			'mode': 'payment',
-			'success_url': `${process.env.PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout/success?order=${input.orderId}`,
-			'cancel_url': `${process.env.PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout/cancel?order=${input.orderId}`,
-			'client_reference_id': String(input.orderId),
+			mode: 'payment',
+			success_url: `${process.env.PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout/success?order=${input.orderId}`,
+			cancel_url: `${process.env.PUBLIC_BASE_URL || 'http://localhost:3000'}/checkout/cancel?order=${input.orderId}`,
+			client_reference_id: String(input.orderId),
 			'line_items[0][quantity]': '1',
 			'line_items[0][price_data][currency]': input.currency.toLowerCase(),
 			'line_items[0][price_data][unit_amount]': String(amountMinor),
@@ -71,7 +76,8 @@ export const stripeProvider: PaymentProvider = {
 	async verifyWebhook(headers, rawBody): Promise<WebhookVerification> {
 		const secret = process.env.STRIPE_WEBHOOK_SECRET;
 		const sigHeader = headers['stripe-signature'];
-		if (!secret || !sigHeader) return { valid: false, transactionId: null, status: null, raw: {} };
+		if (!secret || !sigHeader)
+			return { valid: false, transactionId: null, status: null, raw: {} };
 		// Stripe signs "<timestamp>.<body>" with HMAC-SHA256(secret).
 		const parts = sigHeader.split(',').reduce<Record<string, string>>((acc, p) => {
 			const [k, v] = p.split('=');
@@ -81,9 +87,7 @@ export const stripeProvider: PaymentProvider = {
 		const ts = parts['t'];
 		const sig = parts['v1'];
 		if (!ts || !sig) return { valid: false, transactionId: null, status: null, raw: {} };
-		const expected = createHmac('sha256', secret)
-			.update(`${ts}.${rawBody}`)
-			.digest('hex');
+		const expected = createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
 		const a = Buffer.from(sig, 'hex');
 		const b = Buffer.from(expected, 'hex');
 		if (a.length !== b.length || !timingSafeEqual(a, b)) {

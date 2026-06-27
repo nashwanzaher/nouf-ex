@@ -13,6 +13,14 @@ real bug it caught the first time we wrote it.
 
 ## 📖 Table of Contents
 
+**Required by gap #13 spec:**
+- [R-A: How to test an admin endpoint](#r-a-how-to-test-an-admin-endpoint)
+- [R-B: How to test rate-limited endpoints](#r-b-how-to-test-rate-limited-endpoints)
+- [R-C: How to handle a stateful flow (create → act → verify)](#r-c-how-to-handle-a-stateful-flow-create--act--verify)
+- [R-D: How to test a webhook](#r-d-how-to-test-a-webhook)
+- [R-E: How to handle 4xx vs 5xx correctly](#r-e-how-to-handle-4xx-vs-5xx-correctly)
+
+**Extended recipes (16):**
 1. [Login + capture a token](#1-login--capture-a-token)
 2. [Build an Authorization header](#2-build-an-authorization-header)
 3. [Boundary value: numeric field at 0](#3-boundary-value-numeric-field-at-0)
@@ -29,6 +37,226 @@ real bug it caught the first time we wrote it.
 14. [Wait for a background job to finish](#14-wait-for-a-background-job-to-finish)
 15. [Capture a fixture ID once, reuse across sections](#15-capture-a-fixture-id-once-reuse-across-sections)
 16. [Re-run a failed phase with `-KeepGoing` for debugging](#16-re-run-a-failed-phase-with--keepgoing-for-debugging)
+
+---
+
+# Required recipes (gap #13)
+
+## R-A: How to test an admin endpoint
+
+**When:** the endpoint requires `role='admin'` (or any other role-gated route).
+
+**Pattern:** acquire the admin token explicitly, then assert that the customer
+gets **403** while the admin gets **200**.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+$tokens  = Get-TestTokens                          # customer + merchant + admin
+$hdrCust = Get-AuthHeader $tokens.customer
+$hdrAdm  = Get-AuthHeader $tokens.admin
+
+# Customer must NOT be able to call an admin-only route
+$r = Invoke-ApiRequest GET '/api/admin/users' $hdrCust $null
+Assert-Status 'GET /api/admin/users (customer → 403)' $r 403
+Assert-JsonField 'body has FORBIDDEN code' $r 'code' 'FORBIDDEN'
+
+# Admin can
+$r = Invoke-ApiRequest GET '/api/admin/users' $hdrAdm $null
+Assert-Status      'GET /api/admin/users (admin → 200)'     $r 200
+Assert-JsonField   'returns data array'                      $r 'data' -NotNull
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Admin-only mutation | `Invoke-ApiRequest PATCH '/api/admin/users/3' $hdrCust @{ role = 'merchant' }` → expect 403 |
+| Admin disables themselves | assert response is `200` and a follow-up login returns `401` |
+
+---
+
+## R-B: How to test rate-limited endpoints
+
+**When:** verifying that the bucket actually limits traffic (vs the bucket being a no-op).
+
+**Pattern:** the auth bucket is `20 / 15 min`. Hit it 21 times and expect `429`.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+# Always start clean
+node tests/e2e/reset-rate-limit.cjs | Out-Null
+
+# Burn through login attempts (all hit the auth bucket)
+$hitLimitAt = -1
+for ($i = 1; $i -le 25; $i++) {
+    $r = Invoke-ApiRequest POST '/api/auth/login' @{} @{
+        email    = 'no-such-user@example.com'
+        password = 'wrong-password'
+    }
+    if ($r.status -eq 429) {
+        $hitLimitAt = $i
+        break
+    }
+}
+
+if ($hitLimitAt -gt 0) {
+    Assert-Status ("hit 429 after $hitLimitAt requests") $r 429
+} else {
+    Write-Host "  Rate limit did NOT trigger — adjust bucket size in rateLimit()." -ForegroundColor Yellow
+}
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Per-endpoint bucket | `/api/products` and `/api/cart/count` use different buckets — hit each independently |
+| Window expiry | wait 15 min, or call `node tests/e2e/reset-rate-limit.cjs` |
+
+---
+
+## R-C: How to handle a stateful flow (create → act → verify)
+
+**When:** the test must create something, then act on it, then verify side-effects
+(orders, payments, refunds, cart → checkout, etc.).
+
+**Pattern:** capture an id from the response, use it in the next call, verify the
+side-effect.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+$tokens  = Get-TestTokens
+$hdrCust = Get-AuthHeader $tokens.customer
+
+# Step 1: create the parent entity (an order)
+$orderResp = Invoke-ApiRequest POST '/api/orders' $hdrCust @{
+    items        = @(@{ productId = 11; quantity = 2; unitPrice = 18000 })
+    total        = 36000
+    paymentMethod = 'cod'
+}
+Assert-Status   'POST /api/orders' $orderResp 200
+Assert-JsonField 'returns id'      $orderResp 'data.id' -NotNull
+$orderId = $orderResp.json.data.id
+
+# Step 2: act on it (initiate a payment)
+$payResp = Invoke-ApiRequest POST '/api/payments' $hdrCust @{
+    order_id = $orderId
+    amount   = 36000
+    currency = 'YER'
+    method   = 'cod'
+}
+Assert-Status 'POST /api/payments' $payResp 200
+
+# Step 3: verify side-effect (stock decremented)
+$prodResp = Invoke-ApiRequest GET '/api/products/11' @{} $null
+Assert-JsonField 'stock decremented' $prodResp 'data.stock' 38
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Order → refund | create order → pay → request refund → admin resolves refund |
+| Cart → checkout | add to cart → checkout → verify cart empty + order created |
+| Login → 2FA | POST `/api/auth/login` → if `requires_2fa`, POST `/api/auth/2fa/verify` |
+
+---
+
+## R-D: How to test a webhook
+
+**When:** the API fires a webhook to an external URL (e.g. payment provider callback).
+
+**Pattern:** stand up a local HTTP listener that captures the call, then trigger
+the webhook, then assert what arrived.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+# 1. Start a tiny TCP listener on a free port
+$listener = New-Object System.Net.HttpListener
+$listener.Prefixes.Add('http://localhost:9876/')
+$listener.Start()
+$captured = $null
+
+# 2. Background job to grab the first request
+$job = Start-Job {
+    param($listener)
+    $ctx = $listener.GetContext()
+    $req = $ctx.Request
+    $body = (New-Object System.IO.StreamReader($req.InputStream)).ReadToEnd()
+    return @{ url = $req.Url.AbsolutePath; method = $req.HttpMethod; body = $body }
+} -ArgumentList $listener
+
+# 3. Trigger the webhook (e.g. confirm a payment)
+$tokens  = Get-TestTokens
+$hdrCust = Get-AuthHeader $tokens.customer
+$hdrAdm  = Get-AuthHeader $tokens.admin
+
+# ... (create order + payment as in R-C) ...
+
+$r = Invoke-ApiRequest POST '/api/payments/12/confirm' $hdrAdm $null
+Assert-Status 'confirm payment (triggers webhook)' $r 200
+
+# 4. Wait for the webhook
+$captured = Receive-Job $job -Wait -Timeout 15
+
+# 5. Assert
+if ($captured) {
+    Assert-Status 'webhook arrived' @{ status = 200; body = $captured.body; json = ($captured.body | ConvertFrom-Json) } 200
+    # Verify the payload
+    $payload = $captured.body | ConvertFrom-Json
+    if ($payload.payment_id -ne 12) { Fail 'webhook payload' 12 $payload.payment_id }
+}
+
+$listener.Stop()
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Webhook with signature | expect header `X-Signature: <hmac>` and verify it |
+| Idempotent webhook | POST same event twice → backend should de-dupe (no double-side-effect) |
+
+---
+
+## R-E: How to handle 4xx vs 5xx correctly
+
+**When:** every assertion. The principle: **4xx is "the request was bad", 5xx is "the server crashed".**
+
+| Status | Means | Test expectation |
+|--------|-------|-------------------|
+| 400 | Bad Request — body or params failed validation | assert specific code in body, e.g. `'MIXED_STORES'` |
+| 401 | Unauthorized — no/invalid token | assert NO body data leaked |
+| 403 | Forbidden — token OK but role/owner mismatch | assert body has `code: 'FORBIDDEN'` |
+| 404 | Not Found — id doesn't exist | assert `code: 'NOT_FOUND'` if router returns one |
+| 409 | Conflict — duplicate / state mismatch | assert `code: 'EMAIL_TAKEN'` etc. |
+| 429 | Too Many Requests — rate limit hit | assert bucket cleared, then retry |
+| **5xx** | **Server error — actual bug** | **fail loudly with the full body — never silently accept** |
+
+```powershell
+# BAD — silently accepts 500 as "expected"
+Assert-Status 'POST /api/cart' $r 500
+
+# GOOD — fail loudly on 5xx (server bugs are NEVER expected)
+if ($r.status -ge 500 -and $r.status -lt 600) {
+    Write-Host "  [FAIL] 5xx unexpected — server bug" -ForegroundColor Red
+    Show-ApiResult 'POST /api/cart' $r
+    $script:FailCount++
+    continue
+}
+Assert-Status 'POST /api/cart (validation error)' $r 400
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Distinguish 400 vs 422 | some routers use 422 for "validation OK but business rule fails" — read the route |
+| Catch 503 from upstream | rate limit on a downstream API → 503 + `Retry-After` header → mark test as `SKIP` not `FAIL` |
 
 ---
 
@@ -521,3 +749,234 @@ Write-Host "  Got $($list.Count) products"
 - [`docs/testing/standards/IEEE-829.md`](../standards/IEEE-829.md) — IEEE 829 §8 mapping
 - [`docs/testing/standards/ISTQB-CTFL.md`](../standards/ISTQB-CTFL.md) — techniques used in these recipes
 - [`tests/e2e/README.md`](../README.md) — running the suite
+---
+
+# 📌 Required recipes (from gap #13 spec)
+
+The 5 recipes below are the **explicit deliverables** requested by `PHASE_TEST_TASKS.md` gap #13.
+They are cross-referenced from the extended recipes above.
+
+## R-A: How to test an admin endpoint
+
+**When:** the endpoint requires `role='admin'` (or any other role-gated route).
+
+**Pattern:** acquire the admin token explicitly, then assert that the customer
+gets **403** while the admin gets **200**.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+$tokens  = Get-TestTokens                          # customer + merchant + admin
+$hdrCust = Get-AuthHeader $tokens.customer
+$hdrAdm  = Get-AuthHeader $tokens.admin
+
+# Customer must NOT be able to call an admin-only route
+$r = Invoke-ApiRequest GET '/api/admin/users' $hdrCust $null
+Assert-Status    'GET /api/admin/users (customer → 403)' $r 403
+Assert-JsonField 'body has FORBIDDEN code'              $r 'code' 'FORBIDDEN'
+
+# Admin can
+$r = Invoke-ApiRequest GET '/api/admin/users' $hdrAdm $null
+Assert-Status    'GET /api/admin/users (admin → 200)' $r 200
+Assert-JsonField 'returns data array'                  $r 'data' -NotNull
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Admin-only mutation | `Invoke-ApiRequest PATCH '/api/admin/users/3' $hdrCust @{ role = 'merchant' }` → expect 403 |
+| Admin disables themselves | assert response is `200` and a follow-up login returns `401` |
+
+---
+
+## R-B: How to test rate-limited endpoints
+
+**When:** verifying the bucket actually limits traffic (vs the bucket being a no-op).
+
+**Pattern:** the auth bucket is `20 / 15 min`. Hit it 21 times and expect `429`.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+# Always start clean
+node tests/e2e/reset-rate-limit.cjs | Out-Null
+
+# Burn through login attempts (all hit the auth bucket)
+$hitLimitAt = -1
+for ($i = 1; $i -le 25; $i++) {
+    $r = Invoke-ApiRequest POST '/api/auth/login' @{} @{
+        email    = 'no-such-user@example.com'
+        password = 'wrong-password'
+    }
+    if ($r.status -eq 429) {
+        $hitLimitAt = $i
+        break
+    }
+}
+
+if ($hitLimitAt -gt 0) {
+    Assert-Status ("hit 429 after $hitLimitAt requests") $r 429
+} else {
+    Write-Host "  Rate limit did NOT trigger — adjust bucket size." -ForegroundColor Yellow
+}
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Per-endpoint bucket | `/api/products` and `/api/cart/count` use different buckets — hit each independently |
+| Window expiry | wait 15 min, or call `node tests/e2e/reset-rate-limit.cjs` |
+
+---
+
+## R-C: How to handle a stateful flow (create → act → verify)
+
+**When:** the test must create something, then act on it, then verify side-effects
+(orders, payments, refunds, cart → checkout, etc.).
+
+**Pattern:** capture an id from the response, use it in the next call, verify the
+side-effect.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+$tokens  = Get-TestTokens
+$hdrCust = Get-AuthHeader $tokens.customer
+
+# Step 1: create the parent entity (an order)
+$orderResp = Invoke-ApiRequest POST '/api/orders' $hdrCust @{
+    items        = @(@{ productId = 11; quantity = 2; unitPrice = 18000 })
+    total        = 36000
+    paymentMethod = 'cod'
+}
+Assert-Status   'POST /api/orders' $orderResp 200
+Assert-JsonField 'returns id'      $orderResp 'data.id' -NotNull
+$orderId = $orderResp.json.data.id
+
+# Step 2: act on it (initiate a payment)
+$payResp = Invoke-ApiRequest POST '/api/payments' $hdrCust @{
+    order_id = $orderId
+    amount   = 36000
+    currency = 'YER'
+    method   = 'cod'
+}
+Assert-Status 'POST /api/payments' $payResp 200
+
+# Step 3: verify side-effect (stock decremented)
+$prodResp = Invoke-ApiRequest GET '/api/products/11' @{} $null
+Assert-JsonField 'stock decremented' $prodResp 'data.stock' 38
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Order → refund | create order → pay → request refund → admin resolves refund |
+| Cart → checkout | add to cart → checkout → verify cart empty + order created |
+| Login → 2FA | POST `/api/auth/login` → if `requires_2fa`, POST `/api/auth/2fa/verify` |
+
+---
+
+## R-D: How to test a webhook
+
+**When:** the API fires a webhook to an external URL (e.g. payment provider callback).
+
+**Pattern:** stand up a local HTTP listener that captures the call, then trigger
+the webhook, then assert what arrived.
+
+```powershell
+. "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
+
+# 1. Start a tiny HTTP listener on a free port
+$listener = New-Object System.Net.HttpListener
+$listener.Prefixes.Add('http://localhost:9876/')
+$listener.Start()
+
+# 2. Background job to grab the first request
+$job = Start-Job {
+    param($listener)
+    $ctx = $listener.GetContext()
+    $req = $ctx.Request
+    $body = (New-Object System.IO.StreamReader($req.InputStream)).ReadToEnd()
+    return @{ url = $req.Url.AbsolutePath; method = $req.HttpMethod; body = $body }
+} -ArgumentList $listener
+
+# 3. Trigger the webhook (e.g. confirm a payment as admin)
+$tokens  = Get-TestTokens
+$hdrAdm  = Get-AuthHeader $tokens.admin
+
+# ... (create order + payment as in R-C, get $paymentId) ...
+
+$r = Invoke-ApiRequest POST "/api/payments/$paymentId/confirm" $hdrAdm $null
+Assert-Status 'confirm payment (triggers webhook)' $r 200
+
+# 4. Wait for the webhook
+$captured = Receive-Job $job -Wait -Timeout 15
+
+# 5. Assert
+if ($captured) {
+    $payload = $captured.body | ConvertFrom-Json
+    if ($payload.payment_id -ne $paymentId) {
+        Fail 'webhook payment_id' $paymentId $payload.payment_id
+    } else {
+        Pass 'webhook arrived with correct payment_id'
+    }
+} else {
+    Fail 'webhook arrived' '<within 15s>' '<timed out>'
+}
+
+$listener.Stop()
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Webhook with signature | expect header `X-Signature: <hmac>` and verify it against the shared secret |
+| Idempotent webhook | POST same event twice → backend should de-dupe (no double-side-effect) |
+
+---
+
+## R-E: How to handle 4xx vs 5xx correctly
+
+**When:** every assertion. The principle: **4xx is "the request was bad", 5xx is "the server crashed".**
+
+| Status | Means | Test expectation |
+|--------|-------|-------------------|
+| 400 | Bad Request — body or params failed validation | assert specific code in body, e.g. `'MIXED_STORES'` |
+| 401 | Unauthorized — no/invalid token | assert NO body data leaked |
+| 403 | Forbidden — token OK but role/owner mismatch | assert body has `code: 'FORBIDDEN'` |
+| 404 | Not Found — id doesn't exist | assert `code: 'NOT_FOUND'` if router returns one |
+| 409 | Conflict — duplicate / state mismatch | assert `code: 'EMAIL_TAKEN'` etc. |
+| 429 | Too Many Requests — rate limit hit | assert bucket cleared, then retry |
+| **5xx** | **Server error — actual bug** | **fail loudly with the full body — never silently accept** |
+
+```powershell
+# BAD — silently accepts 500 as "expected"
+Assert-Status 'POST /api/cart' $r 500
+
+# GOOD — fail loudly on 5xx (server bugs are NEVER expected)
+if ($r.status -ge 500 -and $r.status -lt 600) {
+    Write-Host "  [FAIL] 5xx unexpected — server bug" -ForegroundColor Red
+    Show-ApiResult 'POST /api/cart' $r
+    $script:FailCount++
+    continue
+}
+Assert-Status 'POST /api/cart (validation error)' $r 400
+```
+
+**Variants:**
+
+| Need | Variation |
+|------|-----------|
+| Distinguish 400 vs 422 | some routers use 422 for "validation OK but business rule fails" — read the route |
+| Catch 503 from upstream | rate limit on a downstream API → 503 + `Retry-After` header → mark test as `SKIP` not `FAIL` |
+
+---
+
+**See also:**
+- Recipe 6 (ownership guard) — covers 403 from a user perspective
+- Recipe 9 (state transition) — covers stateful flows end-to-end
+- Recipe 8 (idempotency POST) — covers 200/200 same-id pattern

@@ -125,7 +125,7 @@
 
 | ID | المهمة | الملف الهدف | الحالة | الجهد |
 |----|--------|-------------|--------|-------|
-| **B.1.1** | PHASE_00_HEALTH_AUTH.md (نموذج للنسخ) | `docs/testing/phases/PHASE_00_HEALTH_AUTH.md` | ⏳ TODO | 1 ساعة |
+| **B.1.1** | PHASE_00_HEALTH_AUTH.md (نموذج للنسخ) | `docs/testing/phases/PHASE_00_HEALTH_AUTH.md` | ✅ **Done (2026-06-28)** — 17 TC + 9 REQ + 13 ISO 29119-3 sections · 17,501 bytes | 1 ساعة |
 | **B.1.2** | PHASE_01_PROFILE_ADDRESSES.md | `docs/testing/phases/PHASE_01_PROFILE_ADDRESSES.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.3** | PHASE_01_PROFILE_ADDRESSES_RETEST.md | `docs/testing/phases/PHASE_01_PROFILE_ADDRESSES_RETEST.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.4** | PHASE_02_PUBLIC_CATALOG.md | `docs/testing/phases/PHASE_02_PUBLIC_CATALOG.md` | ⏳ TODO | 30 دقيقة |

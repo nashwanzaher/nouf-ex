@@ -145,7 +145,6 @@ export default function Checkout() {
 		}
 		try {
 			const created = await createAddress({
-				user_id: Number(user!.id),
 				label: String(newAddress.label),
 				full_name: String(newAddress.full_name),
 				phone: String(newAddress.phone),
@@ -416,7 +415,7 @@ export default function Checkout() {
 											onChange={(e) =>
 												setNewAddress((a) => ({
 													...a,
-													is_default: e.target.checked ? 1 : 0,
+													is_default: e.target.checked,
 												}))
 											}
 										/>

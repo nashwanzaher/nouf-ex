@@ -335,7 +335,6 @@ describe('Addresses API', () => {
 	it('createAddress POSTs the address body', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		await createAddress({
-			user_id: 5,
 			label: 'Home',
 			full_name: 'Ahmed',
 			phone: '+967711111111',
@@ -345,6 +344,11 @@ describe('Addresses API', () => {
 		});
 		const call = fetchSpy.mock.calls[0];
 		expect(call?.[1]?.method).toBe('POST');
+		const body = JSON.parse(String(call?.[1]?.body ?? '{}'));
+		// user_id is intentionally NOT sent — server reads it from the
+		// bearer token. Sending it would 400 on the strict Zod schema.
+		expect(body.user_id).toBeUndefined();
+		expect(body.label).toBe('Home');
 		fetchSpy.mockRestore();
 	});
 

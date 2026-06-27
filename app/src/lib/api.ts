@@ -249,7 +249,7 @@ export interface Address {
 	street: string;
 	building?: string | null;
 	notes?: string | null;
-	is_default: number;
+	is_default: boolean;
 	created_at: string;
 	updated_at: string;
 }
@@ -342,7 +342,6 @@ export interface CreateOrderBody {
 }
 
 export interface CreateAddressBody {
-	user_id: number;
 	label: string;
 	full_name: string;
 	phone: string;
@@ -692,6 +691,13 @@ export async function getAddresses(userId: number, options?: RequestOptions): Pr
 export async function createAddress(body: CreateAddressBody): Promise<Address> {
 	return apiRequest('/addresses', {
 		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function updateAddress(id: number, body: CreateAddressBody): Promise<Address> {
+	return apiRequest(`/addresses/${id}`, {
+		method: 'PUT',
 		body: JSON.stringify(body),
 	});
 }

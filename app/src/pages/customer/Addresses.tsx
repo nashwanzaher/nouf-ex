@@ -1,25 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Plus, Edit3, Trash2, CheckCircle, Home, Building2 } from 'lucide-react';
+import { MapPin, Plus, Edit3, Trash2, CheckCircle, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import CustomerSidebar from './CustomerSidebar';
-
-interface Address {
-	id: number;
-	name: string;
-	phone: string;
-	governorate: string;
-	city: string;
-	district: string;
-	street: string;
-	building: string;
-	directions: string;
-	isDefault: boolean;
-}
+import { useAuth } from '@/context/AppContext';
+import {
+	getAddresses,
+	createAddress,
+	updateAddress,
+	deleteAddress as apiDeleteAddress,
+} from '@/lib/api';
+import type { Address as ApiAddress, CreateAddressBody } from '@/lib/api';
 
 const yemeniGovernorates = [
 	'صنعاء',
@@ -45,87 +40,170 @@ const yemeniGovernorates = [
 	'سقطرى',
 ];
 
-const initialAddresses: Address[] = [
-	{
-		id: 1,
-		name: 'أحمد محمد',
-		phone: '+967 771 234 567',
-		governorate: 'صنعاء',
-		city: 'صنعاء',
-		district: 'حدة',
-		street: 'شارع حدة الرئيسي',
-		building: 'عمارة الأوراس - الطابق ٣ - شقة ١٢',
-		directions: 'بجانك صيدلية النهدي، مدخل جانبي',
-		isDefault: true,
-	},
-	{
-		id: 2,
-		name: 'أحمد محمد',
-		phone: '+967 771 234 567',
-		governorate: 'عدن',
-		city: 'المنصورة',
-		district: 'المنصورة',
-		street: 'شارع الجمهورية',
-		building: 'بناية السعيد - الطابق ٢',
-		directions: 'خلف محل الأندلس',
-		isDefault: false,
-	},
-];
-
 export default function Addresses() {
 	const { t } = useTranslation();
-	const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
+	const { user, isAuthenticated, addToast } = useAuth();
+
+	const [addresses, setAddresses] = useState<ApiAddress[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
-	const [form, setForm] = useState<Partial<Address>>({});
+	const [form, setForm] = useState<Partial<CreateAddressBody>>({});
+
+	// Load addresses from the server on mount + when the user logs in/out.
+	useEffect(() => {
+		let cancelled = false;
+		async function load() {
+			if (!isAuthenticated || !user) {
+				setAddresses([]);
+				setLoading(false);
+				return;
+			}
+			try {
+				const list = await getAddresses(Number(user.id));
+				if (!cancelled) setAddresses(Array.isArray(list) ? list : []);
+			} catch {
+				if (!cancelled) {
+					addToast({
+						message: t('addresses.loadError', 'Could not load addresses'),
+						type: 'error',
+					});
+				}
+			} finally {
+				if (!cancelled) setLoading(false);
+			}
+		}
+		void load();
+		return () => {
+			cancelled = true;
+		};
+	}, [isAuthenticated, user, t, addToast]);
 
 	const openAdd = () => {
 		setEditingId(null);
-		setForm({ isDefault: false });
+		setForm({ is_default: false });
 		setDialogOpen(true);
 	};
 
-	const openEdit = (addr: Address) => {
+	const openEdit = (addr: ApiAddress) => {
 		setEditingId(addr.id);
-		setForm({ ...addr });
+		setForm({
+			label: addr.label,
+			full_name: addr.full_name,
+			phone: addr.phone,
+			governorate: addr.governorate,
+			city: addr.city,
+			district: addr.district ?? undefined,
+			street: addr.street,
+			building: addr.building ?? undefined,
+			notes: addr.notes ?? undefined,
+			is_default: addr.is_default ?? false,
+		});
 		setDialogOpen(true);
 	};
 
-	const saveAddress = () => {
-		if (!form.name || !form.phone || !form.governorate || !form.city || !form.street) return;
-
-		if (editingId) {
-			setAddresses((prev) =>
-				prev.map((a) => (a.id === editingId ? ({ ...a, ...form } as Address) : a)),
-			);
-		} else {
-			const newAddr: Address = {
-				id: Date.now(),
-				name: form.name || '',
-				phone: form.phone || '',
-				governorate: form.governorate || '',
-				city: form.city || '',
-				district: form.district || '',
-				street: form.street || '',
-				building: form.building || '',
-				directions: form.directions || '',
-				isDefault: form.isDefault || false,
-			};
-			if (newAddr.isDefault) {
-				setAddresses((prev) => [...prev.map((a) => ({ ...a, isDefault: false })), newAddr]);
+	/** Save the current form (create or update). Real network call —
+	 *  the previous version only mutated local React state and the edit
+	 *  was lost on reload. */
+	const saveAddress = async () => {
+		if (
+			!form.label ||
+			!form.full_name ||
+			!form.phone ||
+			!form.governorate ||
+			!form.city ||
+			!form.street
+		)
+			return;
+		if (!user) return;
+		const body: CreateAddressBody = {
+			label: form.label,
+			full_name: form.full_name,
+			phone: form.phone,
+			governorate: form.governorate,
+			city: form.city,
+			district: form.district,
+			street: form.street,
+			building: form.building,
+			notes: form.notes,
+			is_default: form.is_default,
+		};
+		setSaving(true);
+		try {
+			if (editingId) {
+				const updated = await updateAddress(editingId, body);
+				setAddresses((prev) => prev.map((a) => (a.id === editingId ? updated : a)));
+				addToast({
+					message: t('addresses.updateSuccess', 'Address updated'),
+					type: 'success',
+				});
 			} else {
-				setAddresses((prev) => [...prev, newAddr]);
+				const created = await createAddress(body);
+				setAddresses((prev) => [...prev, created]);
+				addToast({
+					message: t('addresses.createSuccess', 'Address added'),
+					type: 'success',
+				});
 			}
+			setDialogOpen(false);
+		} catch (err) {
+			addToast({
+				message:
+					(err as Error)?.message ?? t('addresses.saveError', 'Could not save address'),
+				type: 'error',
+			});
+		} finally {
+			setSaving(false);
 		}
-		setDialogOpen(false);
 	};
 
-	const deleteAddress = (id: number) => {
-		setAddresses((prev) => prev.filter((a) => a.id !== id));
+	const deleteAddress = async (id: number) => {
+		try {
+			await apiDeleteAddress(id);
+			setAddresses((prev) => prev.filter((a) => a.id !== id));
+			addToast({ message: t('addresses.deleteSuccess', 'Address deleted'), type: 'success' });
+		} catch (err) {
+			addToast({
+				message: (err as Error)?.message ?? t('addresses.deleteError', 'Could not delete'),
+				type: 'error',
+			});
+		}
 	};
 
-	const setDefault = (id: number) => {
-		setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a.id === id })));
+	/** Set an address as the user's default. The backend clears the
+	 *  `is_default` flag on every other row in the same transaction,
+	 *  so we just refresh the local list to mirror the new state. */
+	const setDefault = async (id: number) => {
+		const current = addresses.find((a) => a.id === id);
+		if (!current) return;
+		try {
+			const updated = await updateAddress(id, {
+				label: current.label,
+				full_name: current.full_name,
+				phone: current.phone,
+				governorate: current.governorate,
+				city: current.city,
+				district: current.district ?? undefined,
+				street: current.street,
+				building: current.building ?? undefined,
+				notes: current.notes ?? undefined,
+				is_default: true,
+			});
+			setAddresses((prev) =>
+				prev.map((a) => (a.id === id ? updated : { ...a, is_default: false })),
+			);
+			addToast({
+				message: t('addresses.defaultSet', 'Default address updated'),
+				type: 'success',
+			});
+		} catch (err) {
+			addToast({
+				message:
+					(err as Error)?.message ?? t('addresses.saveError', 'Could not save address'),
+				type: 'error',
+			});
+		}
 	};
 
 	return (
@@ -138,138 +216,119 @@ export default function Addresses() {
 						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
 							{t('addresses.title', 'My Addresses')}
 						</h1>
-						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
-							{t('addresses.subtitle', 'Manage shipping addresses')}
+						<p className="text-sm text-[#6B6B6B] font-cairo mt-0.5">
+							{t('addresses.subtitle', 'Manage your delivery addresses')}
 						</p>
 					</div>
 					<Button
 						onClick={openAdd}
-						className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl"
+						className="bg-[#0F7B6C] hover:bg-[#0a6356] text-white"
 					>
-						<Plus className="w-4 h-4 ml-1" strokeWidth={1.5} />
-						{t('addresses.addButton', 'Add Address')}
+						<Plus className="w-4 h-4 ml-1" />
+						{t('addresses.addNew', 'Add New')}
 					</Button>
 				</div>
 
-				<div className="p-6 max-w-4xl mx-auto">
-					{addresses.length === 0 ? (
-						<div className="bg-white rounded-2xl p-12 text-center shadow-sm">
+				<div className="p-6 max-w-4xl">
+					{loading ? (
+						<div className="flex items-center justify-center py-12 text-[#6B6B6B]">
+							<Loader2 className="w-5 h-5 animate-spin ml-2" />
+							{t('common.loading', 'Loading...')}
+						</div>
+					) : addresses.length === 0 ? (
+						<div className="bg-white rounded-2xl p-10 text-center shadow-sm">
 							<MapPin
-								className="w-20 h-20 text-[#AAAAAA] mx-auto mb-4"
-								strokeWidth={1}
+								className="w-12 h-12 mx-auto text-[#D4A853] mb-3"
+								strokeWidth={1.5}
 							/>
-							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-								{t('addresses.emptyTitle', 'No addresses yet')}
-							</h3>
-							<p className="text-[#6B6B6B] font-cairo text-sm mb-4">
+							<h2 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
+								{t('addresses.emptyTitle', 'No saved addresses')}
+							</h2>
+							<p className="text-sm text-[#6B6B6B] font-cairo mb-4">
 								{t(
-									'addresses.emptySubtitle',
-									'Add an address to ship your orders to',
+									'addresses.emptyHint',
+									'Add an address to speed up checkout and order tracking.',
 								)}
 							</p>
 							<Button
 								onClick={openAdd}
-								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
+								className="bg-[#0F7B6C] hover:bg-[#0a6356] text-white"
 							>
-								<Plus className="w-4 h-4 ml-1" strokeWidth={1.5} />
-								{t('addresses.emptyButton', 'Add New Address')}
+								<Plus className="w-4 h-4 ml-1" />
+								{t('addresses.addNew', 'Add New')}
 							</Button>
 						</div>
 					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div className="grid gap-4 sm:grid-cols-2">
 							{addresses.map((addr) => (
 								<div
 									key={addr.id}
-									className={`bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow ${
-										addr.isDefault ? 'ring-2 ring-[#D4A853]' : ''
+									className={`bg-white rounded-2xl p-5 shadow-sm border-2 transition-colors ${
+										addr.is_default ? 'border-[#0F7B6C]' : 'border-transparent'
 									}`}
 								>
 									<div className="flex items-start justify-between mb-3">
 										<div className="flex items-center gap-2">
-											<div
-												className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-													addr.isDefault
-														? 'bg-[#D4A853]/15'
-														: 'bg-[#F8F8F8]'
-												}`}
-											>
-												{addr.building ? (
-													<Building2
-														className={`w-5 h-5 ${addr.isDefault ? 'text-[#D4A853]' : 'text-[#6B6B6B]'}`}
-														strokeWidth={1.5}
-													/>
-												) : (
-													<Home
-														className={`w-5 h-5 ${addr.isDefault ? 'text-[#D4A853]' : 'text-[#6B6B6B]'}`}
-														strokeWidth={1.5}
-													/>
-												)}
+											<div className="w-10 h-10 rounded-full bg-[#F3EDE4] flex items-center justify-center">
+												<Home
+													className="w-5 h-5 text-[#0F7B6C]"
+													strokeWidth={1.5}
+												/>
 											</div>
 											<div>
-												<p className="font-cairo font-semibold text-sm text-[#111111]">
-													{addr.name}
-												</p>
-												<p className="text-xs text-[#6B6B6B] font-cairo">
-													{addr.phone}
-												</p>
+												<h3 className="text-base font-bold text-[#1A1612] font-cairo">
+													{addr.label}
+												</h3>
+												{addr.is_default && (
+													<span className="inline-flex items-center gap-1 text-[11px] text-[#0F7B6C] font-semibold font-cairo">
+														<CheckCircle className="w-3 h-3" />
+														{t('addresses.default', 'Default')}
+													</span>
+												)}
 											</div>
 										</div>
-										{addr.isDefault && (
-											<span className="bg-[#D4A853] text-[#1A1612] text-[10px] font-cairo font-semibold px-2.5 py-1 rounded-full">
-												{t('addresses.defaultBadge', 'Default')}
-											</span>
-										)}
+										<div className="flex items-center gap-1">
+											<button
+												type="button"
+												onClick={() => openEdit(addr)}
+												aria-label={t('addresses.edit', 'Edit')}
+												className="p-2 rounded-lg hover:bg-[#F3EDE4] transition-colors text-[#6B6B6B]"
+											>
+												<Edit3 className="w-4 h-4" />
+											</button>
+											<button
+												type="button"
+												onClick={() => deleteAddress(addr.id)}
+												aria-label={t('addresses.delete', 'Delete')}
+												className="p-2 rounded-lg hover:bg-[#F3EDE4] transition-colors text-[#B85C5C]"
+											>
+												<Trash2 className="w-4 h-4" />
+											</button>
+										</div>
 									</div>
-
-									<div className="space-y-1.5 mb-4">
-										<p className="text-sm text-[#111111] font-cairo">
-											{addr.street}، {addr.district}، {addr.city}
+									<div className="text-sm text-[#1A1612] font-cairo space-y-1">
+										<p className="font-semibold">{addr.full_name}</p>
+										<p className="text-[#6B6B6B]">{addr.phone}</p>
+										<p className="text-[#6B6B6B]">
+											{addr.street}
+											{addr.building ? `, ${addr.building}` : ''}
 										</p>
-										{addr.building && (
-											<p className="text-xs text-[#6B6B6B] font-cairo">
-												{addr.building}
+										<p className="text-[#6B6B6B]">
+											{addr.district ? `${addr.district}, ` : ''}
+											{addr.city}, {addr.governorate}
+										</p>
+										{addr.notes && (
+											<p className="text-xs text-[#9A9A9A] mt-2 italic">
+												{addr.notes}
 											</p>
 										)}
-										{addr.directions && (
-											<p className="text-xs text-[#AAAAAA] font-cairo">
-												{addr.directions}
-											</p>
-										)}
 									</div>
-
-									<div className="flex items-center gap-1 mb-4">
-										<span className="bg-[#F3EDE4] text-[#6B6B6B] text-[10px] font-cairo font-medium px-2 py-1 rounded-full">
-											{addr.governorate}
-										</span>
-									</div>
-
-									<div className="flex gap-2">
+									{!addr.is_default && (
 										<button
-											onClick={() => openEdit(addr)}
-											className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#F3EDE4] text-sm text-[#6B6B6B] hover:bg-[#F8F8F8] font-cairo transition-colors"
-										>
-											<Edit3 className="w-3.5 h-3.5" strokeWidth={1.5} />
-											{t('addresses.edit', 'Edit')}
-										</button>
-										<button
-											onClick={() => deleteAddress(addr.id)}
-											title={t('addresses.delete', 'Delete')}
-											aria-label={t('addresses.delete', 'Delete')}
-											className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[#EF4444]/20 text-sm text-[#EF4444] hover:bg-[#EF4444]/10 font-cairo transition-colors"
-										>
-											<Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-										</button>
-									</div>
-
-									{!addr.isDefault && (
-										<button
+											type="button"
 											onClick={() => setDefault(addr.id)}
-											className="w-full mt-2 flex items-center justify-center gap-1.5 text-xs text-[#D4A853] font-cairo font-medium hover:underline py-1"
+											className="mt-3 text-xs text-[#0F7B6C] hover:underline font-cairo font-semibold"
 										>
-											<CheckCircle
-												className="w-3.5 h-3.5"
-												strokeWidth={1.5}
-											/>
 											{t('addresses.setDefault', 'Set as default')}
 										</button>
 									)}
@@ -280,169 +339,162 @@ export default function Addresses() {
 				</div>
 			</div>
 
-			{/* Add/Edit Address Dialog */}
 			<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-				<DialogContent
-					className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto"
-					dir="rtl"
-				>
+				<DialogContent className="max-w-lg">
 					<DialogHeader>
-						<DialogTitle className="font-amiri text-xl text-[#1A1612]">
+						<DialogTitle className="font-amiri text-xl">
 							{editingId
 								? t('addresses.dialogTitleEdit', 'Edit Address')
 								: t('addresses.dialogTitleAdd', 'Add New Address')}
 						</DialogTitle>
 					</DialogHeader>
-					<div className="space-y-4 pt-2">
+					<div className="space-y-4 mt-2">
 						<div>
-							<Label className="font-cairo text-sm text-[#111111]">
-								{t('addresses.labelFullName', 'Full Name')}
+							<Label className="text-sm font-medium mb-1.5 block">
+								{t('addresses.label', 'Label (e.g. Home, Office)')}
 							</Label>
 							<Input
-								value={form.name || ''}
-								onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-								placeholder={t(
-									'addresses.placeholderFullName',
-									'Name as it appears on the card',
-								)}
-								className="rounded-xl mt-1 font-cairo"
+								value={form.label ?? ''}
+								onChange={(e) => setForm((p) => ({ ...p, label: e.target.value }))}
+								placeholder="Home"
+								className="h-11"
 							/>
-						</div>
-						<div>
-							<Label className="font-cairo text-sm text-[#111111]">
-								{t('addresses.labelPhone', 'Phone Number')}
-							</Label>
-							<Input
-								value={form.phone || ''}
-								onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-								placeholder={t('addresses.placeholderPhone', '+967 7XX XXX XXX')}
-								className="rounded-xl mt-1 font-cairo"
-							/>
-						</div>
-						<div>
-							<Label className="font-cairo text-sm text-[#111111]">
-								{t('addresses.labelGovernorate', 'Governorate')}
-							</Label>
-							<select
-								value={form.governorate || ''}
-								onChange={(e) =>
-									setForm((f) => ({ ...f, governorate: e.target.value }))
-								}
-								aria-label={t('addresses.labelGovernorate', 'Governorate')}
-								className="w-full mt-1 rounded-xl border border-[#e4e4e7] px-3 py-2 text-sm font-cairo focus:outline-none focus:ring-2 focus:ring-[#D4A853]/30 focus:border-[#D4A853]"
-							>
-								<option value="">
-									{t('addresses.placeholderGovernorate', 'Select governorate')}
-								</option>
-								{yemeniGovernorates.map((g) => (
-									<option key={g} value={g}>
-										{g}
-									</option>
-								))}
-							</select>
 						</div>
 						<div className="grid grid-cols-2 gap-3">
 							<div>
-								<Label className="font-cairo text-sm text-[#111111]">
-									{t('addresses.labelCity', 'City')}
+								<Label className="text-sm font-medium mb-1.5 block">
+									{t('addresses.fullName', 'Full name')}
 								</Label>
 								<Input
-									value={form.city || ''}
+									value={form.full_name ?? ''}
 									onChange={(e) =>
-										setForm((f) => ({ ...f, city: e.target.value }))
+										setForm((p) => ({ ...p, full_name: e.target.value }))
 									}
-									placeholder={t('addresses.placeholderCity', 'City')}
-									className="rounded-xl mt-1 font-cairo"
+									className="h-11"
 								/>
 							</div>
 							<div>
-								<Label className="font-cairo text-sm text-[#111111]">
-									{t('addresses.labelDistrict', 'District/Area')}
+								<Label className="text-sm font-medium mb-1.5 block">
+									{t('addresses.phone', 'Phone')}
 								</Label>
 								<Input
-									value={form.district || ''}
+									value={form.phone ?? ''}
 									onChange={(e) =>
-										setForm((f) => ({ ...f, district: e.target.value }))
+										setForm((p) => ({ ...p, phone: e.target.value }))
 									}
-									placeholder={t('addresses.placeholderDistrict', 'District')}
-									className="rounded-xl mt-1 font-cairo"
+									className="h-11"
+									dir="ltr"
+								/>
+							</div>
+						</div>
+						<div className="grid grid-cols-2 gap-3">
+							<div>
+								<Label className="text-sm font-medium mb-1.5 block">
+									{t('addresses.governorate', 'Governorate')}
+								</Label>
+								<select
+									value={form.governorate ?? ''}
+									onChange={(e) =>
+										setForm((p) => ({ ...p, governorate: e.target.value }))
+									}
+									className="w-full h-11 px-3 rounded-md border border-[#E8DCC8] bg-white text-sm font-cairo"
+								>
+									<option value="">{t('addresses.selectGov', 'Select…')}</option>
+									{yemeniGovernorates.map((g) => (
+										<option key={g} value={g}>
+											{g}
+										</option>
+									))}
+								</select>
+							</div>
+							<div>
+								<Label className="text-sm font-medium mb-1.5 block">
+									{t('addresses.city', 'City')}
+								</Label>
+								<Input
+									value={form.city ?? ''}
+									onChange={(e) =>
+										setForm((p) => ({ ...p, city: e.target.value }))
+									}
+									className="h-11"
+								/>
+							</div>
+						</div>
+						<div className="grid grid-cols-2 gap-3">
+							<div>
+								<Label className="text-sm font-medium mb-1.5 block">
+									{t('addresses.district', 'District')}
+								</Label>
+								<Input
+									value={form.district ?? ''}
+									onChange={(e) =>
+										setForm((p) => ({ ...p, district: e.target.value }))
+									}
+									className="h-11"
+								/>
+							</div>
+							<div>
+								<Label className="text-sm font-medium mb-1.5 block">
+									{t('addresses.street', 'Street')}
+								</Label>
+								<Input
+									value={form.street ?? ''}
+									onChange={(e) =>
+										setForm((p) => ({ ...p, street: e.target.value }))
+									}
+									className="h-11"
 								/>
 							</div>
 						</div>
 						<div>
-							<Label className="font-cairo text-sm text-[#111111]">
-								{t('addresses.labelStreet', 'Street')}
+							<Label className="text-sm font-medium mb-1.5 block">
+								{t('addresses.building', 'Building / Floor / Apartment')}
 							</Label>
 							<Input
-								value={form.street || ''}
-								onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
-								placeholder={t('addresses.placeholderStreet', 'Main street name')}
-								className="rounded-xl mt-1 font-cairo"
-							/>
-						</div>
-						<div>
-							<Label className="font-cairo text-sm text-[#111111]">
-								{t('addresses.labelBuilding', 'Building / Floor / Apartment')}
-							</Label>
-							<Input
-								value={form.building || ''}
+								value={form.building ?? ''}
 								onChange={(e) =>
-									setForm((f) => ({ ...f, building: e.target.value }))
+									setForm((p) => ({ ...p, building: e.target.value }))
 								}
-								placeholder={t(
-									'addresses.placeholderBuilding',
-									'e.g. Al-Auras Building - Floor 3 - Apt 12',
-								)}
-								className="rounded-xl mt-1 font-cairo"
+								className="h-11"
 							/>
 						</div>
 						<div>
-							<Label className="font-cairo text-sm text-[#111111]">
-								{t('addresses.labelDirections', 'Additional directions')}
+							<Label className="text-sm font-medium mb-1.5 block">
+								{t('addresses.notes', 'Delivery notes')}
 							</Label>
 							<Textarea
-								value={form.directions || ''}
-								onChange={(e) =>
-									setForm((f) => ({ ...f, directions: e.target.value }))
-								}
-								placeholder={t(
-									'addresses.placeholderDirections',
-									'Any additional info to help the courier reach you...',
-								)}
-								className="rounded-xl mt-1 font-cairo min-h-[80px] resize-none"
+								value={form.notes ?? ''}
+								onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+								rows={2}
 							/>
 						</div>
-						<div className="flex items-center gap-2">
+						<label className="flex items-center gap-2 text-sm font-cairo">
 							<input
 								type="checkbox"
-								checked={form.isDefault || false}
-								aria-label={t('addresses.setAsDefault', 'Set as default')}
+								checked={Boolean(form.is_default)}
 								onChange={(e) =>
-									setForm((f) => ({ ...f, isDefault: e.target.checked }))
+									setForm((p) => ({ ...p, is_default: e.target.checked }))
 								}
-								className="w-4 h-4 rounded accent-[#D4A853]"
 							/>
-							<Label className="font-cairo text-sm text-[#111111] cursor-pointer">
-								{t('addresses.labelSetDefaultCheckbox', 'Set as default address')}
-							</Label>
-						</div>
-						<div className="flex gap-3 pt-2">
-							<Button
-								onClick={saveAddress}
-								className="flex-1 bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo font-semibold rounded-xl h-11"
-							>
-								{editingId
-									? t('addresses.saveEdit', 'Save Changes')
-									: t('addresses.saveAdd', 'Add Address')}
-							</Button>
-							<Button
-								variant="ghost"
-								onClick={() => setDialogOpen(false)}
-								className="font-cairo rounded-xl h-11"
-							>
-								{t('addresses.cancel', 'Cancel')}
-							</Button>
-						</div>
+							{t('addresses.setAsDefault', 'Set as default address')}
+						</label>
+					</div>
+					<div className="flex justify-end gap-2 mt-4">
+						<Button
+							variant="outline"
+							onClick={() => setDialogOpen(false)}
+							disabled={saving}
+						>
+							{t('common.cancel', 'Cancel')}
+						</Button>
+						<Button
+							onClick={saveAddress}
+							disabled={saving}
+							className="bg-[#0F7B6C] hover:bg-[#0a6356] text-white"
+						>
+							{saving && <Loader2 className="w-4 h-4 ml-1 animate-spin" />}
+							{editingId ? t('common.save', 'Save') : t('addresses.addNew', 'Add')}
+						</Button>
 					</div>
 				</DialogContent>
 			</Dialog>

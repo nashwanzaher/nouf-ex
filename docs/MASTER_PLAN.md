@@ -132,7 +132,7 @@
 | **B.1.5** | PHASE_03_SEARCH_FILTERS.md | `docs/testing/phases/PHASE_03_SEARCH_FILTERS.md` | ✅ **Done (2026-06-28)** — 24 TC + 10 REQ · live 24/24 PASS · 13,518 bytes | 30 دقيقة |
 | **B.1.6** | PHASE_04_CART.md | `docs/testing/phases/PHASE_04_CART.md` | ✅ **Done (2026-06-28)** — 27 TC + 11 REQ · live 27/27 PASS (after A.1 + ahmed reset) · 16,546 bytes | 30 دقيقة |
 | **B.1.7** | PHASE_05_ORDERS_INVENTORY.md | `docs/testing/phases/PHASE_05_ORDERS_INVENTORY.md` | ✅ **Done (2026-06-28)** — 28 TC + 15 REQ · live 28/28 PASS · 15,818 bytes | 30 دقيقة |
-| **B.1.8** | PHASE_06_COUPONS_DISCOUNTS.md | `docs/testing/phases/PHASE_06_COUPONS_DISCOUNTS.md` | ⏳ TODO | 30 دقيقة |
+| **B.1.8** | PHASE_06_COUPONS_DISCOUNTS.md | `docs/testing/phases/PHASE_06_COUPONS_DISCOUNTS.md` | ✅ **Done (2026-06-28)** — 19 TC + 10 REQ · live 19/19 PASS · 13,985 bytes | 30 دقيقة |
 | **B.1.9** | PHASE_07_PAYMENTS_REFUNDS.md | `docs/testing/phases/PHASE_07_PAYMENTS_REFUNDS.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.10** | PHASE_08_REVIEWS_RATINGS.md | `docs/testing/phases/PHASE_08_REVIEWS_RATINGS.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.11** | PHASE_09_WISHLIST_FOLLOWERS.md | `docs/testing/phases/PHASE_09_WISHLIST_FOLLOWERS.md` | ⏳ TODO | 30 دقيقة |

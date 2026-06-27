@@ -102,18 +102,21 @@
 ## 🅰️ Phase A — إصلاحات حرجة P0 (6 مهام · 4-6 ساعات · هذا الأسبوع)
 
 > **الهدف:** معالجة العوائق التي تمنع تشغيل الاختبارات أو تهدد الإنتاج.
+> **الحالة:** ✅ **6/6 Done (2026-06-28)** — Phase A مكتملة بالكامل.
 
 | ID | المهمة | المصدر الأصلي | الملف الهدف | الحالة | الجهد |
 |----|--------|----------------|-------------|--------|-------|
-| **A.1** | إصلاح PHASE 4 cart assertions (7 failures: route يتجاهل URL `:userId` — security issue) | PHASE_TEST_TASKS.md | `app/server/routes/cart.cts` + `tests/e2e/phase04_cart.ps1` | ✅ Done (2026-06-28) | 1 ساعة |
-| **A.2** | إنشاء قالب PowerShell للـ PHASE scripts | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TEST_TEMPLATE.ps1` | ✅ **Done (2026-06-28)** — 8/8 smoke PASS | 1 ساعة |
-| **A.3** | إنشاء قالب Vitest للـ integration tests | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/JS_INTEGRATION_TEST_TEMPLATE.ts` | ✅ **Done (2026-06-28)** — 14/23 proof tests PASS, 9 كشف فجوات في wishlist | 30 دقيقة |
-| **A.4** | إنشاء مرجع دوال `PS_TestHelpers.ps1` | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TESTHELPERS_REFERENCE.md` | ✅ **Done (2026-06-28)** — 8/8 functions documented, 4 helpers cross-links | 30 دقيقة |
+| **A.1** | إصلاح PHASE 4 cart assertions (7 failures: route يتجاهل URL `:userId` — security issue) | PHASE_TEST_TASKS.md | `app/server/routes/cart.cts` + `tests/e2e/phase04_cart.ps1` | ✅ Done (2026-06-28) — 669 tests passing | 1 ساعة |
+| **A.2** | إنشاء قالب PowerShell للـ PHASE scripts | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TEST_TEMPLATE.ps1` | ✅ **Done (2026-06-28)** — 13 assertions e2e PASS | 1 ساعة |
+| **A.3** | إنشاء قالب Vitest للـ integration tests | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/JS_INTEGRATION_TEST_TEMPLATE.ts` | ✅ **Done (2026-06-28)** — 14/23 proof tests PASS, 9 كشف فجوات | 30 دقيقة |
+| **A.4** | إنشاء مرجع دوال `PS_TestHelpers.ps1` | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TESTHELPERS_REFERENCE.md` | ✅ **Done (2026-06-28)** — 8/8 functions documented | 30 دقيقة |
 | **A.5** | إنشاء COOKBOOK للحالات الشائعة في الاختبار | PHASE_TEST_TASKS.md gap #13 | `tests/e2e/COOKBOOK.md` | ✅ **Done (2026-06-28)** — 16 recipes + helpers + anti-patterns | 1-2 ساعة |
 | **A.6** | إنشاء README لـ `tests/e2e/smoke/` | PHASE_TEST_TASKS.md gap #14 | `tests/e2e/smoke/README.md` | ✅ **Done (2026-06-28)** — 17/17 scripts catalogued | 1 ساعة |
 
 ---
 
+
+> **🎉 Phase A مكتملة بالكامل (2026-06-28):** 6/6 مهام منجزة. التحقق: 669 passing (53 ملف اختبار)، Vite build ✅، typecheck ✅، lint ✅. الـ 5 commits: `fd2c605` (A.1 fix) → `20ae169` (A.2) → `75be206` (A.3) → `5c38504` (A.4) → `b7a2b6f` (A.5) → `ae9dbe5` (A.6) → `eab7f61` (style).
 ## 🅱️ Phase B — توثيق البنية P1 (24 مهمة · 1-2 أسبوع)
 
 ### B.1: 18 ملف PHASE design specs (الأولوية القصوى ضمن P1)

@@ -353,6 +353,15 @@
     "thStatus": "Status",
     "thSales": "Sales",
     "thActions": "Actions",
+    "statusActive": "Active",
+    "statusLow": "Low",
+    "statusOut": "Out",
+    "statusDisabled": "Disabled",
+    "catElectronics": "Electronics",
+    "catFashion": "Fashion",
+    "catFood": "Food",
+    "catJewelry": "Jewelry",
+    "catHome": "Home",
     "yes": "Yes",
     "no": "No",
     "confirm": "Confirm",
@@ -646,7 +655,16 @@
     "thStock": "Stock",
     "thStatus": "Status",
     "thSales": "Sales",
-    "thActions": "Actions"
+    "thActions": "Actions",
+    "statusActive": "Active",
+    "statusLow": "Low",
+    "statusOut": "Out",
+    "statusDisabled": "Disabled",
+    "catElectronics": "Electronics",
+    "catFashion": "Fashion",
+    "catFood": "Food",
+    "catJewelry": "Jewelry",
+    "catHome": "Home"
     }
   },
   "deals": {

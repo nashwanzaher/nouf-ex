@@ -189,11 +189,12 @@ const mockProducts: Product[] = [
 /* ------------------------------------------------------------------ */
 
 function StatusBadge({ status }: { status: Product['status'] }) {
+	const { t } = useTranslation();
 	const config = {
-		active: { label: 'نشط', className: 'bg-[rgba(16,185,129,0.12)] text-[#10B981]' },
-		low: { label: 'منخفض', className: 'bg-[rgba(245,158,11,0.12)] text-[#F59E0B]' },
-		out: { label: 'نفذ', className: 'bg-[rgba(239,68,68,0.12)] text-[#EF4444]' },
-		disabled: { label: 'معطل', className: 'bg-[rgba(170,170,170,0.12)] text-[#AAAAAA]' },
+		active: { label: t('seller.statusActive', 'Active'), className: 'bg-[rgba(16,185,129,0.12)] text-[#10B981]' },
+		low: { label: t('seller.statusLow', 'Low'), className: 'bg-[rgba(245,158,11,0.12)] text-[#F59E0B]' },
+		out: { label: t('seller.statusOut', 'Out'), className: 'bg-[rgba(239,68,68,0.12)] text-[#EF4444]' },
+		disabled: { label: t('seller.statusDisabled', 'Disabled'), className: 'bg-[rgba(170,170,170,0.12)] text-[#AAAAAA]' },
 	};
 	const c = config[status];
 	return (
@@ -203,14 +204,21 @@ function StatusBadge({ status }: { status: Product['status'] }) {
 	);
 }
 
-const categories = ['الكل', 'إلكترونيات', 'موضة', 'غذائية', 'مجوهرات', 'منزلية'];
+const CATEGORY_KEYS = [
+	{ key: 'all', labelKey: 'seller.allCategories' },
+	{ key: 'electronics', labelKey: 'seller.catElectronics' },
+	{ key: 'fashion', labelKey: 'seller.catFashion' },
+	{ key: 'food', labelKey: 'seller.catFood' },
+	{ key: 'jewelry', labelKey: 'seller.catJewelry' },
+	{ key: 'home', labelKey: 'seller.catHome' },
+];
 
-const statusFilters = [
-	{ key: 'all', label: 'الكل' },
-	{ key: 'active', label: 'نشط' },
-	{ key: 'low', label: 'منخفض' },
-	{ key: 'out', label: 'نفذ' },
-	{ key: 'disabled', label: 'معطل' },
+const STATUS_FILTER_KEYS = [
+	{ key: 'all', labelKey: 'common.all' },
+	{ key: 'active', labelKey: 'seller.statusActive' },
+	{ key: 'low', labelKey: 'seller.statusLow' },
+	{ key: 'out', labelKey: 'seller.statusOut' },
+	{ key: 'disabled', labelKey: 'seller.statusDisabled' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -364,7 +372,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</label>
 												<input
 													type="text"
-													placeholder={t('seller.productNamePlaceholder', 'Enter product name')}
+													placeholder={t(
+														'seller.productNamePlaceholder',
+														'Enter product name',
+													)}
 													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 												/>
 											</div>
@@ -386,8 +397,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 																'Select category',
 															)}
 														</option>
-														{categories.slice(1).map((c) => (
-															<option key={c}>{c}</option>
+														{CATEGORY_KEYS.slice(1).map((c) => (
+															<option key={c.key} value={c.key}>
+																{t(c.labelKey)}
+															</option>
 														))}
 													</select>
 												</div>
@@ -397,14 +410,17 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													</label>
 													<input
 														type="text"
-														placeholder="العلامة التجارية"
+														placeholder={t('seller.brandPlaceholder', 'Brand')}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 													/>
 												</div>
 											</div>
 											<div>
 												<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-													{t('seller.descriptionLabel', 'Product description')}
+													{t(
+														'seller.descriptionLabel',
+														'Product description',
+													)}
 												</label>
 												<textarea
 													rows={4}
@@ -440,10 +456,16 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													strokeWidth={1.5}
 												/>
 												<p className="text-sm font-cairo font-semibold text-[#111111]">
-													{t('seller.dragImagesHere', 'Drag images here or click to select')}
+													{t(
+														'seller.dragImagesHere',
+														'Drag images here or click to select',
+													)}
 												</p>
 												<p className="text-xs text-[#6B6B6B] font-cairo mt-1">
-													{t('seller.imageLimits', 'PNG, JPG up to 5MB — max 8 images')}
+													{t(
+														'seller.imageLimits',
+														'PNG, JPG up to 5MB — max 8 images',
+													)}
 												</p>
 											</div>
 											{images.length > 0 && (
@@ -499,7 +521,8 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</div>
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														t('seller.comparePriceLabel', 'Compare-at price')
+														t('seller.comparePriceLabel', 'Compare-at
+														price')
 													</label>
 													<input
 														type="text"
@@ -535,7 +558,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													</label>
 													<input
 														type="text"
-														placeholder={t('seller.skuPlaceholder', 'Product SKU')}
+														placeholder={t(
+															'seller.skuPlaceholder',
+															'Product SKU',
+														)}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 													/>
 												</div>
@@ -546,7 +572,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</label>
 												<input
 													type="text"
-													placeholder={t('seller.barcodePlaceholder', 'Or scan with scanner')}
+													placeholder={t(
+														'seller.barcodePlaceholder',
+														'Or scan with scanner',
+													)}
 													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 												/>
 											</div>
@@ -556,12 +585,15 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 									{step === 4 && (
 										<div className="max-w-2xl space-y-4">
 											<p className="text-sm text-[#6B6B6B] font-cairo">
-												{t('seller.variantHelpText', 'Add variants like color and size')}
+												{t(
+													'seller.variantHelpText',
+													'Add variants like color and size',
+												)}
 											</p>
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														اسم المتغير
+														{t('seller.variantNameLabel', 'Variant name')}
 													</label>
 													<select
 														aria-label={t(
@@ -596,7 +628,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													</label>
 													<input
 														type="text"
-														placeholder={t('seller.variantValuesPlaceholder', 'red, blue, green')}
+														placeholder={t(
+															'seller.variantValuesPlaceholder',
+															'red, blue, green',
+														)}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 													/>
 												</div>
@@ -606,13 +641,13 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													<thead className="bg-[#F8F8F8]">
 														<tr>
 															<th className="px-3 py-2 font-cairo font-semibold text-[#6B6B6B]">
-																المتغير
+																{t('seller.variantNameLabel', 'Variant')}
 															</th>
 															<th className="px-3 py-2 font-cairo font-semibold text-[#6B6B6B]">
-																السعر
+																{t('seller.priceLabel', 'Price')}
 															</th>
 															<th className="px-3 py-2 font-cairo font-semibold text-[#6B6B6B]">
-																المخزون
+																{t('seller.stockLabel', 'Stock')}
 															</th>
 															<th className="px-3 py-2 font-cairo font-semibold text-[#6B6B6B]">
 																SKU
@@ -728,11 +763,14 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
 														فئة الشحن
 													</label>
-													<select className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white">
-														<option>{t('seller.shippingStandard', 'Standard shipping')}</option>
-																																																																																																																																																																																																																																																																																																																																																																																																		\t<option>{t('seller.shippingExpress', 'Express shipping')}</option>
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												t																																																																																																																																																																																																																																										t	t		tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt	<option>{t('seller.shippingFree', 'Free shipping')}</option>
-													</select>
+													<select
+													aria-label={t('seller.shippingClassLabel', 'Shipping class')}
+													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
+												>
+													<option>{t('seller.shippingStandard', 'Standard shipping')}</option>
+													<option>{t('seller.shippingExpress', 'Express shipping')}</option>
+													<option>{t('seller.shippingFree', 'Free shipping')}</option>
+												</select>
 												</div>
 											</div>
 										</div>
@@ -746,19 +784,40 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													{t('seller.readyToPublish', 'Ready to publish')}
 												</h3>
 												<p className="text-xs text-[#6B6B6B] font-cairo">
-													{t('seller.reviewBeforePublish', 'Review product info before publishing')}
+													{t(
+														'seller.reviewBeforePublish',
+														'Review product info before publishing',
+													)}
 												</p>
 											</div>
 											<div className="space-y-3">
 												{[
 													{
-														label: t('seller.reviewProductName', 'Product name'),
+														label: t(
+															'seller.reviewProductName',
+															'Product name',
+														),
 														value: 'ساعة ذكية أبل واتش سلسلة ٩',
 													},
-													{ label: t('seller.categoryLabel', 'Category'), value: 'إلكترونيات' },
-													{ label: t('seller.priceLabel', 'Price'), value: '٤٥,٠٠٠ ر.ي' },
-													{ label: t('seller.stockLabel', 'Stock'), value: '٢٤ وحدة' },
-													{ label: t('seller.reviewStatus', 'Status'), value: 'نشط' },
+													{
+														label: t(
+															'seller.categoryLabel',
+															'Category',
+														),
+														value: 'إلكترونيات',
+													},
+													{
+														label: t('seller.priceLabel', 'Price'),
+														value: '٤٥,٠٠٠ ر.ي',
+													},
+													{
+														label: t('seller.stockLabel', 'Stock'),
+														value: '٢٤ وحدة',
+													},
+													{
+														label: t('seller.reviewStatus', 'Status'),
+														value: 'نشط',
+													},
 												].map((field, i) => (
 													<div
 														key={i}
@@ -844,11 +903,10 @@ export default function SellerProducts() {
 	const [wizardOpen, setWizardOpen] = useState(false);
 	const [products, setProducts] = useState<Product[]>(mockProducts);
 
-	const allCategoryLabel = t('seller.allCategories', 'All Categories');
 	const filtered = products.filter((p) => {
 		const matchesSearch =
 			p.name.toLowerCase().includes(search.toLowerCase()) || p.price.includes(search);
-		const matchesCategory = category === allCategoryLabel || p.category === category;
+		const matchesCategory = category === 'all' || p.category === category;
 		const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
 		return matchesSearch && matchesCategory && matchesStatus;
 	});
@@ -915,7 +973,10 @@ export default function SellerProducts() {
 								type="text"
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
-								placeholder={t('seller.searchProductPlaceholder', 'Search products...')}
+								placeholder={t(
+									'seller.searchProductPlaceholder',
+									'Search products...',
+								)}
 								className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 							/>
 						</div>
@@ -927,14 +988,16 @@ export default function SellerProducts() {
 							aria-label={t('seller.categoryLabel', 'Category')}
 							className="px-3 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
 						>
-							{categories.map((c) => (
-								<option key={c}>{c}</option>
+							{CATEGORY_KEYS.map((c) => (
+								<option key={c.key} value={c.key}>
+									{t(c.labelKey)}
+								</option>
 							))}
 						</select>
 
 						{/* Status Filter */}
 						<div className="flex items-center gap-1 bg-[#F8F8F8] rounded-xl p-1 overflow-x-auto">
-							{statusFilters.map((f) => (
+							{STATUS_FILTER_KEYS.map((f) => (
 								<button
 									key={f.key}
 									onClick={() => setStatusFilter(f.key)}
@@ -945,7 +1008,7 @@ export default function SellerProducts() {
 											: 'text-[#6B6B6B] hover:text-[#111111]',
 									)}
 								>
-									{f.label}
+									{t(f.labelKey)}
 								</button>
 							))}
 						</div>
@@ -1197,7 +1260,7 @@ export default function SellerProducts() {
 						<button
 							onClick={() => {
 								setSearch('');
-								setCategory(t('seller.allCategories', 'All Categories'));
+								setCategory('all');
 								setStatusFilter('all');
 							}}
 							className="px-4 py-2.5 bg-[#D4A853] text-[#1A1612] rounded-xl text-sm font-cairo font-semibold hover:bg-[#c49a48] transition-colors"

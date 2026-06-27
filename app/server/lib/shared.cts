@@ -481,6 +481,16 @@ export const cartAddSchema = z
 
 export const cartItemIdParamSchema = z.object({ id: z.coerce.number().int().positive() });
 
+/** Body for PATCH /api/cart/:id — update the quantity of an existing
+ *  cart line. Stock is checked before the write so the user gets a
+ *  clear 400 instead of a trigger error if they overshoot. */
+export const cartItemUpdateSchema = z
+	.object({
+		quantity: z.number().int().positive().max(100),
+		variant: z.record(z.string(), z.unknown()).optional(),
+	})
+	.strict();
+
 export const wishlistAddSchema = z
 	.object({
 		productId: z.number().int().positive(),

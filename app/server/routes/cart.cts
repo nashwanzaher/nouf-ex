@@ -7,6 +7,7 @@ import {
 	requireAuth,
 	cartAddSchema,
 	cartItemIdParamSchema,
+	cartItemUpdateSchema,
 } from '../lib/shared.cts';
 
 export const cartRouter = Router();
@@ -60,6 +61,48 @@ cartRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			return sendError(res, 'Failed to add item to cart', 500, 'INSERT_FAILED');
 		}
 		return sendSuccess(res, { id: result.lastInsertRowid }, 'Item added to cart');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+cartRouter.patch('/:id', requireAuth, async (req: Request, res: Response) => {
+	try {
+		const idV = validate(cartItemIdParamSchema, req.params);
+		if (!idV.ok) return sendError(res, 'Invalid cart item id: ' + idV.error, 400);
+		const v = validate(cartItemUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		const userId = req.user!.id;
+		const existing = (await db
+			.prepare('SELECT id, product_id FROM cart_items WHERE id = ? AND user_id = ?')
+			.get(idV.data.id, userId)) as { id: number; product_id: number } | undefined;
+		if (!existing) return sendError(res, 'Cart item not found', 404);
+		// Optional stock guard: don't let the new quantity exceed product.stock.
+		const stock = (await db
+			.prepare('SELECT stock FROM products WHERE id = ? AND is_active = TRUE')
+			.get(existing.product_id)) as { stock: number } | undefined;
+		if (!stock) return sendError(res, 'Product is no longer available', 404);
+		if (stock.stock < v.data.quantity) {
+			return sendError(
+				res,
+				`Insufficient stock for product ${existing.product_id} (have ${stock.stock}, need ${v.data.quantity})`,
+				400,
+				'INSUFFICIENT_STOCK',
+			);
+		}
+		await db
+			.prepare('UPDATE cart_items SET quantity = ?, variant = ? WHERE id = ? AND user_id = ?')
+			.run(
+				v.data.quantity,
+				v.data.variant ? JSON.stringify(v.data.variant) : null,
+				idV.data.id,
+				userId,
+			);
+		return sendSuccess(
+			res,
+			{ id: idV.data.id, quantity: v.data.quantity },
+			'Cart item updated',
+		);
 	} catch (err) {
 		return sendError(res, err);
 	}

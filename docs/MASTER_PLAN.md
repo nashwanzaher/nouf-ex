@@ -106,7 +106,7 @@
 | ID | المهمة | المصدر الأصلي | الملف الهدف | الحالة | الجهد |
 |----|--------|----------------|-------------|--------|-------|
 | **A.1** | إصلاح PHASE 4 cart assertions (7 failures: route يتجاهل URL `:userId` — security issue) | PHASE_TEST_TASKS.md | `app/server/routes/cart.cts` + `tests/e2e/phase04_cart.ps1` | ✅ Done (2026-06-28) | 1 ساعة |
-| **A.2** | إنشاء قالب PowerShell للـ PHASE scripts | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TEST_TEMPLATE.ps1` | ⏳ TODO | 1 ساعة |
+| **A.2** | إنشاء قالب PowerShell للـ PHASE scripts | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TEST_TEMPLATE.ps1` | ✅ **Done (2026-06-28)** — 8/8 smoke PASS | 1 ساعة |
 | **A.3** | إنشاء قالب Vitest للـ integration tests | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/JS_INTEGRATION_TEST_TEMPLATE.ts` | ⏳ TODO | 30 دقيقة |
 | **A.4** | إنشاء مرجع دوال `PS_TestHelpers.ps1` | PHASE_TEST_TASKS.md gap #2 | `docs/testing/templates/PS_TESTHELPERS_REFERENCE.md` | ⏳ TODO | 30 دقيقة |
 | **A.5** | إنشاء COOKBOOK للحالات الشائعة في الاختبار | PHASE_TEST_TASKS.md gap #13 | `tests/e2e/COOKBOOK.md` | ⏳ TODO | 1-2 ساعة |
@@ -266,7 +266,7 @@
 | **DONE.1** | Authentication الكامل (login, register, JWT, 2FA) | PHASE 0 + 12 | ✅ Done |
 | **DONE.2** | قاعدة بيانات المنتجات (29 جدول) | `database/` | ✅ Done |
 | **DONE.3** | صفحة تفاصيل المنتج (PDP) | PHASE 2 | ✅ Done |
-| **DONE.4** | نظام السلة (Cart) | PHASE 4 (في 74% — 7 من 27 assertions معلقة) | 🔄 In Progress |
+| **DONE.4** | نظام السلة (Cart) | PHASE 4 (✅ **27/27 PASS** — مكتمل 2026-06-28) | ✅ Done |
 | **DONE.5** | نظام الطلبات (Orders + Inventory trigger) | PHASE 5 | ✅ Done |
 | **DONE.6** | نظام الدفع (Methods + Create + Confirm + Refund) | PHASE 7 | ✅ Done |
 | **DONE.7** | نظام المراسلة (Messages + Inbox) | PHASE 13 | ✅ Done |
@@ -302,7 +302,7 @@
 | 01-R | Re-test Strict Mode | z.strict() + privilege escalation | ✅ Done | 10/0 | — |
 | 02 | Public Catalog | products, categories, stores, filters | ✅ Done | 42/0 | — |
 | 03 | Search + Filters | FTS, sort, pagination | ✅ Done | 24/0 | — |
-| 04 | Cart | CRUD cart, ownership | 🔄 In Progress | 20/27 | **A.1**: إصلاح assertions |
+| 04 | Cart | CRUD cart, ownership | ✅ **Done** | 27/27 | — (A.1 completed) |
 | 05 | Orders + Inventory | creation, trigger decrement | ✅ Done | 28/0 | — |
 | 06 | Coupons + Discounts | validate, redeem, idempotent | ✅ Done | 19/0 | — |
 | 07 | Payments + Refunds | methods, create, confirm, refund | ✅ Done | 34/0 | — |

@@ -136,7 +136,7 @@
 | **B.1.9** | PHASE_07_PAYMENTS_REFUNDS.md | `docs/testing/phases/PHASE_07_PAYMENTS_REFUNDS.md` | ✅ **Done (2026-06-28)** — 34 TC + 14 REQ · live 34/34 PASS · 16,605 bytes | 30 دقيقة |
 | **B.1.10** | PHASE_08_REVIEWS_RATINGS.md | `docs/testing/phases/PHASE_08_REVIEWS_RATINGS.md` | ✅ **Done (2026-06-28)** — 21 TC + 9 REQ · live 21/21 PASS · 14,089 bytes | 30 دقيقة |
 | **B.1.11** | PHASE_09_WISHLIST_FOLLOWERS.md | `docs/testing/phases/PHASE_09_WISHLIST_FOLLOWERS.md` | ✅ **Done (2026-06-28)** — 24 TC + 11 REQ · live 24/24 PASS · 14,463 bytes | 30 دقيقة |
-| **B.1.12** | PHASE_10_MERCHANT_FLOW.md | `docs/testing/phases/PHASE_10_MERCHANT_FLOW.md` | ⏳ TODO | 30 دقيقة |
+| **B.1.12** | PHASE_10_MERCHANT_FLOW.md | `docs/testing/phases/PHASE_10_MERCHANT_FLOW.md` | ✅ **Done (2026-06-28)** — 8 PASS / 12 SKIP (gap inventory) · live 8/0/12 · 12,889 bytes | 30 دقيقة |
 | **B.1.13** | PHASE_11_ADMIN_RBAC.md | `docs/testing/phases/PHASE_11_ADMIN_RBAC.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.14** | PHASE_12_2FA_BACKUP.md | `docs/testing/phases/PHASE_12_2FA_BACKUP.md` | ⏳ TODO | 30 دقيقة |
 | **B.1.15** | PHASE_13_NOTIFICATIONS_MESSAGES.md | `docs/testing/phases/PHASE_13_NOTIFICATIONS_MESSAGES.md` | ⏳ TODO | 30 دقيقة |

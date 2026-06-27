@@ -360,11 +360,11 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 										<div className="space-y-4 max-w-2xl">
 											<div>
 												<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-													اسم المنتج *
+													{t('seller.productNameLabel', 'Product name')} *
 												</label>
 												<input
 													type="text"
-													placeholder="أدخل اسم المنتج"
+													placeholder={t('seller.productNamePlaceholder', 'Enter product name')}
 													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 												/>
 											</div>
@@ -374,10 +374,18 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 														الفئة *
 													</label>
 													<select
-														aria-label={t('seller.categoryLabel', 'Category')}
+														aria-label={t(
+															'seller.categoryLabel',
+															'Category',
+														)}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
 													>
-														<option>{t('seller.selectCategory', 'Select category')}</option>
+														<option>
+															{t(
+																'seller.selectCategory',
+																'Select category',
+															)}
+														</option>
 														{categories.slice(1).map((c) => (
 															<option key={c}>{c}</option>
 														))}
@@ -396,11 +404,14 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 											</div>
 											<div>
 												<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-													وصف المنتج
+													{t('seller.descriptionLabel', 'Product description')}
 												</label>
 												<textarea
 													rows={4}
-													placeholder={t('seller.descriptionPlaceholder', 'Write detailed product description...')}
+													placeholder={t(
+														'seller.descriptionPlaceholder',
+														'Write detailed product description...',
+													)}
 													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo resize-none"
 												/>
 											</div>
@@ -414,7 +425,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												type="file"
 												multiple
 												accept="image/*"
-												aria-label={t('seller.uploadImages', 'Upload product images')}
+												aria-label={t(
+													'seller.uploadImages',
+													'Upload product images',
+												)}
 												className="hidden"
 											/>
 											<div
@@ -426,10 +440,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													strokeWidth={1.5}
 												/>
 												<p className="text-sm font-cairo font-semibold text-[#111111]">
-													اسحب الصور هنا أو انقر للاختيار
+													{t('seller.dragImagesHere', 'Drag images here or click to select')}
 												</p>
 												<p className="text-xs text-[#6B6B6B] font-cairo mt-1">
-													PNG, JPG حتى ٥ ميجا — بحد أقصى ٨ صور
+													{t('seller.imageLimits', 'PNG, JPG up to 5MB — max 8 images')}
 												</p>
 											</div>
 											{images.length > 0 && (
@@ -449,7 +463,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 																	removeImage(i);
 																}}
 																title={t('common.remove', 'Remove')}
-																aria-label={t('common.remove', 'Remove')}
+																aria-label={t(
+																	'common.remove',
+																	'Remove',
+																)}
 																className="absolute top-1 left-1 w-6 h-6 rounded-full bg-[#EF4444] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
 															>
 																<X
@@ -472,7 +489,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 											<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														السعر *
+														{t('seller.priceLabel', 'Price')} *
 													</label>
 													<input
 														type="text"
@@ -482,7 +499,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</div>
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														سعر المقارنة
+														t('seller.comparePriceLabel', 'Compare-at price')
 													</label>
 													<input
 														type="text"
@@ -504,7 +521,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														المخزون *
+														{t('seller.stockLabel', 'Stock')} *
 													</label>
 													<input
 														type="number"
@@ -518,18 +535,18 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													</label>
 													<input
 														type="text"
-														placeholder="رمز المنتج"
+														placeholder={t('seller.skuPlaceholder', 'Product SKU')}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 													/>
 												</div>
 											</div>
 											<div>
 												<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-													الباركود
+													{t('seller.barcodeLabel', 'Barcode')}
 												</label>
 												<input
 													type="text"
-													placeholder="أو اقرأ باستخدام الماسح الضوئي"
+													placeholder={t('seller.barcodePlaceholder', 'Or scan with scanner')}
 													className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 												/>
 											</div>
@@ -539,7 +556,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 									{step === 4 && (
 										<div className="max-w-2xl space-y-4">
 											<p className="text-sm text-[#6B6B6B] font-cairo">
-												أضف متغيرات للمنتج مثل اللون والمقاس
+												{t('seller.variantHelpText', 'Add variants like color and size')}
 											</p>
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 												<div>
@@ -547,13 +564,30 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 														اسم المتغير
 													</label>
 													<select
-														aria-label={t('seller.variantName', 'Variant name')}
+														aria-label={t(
+															'seller.variantName',
+															'Variant name',
+														)}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white"
 													>
-														<option>{t('seller.selectVariant', 'Select variant')}</option>
-														<option>{t('seller.variantColor', 'Color')}</option>
-														<option>{t('seller.variantSize', 'Size')}</option>
-														<option>{t('seller.variantMaterial', 'Material')}</option>
+														<option>
+															{t(
+																'seller.selectVariant',
+																'Select variant',
+															)}
+														</option>
+														<option>
+															{t('seller.variantColor', 'Color')}
+														</option>
+														<option>
+															{t('seller.variantSize', 'Size')}
+														</option>
+														<option>
+															{t(
+																'seller.variantMaterial',
+																'Material',
+															)}
+														</option>
 													</select>
 												</div>
 												<div>
@@ -562,7 +596,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 													</label>
 													<input
 														type="text"
-														placeholder="أحمر، أزرق، أخضر"
+														placeholder={t('seller.variantValuesPlaceholder', 'red, blue, green')}
 														className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 													/>
 												</div>
@@ -695,9 +729,9 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 														فئة الشحن
 													</label>
 													<select className="w-full px-4 py-3 rounded-xl border border-[#AAAAAA] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo bg-white">
-														<option>شحن عادي</option>
-														<option>شحن سريع</option>
-														<option>شحن مجاني</option>
+														<option>{t('seller.shippingStandard', 'Standard shipping')}</option>
+																																																																																																																																																																																																																																																																																																																																																																																																		\t<option>{t('seller.shippingExpress', 'Express shipping')}</option>
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												t																																																																																																																																																																																																																																										t	t		tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt	<option>{t('seller.shippingFree', 'Free shipping')}</option>
 													</select>
 												</div>
 											</div>
@@ -709,22 +743,22 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 											<div className="p-4 rounded-xl bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.2)]">
 												<h3 className="text-sm font-cairo font-semibold text-[#10B981] mb-2 flex items-center gap-2">
 													<Check className="w-4 h-4" strokeWidth={2} />
-													جاهز للنشر
+													{t('seller.readyToPublish', 'Ready to publish')}
 												</h3>
 												<p className="text-xs text-[#6B6B6B] font-cairo">
-													راجع معلومات المنتج قبل النشر
+													{t('seller.reviewBeforePublish', 'Review product info before publishing')}
 												</p>
 											</div>
 											<div className="space-y-3">
 												{[
 													{
-														label: 'اسم المنتج',
+														label: t('seller.reviewProductName', 'Product name'),
 														value: 'ساعة ذكية أبل واتش سلسلة ٩',
 													},
-													{ label: 'الفئة', value: 'إلكترونيات' },
-													{ label: 'السعر', value: '٤٥,٠٠٠ ر.ي' },
-													{ label: 'المخزون', value: '٢٤ وحدة' },
-													{ label: 'الحالة', value: 'نشط' },
+													{ label: t('seller.categoryLabel', 'Category'), value: 'إلكترونيات' },
+													{ label: t('seller.priceLabel', 'Price'), value: '٤٥,٠٠٠ ر.ي' },
+													{ label: t('seller.stockLabel', 'Stock'), value: '٢٤ وحدة' },
+													{ label: t('seller.reviewStatus', 'Status'), value: 'نشط' },
 												].map((field, i) => (
 													<div
 														key={i}
@@ -881,7 +915,7 @@ export default function SellerProducts() {
 								type="text"
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
-								placeholder="ابحث في المنتجات..."
+								placeholder={t('seller.searchProductPlaceholder', 'Search products...')}
 								className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] focus:ring-2 focus:ring-[rgba(212,168,83,0.2)] outline-none transition-all text-sm font-cairo"
 							/>
 						</div>
@@ -1025,7 +1059,7 @@ export default function SellerProducts() {
 											{product.price} ر.ي
 										</span>
 										<span className="text-[10px] text-[#6B6B6B] font-cairo">
-											{product.stock} متوفر
+											{product.stock} {t('seller.inStock', 'in stock')}
 										</span>
 									</div>
 									<div className="flex items-center gap-3 text-[10px] text-[#6B6B6B] font-cairo">
@@ -1051,25 +1085,25 @@ export default function SellerProducts() {
 							<thead>
 								<tr className="text-right bg-[#F8F8F8]">
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										صورة
+										{t('seller.thImage', 'Image')}
 									</th>
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										اسم المنتج
+										{t('seller.thProductName', 'Product name')}
 									</th>
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										السعر
+										{t('seller.thPrice', 'Price')}
 									</th>
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										المخزون
+										{t('seller.thStock', 'Stock')}
 									</th>
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										الحالة
+										{t('seller.thStatus', 'Status')}
 									</th>
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										المبيعات
+										{t('seller.thSales', 'Sales')}
 									</th>
 									<th className="px-4 py-3 text-[11px] font-semibold text-[#6B6B6B] font-cairo">
-										إجراءات
+										{t('seller.thActions', 'Actions')}
 									</th>
 								</tr>
 							</thead>
@@ -1129,7 +1163,11 @@ export default function SellerProducts() {
 														strokeWidth={1.5}
 													/>
 												</button>
-												<button className="w-7 h-7 rounded-lg hover:bg-[#F3EDE4] flex items-center justify-center transition-colors">
+												<button
+													title={t('seller.view', 'View')}
+													aria-label={t('seller.view', 'View')}
+													className="w-7 h-7 rounded-lg hover:bg-[#F3EDE4] flex items-center justify-center transition-colors"
+												>
 													<Eye
 														className="w-3.5 h-3.5 text-[#6B6B6B]"
 														strokeWidth={1.5}
@@ -1151,20 +1189,20 @@ export default function SellerProducts() {
 							<Package className="w-8 h-8 text-[#D4A853]" strokeWidth={1.5} />
 						</div>
 						<h3 className="text-base font-amiri font-bold text-[#111111] mb-1">
-							لا توجد منتجات
+							{t('seller.noProducts', 'No products')}
 						</h3>
 						<p className="text-sm text-[#6B6B6B] font-cairo mb-4">
-							لم يتم العثور على منتجات تطابق معايير البحث
+							{t('seller.noProductsMatch', 'No products match your search criteria')}
 						</p>
 						<button
 							onClick={() => {
 								setSearch('');
-								setCategory('الكل');
+								setCategory(t('seller.allCategories', 'All Categories'));
 								setStatusFilter('all');
 							}}
 							className="px-4 py-2.5 bg-[#D4A853] text-[#1A1612] rounded-xl text-sm font-cairo font-semibold hover:bg-[#c49a48] transition-colors"
 						>
-							إعادة ضبط الفلاتر
+							{t('seller.resetFilters', 'Reset filters')}
 						</button>
 					</div>
 				)}

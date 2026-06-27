@@ -70,7 +70,7 @@ Adopted the **official React 19 pattern** of doing the setState in a Promise cal
 | `src/pages/customer/CustomerDashboard.tsx`                                     | Replaced the "close drawer on route change" effect with `onClick={closeMobile}` on each `<Link>`                                                     |
 | `src/pages/seller/SellerDashboard.tsx`                                         | Same as above                                                                                                                                        |
 | `src/pages/seller/DashboardShell.tsx`                                          | Same as above                                                                                                                                        |
-| `src/pages/SearchResults.tsx`                                                  | Switched to the official "adjust state during render" pattern (https://react.dev/reference/react/useState#storing-information-from-previous-renders) |
+| `src/pages/SearchResults.tsx`                                                  | Switched to the official "adjust state during render" pattern (<https://react.dev/reference/react/useState#storing-information-from-previous-renders>) |
 
 ### 3. `react-refresh/only-export-components` (9 fixes)
 

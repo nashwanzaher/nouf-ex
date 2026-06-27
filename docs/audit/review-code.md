@@ -7,6 +7,7 @@
 تم إجراء مراجعة شاملة على 14 ملفاً أساسياً في تطبيق Noufex (منصة تجارة إلكترونية). التطبيق يستخدم **React 19 + TypeScript + Tailwind CSS** في الواجهة الأمامية، و**Express + better-sqlite3** في الخلفية، مع نظام ترجمة ثلاثي اللغات (عربي/إنجليزي/صيني).
 
 **النتيجة الإجمالية:** تم اكتشاف **42 مشكلة** موزعة كالتالي:
+
 - 🔴 **حرجة (Critical):** 8 مشاكل
 - 🟠 **متوسطة (Medium):** 18 مشكلة
 - 🟡 **منخفضة (Low):** 16 مشكلة
@@ -16,6 +17,7 @@
 ## 1. المشاكل الحرجة (Critical) 🔴
 
 ### C1: تجزئة كلمات المرور غير الآمنة (api-server.ts)
+
 **الملف:** `api-server.ts` | **الأسطر:** 816، 855
 
 ```typescript
@@ -26,6 +28,7 @@ const passwordHash = `hash_${password}`;
 **التأثير:** كلمات المرور مخزنة بتجزئة قابلة للعكس بسهولة. أي مخترق يمكنه استخراج كلمات المرور الأصلية بحذف البادئة `hash_`.
 
 **الإصلاح المقترح:**
+
 ```typescript
 import bcrypt from 'bcrypt';
 
@@ -39,6 +42,7 @@ const valid = await bcrypt.compare(password, user.password_hash);
 ---
 
 ### C2: نقص التحقق من المخزون عند إنشاء الطلب (api-server.ts)
+
 **الملف:** `api-server.ts` | **الأسطر:** 587-589
 
 ```typescript
@@ -50,6 +54,7 @@ db.prepare("UPDATE products SET stock = stock - ?, sold_count = sold_count + ? W
 **التأثير:** يمكن للمستخدم طلب كميات تتجاوز المخزون المتاح، مما يؤدي إلى قيم سالبة في قاعدة البيانات.
 
 **الإصلاح المقترح:**
+
 ```typescript
 // التحقق من المخزون أولاً
 const product = db.prepare("SELECT stock FROM products WHERE id = ?").get(item.productId) as { stock: number };
@@ -64,6 +69,7 @@ db.prepare("UPDATE products SET stock = stock - ?, sold_count = sold_count + ? W
 ---
 
 ### C3: عدم استخدام المعاملات (Transactions) في إنشاء الطلب (api-server.ts)
+
 **الملف:** `api-server.ts` | **الأسطر:** 540-596
 
 ```typescript
@@ -79,6 +85,7 @@ for (const item of items) {
 **التأثير:** إذا فشلت أي عملية وسطية، تصبح قاعدة البيانات في حالة غير متناسقة (طلب بدون عناصر، أو مخزون تم خصمه بدون طلب).
 
 **الإصلاح المقترح:**
+
 ```typescript
 const transaction = db.transaction((orderData, items) => {
   const result = db.prepare("INSERT INTO orders ...").run(...orderData);
@@ -97,6 +104,7 @@ const transaction = db.transaction((orderData, items) => {
 ---
 
 ### C4: السماح بتسجيل أي دور (Role) (api-server.ts)
+
 **الملف:** `api-server.ts` | **السطر:** 803
 
 ```typescript
@@ -107,6 +115,7 @@ const { email, password, name, role = "customer" } = req.body;
 **التأثير:** يمكن لأي مستخدم تسجيل حساب بصلاحيات مدير (`role: "admin"`).
 
 **الإصلاح المقترح:**
+
 ```typescript
 const { email, password, name } = req.body;
 const role = "customer"; // الدور ثابت دائماً
@@ -115,6 +124,7 @@ const role = "customer"; // الدور ثابت دائماً
 ---
 
 ### C5: localStorage غير الآمن في AppContext (AppContext.tsx)
+
 **الملف:** `AppContext.tsx` | **الأسطر:** 25، 38-39
 
 ```typescript
@@ -125,6 +135,7 @@ user: JSON.parse(localStorage.getItem('noufex_user') || 'null'),
 **التأثير:** إذا كان localStorage تالفاً، يتعطل التطبيق بالكامل عند التحميل.
 
 **الإصلاح المقترح:**
+
 ```typescript
 function loadUser(): User | null {
   try {
@@ -145,6 +156,7 @@ const initialState: AppState = {
 ---
 
 ### C6: تحديث localStorage داخل Reducer (CartContext.tsx)
+
 **الملف:** `CartContext.tsx` | **السطر:** 55
 
 ```typescript
@@ -159,15 +171,16 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 **التأثير:** Reducer غير نقي (impure) - يسبب side effects. يعطل time-travel debugging وقد يسبب مشاكل في Concurrent Mode.
 
 **الإصلاح المقترح:**
+
 ```typescript
 // استخدام useEffect للتخزين
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initial);
-  
+
   useEffect(() => {
     localStorage.setItem('noufex_cart', JSON.stringify(state.items));
   }, [state.items]);
-  
+
   // ...
 }
 ```
@@ -175,6 +188,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 ---
 
 ### C7: تسريب بيانات المستخدم في استجابة API (api-server.ts)
+
 **الملف:** `api-server.ts` | **الأسطر:** 826-828
 
 ```typescript
@@ -187,6 +201,7 @@ sendSuccess(res, user, "User registered successfully");
 **التأثير:** قد يتم تسريب معلومات حساسة في استجابة التسجيل.
 
 **الإصلاح المقترح:**
+
 ```typescript
 const safeUser = {
   id: result.lastInsertRowid,
@@ -200,6 +215,7 @@ sendSuccess(res, safeUser, "User registered successfully");
 ---
 
 ### C8: مشكلة في ترتيب Hooks (Navbar.tsx)
+
 **الملف:** `Navbar.tsx` | **الأسطر:** 26-36
 
 ```typescript
@@ -212,6 +228,7 @@ const [userOpen, setUserOpen] = useState(false);  // Line 36 - بعد useEffect!
 **التأثير:** يخالف قواعد React (Rules of Hooks). قد يسبب مشاكل غير متوقعة عند إضافة شروط مستقبلية.
 
 **الإصلاح المقترح:**
+
 ```typescript
 export default function Navbar() {
   const { t, i18n } = useTranslation();
@@ -219,7 +236,7 @@ export default function Navbar() {
   const { cartCount } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // جميع الـ hooks في الأعلى
   const [searchQ, setSearchQ] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -228,7 +245,7 @@ export default function Navbar() {
   const [searchCat, setSearchCat] = useState('all');
   const userRef = useRef<HTMLDivElement>(null);
   const catRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {  // ← بعد جميع الـ hooks
     function handleClick(e: MouseEvent) {
       if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
@@ -244,6 +261,7 @@ export default function Navbar() {
 ## 2. المشاكل المتوسطة (Medium) 🟠
 
 ### M1: عدم وجود Rate Limiting (api-server.ts)
+
 **الملف:** `api-server.ts` | **الأسطر:** 29-38
 
 ```typescript
@@ -253,6 +271,7 @@ app.use(express.json({ limit: "10mb" }));
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 import rateLimit from 'express-rate-limit';
 
@@ -269,6 +288,7 @@ app.use('/api/auth/register', authLimiter);
 ---
 
 ### M2: CORS مفتوح بالكامل (api-server.ts)
+
 **الملف:** `api-server.ts` | **السطر:** 30
 
 ```typescript
@@ -276,6 +296,7 @@ app.use(cors());  // ❌ يسمح لأي نطاق
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
@@ -286,6 +307,7 @@ app.use(cors({
 ---
 
 ### M3: محاكاة DOM أثناء الرندر (AppContext.tsx)
+
 **الملف:** `AppContext.tsx` | **الأسطر:** 56-59
 
 ```typescript
@@ -297,15 +319,16 @@ if (typeof document !== 'undefined') {
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  
+
   useEffect(() => {
     document.documentElement.lang = state.lang;
     document.documentElement.dir = state.dir;
   }, [state.lang, state.dir]);
-  
+
   return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 }
 ```
@@ -313,6 +336,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 ---
 
 ### M4: عدم وجود route guards (App.tsx)
+
 **الملف:** `App.tsx` | **جميع Routes
 
 ```tsx
@@ -322,6 +346,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 ```
 
 **الإصلاح المقترح:**
+
 ```tsx
 function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allowedRoles: Role[] }) {
   const { state } = useApp();
@@ -337,6 +362,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allow
 ---
 
 ### M5: صفحة 404 غير موجودة (App.tsx)
+
 **الملف:** `App.tsx` | **آخر Route
 
 ```tsx
@@ -348,6 +374,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: ReactNode; allow
 ---
 
 ### M6: التنقل يستخدم `react-router` بدلاً من `react-router-dom` (App.tsx + جميع الصفحات)
+
 **الملف:** `App.tsx` | **السطر:** 1
 
 ```typescript
@@ -359,6 +386,7 @@ import { Routes, Route } from 'react-router';  // ⚠️ ربما يجب الت�
 ---
 
 ### M7: تحويل `numericId` بدون تحقق (ProductDetail.tsx + StorePage.tsx)
+
 **الملف:** `ProductDetail.tsx` | **السطر:** 34
 
 ```typescript
@@ -368,6 +396,7 @@ const numericId = Number(id);
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 const numericId = Number(id);
 if (isNaN(numericId) || numericId <= 0) {
@@ -383,6 +412,7 @@ if (isNaN(numericId) || numericId <= 0) {
 ---
 
 ### M8: عدد عشوائي في JSX (StorePage.tsx)
+
 **الملف:** `StorePage.tsx` | **السطر:** 269
 
 ```typescript
@@ -391,6 +421,7 @@ value: '+967-' + Math.floor(Math.random() * 9000000 + 1000000)
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 const storePhone = useMemo(() => '+967-' + Math.floor(Math.random() * 9000000 + 1000000), [store?.id]);
 ```
@@ -398,6 +429,7 @@ const storePhone = useMemo(() => '+967-' + Math.floor(Math.random() * 9000000 + 
 ---
 
 ### M9: قسم التصنيفات يعرض أرقام بدل أسماء (StorePage.tsx)
+
 **الملف:** `StorePage.tsx` | **السطر:** 205
 
 ```tsx
@@ -406,6 +438,7 @@ const storePhone = useMemo(() => '+967-' + Math.floor(Math.random() * 9000000 + 
 ```
 
 **الإصلاح المقترح:**
+
 ```tsx
 // استخدام خريطة التصنيفات
 const catName = categories.find(c => c.id === catId)?.name_ar || `Cat ${catId}`;
@@ -415,6 +448,7 @@ const catName = categories.find(c => c.id === catId)?.name_ar || `Cat ${catId}`;
 ---
 
 ### M10: الترقيم الصفحي ثابت (SearchResults.tsx)
+
 **الملف:** `SearchResults.tsx` | **الأسطر:** 377-381
 
 ```tsx
@@ -429,6 +463,7 @@ const catName = categories.find(c => c.id === catId)?.name_ar || `Cat ${catId}`;
 ---
 
 ### M11: `as any` في TypeScript (SearchResults.tsx)
+
 **الملف:** `SearchResults.tsx` | **السطر:** 211
 
 ```typescript
@@ -437,6 +472,7 @@ onChange={e => setSort(e.target.value as any)}
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 onChange={e => setSort(e.target.value as typeof sort)}
 ```
@@ -444,6 +480,7 @@ onChange={e => setSort(e.target.value as typeof sort)}
 ---
 
 ### M12: تحديث المخزن المؤقت (jsonData.ts)
+
 **الملف:** `jsonData.ts` | **الأسطر:** 82-87
 
 ```typescript
@@ -455,6 +492,7 @@ onChange={e => setSort(e.target.value as typeof sort)}
 **التأثير:** البيانات المخزنة مؤقتاً يتم تعديلها، مما يؤثر على المكالمات اللاحقة.
 
 **الإصلاح المقترح:**
+
 ```typescript
 return {
   ...product,
@@ -466,6 +504,7 @@ return {
 ---
 
 ### M13: الـ Timer يستمر بعد انتهاء العد التنازلي (Deals.tsx)
+
 **الملف:** `Deals.tsx` | **الأسطر:** 21-32
 
 ```typescript
@@ -477,6 +516,7 @@ const interval = setInterval(() => {
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 const interval = setInterval(() => {
   const diff = Math.max(0, endTime - Date.now());
@@ -492,6 +532,7 @@ const interval = setInterval(() => {
 ---
 
 ### M14: Lightbox لا يدعم مفتاح Escape (ProductDetail.tsx)
+
 **الملف:** `ProductDetail.tsx` | **الأسطر:** 546-551
 
 ```tsx
@@ -500,6 +541,7 @@ const interval = setInterval(() => {
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 useEffect(() => {
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -515,6 +557,7 @@ useEffect(() => {
 ---
 
 ### M15: محاكاة الـ Reviews تحدث عند كل رندر (ProductDetail.tsx)
+
 **الملف:** `ProductDetail.tsx` | **الأسطر:** 450-460
 
 ```typescript
@@ -526,6 +569,7 @@ useEffect(() => {
 ```
 
 **الإصلاح المقترح:**
+
 ```typescript
 const ratingDistribution = useMemo(() => {
   return [5, 4, 3, 2, 1].map(stars => ({
@@ -538,6 +582,7 @@ const ratingDistribution = useMemo(() => {
 ---
 
 ### M16: إعادة إنشاء المصفوفات عند كل رندر (Home/index.tsx)
+
 **الملف:** `Home/index.tsx` | **الأسطر:** 139-146، 305-310، 551-580
 
 المصفوفات الثابتة التي تعتمد على اللغة يتم إعادة إنشاؤها عند كل رندر. استخدم `useMemo` للتحسين.
@@ -545,6 +590,7 @@ const ratingDistribution = useMemo(() => {
 ---
 
 ### M17: لا يوجد تحقق من صحة المدخلات في API (api-server.ts)
+
 **الملف:** `api-server.ts` | **عدة نقاط
 
 ```typescript
@@ -560,6 +606,7 @@ const { customerId, storeId, items, ... } = req.body;
 ---
 
 ### M18: الصور بدون أبعاد محددة (ProductDetail.tsx + جميع الصفحات)
+
 **الملف:** `ProductDetail.tsx` | **الأسطر:** 135، 161
 
 ```tsx
@@ -574,45 +621,58 @@ const { customerId, storeId, items, ... } = req.body;
 ## 3. المشاكل المنخفضة (Low) 🟡
 
 ### L1: استيراد `Flag` غير مستخدم (ProductDetail.tsx)
+
 **الملف:** `ProductDetail.tsx` | **السطر:** 13
+
 ```typescript
 import { ..., Flag } from 'lucide-react';  // ❌ غير مستخدم
 ```
 
 ### L2: استيراد `useCallback` غير مستخدم كاملاً (Deals.tsx)
+
 **الملف:** `Deals.tsx` | **السطر:** 1
+
 ```typescript
 import { useState, useEffect, useCallback } from 'react';  // useCallback مستخدم ولكن...
 ```
 
 ### L3: استيراد `useMemo` غير مستخدم (SearchResults.tsx)
+
 **الملف:** `SearchResults.tsx` | **السطر:** 1
+
 ```typescript
 import { useState, useEffect, useMemo } from 'react';  // ⚠️ useMemo مستخدم مرة واحدة فقط
 ```
 
 ### L4: مفتاح الترجمة `t('common.search')` ربما غير موجود (SearchResults.tsx)
+
 **الملف:** `SearchResults.tsx` | **السطر:** 155
+
 ```tsx
 <span className="hidden lg:inline">{t('nav.search')}</span>
 ```
 
 ### L5: `CheckSquare` مستورد ولكن غير مستخدم فعلياً في القالب (SearchResults.tsx)
+
 **الملف:** `SearchResults.tsx` | **السطر:** 8
 
 ### L6: القيمة `totalProductCount` تحسب جميع التصنيفات بما فيها الفرعية (Categories.tsx)
+
 **الملف:** `Categories.tsx` | **السطر:** 136
+
 ```typescript
 const totalProductCount = allCategories.reduce((sum, c) => sum + (c.product_count ?? 0), 0);
 // هذا يحسب المنتجات مرتين (التصنيف الرئيسي + الفرعي)
 ```
 
 ### L7: النصوص المختلطة بين i18n والنصوص المباشرة (Home/index.tsx)
+
 **الملف:** `Home/index.tsx` | **عدة مواقع
 
 الصفحة تستخدم مزيجاً غير متسق: أحياناً `t('key')` وأحياناً نصوص مباشرة مع `i18n.language === 'ar'`. يجب توحيد النهج.
 
 ### L8: مكونات SVG مكررة (ProductDetail.tsx + StorePage.tsx)
+
 **الملف:** `ProductDetail.tsx` | **الأسطر:** 557-579
 
 ```tsx
@@ -621,6 +681,7 @@ const totalProductCount = allCategories.reduce((sum, c) => sum + (c.product_coun
 ```
 
 ### L9: `escapeValue: false` في i18n (i18n/index.ts)
+
 **الملف:** `i18n/index.ts` | **السطر:** 17
 
 ```typescript
@@ -630,6 +691,7 @@ interpolation: { escapeValue: false },  // ⚠️ يتطلب التأكد من �
 **ملاحظة:** هذا مقبول إذا كان React يتعامل مع XSS (وهو كذلك)، لكن يجب توثيقه.
 
 ### L10: لا يوجد helmet/security headers (api-server.ts)
+
 **الملف:** `api-server.ts` | **غائب
 
 ```typescript
@@ -640,6 +702,7 @@ interpolation: { escapeValue: false },  // ⚠️ يتطلب التأكد من �
 ```
 
 ### L11: استخدام `console.log` في الإنتاج (api-server.ts)
+
 **الملف:** `api-server.ts` | **السطر:** 36
 
 ```typescript
@@ -648,6 +711,7 @@ console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
 ```
 
 ### L12: لا يوجد معالج لإلغاء الطلبات (useApi.ts)
+
 **الملف:** `useApi.ts` | **الأسطر:** 46-69
 
 ```typescript
@@ -659,11 +723,13 @@ const fetch = useCallback(async () => {
 ```
 
 ### L13: hardcoded pagination pages (SearchResults.tsx)
+
 **الملف:** `SearchResults.tsx` | **الأسطر:** 377-380
 
 أزرار الترقيم الصفحي (1, 2, 3) ثابتة ولا تعمل فعلياً.
 
 ### L14: `className="border-3"` غير قياسي (ProductDetail.tsx + StorePage.tsx)
+
 **الملف:** `ProductDetail.tsx` | **السطر:** 63
 
 ```tsx
@@ -676,6 +742,7 @@ const fetch = useCallback(async () => {
 بعض الملفات تستخدم ألوان مخصصة مثل `[#FF6A00]` بكثرة. يُفضل تعريفها في `tailwind.config.js` كـ `aliOrange` و `aliText` إلخ.
 
 ### L16: `useProducts` تُستدعى بكائنات مختلفة عند كل رندر (Home/index.tsx)
+
 **الملف:** `Home/index.tsx` | **الأسطر:** 85-88
 
 ```typescript
@@ -717,6 +784,7 @@ const { data: dealsResp   } = useProducts({ limit: 4,  sort: 'popular' });
 ## 6. توصيات عامة
 
 ### 6.1 الأمان
+
 1. **استخدم bcrypt** لتجزئة كلمات المرور فوراً
 2. **أضف rate limiting** على جميع نقاط النهاية الحساسة
 3. **حدد CORS origins** في الإنتاج
@@ -725,18 +793,21 @@ const { data: dealsResp   } = useProducts({ limit: 4,  sort: 'popular' });
 6. **استخدم transactions** لجميع العمليات المتعددة الخطوات
 
 ### 6.2 الأداء
+
 1. **غلف `useMemo`** حول جميع الحسابات الثقيلة (distribution, filtering)
 2. **استخدم `React.memo`** للمكونات التي تُعاد كثيراً (DealCard, ProductCard)
 3. **أضف `AbortController`** في hooks لإلغاء الطلبات
 4. **استخدم `useCallback`** للدوال المُمررة كـ props
 
 ### 6.3 جودة الكود
+
 1. **وحّد نهج الترجمة** - استخدم i18n keys فقط بدلاً من الشروط
 2. **أنشئ مكونات مشتركة** للبطاقات المتكررة (ProductCard, DealCard)
 3. **استخرج helpers** المشتركة (getProductName, formatPrice) إلى utils
 4. **أضف اختبارات** للـ hooks والـ reducers
 
 ### 6.4 تجربة المستخدم
+
 1. **أضف صفحة 404** مخصصة
 2. **أضف route guards** للصفحات المحمية
 3. **أصلح الترقيم الصفحي** ليكون ديناميكياً
@@ -759,4 +830,4 @@ const { data: dealsResp   } = useProducts({ limit: 4,  sort: 'popular' });
 
 ---
 
-*تم إعداد هذا التقرير بتاريخ ${new Date().toISOString().split('T')[0]}*
+*تم إعداد هذا التقرير بتاريخ ${new Date().toISOString().split['T'](0)}*

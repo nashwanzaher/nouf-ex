@@ -9,7 +9,11 @@ import fs from 'fs';
 import { PgDb } from './db/pg-wrapper.cts';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import dotenv from 'dotenv';
+// Side-effect import: must run BEFORE shared.cts is loaded,
+// because shared.cts reads process.env.DATABASE_URL at module
+// evaluation time and throws if it is missing. A bare
+// `dotenv.config()` call would run too late (after the imports).
+import 'dotenv/config';
 import {
 	requestId,
 	securityHeaders,
@@ -42,7 +46,11 @@ import { storeFollowersRouter } from './routes/store-followers.cts';
 import { addressesRouter } from './routes/addresses.cts';
 import { messagesRouter } from './routes/messages.cts';
 
-dotenv.config();
+// Note: `import 'dotenv/config'` above already loaded .env.
+// Keep this comment as a marker so future readers know not to
+// re-add the `dotenv.config()` call below — it would be a no-op
+// but the call site order is the whole reason the side-effect
+// import is in place.
 
 // --- Env validation -----------------------------------------------------------
 const env = loadEnv();

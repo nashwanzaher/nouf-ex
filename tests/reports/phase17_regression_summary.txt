@@ -1,0 +1,26 @@
+﻿Nouf-ex E2E Regression Summary
+Generated: 2026-06-27 23:44:25
+────────────────────────────────────────
+Phases OK:    7
+Phases FAIL:  9
+Phases SKIP:  0
+Total PASS:   166
+Total FAIL:   107
+
+Per-phase:
+  [OK] 00 — Health + Auth  pass=0 fail=0
+  [OK] 01 — Profile + Addresses  pass=0 fail=0
+  [OK] 01-R — Profile re-test (strict mode)  pass=0 fail=0
+  [OK] 02 — Public Catalog  pass=42 fail=0
+  [OK] 03 — Search + Filters  pass=24 fail=0
+  [FAIL] 04 — Cart (known issues)  pass=7 fail=19
+  [FAIL] 05 — Orders + Inventory  pass=5 fail=11
+  [FAIL] 06 — Coupons + Discounts  pass=2 fail=10
+  [FAIL] 07 — Payments + Refunds  pass=4 fail=23
+  [FAIL] 08 — Reviews + Ratings  pass=8 fail=12
+  [FAIL] 09 — Wishlist + Store Followers  pass=7 fail=15
+  [FAIL] 12 — 2FA + Backup Codes  pass=14 fail=5
+  [FAIL] 13 — Notifications + Messages  pass=4 fail=10
+  [OK] 14 — Shipping Methods  pass=19 fail=0
+  [FAIL] 15 — Audit Logs  pass=9 fail=2
+  [OK] 16 — Frontend SPA / PWA  pass=21 fail=0

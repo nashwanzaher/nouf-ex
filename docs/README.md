@@ -1,36 +1,101 @@
 # Documentation — Nouf-ex
 
-This directory is the single source of truth for **how the project works**.
-Everything below points into either the live code (`app/`, `docs/`, the
-SQL files) or archived research (`audit/`, `research/`).
+> **Framework:** [Diátaxis](https://diataxis.fr/) — *tutorials · how-to · reference · explanation*
+> **Standards:** [IEEE 829](https://standards.ieee.org/ieee/829/4987/) · [ISO/IEC/IEEE 29119](https://www.iso.org/standard/81291.html) · [ISTQB CTFL](https://www.istqb.org/)
+
+The documentation is split by intent to make navigation intuitive:
+
+| Folder | Intent | Audience |
+|--------|--------|----------|
+| [`architecture/`](architecture/) | **Explanation** — How is the system designed? | New engineers, architects |
+| [`development/`](development/) | **How-to** — How do I develop / build / deploy? | Active contributors |
+| [`planning/`](planning/) | **Strategy** — Where is the project going? | Product, leadership |
+| [`operations/`](operations/) | **How-to** — How do I run it in production? | Operators, SRE |
+| [`testing/`](testing/) | **Reference** — Test program & standards | QA engineers |
+| [`STRUCTURE.md`](STRUCTURE.md) | **Reference** — Repository map | Everyone |
 
 ---
 
-## Start here
+## 🚀 Start Here
 
-- **[Getting Started](getting-started.md)** — prerequisites, install, first run.
-- **[Architecture](architecture.md)** — high-level diagram and component map.
+| You want to … | Read |
+|---------------|------|
+| Get the project running | [`development/getting-started.md`](development/getting-started.md) |
+| Understand the system architecture | [`architecture/overview.md`](architecture/overview.md) |
+| Look up an API endpoint | [`architecture/api.md`](architecture/api.md) |
+| Set up or update the database | [`architecture/database.md`](architecture/database.md) |
+| Contribute code | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| Follow coding conventions | [`development/conventions.md`](development/conventions.md) |
+| Run day-to-day dev workflow | [`development/workflow.md`](development/workflow.md) |
+| Run tests | [`testing/README.md`](testing/README.md) |
+| Build the Docker image | [`operations/docker.md`](operations/docker.md) |
+| See the roadmap | [`planning/roadmap.md`](planning/roadmap.md) |
+| Read competitive analysis | [`planning/competitive-analysis.md`](planning/competitive-analysis.md) |
+| Browse the repository map | [`STRUCTURE.md`](STRUCTURE.md) |
 
-## Operations
+---
 
-- **[Database](database.md)** — connection, env vars, schema overview, `db:setup`.
-- **[Docker](docker.md)** — single-container API image, `host.docker.internal`.
-- **[Testing](testing.md)** — Vitest layout, mocks, conventions.
+## 🗂️ Folder Map
 
-## Development
+```
+docs/
+├── README.md                 ← (this file) — documentation index
+├── STRUCTURE.md              ← repository map
+│
+├── architecture/             ← ⟦Explanation⟧
+│   ├── overview.md
+│   ├── api.md
+│   └── database.md
+│
+├── development/              ← ⟦How-to⟧
+│   ├── getting-started.md
+│   ├── workflow.md
+│   ├── conventions.md
+│
+├── operations/               ← ⟦How-to / Deployment⟧
+│   └── docker.md
+│
+├── planning/                 ← ⟦Strategy⟧
+│   ├── roadmap.md
+│   └── competitive-analysis.md
+│
+├── testing/                  ← ⟦Reference⟧
+│   ├── README.md
+│   ├── PHASE_TEST_TASKS.md
+│   ├── conventions.md
+│   ├── overview.md
+│   ├── standards/
+│   │   ├── IEEE-829.md
+│   │   ├── ISO-29119.md
+│   │   └── ISTQB-CTFL.md
+│   ├── phases/              ← per-PHASE test design specs
+│   └── templates/
+│
+├── audit/                    ← ⟦Historical⟧
+├── research/                 ← ⟦Historical⟧
+├── assets/                   ← images, screenshots
+└── workflows/                ← workflow diagrams
+```
 
-- **[Development](development.md)** — lint, format, type-check, build.
-- **[Conventions](conventions.md)** — code style, i18n, git workflow.
-- **[API Reference](api.md)** — every Express endpoint + payload shape.
+---
 
-## Planning
+## 📚 Standards We Follow
 
-- **[Roadmap](roadmap.md)** — current P0–P3 backlog and recently completed work.
+- **IEEE 829-2008** — Software & System Test Documentation → [`testing/standards/IEEE-829.md`](testing/standards/IEEE-829.md)
+- **ISO/IEC/IEEE 29119** — Software Testing → [`testing/standards/ISO-29119.md`](testing/standards/ISO-29119.md)
+- **ISTQB CTFL v4.0** — Test techniques → [`testing/standards/ISTQB-CTFL.md`](testing/standards/ISTQB-CTFL.md)
+- **Diátaxis** — Documentation framework → <https://diataxis.fr/>
+- **Conventional Commits** — Commit messages
+- **Semantic Versioning** — Version numbers
+- **Keep a Changelog** — CHANGELOG format
 
-## Archive
+---
 
-- **[`audit/`](audit/)** — code audit, extension audit, feature/UX/market reviews.
-- **[`research/`](research/)** — original deep-research notes on Alibaba/Taobao,
-  the original plans (`plan.md`, `plan-fixes.md`), and the Alibaba design
-  study that informed the UI.
-- **[`assets/`](assets/)** — screenshots and product page mockups.
+## 🗄️ Archive
+
+> Files preserved for historical reference (do not link from new content).
+
+- [`audit/`](audit/) — Past code audits, extension audits, reviews.
+- [`research/`](research/) — Original deep-research notes, plans, design study.
+- [`assets/`](assets/) — Screenshots, product page mockups.
+- [`workflows/`](workflows/) — Workflow diagrams.

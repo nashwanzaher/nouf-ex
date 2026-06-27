@@ -113,10 +113,11 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 			initialStatus = 'pending';
 		}
 
-		const result = await db
+		const result = (await db
 			.prepare(
 				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, provider_txn_id, provider_meta, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, NOW(), NOW())`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, NOW(), NOW())
+         RETURNING id`,
 			)
 			.run(
 				order_id,
@@ -126,8 +127,12 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 				method,
 				initialStatus,
 				txnId,
-				providerMeta ? JSON.stringify(providerMeta) : null,
-			);
+				providerMeta ? JSON.stringify(providerMeta) : '{}',
+			)) as { lastInsertRowid: number | null };
+		if (result.lastInsertRowid == null) {
+			return sendError(res, 'Failed to record payment', 500, 'INSERT_FAILED');
+		}
+		const newPaymentId: number = result.lastInsertRowid;
 
 		// Auto-mark as 'paid' only when the provider explicitly returned
 		// accepted=true (real Stripe / Paymob). Stub returns keep the
@@ -157,7 +162,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 		sendSuccess(
 			res,
 			{
-				id: result.lastInsertRowid,
+				id: newPaymentId,
 				status: initialStatus,
 				transaction_id: txnId,
 				redirect_url: redirectUrl,

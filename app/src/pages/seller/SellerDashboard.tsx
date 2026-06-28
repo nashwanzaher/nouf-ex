@@ -12,7 +12,7 @@
  * SellerDashboard.legacy.tsx (not shipped) for reference.
  */
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
 	Package,
@@ -37,7 +37,6 @@ import styles from './SellerDashboard.module.css';
 
 export default function SellerDashboard() {
 	const { t } = useTranslation();
-	const location = useLocation();
 	const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'shipped'>('all');
 	const statusFilter = filter === 'all' ? undefined : filter;
 

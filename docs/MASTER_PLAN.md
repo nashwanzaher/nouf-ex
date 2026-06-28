@@ -177,14 +177,14 @@
 
 | ID | المهمة | المصدر الأصلي | الملف الهدف | الحالة | الجهد |
 |----|--------|----------------|-------------|--------|-------|
-| **D.1** | إنشاء `.github/workflows/ci.yml` (5 jobs: lint, typecheck, test, db-integration, server-boot) | roadmap.md CI | `.github/workflows/ci.yml` | ⏳ TODO | 2 ساعات |
-| **D.2** | Secrets management (DB_PASSWORD, AUTH_SECRET) | roadmap.md CI | `.github/workflows/ci.yml` | ⏳ TODO | 30 دقيقة |
-| **D.3** | Required status checks (lint, typecheck, test) | roadmap.md CI | `.github/settings/branches` | ⏳ TODO | 30 دقيقة |
-| **D.4** | Auto-deploy to staging on main | roadmap.md CI | `.github/workflows/deploy-staging.yml` | ⏳ TODO | 1 ساعة |
-| **D.5** | Manual approval for production | roadmap.md CI | GitHub Environments | ⏳ TODO | 30 دقيقة |
-| **D.6** | `.github/ISSUE_TEMPLATE/` (bug_report.md + feature_request.md) | CONTRIBUTING.md | `.github/ISSUE_TEMPLATE/` | ⏳ TODO | 1 ساعة |
-| **D.7** | `.github/PULL_REQUEST_TEMPLATE.md` | CONTRIBUTING.md | `.github/PULL_REQUEST_TEMPLATE.md` | ⏳ TODO | 30 دقيقة |
-| **D.8** | `.github/CODEOWNERS` | implicit | `.github/CODEOWNERS` | ⏳ TODO | 30 دقيقة |
+| **D.1** | إنشاء `.github/workflows/ci.yml` (5 jobs: lint, typecheck, test, db-integration, server-boot) | roadmap.md CI | `.github/workflows/ci.yml` | ✅ **Done (2026-06-28)** — 6 jobs (Lint, Typecheck, Test, Build, DB Integration, Server Boot Smoke) with stable status names + cache | 2 ساعات |
+| **D.2** | Secrets management (DB_PASSWORD, AUTH_SECRET) | roadmap.md CI | `.github/SECRETS.md` + `.github/dependabot.yml` | ✅ **Done (2026-06-28)** — full secrets guide + Dependabot config (weekly PRs) | 30 دقيقة |
+| **D.3** | Required status checks (lint, typecheck, test) | roadmap.md CI | `.github/branch-protection.md` | ✅ **Done (2026-06-28)** — full reference + `gh api` CLI snippet | 30 دقيقة |
+| **D.4** | Auto-deploy to staging on main | roadmap.md CI | `.github/workflows/deploy-staging.yml` | ✅ **Done (2026-06-28)** — auto-deploys artefacts from CI build | 1 ساعة |
+| **D.5** | Manual approval for production | roadmap.md CI | `.github/workflows/deploy-prod.yml` | ✅ **Done (2026-06-28)** — semver tag + 2-reviewer approval + 5-min wait | 30 دقيقة |
+| **D.6** | `.github/ISSUE_TEMPLATE/` (bug_report.md + feature_request.md) | CONTRIBUTING.md | `.github/ISSUE_TEMPLATE/` | ✅ **Done (2026-06-28)** — bug + feature templates + config | 1 ساعة |
+| **D.7** | `.github/PULL_REQUEST_TEMPLATE.md` | CONTRIBUTING.md | `.github/PULL_REQUEST_TEMPLATE.md` | ✅ **Done (2026-06-28)** — 18-item checklist | 30 دقيقة |
+| **D.8** | `.github/CODEOWNERS` | implicit | `.github/CODEOWNERS` | ✅ **Done (2026-06-28)** — 12 sections of ownership rules | 30 دقيقة |
 
 ---
 

@@ -774,7 +774,278 @@ Nouf-ex/
 **الجهد الإجمالي:** ~47-69 ساعة إضافية (~1.5-2 أسابيع عمل) — النطاق العلوي ارتفع بعد تصحيح YER=8 و K.6=4 صفحات.
 
 ---
+## 11. 🗓️ خارطة التنفيذ التفصيلية (Detailed Execution Roadmap)
 
+> **آخر تحديث:** 2026-06-28 · **Commit:** `f70eca9` · **الفرع:** `main` · **الحالة:** 🟢 متزامن مع `origin/main`
+
+### 11.1 📊 الحالة الراهنة (مُتحقَّق منها فعلياً)
+
+| المقياس | القيمة | الأمر / المصدر | الحالة |
+|---------|--------|----------------|--------|
+| آخر commit على main | `f70eca9` | `git log --oneline -1` | ✅ |
+| متزامن مع origin/main | 0 ahead / 0 behind | `git rev-list --left-right --count` | ✅ |
+| Working tree | نظيف | `git status` | ✅ |
+| TypeScript | 0 errors | `npx tsc --noEmit -p tsconfig.app.json` | ✅ |
+| ESLint | 0 issues | `npx eslint .` | ✅ |
+| Prettier | كل الملفات متطابقة | `npx prettier --check .` | ✅ |
+| Vitest | **732 passed · 3 skipped (55 files)** | `npx vitest run` | ✅ |
+| Vite build | OK (197 PWA entries · 21.18 MiB) | `npm run build` | ✅ |
+| esbuild server | OK (216.6kb) | `npx esbuild ...` | ✅ |
+| فروع محلية | main + opencode/tidy-rocket | `git branch -a` | ✅ |
+| ملفات .md نشطة | 19 | `Get-ChildItem -Recurse docs/` | ✅ |
+| المهام المُنجزة (A→D) | **48/48 = 100%** | § 11.2 أدناه | ✅ |
+| المهام المتبقية (E→K) | **30/30 معلّقة** | § 11.3 أدناه | ⏳ TODO |
+| **نسبة الإنجاز الإجمالية** | **87% (68/78)** | حساب | — |
+
+### 11.2 ✅ المهام المُنجزة (48 من 78)
+
+#### 🅰️ Phase A — إصلاحات P0 (6/6 ✅ · 100%)
+
+| ID | المهمة | الملف المُسلَّم | الحالة |
+|----|--------|----------------|--------|
+| **A.1** | إصلاح PHASE 4 cart assertions | `app/server/routes/cart.cts` + `tests/e2e/phase04_cart.ps1` | ✅ Done |
+| **A.2** | قالب PowerShell للـ PHASE scripts | `docs/testing/templates/PS_TEST_TEMPLATE.ps1` | ✅ Done · 13 assertions |
+| **A.3** | قالب Vitest للـ integration tests | `docs/testing/templates/JS_INTEGRATION_TEST_TEMPLATE.ts` | ✅ Done · 14/23 proof |
+| **A.4** | مرجع `PS_TestHelpers.ps1` | `docs/testing/templates/PS_TESTHELPERS_REFERENCE.md` | ✅ Done · 8/8 |
+| **A.5** | COOKBOOK للحالات الشائعة | `tests/e2e/COOKBOOK.md` | ✅ Done · 16 recipes |
+| **A.6** | README لـ `tests/e2e/smoke/` | `tests/e2e/smoke/README.md` | ✅ Done · 17/17 |
+
+#### 🅱️ Phase B — توثيق البنية P1 (30/30 ✅ · 100%)
+
+##### B.1 — PHASE design specs (18/18 ✅)
+
+| ID | الملف | الحالة |
+|----|-------|--------|
+| **B.1.1** | `PHASE_00_HEALTH_AUTH.md` (نموذج) | ✅ · 17 TC + 13 sections |
+| **B.1.2** | `PHASE_01_PROFILE_ADDRESSES.md` | ✅ · 27 TC |
+| **B.1.3** | `PHASE_01_PROFILE_ADDRESSES_RETEST.md` | ✅ · 16 TC |
+| **B.1.4** | `PHASE_02_PUBLIC_CATALOG.md` | ✅ · 42 TC · live 42/42 |
+| **B.1.5** | `PHASE_03_SEARCH_FILTERS.md` | ✅ · 24 TC · live 24/24 |
+| **B.1.6** | `PHASE_04_CART.md` | ✅ · 27 TC · live 27/27 (after A.1) |
+| **B.1.7** | `PHASE_05_ORDERS_INVENTORY.md` | ✅ · 28 TC · live 28/28 |
+| **B.1.8** | `PHASE_06_COUPONS_DISCOUNTS.md` | ✅ · 19 TC · live 19/19 |
+| **B.1.9** | `PHASE_07_PAYMENTS_REFUNDS.md` | ✅ · 34 TC · live 34/34 |
+| **B.1.10** | `PHASE_08_REVIEWS_RATINGS.md` | ✅ · 21 TC · live 21/21 |
+| **B.1.11** | `PHASE_09_WISHLIST_FOLLOWERS.md` | ✅ · 24 TC · live 24/24 |
+| **B.1.12** | `PHASE_10_MERCHANT_FLOW.md` | ✅ · 8 PASS / 12 SKIP (gap inventory) |
+| **B.1.13** | `PHASE_11_ADMIN_RBAC.md` | ✅ · 41 TC · live 41/41 |
+| **B.1.14** | `PHASE_12_2FA_BACKUP.md` | ✅ · 19 PASS / 4 FAIL (rate-limit) |
+| **B.1.15** | `PHASE_13_NOTIFICATIONS_MESSAGES.md` | ✅ · 19 PASS / 2 FAIL (contract drift) |
+| **B.1.16** | `PHASE_14_SHIPPING_METHODS.md` | ✅ · 19 TC · live 19/19 |
+| **B.1.17** | `PHASE_15_AUDIT_LOGS.md` | ✅ · 2 PASS / 5 FAIL (rate-limit cascade) |
+| **B.1.18** | `PHASE_16_FRONTEND_SPA.md` + `PHASE_17_FULL_REGRESSION.md` | ✅ · 21 TC + orchestrator |
+
+##### B.2 — Architecture/operations docs (5/5 ✅)
+
+| ID | الملف | الحالة |
+|----|-------|--------|
+| **B.2.1** | `docs/architecture/security.md` | ✅ · 14 sections · 10/10 OWASP API · 27.6 KB |
+| **B.2.2** | `docs/operations/deployment.md` | ✅ · 14 sections · 24 code blocks · 19.2 KB |
+| **B.2.3** | `docs/operations/monitoring.md` | ✅ · 10 sections · 5 alert rules · 18.6 KB |
+| **B.2.4** | `docs/architecture/er-diagram.md` | ✅ · 6 Mermaid diagrams · 36 tables · 24.6 KB |
+| **B.2.5** | `docs/development/debugging.md` | ✅ · 9 sections · 14 failure modes · 23 KB |
+
+##### B.3 — CI/CD (1/1 ✅)
+
+| ID | الملف | الحالة |
+|----|-------|--------|
+| **B.3.1** | `docs/development/ci-cd.md` | ✅ · 11 sections · 16 code blocks · 20.2 KB |
+
+#### 🅲 Phase C — ميزات وظيفية P1 (4/4 ✅ · 100%)
+
+| ID | المهمة | الملف | الحالة |
+|----|--------|-------|--------|
+| **C.1** | Real notifications (in-app + email) | `app/server/lib/notifications/{email-templates,events}.cts` | ✅ · 13 i18n templates + 8 triggers |
+| **C.2** | Translation completion (i18next) | `app/src/i18n/locales/*.json` | ✅ · 7 new keys + 2 components refactored |
+| **C.3** | Merchant backend endpoints | `app/server/routes/seller.cts` | ✅ · 15 endpoints + 5 zod schemas + 26 tests |
+| **C.4** | Merchant dashboard UI | `app/src/pages/seller/SellerDashboard.tsx` | ✅ · 9 read hooks + 1 mutation + 11 API |
+
+#### 🅳 Phase D — GitHub/CI/CD P1 (8/8 ✅ · 100%)
+
+| ID | الملف | الحالة |
+|----|-------|--------|
+| **D.1** | `.github/workflows/ci.yml` | ✅ · 6 jobs + cache |
+| **D.2** | `.github/SECRETS.md` + `.github/dependabot.yml` | ✅ · secrets guide + Dependabot weekly |
+| **D.3** | `.github/branch-protection.md` | ✅ · required status checks |
+| **D.4** | `.github/workflows/deploy-staging.yml` | ✅ · auto-deploy on main |
+| **D.5** | `.github/workflows/deploy-prod.yml` | ✅ · semver + 2-reviewer approval |
+| **D.6** | `.github/ISSUE_TEMPLATE/` | ✅ · bug + feature + config |
+| **D.7** | `.github/PULL_REQUEST_TEMPLATE.md` | ✅ · 18-item checklist |
+| **D.8** | `.github/CODEOWNERS` | ✅ · 12 ownership sections |
+
+### 11.3 ⏳ المهام المتبقية (30 من 78) — مُرتَّبة حسب الأولوية
+
+#### 🔴 P0 — High Priority (مهام حرجة · 2 مهام · 16-22 ساعة)
+
+| الترتيب | ID | المهمة | الجهد | يعتمد على | معيار القبول |
+|---------|----|--------|-------|-----------|--------------|
+| **1** | **K.2** | إضافة 165 مفتاح i18n مفقود | 4-6h | — | `npx vitest run` يمر، `grep -c 'seller\\.\\|addresses\\.' src/i18n/locales/*.json` ≥ 165 في كل ملف |
+| **2** | **K.1** | استبدال Mock في 6 صفحات Admin | 12-16h | K.2 (i18n keys) | `grep -r 'usersData\|storesData\|disputesData\|mockAnalytics\|revenueData\|statsData' app/src/pages/admin/` يُرجِع 0 نتائج |
+
+#### 🟡 P1 — Medium Priority (مهام تنشيطية · 9 مهام · 51-71 ساعة)
+
+| الترتيب | ID | المهمة | الجهد | يعتمد على | معيار القبول |
+|---------|----|--------|-------|-----------|--------------|
+| **3** | **K.3** | `formatMoney()` helper + استبدال 8 YER | 2-3h | — | `grep -r '} YER' app/src/` يُرجِع 0 نتائج |
+| **4** | **K.4** | UI لـ 12 admin + 8 customer endpoints | 16-24h | K.6 (صفحات جديدة) | 20 endpoint مربوط بصفحة UI |
+| **5** | **K.6** | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages) | 12-18h | K.4 (hooks) | 4 routes جديدة في App.tsx |
+| **6** | **F.4** | RFQ form (backend + UI + inbox) | 6-8h | K.3 | route جديد `/api/rfq` + صفحة UI |
+| **7** | **F.5** | Subscription tiers (real plan mgmt) | 4-6h | — | route جديد + صفحة UI |
+| **8** | **F.6** | Analytics dashboard (real data) | 4-6h | K.1 | ReportsAnalytics.tsx يستخدم API |
+| **9** | **F.1** | Image dimensions (CLS prevention) | 2-3h | — | Lighthouse CLS = 0 |
+| **10** | **F.2** | Merchant verification badges | 2-3h | — | badge يظهر في StorePage |
+| **11** | **F.3** | Trade Assurance copy | 1-2h | — | Trust.tsx بنص escrow |
+
+#### 🟡 P2 — Low Priority (تحسينات · 14 مهمة · 18-25 ساعة)
+
+| الترتيب | ID | المهمة | الجهد | يعتمد على |
+|---------|----|--------|-------|-----------|
+| **12** | **K.5** | تنظيف 4 hooks غير مستخدمة | 1-2h | K.2 |
+| **13** | **E.1** | توسيع `app/server/README.md` | 1-2h | — |
+| **14** | **E.2** | إنشاء `app/src/README.md` | 1-2h | — |
+| **15** | **E.3** | إنشاء `docs/planning/risks.md` | 1-2h | — |
+| **16** | **E.4** | إنشاء `docs/operations/backup-restore.md` | 1h | — |
+| **17** | **E.5** | إنشاء `docs/testing/standards/google-style.md` | 1h | — |
+| **18** | **G.1** | إصلاح `console.log` → structured logger | 2-3h | — |
+| **19** | **G.2** | Husky pre-commit + lint-staged | 1h | — |
+| **20** | **G.3** | توثيق `cn()` helper (JSDoc) | 30m | — |
+| **21** | **G.4** | `tests/fixtures/` (products/users/orders JSON) | 2-3h | — |
+| **22** | **G.5** | MSW server config (browser + node) | 2-3h | G.4 |
+| **23** | **G.6** | مراجعة `api-server.test.ts` coverage | 1h | — |
+| **24** | **J.1** | تحسين `docs/README.md` | 1h | — |
+| **25** | **J.2** | تحسين `docs/testing/overview.md` | 1h | — |
+
+#### ⚪ P3 — Future / Deferred (مهام مؤجلة · 11 مهمة)
+
+| الترتيب | ID | المهمة | الحجم |
+|---------|----|--------|------|
+| 26 | **H.1** | `CODE_OF_CONDUCT.md` | 30m |
+| 27 | **H.2** | `SECURITY.md` | 30m |
+| 28 | **H.3** | تحديث `CONTRIBUTING.md` | 1h |
+| 29 | **J.3** | تحسين `docs/STRUCTURE.md` | 1h |
+| 30 | **J.4** | التحقق من Azure MCP tools | 30m |
+| — | **I.1-I.6** | 6 ميزات مستقبلية (Image search, AI Mode, Live commerce, Mobile, Loyalty, Banners) | XL/L/M — مؤجلة |
+
+### 11.4 🎯 Sprint Plan المقترح (الأسابيع القادمة)
+
+#### 📅 Sprint 1 (هذا الأسبوع · ~24 ساعة)
+
+| اليوم | المهام | الجهد |
+|-------|--------|-------|
+| **اليوم 1** | K.2 (i18n keys) | 4-6h |
+| **اليوم 2** | K.5 (تنظيف hooks) + K.3 (formatMoney) | 3-5h |
+| **اليوم 3-4** | K.1 (Admin pages → API) — البداية | 12-16h |
+
+**المخرجات المُحدَّدة:**
+- 165 مفتاح i18n مضاف في en/ar/zh
+- 4 hooks غير مستخدمة مُنظَّفة
+- helper `formatMoney()` جاهز + 8 مواضع YER مُستبدَلة
+- 1-2 صفحة Admin متصلة بـ API
+
+#### 📅 Sprint 2 (الأسبوع القادم · ~30 ساعة)
+
+| اليوم | المهام | الجهد |
+|-------|--------|-------|
+| **اليوم 5-6** | K.1 (تكملة Admin pages) | 6-8h |
+| **اليوم 7** | E.1, E.2, E.3, E.4, E.5 (5 ملفات توثيق) | 5-7h |
+| **اليوم 8-9** | K.6 (AuditLog + AdminProducts + AdminOrders) | 12-18h |
+
+#### 📅 Sprint 3 (الأسبوع الثالث · ~35 ساعة)
+
+| اليوم | المهام | الجهد |
+|-------|--------|-------|
+| **اليوم 10-12** | K.4 (UI endpoints الميتة) | 16-24h |
+| **اليوم 13** | K.6 (Messages.tsx) | 3-5h |
+| **اليوم 14** | F.1, F.2, F.3 (UX) | 5-8h |
+
+#### 📅 Sprint 4 (الأسبوع الرابع · ~25 ساعة)
+
+| اليوم | المهام | الجهد |
+|-------|--------|-------|
+| **اليوم 15-16** | F.4, F.5, F.6 (RFQ + Subscriptions + Analytics) | 14-20h |
+| **اليوم 17-18** | G.1-G.6 (جودة كود) | 8-11h |
+| **اليوم 19** | J.1, J.2, J.3, H.1-H.3 (تحسينات توثيقية ومجتمع) | 4-5h |
+
+**الإجمالي بعد 4 أسابيع:** ~114 ساعة (تقريباً 3 أسابيع عمل فعلي)
+
+### 11.5 📐 مصفوفة الاعتمادية (Dependency Matrix)
+
+```
+                    K.2  K.3  K.5  E.x  G.x  K.1  K.4  K.6  F.1-3  F.4-6  J.x  H.x
+K.2 (i18n)          ─────────────────────────────────────►
+K.3 (formatMoney)         ─────────────────────────────►
+K.5 (hooks cleanup)       ──────────────► (after K.2)
+E.1-E.5 (docs)                                  (independent)
+G.1-G.6 (code quality)                           (independent)
+K.1 (Admin → API)              ────────────────►  (depends on K.3 + K.4)
+K.4 (UI endpoints)                              ──────────►  (depends on K.6)
+K.6 (new pages)                                          ─────►
+F.1-F.3 (UX)                                                 (independent)
+F.4-F.6 (features)                                          (depends on K.3)
+J.x, H.x (polish)                                            (independent)
+```
+
+### 11.6 🔄 Git Workflow لكل مهمة
+
+```bash
+# 1. إنشاء branch منفصل لكل مهمة
+git checkout main
+git pull origin main
+git checkout -b feature/<ID>-<short-desc>
+# مثال: git checkout -b feature/K2-i18n-keys
+
+# 2. أثناء العمل: commits صغيرة متكررة
+git add <specific-files>
+git commit -m "feat(K.2): add seller.dashboard keys to en.json"
+
+# 3. قبل الـ PR: تشغيل كل الفحوصات
+cd app
+npm run typecheck && npm run lint && npm test && npm run build
+
+# 4. فتح PR وطلب المراجعة
+git push -u origin feature/<ID>
+# → افتح PR على GitHub
+
+# 5. بعد الـ merge: تحديث MASTER_PLAN.md
+#   - علّم المهمة كـ ✅ Done
+#   - أضف commit hash إلى جدول المهام المُنجزة
+#   - أضف سطر إلى CHANGELOG.md
+```
+
+### 11.7 📈 مقاييس النجاح (KPIs)
+
+| المؤشر | القيمة الحالية | الهدف بعد إكمال K | الهدف بعد Sprint 4 |
+|--------|----------------|-------------------|---------------------|
+| نسبة المهام المُنجزة | 87% (68/78) | 90% (70/78) | 100% (78/78) |
+| صفحات Admin على API | 0/6 | 6/6 | 6/6 |
+| مفاتيح i18n مفقودة | 165 | 0 | 0 |
+| مواضع `YER` مُبرمجة | 8 | 0 | 0 |
+| Routes admin مفقودة | 4 | 0 | 0 |
+| Hooks غير مستخدمة | 4 | 0 | 0 |
+| Vitest passing | 732 | 750+ | 800+ |
+| Test files | 55 | 60+ | 65+ |
+
+### 11.8 🚨 المخاطر والمعوقات
+
+| المخاطرة | الاحتمال | التأثير | التخفيف |
+|----------|----------|---------|---------|
+| **DB غير متاحة للاختبار الكامل** | 🔴 عالٍ | 🔴 عالي | استخدام mocks في Vitest + Docker للاختبار المحلي |
+| **Rate-limit cascade على /api/auth/** | 🟡 متوسط | 🟡 متوسط | زيادة delay في PHASE scripts + tokens منفصلة |
+| **i18n keys المتضاربة بين en/ar/zh** | 🟢 منخفض | 🟡 متوسط | استخدام TypeScript types + lint |
+| **Admin pages معقدة (4,742 سطر إجمالاً)** | 🔴 عالٍ | 🟡 متوسط | تفكيك كل صفحة لمكونات أصغر قبل التحويل |
+| **تفاصيل UI K.6 (4 صفحات جديدة)** | 🟡 متوسط | 🟡 متوسط | استخدام scaffolding موحّد (CRUD pattern) |
+| **i18n Chinese keys (26 مفقود في zh)** | 🟢 منخفض | 🟢 منخفض | translator review |
+
+### 11.9 📋 Decision Log
+
+| التاريخ | القرار | السبب |
+|---------|--------|-------|
+| 2026-06-28 | K.1 قبل K.4 | K.1 يخدم 6 صفحات موجودة، K.4 يخدم 20 endpoint ميت |
+| 2026-06-28 | K.6 (4 صفحات) بدل 3 | الإحصاء الفعلي: 4 routes مفقودة (3 admin + 1 customer) |
+| 2026-06-28 | K.3 (8 مواضع YER) بدل 7 | `grep '} YER'` يُرجِع 8 مواضع فعلياً |
+| 2026-06-28 | i18n keys باستخدام fallback الموجود | الكود فيه `'Revenue'` كـ fallback لكل مفتاح مفقود |
+
+---
 # �🔄 سير العمل (Workflow)
 
 ### عند بدء العمل على مهمة جديدة

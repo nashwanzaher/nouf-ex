@@ -13,14 +13,15 @@
 | المقياس | القيمة | المصدر | الحالة |
 |---------|--------|--------|--------|
 | **ملفات .md** | **41** (19 نشط + 22 أرشيف) | `Get-ChildItem -Recurse -Filter *.md` | ✅ |
-| **مهام فريدة** | **72** (بدون تكرار، بعد التدقيق) | بعد إزالة 30+ تكرار من 102 خام | ✅ |
+| **مهام فريدة** | **72** (A→J) + **6 جديدة** (Phase K — Gap Remediation) = **78** | مراجعة UI/API/DB 2026-06-28 | ✅ |
 | **منجزة** | **17 PHASES** (94% من 18) | PHASE 0–3، 5–17 + 01-R | ✅ |
 | **قيد التنفيذ** | **1 PHASE** (PHASE 4) | 20/27 assertions passing | 🔄 |
 | **فجوات توثيقية** | **15** (6 P0 + 7 P1 + 2 P2) | docs/testing/ | ⏳ TODO |
 | **ميزات وظيفية مفقودة** | **14** (4 P1 + 6 P2 + 4 P3) | roadmap.md | ⏳ TODO |
+| **فجوات UI/API/DB (جديد)** | **6 مهام Phase K** (47-67 ساعة) | § "مراجعة الفجوات UI ↔ Server ↔ DB" أدناه | ⏳ TODO |
 | **إصلاحات (Bugfixes)** | **3** | RETURNING id، provider_meta، dotenv order | ✅ |
 | **Git remote** | github.com/nashwanzaher/nouf-ex | `git remote -v` | ✅ |
-| **آخر commit** | 8c80564 | `git log --oneline -1` | ✅ |
+| **آخر commit** | 01d491e | `git log --oneline -1` | ✅ |
 | **حجم هذه الوثيقة** | محدّث عند كل تعديل | `Get-Item` | ✅ |
 
 > **مفتاح الحالات:** ⏳ TODO (لم يبدأ) · 🔄 In Progress (قيد العمل) · ✅ Done (منجز) · ⚠️ Partial (جزئي) · ❌ غير موجود · ❓ غير مؤكد
@@ -480,7 +481,248 @@ Nouf-ex/
 
 ---
 
-# 🔄 سير العمل (Workflow)
+# � مراجعة الفجوات UI ↔ Server ↔ DB
+
+> **تاريخ الإضافة:** 2026-06-28
+> **المصدر:** تحليل آلي لـ 49 صفحة UI + 74 route في السيرفر + 29 جدول DB + 3 ملفات locale
+> **الحالة:** ⏳ TODO — يجب معالجتها قبل اعتبار الكود "production-ready"
+
+## 1. 📊 ملخص الفجوات (Gap Summary)
+
+| الفئة | العدد | الخطورة | الحالة |
+|-------|-------|---------|--------|
+| **صفحات Admin على Mock Data** | 6 صفحات (~4,800 سطر) | 🔴 HIGH | ⏳ TODO |
+| **مفاتيح i18n مفقودة في en.json** | 171 مفتاح | 🔴 HIGH | ⏳ TODO |
+| **مفاتيح مفقودة في الثلاث locales** | 165 مفتاح | 🔴 HIGH | ⏳ TODO |
+| **عملة YER مُبرمجة (hardcoded)** | 5+ مواضع | 🟡 MEDIUM | ⏳ TODO |
+| **endpoints في السيرفر غير مُستخدمة في UI** | 35 endpoint | 🟡 MEDIUM | ⏳ TODO |
+| **endpoints UI تستدعيها لكن السيرفر لا يوفّرها** | 0 (regex false positives فقط) | 🟢 NONE | ✅ |
+| **hooks غير مُستخدمة** | 4 hooks | 🟡 MEDIUM | ⏳ TODO |
+| **endpoints لا routes لها في React Router** | 2 مسارات | 🟡 MEDIUM | ⏳ TODO |
+
+---
+
+## 2. 🔴 HIGH — صفحات Admin ما زالت على Mock Data
+
+> **المشكلة:** 6 صفحات Admin بحجم 4,800+ سطر معرّفة بالكامل لكن **بدون أي استدعاء API حقيقي** — كلها تستهلك `usersData` / `storesData` / `disputesData` المُعرّفة محلياً.
+
+| # | الصفحة | الملف | الأسطر | الـ Mock Object | الـ API المطلوب |
+|---|--------|-------|--------|---------------|----------------|
+| 1 | **UsersManagement** | [app/src/pages/admin/UsersManagement.tsx](app/src/pages/admin/UsersManagement.tsx) | 768 | `usersData[]` (L46) | `GET /api/admin/users`, `PATCH /api/admin/users/:id` |
+| 2 | **StoresManagement** | [app/src/pages/admin/StoresManagement.tsx](app/src/pages/admin/StoresManagement.tsx) | 802 | `storesData[]` | `GET /api/admin/stores`, `PATCH /api/admin/stores/:id` |
+| 3 | **AdminDashboard** | [app/src/pages/admin/AdminDashboard.tsx](app/src/pages/admin/AdminDashboard.tsx) | 1,332 | `dashboardData{}` | `GET /api/admin/stats` |
+| 4 | **AdminOverview** | [app/src/pages/admin/AdminOverview.tsx](app/src/pages/admin/AdminOverview.tsx) | 593 | `mockAnalytics{}`, `mockActivity[]` | `GET /api/admin/stats` |
+| 5 | **DisputesManagement** | [app/src/pages/admin/DisputesManagement.tsx](app/src/pages/admin/DisputesManagement.tsx) | 777 | `disputesData[]` | `GET /api/admin/disputes`, `PATCH /api/admin/disputes/:id` |
+| 6 | **ReportsAnalytics** | [app/src/pages/admin/ReportsAnalytics.tsx](app/src/pages/admin/ReportsAnalytics.tsx) | 718 | `revenueData[]` | `GET /api/admin/stats` |
+
+**الإجراء:**
+- **مهمة جديدة:** `K.1` — استبدال Mock Data في 6 صفحات Admin بـ `useAdmin*` hooks
+- **الجهد:** 12-16 ساعة (مقسمة على 6 صفحات)
+- **الأولوية:** 🔴 P0 — يحظر اعتبار الواجهة "production-ready"
+
+---
+
+## 3. 🔴 HIGH — مفاتيح i18n مفقودة (171 مفتاح)
+
+> **المشكلة:** الكود يستدعي `t('seller.dashboard.kpi.revenue', ...)` بـ fallback إنجليزي، لكن **مفتاح `seller.dashboard.*` غير موجود في أي ملف locale**. النتيجة: المستخدم العربي/الصيني يرى fallback بالإنجليزية.
+
+### 3.1 الإحصائيات
+
+| الملف | عدد المفاتيح المُعرّفة | مفقودة من الكود | حالة |
+|-------|------------------------|----------------|------|
+| `en.json` | 828 | **171 مفقود** | 🟡 |
+| `ar.json` | 970 | 1 مفقود فقط (`categories.ui.sortLabel`) | 🟢 |
+| `zh.json` | 895 | 26 مفقود (`admin.adminName`, `admin.adminPanel`, ...) | 🟡 |
+| **في الثلاثة معاً** | — | **165 مفتاح** | 🔴 |
+
+### 3.2 أهم المجموعات المفقودة
+
+| Namespace | العدد | أمثلة | الأولوية |
+|-----------|------|------|---------|
+| `seller.dashboard.*` | 12 | `kpi.revenue`, `kpi.lowStock`, `noStore`, `recentOrders`, `restock` | 🔴 C.4 |
+| `seller.*` (Product wizard) | 64 | `barcodeLabel`, `categoryLabel`, `dragImagesHere`, `stepBasics`, `stepImages`, `stepPricing`, `stepReview`, `stepShipping`, `stepVariants`, `publishProduct` | 🔴 C.4 |
+| `seller.*` (Orders page) | 18 | `searchOrderPlaceholder`, `printInvoice`, `changeStatus`, `timeline` | 🔴 C.4 |
+| `seller.*` (Analytics page) | 14 | `dailyOrders`, `monthlyRevenue`, `peakHours`, `trafficSources`, `geographicDistribution` | 🔴 C.4 |
+| `addresses.*` | 21 | `addNew`, `building`, `city`, `district`, `governorate`, `setAsDefault` | 🔴 Customer |
+| `nav.*` | 5 | `imageSearch`, `rfq`, `save`, `topBar`, `tradeAssurance` | 🟡 |
+| `product.badge.*` | 2 | `bestseller`, `new` | 🟡 |
+| `home.tradeAssurance` | 1 | (home page) | 🟡 |
+| `search.ui.*` | 4 | `compareAdd`, `compareRemove`, `viewGrid`, `viewList` | 🟡 |
+| `errors.notFound.*` | 2 | `title`, `desc` | 🟢 |
+| `lang.` (مسار فارغ!) | 1 | `t('lang.')` — يبدو bug في الكود | 🔴 Bug |
+
+### 3.3 الإجراء
+
+- **مهمة جديدة:** `K.2` — إضافة 165 مفتاح i18n مفقود في en.json/ar.json/zh.json
+- **النهج:** استخدام fallback الموجود في الكود (`t('seller.dashboard.kpi.revenue', 'Revenue')` ← 'Revenue' هو النص الإنجليزي للـ fallback)
+- **الجهد:** 4-6 ساعات
+- **الأولوية:** 🔴 P0
+
+---
+
+## 4. 🟡 MEDIUM — عملة YER مُبرمجة في الواجهة
+
+> **المشكلة:** الكود يفترض أن العملة هي `YER` (ريال يمني) في 5+ مواضع. هذا يمنع التوسع لعملات أخرى.
+
+| الملف | السطر | الكود الحالي |
+|------|------|------------|
+| [Checkout.tsx](app/src/pages/Checkout.tsx) | 649 | `{subtotal.toLocaleString()} YER` |
+| [Checkout.tsx](app/src/pages/Checkout.tsx) | 657 | `{shipping.toLocaleString()} YER` |
+| [Checkout.tsx](app/src/pages/Checkout.tsx) | 664 | `− {discount.toLocaleString()} YER` |
+| [Checkout.tsx](app/src/pages/Checkout.tsx) | 673 | `{total.toLocaleString()} YER` |
+| [SellerDashboard.tsx](app/src/pages/seller/SellerDashboard.tsx) | ~206 | `+ ' YER'` (داخل `KpiCard`) |
+| [SellerDashboard.tsx](app/src/pages/seller/SellerDashboard.tsx) | ~290 | `{order.total.toLocaleString()} YER` |
+| [SellerDashboard.tsx](app/src/pages/seller/SellerDashboard.tsx) | ~348 | `{product.price.toLocaleString()} YER` |
+
+### الإصلاح المقترح
+
+1. إضافة `currency` enum (`'YER'` افتراضياً) إلى schema `Order` و `Product` و `Store`
+2. إنشاء helper `formatMoney(amount, currency = 'YER', locale = 'ar')` في `app/src/lib/format.ts`
+3. استبدال كل `' YER'` بـ `{formatMoney(amount)}`
+
+### الإجراء
+
+- **مهمة جديدة:** `K.3` — إنشاء `formatMoney()` helper + استبدال 7 مواضع
+- **الجهد:** 2-3 ساعات
+- **الأولوية:** 🟡 P1
+
+---
+
+## 5. 🟡 MEDIUM — Server Routes غير مُستخدمة في UI (35 endpoint)
+
+> **المشكلة:** السيرفر يوفّر 35 route لا تستخدمها أي صفحة UI حالياً. بعضها قد يكون ميتاً (dead code)، بعضها قد يحتاج UI مرافق.
+
+### 5.1 Routes الـ Admin (12) — UI تحتاجها لكن لا تستدعيها
+
+| الـ Route | الحالة | التوصية |
+|---------|------|--------|
+| `GET /api/admin/users` | ✅ server: `admin.cts:46` | يحتاج UI: UsersManagement |
+| `GET /api/admin/stores` | ✅ `admin.cts:95` | يحتاج UI: StoresManagement |
+| `GET /api/admin/products` | ✅ `admin.cts:149` | يحتاج UI: AdminProducts (غير موجودة!) |
+| `GET /api/admin/orders` | ✅ `admin.cts:218` | يحتاج UI: AdminOrders (غير موجودة!) |
+| `GET /api/admin/disputes` | ✅ `admin.cts:274` | يحتاج UI: DisputesManagement |
+| `GET /api/admin/audit-log` | ✅ `admin.cts:320` | ⚠️ بدون UI — AuditLog page مفقود |
+| `GET /api/admin/stats` | ✅ `admin.cts:378` | يحتاج UI: AdminOverview, ReportsAnalytics |
+| `PATCH /api/admin/users/:id` | ✅ `admin.cts:455` | يحتاج UI: UsersManagement |
+| `PATCH /api/admin/stores/:id` | ✅ `admin.cts:500` | يحتاج UI: StoresManagement |
+| `PATCH /api/admin/orders/:id/status` | ✅ `admin.cts:537` | يحتاج UI: AdminOrders (مفقود!) |
+| `PATCH /api/admin/products/:id` | ✅ `admin.cts:571` | يحتاج UI: AdminProducts (مفقود!) |
+| `PATCH /api/admin/disputes/:id` | ✅ `admin.cts:607` | يحتاج UI: DisputesManagement |
+
+### 5.2 Routes الـ Customer (15) — ميتة أو محدودة
+
+| الـ Route | الحالة |
+|---------|------|
+| `GET /api/cart/:userId`, `GET /api/cart/count/:userId` | ⚠️ محدود (Frontend يستخدم CartContext محلي) |
+| `DELETE /api/cart/clear/:userId` | ⚠️ Checkout.tsx فقط |
+| `GET /api/categories/:slug` | ⚠️ Categories.tsx لا يستدعيه |
+| `GET /api/search` | ❌ SearchResults.tsx يستخدم `useProducts(filters)` بدل ذلك |
+| `GET /api/payments/methods` | ❌ لا UI |
+| `POST /api/payments/webhook/:method` | ✅ webhook فقط (لا يحتاج UI) |
+| `GET /api/payments/order/:orderId` | ❌ لا UI |
+| `POST /api/coupons/redeem` | ❌ لا UI (Checkout يستخدم validate فقط) |
+| `GET /api/store-followers/check` | ❌ لا UI |
+| `GET /api/messages/{inbox,sent,conversation,unread-count}` | ❌ لا UI (صفحة Messages مفقودة) |
+| `PUT /api/messages/:id/read` | ❌ لا UI |
+| `GET /api/auth/2fa/{setup,enable,verify,disable}` | ❌ UI 2FA مفقود (Authentication.tsx) |
+| `POST /api/auth/change-password` | ❌ لا UI (موجود في backend فقط) |
+
+### 5.3 الإجراء
+
+- **مهمة جديدة:** `K.4` — إنشاء UI لـ 12 admin endpoints + 8 customer endpoints
+- **تحديد الأولوية:** admin endpoints (مكتمل السيرفر) = P1، customer = P2
+- **الجهد:** 16-24 ساعة
+
+---
+
+## 6. 🟢 NONE — endpoints UI تستدعيها لكن السيرفر لا يوفّرها
+
+> **النتيجة:** التحليل الآلي أظهر 9 endpoints "مفقودة" لكن كلها كانت false positives بسبب regex لا يدعم template literals. بعد التحقق اليدوي:
+> - `/refunds/:id/resolve` → **موجود** في `server/routes/refunds.cts:78` ✅
+> - `/cart/clear/:id` → موجود كـ `/cart/clear/:userId` ✅
+> - `/categories/:id` → موجود كـ `/categories/:slug` ✅
+> - الباقي مشابه
+
+**الإجراء:** لا حاجة لإصلاح.
+
+---
+
+## 7. 🟡 MEDIUM — Hooks غير مُستخدمة (4 hooks)
+
+> **المشكلة:** `app/src/hooks/useApi.ts` يُصدّر 30+ hook، لكن 4 منها لا تستخدمها أي صفحة UI:
+
+| الـ Hook | البديل المُستخدم | ملاحظة |
+|---------|------------------|-------|
+| `useUsers()` | لا شيء (يستخدم `/data/users.json` فقط) | ⚠️ فقط في tests |
+| `useFeaturedProducts()` | `useProducts({featured: true})` في Deals.tsx | 🔄 يمكن توحيد |
+| `useDeals()` | `useProducts({limit: 100})` في Deals.tsx | 🔄 يمكن توحيد |
+| `useShippingMethods()` | ✅ مُستخدم في Checkout | ✅ |
+| `useUserAddresses()` | غير مستخدم في UI (Addresses.tsx يستخدم `useState`) | 🔄 |
+| `usePlaceOrder()` | ❌ غير مستخدم | 🔄 |
+| `useCouponValidation()` | ✅ Checkout | ✅ |
+
+### الإجراء
+
+- **مهمة جديدة:** `K.5` — تنظيف 4 hooks غير مُستخدمة (إما استخدامها أو إزالتها)
+- **الجهد:** 1-2 ساعة
+- **الأولوية:** 🟡 P2
+
+---
+
+## 8. 🟡 MEDIUM — مسارات React Router بدون صفحة (2 مسارات)
+
+> **المشكلة:** `App.tsx` يعرّف 23 route لكن:
+
+| الـ Route | المكوّن | المشكلة |
+|---------|--------|---------|
+| `/customer/messages` | ❌ غير موجود في App.tsx | ✅ مغطى (لا route = لا صفحة) |
+| `/customer/notifications` | ✅ موجود (→ Notifications.tsx) | ✅ |
+| `/admin/audit-log` | ❌ غير موجود | 🔴 يحتاج إنشاء AuditLog.tsx |
+| `/admin/products` | ❌ غير موجود | 🔴 AdminProducts.tsx مفقود |
+| `/admin/orders` | ❌ غير موجود | 🔴 AdminOrders.tsx مفقود |
+
+### الإجراء
+
+- **مهمة جديدة:** `K.6` — إنشاء 3 صفحات Admin (AuditLog, AdminProducts, AdminOrders)
+- **الجهد:** 12-16 ساعة
+- **الأولوية:** 🟡 P1
+
+---
+
+## 9. ✅ المهام الجديدة المستخلصة من المراجعة (K.1 → K.6)
+
+> **الـ Prefix:** `K.` (جديد) — Phase K مُخصّص لـ "Gap Remediation"
+
+| ID | المهمة | الجهد | الأولوية | الحالة |
+|----|--------|-------|---------|--------|
+| **K.1** | استبدال Mock Data في 6 صفحات Admin بـ API حقيقي | 12-16 ساعة | 🔴 P0 | ⏳ TODO |
+| **K.2** | إضافة 165 مفتاح i18n مفقود في en.json/ar.json/zh.json | 4-6 ساعات | 🔴 P0 | ⏳ TODO |
+| **K.3** | إنشاء `formatMoney()` helper + استبدال 7 مواضع hardcoded YER | 2-3 ساعات | 🟡 P1 | ⏳ TODO |
+| **K.4** | إنشاء UI لـ 12 admin endpoints + 8 customer endpoints | 16-24 ساعة | 🟡 P1 | ⏳ TODO |
+| **K.5** | تنظيف 4 hooks غير مُستخدمة (useUsers, useFeaturedProducts, useDeals, usePlaceOrder) | 1-2 ساعة | 🟡 P2 | ⏳ TODO |
+| **K.6** | إنشاء 3 صفحات Admin (AuditLog, AdminProducts, AdminOrders) | 12-16 ساعة | 🟡 P1 | ⏳ TODO |
+| **المجموع (K)** | **6 مهام** | **47-67 ساعة** | — | ⏳ TODO |
+
+---
+
+## 10. 📋 ترتيب التنفيذ المقترح
+
+> **القاعدة:** مثل Phase A، الترتيب حسب (الأولوية + الاعتمادية).
+
+| الترتيب | ID | المهمة | يعتمد على |
+|---------|-----|--------|-----------|
+| 1 | **K.2** | إضافة مفاتيح i18n | — |
+| 2 | **K.5** | تنظيف hooks | K.2 (يحذف `useUsers` من tests) |
+| 3 | **K.1** | استبدال Mock بـ API | K.4 (يوفّر الـ hooks) |
+| 4 | **K.3** | formatMoney helper | K.1 (يستخدمه في صفحات Admin) |
+| 5 | **K.4** | UI للـ endpoints الميتة | K.6 |
+| 6 | **K.6** | صفحات Admin جديدة | — |
+
+**الجهد الإجمالي:** ~47-67 ساعة إضافية (~1.5-2 أسابيع عمل).
+
+---
+
+# �🔄 سير العمل (Workflow)
 
 ### عند بدء العمل على مهمة جديدة
 

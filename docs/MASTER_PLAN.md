@@ -149,7 +149,7 @@
 | ID | المهمة | المصدر الأصلي | الملف الهدف | الحالة | الجهد |
 |----|--------|----------------|-------------|--------|-------|
 | **B.2.1** | security.md (Threat model + RBAC + CSP + secrets) | PHASE_TEST_TASKS.md gap #3 | `docs/architecture/security.md` | ✅ **Done (2026-06-28)** — 14 sections, 10/10 OWASP API risks, 158 table rows · 27.6 KB | 2-3 ساعات |
-| **B.2.2** | deployment.md (production checklist + nginx + SSL) | PHASE_TEST_TASKS.md gap #4 | `docs/operations/deployment.md` | ⏳ TODO | 2-3 ساعات |
+| **B.2.2** | deployment.md (production checklist + nginx + SSL) | PHASE_TEST_TASKS.md gap #4 | `docs/operations/deployment.md` | ✅ **Done (2026-06-28)** — 14 sections, 24 code blocks · 19.2 KB | 2-3 ساعات |
 | **B.2.3** | monitoring.md (JSON logs + metrics + alerts) | PHASE_TEST_TASKS.md gap #5 | `docs/operations/monitoring.md` | ⏳ TODO | 1-2 ساعة |
 | **B.2.4** | er-diagram.md (Mermaid ERD لـ 29 جدول) | PHASE_TEST_TASKS.md gap #6 | `docs/architecture/er-diagram.md` | ⏳ TODO | 1-2 ساعة |
 | **B.2.5** | debugging.md (common patterns + reset utilities) | PHASE_TEST_TASKS.md gap #8 | `docs/development/debugging.md` | ⏳ TODO | 1 ساعة |

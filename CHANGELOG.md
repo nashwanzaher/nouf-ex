@@ -25,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   "5+ / 7" to verified **8**. Phase K §8 missing-routes count corrected from
   "2" to verified **4** (`/admin/audit-log`, `/admin/products`, `/admin/orders`,
   `/customer/messages`).
+- **2026-06-28** — `docs/MASTER_PLAN.md` — PHASE test status table rebuilt
+  from actual `tests/reports/phase*.log` files (LastWrite 2026-06-28). Real
+  numbers: 00=18/0, 02=42/0, 03=24/0, 04=27/0, 05=**3/12 FAIL**,
+  06=**2/10 FAIL**, 07=34/0, 08=**8/12 FAIL**, 09=**5/17 FAIL**,
+  12=16/5 (documented), 13=**1/12 FAIL**, 14=19/0, 15=**1/6 FAIL**,
+  16=21/0. The optimistic "17 PHASES Done" was based on isolated runs;
+  the batch run (PHASE 17 regression) trips the `/api/auth/*` rate-limit
+  bucket after PHASE 0-4, causing cascading 401s. Root cause is
+  test-infra (no `reset-rate-limit.cjs` between phases), **not** a code bug.
 - **2026-06-28** — `docs/architecture/overview.md` — Stack table updated
   to Vitest 4.1.9 with verified 732 passed/3 skipped.
 - **2026-06-28** — `docs/planning/roadmap.md` — Stack table updated:

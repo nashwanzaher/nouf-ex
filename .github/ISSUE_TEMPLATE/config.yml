@@ -1,0 +1,17 @@
+# Nouf-ex — GitHub Issue template chooser
+# D.6 in MASTER_PLAN.md.
+# When a user clicks "New Issue" on GitHub, they will be prompted to
+# choose between the templates defined in this directory.
+
+blank_issues_enabled: false   # we require a template for every issue
+contact_links:
+  - name: 💬 Discussions (general Q&A)
+    url: https://github.com/nashwanzaher/nouf-ex/discussions
+    about: Use GitHub Discussions for general questions, ideas, or feedback.
+  - name: 🔒 Security issues
+    url: https://github.com/nashwanzaher/nouf-ex/security/advisories/new
+    about: For SECURITY bugs (BOLA, BFLA, BOPLA) please use GitHub's
+      private security advisory system. Do NOT file a public issue.
+  - name: 📚 Documentation
+    url: https://github.com/nashwanzaher/nouf-ex/tree/main/docs
+    about: Read the canonical documentation in /docs.

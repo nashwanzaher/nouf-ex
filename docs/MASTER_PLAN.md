@@ -158,7 +158,7 @@
 
 | ID | المهمة | المصدر الأصلي | الملف الهدف | الحالة | الجهد |
 |----|--------|----------------|-------------|--------|-------|
-| **B.3.1** | ci-cd.md (GitHub Actions strategy + secrets + stages) | PHASE_TEST_TASKS.md gap #7 | `docs/development/ci-cd.md` | ⏳ TODO | 1-2 ساعة |
+| **B.3.1** | ci-cd.md (GitHub Actions strategy + secrets + stages) | PHASE_TEST_TASKS.md gap #7 | `docs/development/ci-cd.md` | ✅ **Done (2026-06-28)** — 11 sections, 16 code blocks · 20.2 KB | 1-2 ساعة |
 
 ---
 

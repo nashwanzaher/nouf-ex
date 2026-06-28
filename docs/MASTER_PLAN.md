@@ -169,7 +169,7 @@
 | **C.1** | Real notifications (in-app + email opt-in) | roadmap.md P1-7 | `app/server/lib/notifications/{email-templates,events}.cts` | ✅ **Done (2026-06-28)** — 13 i18n templates + 8 event triggers + 37 unit tests · +1,152 lines | 4-6 ساعات |
 | **C.2** | Translation completion (i18next — استخراج كل `lang === 'ar' ? 'X' : 'Y'`) | roadmap.md P1-8 | `app/src/i18n/locales/*.json` | ✅ **Done (2026-06-28)** — 7 new keys (ar/en/zh), 2 components refactored (Navbar + Home), 985 deduped keys · +269/-260 lines | 3-4 ساعات |
 | **C.3** | Merchant backend endpoints (إضافة ما ينقص من seller APIs) | review-features.md §3.2 #17 | `app/server/routes/seller/*.cts` (جديد) | ✅ **Done (2026-06-28)** — 15 endpoints (12 missing + 3 helpers), 5 zod schemas, 26 integration tests · +935 lines | 6-8 ساعات |
-| **C.4** | Merchant dashboard UI (UI + analytics للتاجر) | review-features.md §3.2 #17 | `app/src/pages/seller/Dashboard.tsx` (جديد) | ⏳ TODO | 4-6 ساعات |
+| **C.4** | Merchant dashboard UI (UI + analytics للتاجر) | review-features.md §3.2 #17 | `app/src/pages/seller/SellerDashboard.tsx` (✅ done 2026-06-28) | ✅ **Done (2026-06-28)** — 9 read hooks + 1 mutation hook + 11 API functions + 30+ i18n keys · +1089 lines | 4-6 ساعات |
 
 ---
 

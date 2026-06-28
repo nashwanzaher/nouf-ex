@@ -1,0 +1,78 @@
+# Nouf-ex — Dependabot configuration
+#
+# D.2 in MASTER_PLAN.md - automated dependency update PRs.
+# Dependabot opens a PR every Monday with any available updates;
+# CI runs the normal pipeline (lint / typecheck / test / build)
+# on the PR before it can be merged.
+#
+# See https://docs.github.com/en/code-security/dependabot for the full
+# reference. Grouping rules keep the PR stream manageable: one PR per
+# package group per week.
+
+version: 2
+
+# ─── npm (app/) ──────────────────────────────────────────
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/app'
+    target-branch: 'main'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Aden'
+    open-pull-requests-limit: 5
+    # Group minor + patch updates to keep the PR stream small.
+    groups:
+      production-npm:
+        dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
+      development-npm:
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+    # Do not auto-update critical packages without a manual review.
+    ignore:
+      - dependency-name: 'express'
+      - dependency-name: 'pg'
+      - dependency-name: 'jsonwebtoken'
+    labels:
+      - 'dependencies'
+      - 'npm'
+
+  # ─── npm (mcp-server/) ──────────────────────────────────
+  - package-ecosystem: 'npm'
+    directory: '/mcp-server'
+    target-branch: 'main'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Aden'
+    open-pull-requests-limit: 3
+    labels:
+      - 'dependencies'
+      - 'npm'
+      - 'mcp-server'
+
+  # ─── GitHub Actions ────────────────────────────────────
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    target-branch: 'main'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Aden'
+    open-pull-requests-limit: 2
+    groups:
+      actions-group:
+        update-types:
+          - 'minor'
+          - 'patch'
+    labels:
+      - 'dependencies'
+      - 'github-actions'

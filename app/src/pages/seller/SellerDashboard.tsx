@@ -150,7 +150,7 @@ export default function SellerDashboard() {
 								<button
 									key={f}
 									role="tab"
-									aria-selected={filter === f}
+									aria-selected={filter === f ? 'true' : 'false'}
 									onClick={() => setFilter(f)}
 									className={cn(styles.tab, filter === f && styles.tabActive)}
 								>

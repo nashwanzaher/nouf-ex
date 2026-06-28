@@ -611,13 +611,7 @@ export const sellerStoreUpdateSchema = z
 /** Body for POST /api/seller/orders/:id/status — merchant updates order. */
 export const sellerOrderStatusUpdateSchema = z
 	.object({
-		status: z.enum([
-			'confirmed',
-			'processing',
-			'shipped',
-			'delivered',
-			'cancelled',
-		]),
+		status: z.enum(['confirmed', 'processing', 'shipped', 'delivered', 'cancelled']),
 		tracking_number: z.string().trim().min(3).max(100).optional(),
 		note: z.string().trim().max(500).optional(),
 	})

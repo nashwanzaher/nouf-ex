@@ -48,10 +48,7 @@ const sellerAuth = [requireAuth, requireRole('merchant', 'admin')];
  * user has no store yet. The first call is cached per request via the
  * res.locals slot so subsequent handlers don't re-query.
  */
-async function getMerchantStoreId(
-	req: Request,
-	res: Response,
-): Promise<number | null> {
+async function getMerchantStoreId(req: Request, res: Response): Promise<number | null> {
 	if (res.locals.merchantStoreId != null) return res.locals.merchantStoreId;
 	const row = (await db
 		.prepare('SELECT id FROM stores WHERE owner_id = $1 LIMIT 1')
@@ -70,9 +67,9 @@ sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response
 	try {
 		const storeId = await getMerchantStoreId(req, res);
 		if (storeId == null) return sendError(res, 'You do not have a store yet', 404);
-		const row = (await db
-			.prepare('SELECT * FROM stores WHERE id = $1')
-			.get(storeId)) as Record<string, unknown> | undefined;
+		const row = (await db.prepare('SELECT * FROM stores WHERE id = $1').get(storeId)) as
+			| Record<string, unknown>
+			| undefined;
 		if (!row) return sendError(res, 'Store not found', 404);
 		return sendSuccess(res, row);
 	} catch (err) {
@@ -81,45 +78,34 @@ sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response
 });
 
 /** PATCH /api/seller/stores/:id — update my store. */
-sellerRouter.patch(
-	'/stores/:id',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const id = Number(req.params.id);
-			if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
-			// Ownership check: this id must be MY store.
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null || myStoreId !== id) {
-				return sendError(res, 'Store not found', 404);
-			}
-			const v = validate(sellerStoreUpdateSchema, req.body);
-			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
-			const updates = v.data;
-			const { sql, params } = buildUpdateSet(updates);
-			if (!sql) return sendError(res, 'No updatable fields supplied', 400);
-			params.push(id);
-			const updated = (await db
-				.prepare(
-					`UPDATE stores SET ${sql}, updated_at = NOW()
-           WHERE id = $${params.length} RETURNING *`,
-				)
-				.get(...params)) as Record<string, unknown> | undefined;
-			if (!updated) return sendError(res, 'Store not found', 404);
-			await writeAuditLog(
-				req,
-				'store.update',
-				'stores',
-				id,
-				null,
-				updates,
-			);
-			return sendSuccess(res, updated, 'Store updated');
-		} catch (err) {
-			return sendError(res, err);
+sellerRouter.patch('/stores/:id', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const id = Number(req.params.id);
+		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
+		// Ownership check: this id must be MY store.
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null || myStoreId !== id) {
+			return sendError(res, 'Store not found', 404);
 		}
-	},
-);
+		const v = validate(sellerStoreUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+		const updates = v.data;
+		const { sql, params } = buildUpdateSet(updates);
+		if (!sql) return sendError(res, 'No updatable fields supplied', 400);
+		params.push(id);
+		const updated = (await db
+			.prepare(
+				`UPDATE stores SET ${sql}, updated_at = NOW()
+           WHERE id = $${params.length} RETURNING *`,
+			)
+			.get(...params)) as Record<string, unknown> | undefined;
+		if (!updated) return sendError(res, 'Store not found', 404);
+		await writeAuditLog(req, 'store.update', 'stores', id, null, updates);
+		return sendSuccess(res, updated, 'Store updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 // ═══════════════════════════════════════════════════════════
 //  PRODUCTS — merchant creates/edits/deletes their own products
@@ -193,133 +179,112 @@ sellerRouter.get('/products', ...sellerAuth, async (req: Request, res: Response)
 });
 
 /** GET /api/seller/products/:id — get one of my products. */
-sellerRouter.get(
-	'/products/:id',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const v = validate(sellerProductIdParamSchema, req.params);
-			if (!v.ok) return sendError(res, 'Invalid id', 400);
-			const id = v.data.id;
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const row = (await db
-				.prepare('SELECT * FROM products WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL')
-				.get(id, myStoreId)) as Record<string, unknown> | undefined;
-			if (!row) return sendError(res, 'Product not found', 404);
-			return sendSuccess(res, getProductWithParsedFields(row));
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+sellerRouter.get('/products/:id', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(sellerProductIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid id', 400);
+		const id = v.data.id;
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const row = (await db
+			.prepare(
+				'SELECT * FROM products WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL',
+			)
+			.get(id, myStoreId)) as Record<string, unknown> | undefined;
+		if (!row) return sendError(res, 'Product not found', 404);
+		return sendSuccess(res, getProductWithParsedFields(row));
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** PATCH /api/seller/products/:id — partial update. */
-sellerRouter.patch(
-	'/products/:id',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const v = validate(sellerProductIdParamSchema, req.params);
-			if (!v.ok) return sendError(res, 'Invalid id', 400);
-			const id = v.data.id;
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const v2 = validate(sellerProductUpdateSchema, req.body);
-			if (!v2.ok) return sendError(res, 'Invalid input: ' + v2.error, 400);
-			const updates = v2.data;
-			const { sql, params } = buildUpdateSet(updates);
-			if (!sql) return sendError(res, 'No updatable fields supplied', 400);
-			params.push(id, myStoreId);
-			const updated = (await db
-				.prepare(
-					`UPDATE products SET ${sql}, updated_at = NOW()
+sellerRouter.patch('/products/:id', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(sellerProductIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid id', 400);
+		const id = v.data.id;
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const v2 = validate(sellerProductUpdateSchema, req.body);
+		if (!v2.ok) return sendError(res, 'Invalid input: ' + v2.error, 400);
+		const updates = v2.data;
+		const { sql, params } = buildUpdateSet(updates);
+		if (!sql) return sendError(res, 'No updatable fields supplied', 400);
+		params.push(id, myStoreId);
+		const updated = (await db
+			.prepare(
+				`UPDATE products SET ${sql}, updated_at = NOW()
            WHERE id = $${params.length - 1} AND store_id = $${params.length} AND deleted_at IS NULL
            RETURNING *`,
-				)
-				.get(...params)) as Record<string, unknown> | undefined;
-			if (!updated) return sendError(res, 'Product not found', 404);
-			await writeAuditLog(
-				req,
-				'product.update',
-				'products',
-				id,
-				null,
-				updates,
-			);
-			return sendSuccess(res, getProductWithParsedFields(updated), 'Product updated');
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.get(...params)) as Record<string, unknown> | undefined;
+		if (!updated) return sendError(res, 'Product not found', 404);
+		await writeAuditLog(req, 'product.update', 'products', id, null, updates);
+		return sendSuccess(res, getProductWithParsedFields(updated), 'Product updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** DELETE /api/seller/products/:id — soft-delete (sets deleted_at). */
-sellerRouter.delete(
-	'/products/:id',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const v = validate(sellerProductIdParamSchema, req.params);
-			if (!v.ok) return sendError(res, 'Invalid id', 400);
-			const id = v.data.id;
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const result = (await db
-				.prepare(
-					`UPDATE products
+sellerRouter.delete('/products/:id', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(sellerProductIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid id', 400);
+		const id = v.data.id;
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const result = (await db
+			.prepare(
+				`UPDATE products
            SET deleted_at = NOW(), is_active = FALSE, updated_at = NOW()
          WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL
          RETURNING id`,
-				)
-				.get(id, myStoreId)) as { id: number } | undefined;
-			if (!result) return sendError(res, 'Product not found', 404);
-			await writeAuditLog(req, 'product.delete', 'products', id, null, { soft: true });
-			return sendSuccess(res, { id: result.id }, 'Product deleted');
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.get(id, myStoreId)) as { id: number } | undefined;
+		if (!result) return sendError(res, 'Product not found', 404);
+		await writeAuditLog(req, 'product.delete', 'products', id, null, { soft: true });
+		return sendSuccess(res, { id: result.id }, 'Product deleted');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** POST /api/seller/products/:id/images — add an image to one of my products. */
-sellerRouter.post(
-	'/products/:id/images',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const v = validate(sellerProductIdParamSchema, req.params);
-			if (!v.ok) return sendError(res, 'Invalid product id', 400);
-			const productId = v.data.id;
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			// Ownership check
-			const product = (await db
-				.prepare('SELECT id FROM products WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL')
-				.get(productId, myStoreId)) as { id: number } | undefined;
-			if (!product) return sendError(res, 'Product not found', 404);
-			const v2 = validate(sellerProductImageAddSchema, req.body);
-			if (!v2.ok) return sendError(res, 'Invalid input: ' + v2.error, 400);
-			const data = v2.data;
-			const result = (await db
-				.prepare(
-					`INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary, created_at)
+sellerRouter.post('/products/:id/images', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(sellerProductIdParamSchema, req.params);
+		if (!v.ok) return sendError(res, 'Invalid product id', 400);
+		const productId = v.data.id;
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		// Ownership check
+		const product = (await db
+			.prepare(
+				'SELECT id FROM products WHERE id = $1 AND store_id = $2 AND deleted_at IS NULL',
+			)
+			.get(productId, myStoreId)) as { id: number } | undefined;
+		if (!product) return sendError(res, 'Product not found', 404);
+		const v2 = validate(sellerProductImageAddSchema, req.body);
+		if (!v2.ok) return sendError(res, 'Invalid input: ' + v2.error, 400);
+		const data = v2.data;
+		const result = (await db
+			.prepare(
+				`INSERT INTO product_images (product_id, url, alt_text, sort_order, is_primary, created_at)
            VALUES (?, ?, ?, ?, ?, NOW()) RETURNING id`,
-				)
-				.get(
-					productId,
-					data.url,
-					data.alt_text ?? null,
-					data.sort_order,
-					data.is_primary,
-				)) as { id: number };
-			await writeAuditLog(req, 'product.image.add', 'products', productId, null, { imageId: result.id });
-			return sendSuccess(res, { id: result.id }, 'Image added');
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.get(productId, data.url, data.alt_text ?? null, data.sort_order, data.is_primary)) as {
+			id: number;
+		};
+		await writeAuditLog(req, 'product.image.add', 'products', productId, null, {
+			imageId: result.id,
+		});
+		return sendSuccess(res, { id: result.id }, 'Image added');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 // ═══════════════════════════════════════════════════════════
 //  ORDERS — merchant sees and updates orders for their store
@@ -353,109 +318,102 @@ sellerRouter.get('/orders', ...sellerAuth, async (req: Request, res: Response) =
 });
 
 /** GET /api/seller/orders/:id — get one of my orders. */
-sellerRouter.get(
-	'/orders/:id',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const id = Number(req.params.id);
-			if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const row = (await db
-				.prepare('SELECT * FROM orders WHERE id = $1 AND store_id = $2')
-				.get(id, myStoreId)) as Record<string, unknown> | undefined;
-			if (!row) return sendError(res, 'Order not found', 404);
-			const items = (await db
-				.prepare('SELECT * FROM order_items WHERE order_id = $1')
-				.all(id)) as Record<string, unknown>[];
-			return sendSuccess(res, { ...row, items });
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+sellerRouter.get('/orders/:id', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const id = Number(req.params.id);
+		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const row = (await db
+			.prepare('SELECT * FROM orders WHERE id = $1 AND store_id = $2')
+			.get(id, myStoreId)) as Record<string, unknown> | undefined;
+		if (!row) return sendError(res, 'Order not found', 404);
+		const items = (await db
+			.prepare('SELECT * FROM order_items WHERE order_id = $1')
+			.all(id)) as Record<string, unknown>[];
+		return sendSuccess(res, { ...row, items });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** POST /api/seller/orders/:id/status — update order status. */
-sellerRouter.post(
-	'/orders/:id/status',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const id = Number(req.params.id);
-			if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			// Ownership: must be my order.
-			const order = (await db
-				.prepare('SELECT id, status FROM orders WHERE id = $1 AND store_id = $2')
-				.get(id, myStoreId)) as { id: number; status: string } | undefined;
-			if (!order) return sendError(res, 'Order not found', 404);
-			const v = validate(sellerOrderStatusUpdateSchema, req.body);
-			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
-			const data = v.data;
-			// Forward-only state machine: confirmed → processing → shipped → delivered
-			// (cancelled is allowed from any pre-shipped state). Reject any backward
-			// transition so the merchant can't accidentally un-cancel.
-			const allowed: Record<string, string[]> = {
-				pending: ['confirmed', 'cancelled'],
-				confirmed: ['processing', 'cancelled'],
-				processing: ['shipped', 'cancelled'],
-				shipped: ['delivered'],
-				delivered: [],
-				cancelled: [],
-			};
-			if (!allowed[order.status]?.includes(data.status)) {
-				return sendError(
-					res,
-					`Cannot transition order from '${order.status}' to '${data.status}'`,
-					400,
-					'INVALID_STATE_TRANSITION',
-				);
-			}
-			const updated = (await db
-				.prepare(
-					`UPDATE orders
+sellerRouter.post('/orders/:id/status', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const id = Number(req.params.id);
+		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		// Ownership: must be my order.
+		const order = (await db
+			.prepare('SELECT id, status FROM orders WHERE id = $1 AND store_id = $2')
+			.get(id, myStoreId)) as { id: number; status: string } | undefined;
+		if (!order) return sendError(res, 'Order not found', 404);
+		const v = validate(sellerOrderStatusUpdateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+		const data = v.data;
+		// Forward-only state machine: confirmed → processing → shipped → delivered
+		// (cancelled is allowed from any pre-shipped state). Reject any backward
+		// transition so the merchant can't accidentally un-cancel.
+		const allowed: Record<string, string[]> = {
+			pending: ['confirmed', 'cancelled'],
+			confirmed: ['processing', 'cancelled'],
+			processing: ['shipped', 'cancelled'],
+			shipped: ['delivered'],
+			delivered: [],
+			cancelled: [],
+		};
+		if (!allowed[order.status]?.includes(data.status)) {
+			return sendError(
+				res,
+				`Cannot transition order from '${order.status}' to '${data.status}'`,
+				400,
+				'INVALID_STATE_TRANSITION',
+			);
+		}
+		const updated = (await db
+			.prepare(
+				`UPDATE orders
                 SET status = $1, updated_at = NOW(),
                     timeline = COALESCE(timeline, '[]'::jsonb) || jsonb_build_array(
                         jsonb_build_object('status', $1, 'note', $2, 'at', NOW()::text, 'by', $3)
                     )
               WHERE id = $4
               RETURNING id, status, timeline, updated_at`,
-				)
-				.get(
-					data.status,
-					data.note ?? null,
-					req.user!.id,
-					id,
-				)) as Record<string, unknown> | undefined;
-			if (!updated) return sendError(res, 'Order not found', 404);
-			await writeAuditLog(req, 'order.status.update', 'orders', id, { from: order.status }, {
+			)
+			.get(data.status, data.note ?? null, req.user!.id, id)) as
+			| Record<string, unknown>
+			| undefined;
+		if (!updated) return sendError(res, 'Order not found', 404);
+		await writeAuditLog(
+			req,
+			'order.status.update',
+			'orders',
+			id,
+			{ from: order.status },
+			{
 				to: data.status,
 				tracking_number: data.tracking_number,
-			});
-			return sendSuccess(res, updated, 'Order status updated');
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			},
+		);
+		return sendSuccess(res, updated, 'Order status updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 // ═══════════════════════════════════════════════════════════
 //  ANALYTICS + INVENTORY + PAYOUTS — read-only seller dashboards
 // ═══════════════════════════════════════════════════════════
 
 /** GET /api/seller/analytics — sales KPIs for my store. */
-sellerRouter.get(
-	'/analytics',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const totals = (await db
-				.prepare(
-					`SELECT
+sellerRouter.get('/analytics', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const totals = (await db
+			.prepare(
+				`SELECT
              COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'refunded'))::int AS total_orders,
              COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered_orders,
              COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled_orders,
@@ -464,43 +422,39 @@ sellerRouter.get(
              COUNT(DISTINCT customer_id)::int AS unique_customers
          FROM orders
         WHERE store_id = $1`,
-				)
-				.get(myStoreId)) as Record<string, unknown> | undefined;
-			const today = (await db
-				.prepare(
-					`SELECT COUNT(*)::int AS n
+			)
+			.get(myStoreId)) as Record<string, unknown> | undefined;
+		const today = (await db
+			.prepare(
+				`SELECT COUNT(*)::int AS n
              FROM orders
             WHERE store_id = $1
               AND created_at >= CURRENT_DATE`,
-				)
-				.get(myStoreId)) as { n: number } | undefined;
-			return sendSuccess(res, {
-				store_id: myStoreId,
-				total_orders: totals?.total_orders ?? 0,
-				delivered_orders: totals?.delivered_orders ?? 0,
-				cancelled_orders: totals?.cancelled_orders ?? 0,
-				unique_customers: totals?.unique_customers ?? 0,
-				today_orders: today?.n ?? 0,
-				gross_revenue: Number(totals?.gross_revenue ?? 0),
-				total_revenue: Number(totals?.total_revenue ?? 0),
-			});
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.get(myStoreId)) as { n: number } | undefined;
+		return sendSuccess(res, {
+			store_id: myStoreId,
+			total_orders: totals?.total_orders ?? 0,
+			delivered_orders: totals?.delivered_orders ?? 0,
+			cancelled_orders: totals?.cancelled_orders ?? 0,
+			unique_customers: totals?.unique_customers ?? 0,
+			today_orders: today?.n ?? 0,
+			gross_revenue: Number(totals?.gross_revenue ?? 0),
+			total_revenue: Number(totals?.total_revenue ?? 0),
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** GET /api/seller/inventory — stock levels for my products. */
-sellerRouter.get(
-	'/inventory',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const rows = (await db
-				.prepare(
-					`SELECT id, name_ar, name_en, sku, stock, sold_count, is_active,
+sellerRouter.get('/inventory', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const rows = (await db
+			.prepare(
+				`SELECT id, name_ar, name_en, sku, stock, sold_count, is_active,
                 CASE
                   WHEN stock = 0 THEN 'out_of_stock'
                   WHEN stock < 10 THEN 'low_stock'
@@ -509,86 +463,77 @@ sellerRouter.get(
            FROM products
           WHERE store_id = $1 AND deleted_at IS NULL
           ORDER BY stock ASC, name_en ASC NULLS LAST`,
-				)
-				.all(myStoreId)) as unknown as Record<string, unknown>[];
-			return sendSuccess(res, { items: rows });
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.all(myStoreId)) as unknown as Record<string, unknown>[];
+		return sendSuccess(res, { items: rows });
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** GET /api/seller/payouts — recent store_balance transactions. */
-sellerRouter.get(
-	'/payouts',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const v = validate(paginationSchema, req.query);
-			if (!v.ok) return sendError(res, 'Invalid pagination: ' + v.error, 400);
-			const { limit, offset } = v.data;
-			const rows = (await db
-				.prepare(
-					`SELECT id, type, amount, balance_after, reference_type, reference_id,
+sellerRouter.get('/payouts', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const v = validate(paginationSchema, req.query);
+		if (!v.ok) return sendError(res, 'Invalid pagination: ' + v.error, 400);
+		const { limit, offset } = v.data;
+		const rows = (await db
+			.prepare(
+				`SELECT id, type, amount, balance_after, reference_type, reference_id,
                 description, created_at
            FROM transactions
           WHERE store_id = $1
           ORDER BY created_at DESC
           LIMIT $2 OFFSET $3`,
-				)
-				.all(myStoreId, limit, offset)) as Record<string, unknown>[];
-			// Include the current balance separately for convenience.
-			const balance = (await db
-				.prepare('SELECT available, pending FROM store_balance WHERE store_id = $1')
-				.get(myStoreId)) as { available: number; pending: number } | undefined;
-			return sendSuccess(res, {
-				balance: balance ?? { available: 0, pending: 0 },
-				items: rows,
-				limit,
-				offset,
-			});
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.all(myStoreId, limit, offset)) as Record<string, unknown>[];
+		// Include the current balance separately for convenience.
+		const balance = (await db
+			.prepare('SELECT available, pending FROM store_balance WHERE store_id = $1')
+			.get(myStoreId)) as { available: number; pending: number } | undefined;
+		return sendSuccess(res, {
+			balance: balance ?? { available: 0, pending: 0 },
+			items: rows,
+			limit,
+			offset,
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
 
 /** GET /api/seller/dashboard — KPIs rollup (alias for /analytics). */
-sellerRouter.get(
-	'/dashboard',
-	...sellerAuth,
-	async (req: Request, res: Response) => {
-		try {
-			// Forward to /analytics internally
-			req.url = '/analytics';
-			const myStoreId = await getMerchantStoreId(req, res);
-			if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
-			const totals = (await db
-				.prepare(
-					`SELECT
+sellerRouter.get('/dashboard', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		// Forward to /analytics internally
+		req.url = '/analytics';
+		const myStoreId = await getMerchantStoreId(req, res);
+		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
+		const totals = (await db
+			.prepare(
+				`SELECT
              COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'refunded'))::int AS active_orders,
              COUNT(*) FILTER (WHERE status = 'pending')::int AS pending_orders,
              COALESCE(SUM(total) FILTER (WHERE status = 'delivered'), 0)::numeric AS revenue
          FROM orders WHERE store_id = $1`,
-				)
-				.get(myStoreId)) as Record<string, unknown> | undefined;
-			const lowStock = (await db
-				.prepare(
-					`SELECT COUNT(*)::int AS n FROM products
+			)
+			.get(myStoreId)) as Record<string, unknown> | undefined;
+		const lowStock = (await db
+			.prepare(
+				`SELECT COUNT(*)::int AS n FROM products
           WHERE store_id = $1 AND deleted_at IS NULL AND stock < 10`,
-				)
-				.get(myStoreId)) as { n: number } | undefined;
-			return sendSuccess(res, {
-				store_id: myStoreId,
-				active_orders: totals?.active_orders ?? 0,
-				pending_orders: totals?.pending_orders ?? 0,
-				revenue: Number(totals?.revenue ?? 0),
-				low_stock_products: lowStock?.n ?? 0,
-			});
-		} catch (err) {
-			return sendError(res, err);
-		}
-	},
-);
+			)
+			.get(myStoreId)) as { n: number } | undefined;
+		return sendSuccess(res, {
+			store_id: myStoreId,
+			active_orders: totals?.active_orders ?? 0,
+			pending_orders: totals?.pending_orders ?? 0,
+			revenue: Number(totals?.revenue ?? 0),
+			low_stock_products: lowStock?.n ?? 0,
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});

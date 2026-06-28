@@ -12,7 +12,13 @@ describe('email-templates — render()', () => {
 			const { subject, body } = render({
 				event: 'order_placed',
 				language: 'ar',
-				data: { orderNumber: 'ORD-ABC12345', total: 5000, itemCount: 3, paymentMethod: 'cod', trackingUrl: 'https://noufex.example.com/orders/1' },
+				data: {
+					orderNumber: 'ORD-ABC12345',
+					total: 5000,
+					itemCount: 3,
+					paymentMethod: 'cod',
+					trackingUrl: 'https://noufex.example.com/orders/1',
+				},
 			});
 			expect(subject).toContain('ORD-ABC12345');
 			expect(subject).toContain('تم استلام'); // "received" in AR
@@ -55,7 +61,13 @@ describe('email-templates — render()', () => {
 			const { subject, body } = render({
 				event: 'order_placed',
 				language: 'en',
-				data: { orderNumber: 'ORD-ABC12345', total: 5000, itemCount: 3, paymentMethod: 'cod', trackingUrl: 'https://noufex.example.com/orders/1' },
+				data: {
+					orderNumber: 'ORD-ABC12345',
+					total: 5000,
+					itemCount: 3,
+					paymentMethod: 'cod',
+					trackingUrl: 'https://noufex.example.com/orders/1',
+				},
 			});
 			expect(subject).toContain('Order');
 			expect(subject).toContain('ORD-ABC12345');

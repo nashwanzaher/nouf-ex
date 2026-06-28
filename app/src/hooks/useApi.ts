@@ -458,21 +458,15 @@ export function useSellerProducts(): HookResult<{ items: Product[] }> {
 	return useDataHook(getSellerProducts);
 }
 
-export function useSellerProduct(
-	id: number | null,
-): HookResult<ProductWithDetails | null> {
+export function useSellerProduct(id: number | null): HookResult<ProductWithDetails | null> {
 	return useDataHook(() => getSellerProduct(id ?? 0));
 }
 
-export function useSellerOrders(
-	status?: string,
-): HookResult<{ items: SellerOrder[] }> {
+export function useSellerOrders(status?: string): HookResult<{ items: SellerOrder[] }> {
 	return useDataHook(() => getSellerOrders(status));
 }
 
-export function useSellerOrder(
-	id: number | null,
-): HookResult<SellerOrderWithItems | null> {
+export function useSellerOrder(id: number | null): HookResult<SellerOrderWithItems | null> {
 	return useDataHook(() => getSellerOrder(id ?? 0));
 }
 
@@ -506,10 +500,7 @@ export function useSellerDashboard(): HookResult<SellerDashboard | null> {
 // to force the read hooks to re-fetch.
 export interface SellerMutations {
 	createProduct: (body: SellerProductCreate) => Promise<{ id: number }>;
-	updateProduct: (
-		id: number,
-		body: Partial<SellerProductCreate>,
-	) => Promise<ProductWithDetails>;
+	updateProduct: (id: number, body: Partial<SellerProductCreate>) => Promise<ProductWithDetails>;
 	deleteProduct: (id: number) => Promise<{ id: number }>;
 	addProductImage: (
 		productId: number,
@@ -526,19 +517,12 @@ export interface SellerMutations {
 export function useSellerMutations(): SellerMutations {
 	const [tick, setTick] = useState(0);
 	const refreshAll = useCallback(() => setTick((n) => n + 1), []);
-	const createProduct = useCallback(
-		(body: SellerProductCreate) => createSellerProduct(body),
-		[],
-	);
+	const createProduct = useCallback((body: SellerProductCreate) => createSellerProduct(body), []);
 	const updateProduct = useCallback(
-		(id: number, body: Partial<SellerProductCreate>) =>
-			updateSellerProduct(id, body),
+		(id: number, body: Partial<SellerProductCreate>) => updateSellerProduct(id, body),
 		[],
 	);
-	const deleteProduct = useCallback(
-		(id: number) => deleteSellerProduct(id),
-		[],
-	);
+	const deleteProduct = useCallback((id: number) => deleteSellerProduct(id), []);
 	const addProductImage = useCallback(
 		(
 			productId: number,
@@ -551,10 +535,8 @@ export function useSellerMutations(): SellerMutations {
 		[],
 	);
 	const updateOrderStatus = useCallback(
-		(
-			id: number,
-			body: { status: string; tracking_number?: string; note?: string },
-		) => updateSellerOrderStatus(id, body),
+		(id: number, body: { status: string; tracking_number?: string; note?: string }) =>
+			updateSellerOrderStatus(id, body),
 		[],
 	);
 	// tick is intentionally read by the read hooks via dep arrays.

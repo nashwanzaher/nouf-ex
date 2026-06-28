@@ -43,13 +43,9 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Best-effort — never blocks the response.
 		// (C.1 in MASTER_PLAN.md — real refund-requested notification)
 		try {
-			const { onRefundRequested } = await import(
-				'../lib/notifications/events.cts'
-			);
+			const { onRefundRequested } = await import('../lib/notifications/events.cts');
 			const orderRow = (await db
-				.prepare(
-					'SELECT order_number, customer_id, store_id FROM orders WHERE id = ?',
-				)
+				.prepare('SELECT order_number, customer_id, store_id FROM orders WHERE id = ?')
 				.get(order_id)) as
 				| { order_number: string; customer_id: number; store_id: number | null }
 				| undefined;
@@ -57,9 +53,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				const storeRow = orderRow.store_id
 					? ((await db
 							.prepare('SELECT owner_id FROM stores WHERE id = ?')
-							.get(orderRow.store_id)) as
-							| { owner_id: number }
-							| undefined)
+							.get(orderRow.store_id)) as { owner_id: number } | undefined)
 					: undefined;
 				if (storeRow) {
 					await onRefundRequested({
@@ -135,13 +129,9 @@ refundsRouter.post(
 			// Fire bilingual i18n notification to the customer (best-effort).
 			// (C.1 in MASTER_PLAN.md — real refund-resolved notification)
 			try {
-				const { onRefundResolved } = await import(
-					'../lib/notifications/events.cts'
-				);
+				const { onRefundResolved } = await import('../lib/notifications/events.cts');
 				const orderRow = (await db
-					.prepare(
-						'SELECT order_number, customer_id FROM orders WHERE id = ?',
-					)
+					.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
 					.get(result.order_id)) as
 					| { order_number: string; customer_id: number }
 					| undefined;

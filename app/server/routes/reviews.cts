@@ -116,9 +116,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Fire bilingual i18n notification to the merchant (best-effort).
 		// (C.1 in MASTER_PLAN.md — real review-posted notification)
 		try {
-			const { onReviewPosted } = await import(
-				'../lib/notifications/events.cts'
-			);
+			const { onReviewPosted } = await import('../lib/notifications/events.cts');
 			const productInfo = (await db
 				.prepare('SELECT name_en, name_ar, store_id FROM products WHERE id = ?')
 				.get(productId)) as
@@ -127,9 +125,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			if (productInfo) {
 				const storeRow = (await db
 					.prepare('SELECT owner_id FROM stores WHERE id = ?')
-					.get(productInfo.store_id)) as
-					| { owner_id: number }
-					| undefined;
+					.get(productInfo.store_id)) as { owner_id: number } | undefined;
 				if (storeRow) {
 					await onReviewPosted({
 						productId,

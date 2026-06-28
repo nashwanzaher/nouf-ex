@@ -295,27 +295,21 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// failure here is logged but never blocks the order response.
 		// (C.1 in MASTER_PLAN.md — real notifications with i18n + merchant alert)
 		try {
-			const { onOrderPlaced } = await import(
-				'../lib/notifications/events.cts'
-			);
+			const { onOrderPlaced } = await import('../lib/notifications/events.cts');
 			// Look up the merchant (store owner) and a product display name
 			// for the notification body.
 			const [storeRow, firstProductRow] = await Promise.all([
 				db
 					.prepare('SELECT owner_id, store_name FROM stores WHERE id = ?')
 					.get(resolvedStoreId) as Promise<
-						| { owner_id: number; store_name: string }
-						| undefined
-					>,
+					{ owner_id: number; store_name: string } | undefined
+				>,
 				items.length >= 1
 					? (db
-							.prepare(
-								'SELECT name_en, name_ar FROM products WHERE id = $1',
-							)
+							.prepare('SELECT name_en, name_ar FROM products WHERE id = $1')
 							.get(items[0].productId) as Promise<
-								| { name_en: string | null; name_ar: string }
-								| undefined
-							>)
+							{ name_en: string | null; name_ar: string } | undefined
+						>)
 					: Promise.resolve(undefined),
 			]);
 			const merchantId = storeRow?.owner_id;

@@ -228,9 +228,7 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 		// Fire bilingual i18n notification to the customer (best-effort).
 		// (C.1 in MASTER_PLAN.md — real payment confirmation notification)
 		try {
-			const { onPaymentConfirmed } = await import(
-				'../lib/notifications/events.cts'
-			);
+			const { onPaymentConfirmed } = await import('../lib/notifications/events.cts');
 			const orderRow = (await db
 				.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
 				.get(result!.order_id)) as

@@ -535,16 +535,16 @@ export default function Home() {
 												alt={getProductName(product, i18n.language)}
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 											/>
-			{product.badges?.includes('bestseller') && (
-				<span className="absolute top-2 right-2 bg-aliOrange text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-					{t('product.badge.bestseller')}
-				</span>
-			)}
-			{product.badges?.includes('new') && (
-				<span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-					{t('product.badge.new')}
-				</span>
-			)}
+											{product.badges?.includes('bestseller') && (
+												<span className="absolute top-2 right-2 bg-aliOrange text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+													{t('product.badge.bestseller')}
+												</span>
+											)}
+											{product.badges?.includes('new') && (
+												<span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+													{t('product.badge.new')}
+												</span>
+											)}
 										</Link>
 										<div className="p-2.5">
 											<Link to={`/product/${product.id}`}>
@@ -606,8 +606,8 @@ export default function Home() {
 											>
 												<ShoppingCart size={12} />
 												{addedIds.has(product.id)
-										? t('product.addToCart.added')
-										: t('product.addToCart.idle')}
+													? t('product.addToCart.added')
+													: t('product.addToCart.idle')}
 											</button>
 										</div>
 									</div>
@@ -675,8 +675,8 @@ export default function Home() {
 											>
 												<ShoppingCart size={12} />
 												{addedIds.has(product.id)
-										? t('product.addToCart.added')
-										: t('product.addToCart.idle')}
+													? t('product.addToCart.added')
+													: t('product.addToCart.idle')}
 											</button>
 										</div>
 									</div>
@@ -753,9 +753,7 @@ export default function Home() {
 						<div className="flex-1">
 							<div className="flex items-center gap-2 mb-3">
 								<ShieldCheck size={28} className="text-aliOrange" />
-								<h2 className="text-2xl font-bold">
-									{t('home.tradeAssurance')}
-								</h2>
+								<h2 className="text-2xl font-bold">{t('home.tradeAssurance')}</h2>
 							</div>
 							<p className="text-white/80 mb-4">
 								{t(

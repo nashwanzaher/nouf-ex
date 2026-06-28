@@ -903,19 +903,14 @@ export async function getSellerStoreMe(): Promise<SellerStore> {
 	return apiRequest('/seller/stores/me');
 }
 
-export async function updateSellerStore(
-	id: number,
-	body: SellerStoreUpdate,
-): Promise<SellerStore> {
+export async function updateSellerStore(id: number, body: SellerStoreUpdate): Promise<SellerStore> {
 	return apiRequest(`/seller/stores/${id}`, {
 		method: 'PATCH',
 		body: JSON.stringify(body),
 	});
 }
 
-export async function createSellerProduct(
-	body: SellerProductCreate,
-): Promise<{ id: number }> {
+export async function createSellerProduct(body: SellerProductCreate): Promise<{ id: number }> {
 	return apiRequest('/seller/products', {
 		method: 'POST',
 		body: JSON.stringify(body),
@@ -926,9 +921,7 @@ export async function getSellerProducts(): Promise<{ items: Product[] }> {
 	return apiRequest('/seller/products');
 }
 
-export async function getSellerProduct(
-	id: number,
-): Promise<ProductWithDetails> {
+export async function getSellerProduct(id: number): Promise<ProductWithDetails> {
 	return apiRequest(`/seller/products/${id}`);
 }
 
@@ -956,16 +949,12 @@ export async function addSellerProductImage(
 	});
 }
 
-export async function getSellerOrders(
-	status?: string,
-): Promise<{ items: SellerOrder[] }> {
+export async function getSellerOrders(status?: string): Promise<{ items: SellerOrder[] }> {
 	const q = status ? `?status=${encodeURIComponent(status)}` : '';
 	return apiRequest(`/seller/orders${q}`);
 }
 
-export async function getSellerOrder(
-	id: number,
-): Promise<SellerOrderWithItems> {
+export async function getSellerOrder(id: number): Promise<SellerOrderWithItems> {
 	return apiRequest(`/seller/orders/${id}`);
 }
 

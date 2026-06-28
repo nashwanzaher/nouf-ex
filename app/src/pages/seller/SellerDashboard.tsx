@@ -48,10 +48,7 @@ export default function SellerDashboard() {
 	// Mutation hooks (call refreshAll() after each)
 	const mutations = useSellerMutations();
 
-	const isLoading =
-		dashboard.loading ||
-		products.loading ||
-		(orders.loading && filter !== 'all');
+	const isLoading = dashboard.loading || products.loading || (orders.loading && filter !== 'all');
 	const error = dashboard.error || products.error || orders.error;
 
 	return (
@@ -63,20 +60,13 @@ export default function SellerDashboard() {
 						{t('seller.dashboard.title', 'Seller Dashboard')}
 					</h1>
 					<p className={styles.subtitle}>
-						{t(
-							'seller.dashboard.subtitle',
-							'Manage your store, products, and orders.',
-						)}
+						{t('seller.dashboard.subtitle', 'Manage your store, products, and orders.')}
 					</p>
 				</div>
 				<div className="flex items-center gap-2">
 					<Link
 						to="/seller/products/new"
-						className={cn(
-							styles.btn,
-							styles.btnPrimary,
-							'flex items-center gap-1',
-						)}
+						className={cn(styles.btn, styles.btnPrimary, 'flex items-center gap-1')}
 					>
 						<Plus size={16} /> {t('seller.product.new', 'New Product')}
 					</Link>
@@ -135,10 +125,7 @@ export default function SellerDashboard() {
 					/>
 					<KpiCard
 						icon={<AlertTriangle size={20} />}
-						label={t(
-							'seller.dashboard.kpi.lowStock',
-							'Low-stock products',
-						)}
+						label={t('seller.dashboard.kpi.lowStock', 'Low-stock products')}
 						value={dashboard.data.low_stock_products}
 						hint={
 							dashboard.data.low_stock_products > 0
@@ -159,31 +146,23 @@ export default function SellerDashboard() {
 							{t('seller.dashboard.recentOrders', 'Recent Orders')}
 						</h2>
 						<div className={styles.tabs} role="tablist">
-							{(['all', 'pending', 'confirmed', 'shipped'] as const).map(
-								(f) => (
-									<button
-										key={f}
-										role="tab"
-										aria-selected={filter === f}
-										onClick={() => setFilter(f)}
-										className={cn(
-											styles.tab,
-											filter === f && styles.tabActive,
-										)}
-									>
-										{t(`seller.dashboard.filter.${f}`, f)}
-									</button>
-								),
-							)}
+							{(['all', 'pending', 'confirmed', 'shipped'] as const).map((f) => (
+								<button
+									key={f}
+									role="tab"
+									aria-selected={filter === f}
+									onClick={() => setFilter(f)}
+									className={cn(styles.tab, filter === f && styles.tabActive)}
+								>
+									{t(`seller.dashboard.filter.${f}`, f)}
+								</button>
+							))}
 						</div>
 					</header>
 					<div className={styles.cardBody}>
 						{orders.data?.items.length === 0 && (
 							<p className={styles.emptyText}>
-								{t(
-									'seller.dashboard.noOrders',
-									'No orders in this filter yet.',
-								)}
+								{t('seller.dashboard.noOrders', 'No orders in this filter yet.')}
 							</p>
 						)}
 						{orders.data?.items.slice(0, 8).map((order) => (
@@ -205,10 +184,7 @@ export default function SellerDashboard() {
 							<Package size={18} className="inline mr-1" />
 							{t('seller.dashboard.recentProducts', 'Recent Products')}
 						</h2>
-						<Link
-							to="/seller/products"
-							className={styles.btn + ' ' + styles.btnGhost}
-						>
+						<Link to="/seller/products" className={styles.btn + ' ' + styles.btnGhost}>
 							{t('common.viewAll', 'View all')}
 						</Link>
 					</header>
@@ -248,8 +224,7 @@ function KpiCard({
 }) {
 	const formatted =
 		format === 'currency'
-			? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value) +
-				' YER'
+			? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value) + ' YER'
 			: value.toLocaleString();
 	return (
 		<div className={styles.kpiCard}>
@@ -276,7 +251,7 @@ function OrderRow({
 		total: number;
 		created_at: string;
 	};
-	t: import("i18next").TFunction;
+	t: import('i18next').TFunction;
 	onUpdateStatus: (
 		id: number,
 		body: { status: string; tracking_number?: string },
@@ -285,10 +260,26 @@ function OrderRow({
 }) {
 	const [busy, setBusy] = useState(false);
 	const next: Record<string, { status: string; label: string; icon: React.ReactNode } | null> = {
-		pending: { status: 'confirmed', label: t('seller.order.confirm', 'Confirm'), icon: <Clock size={14} /> },
-		confirmed: { status: 'processing', label: t('seller.order.process', 'Process'), icon: <Package size={14} /> },
-		processing: { status: 'shipped', label: t('seller.order.ship', 'Ship'), icon: <TrendingUp size={14} /> },
-		shipped: { status: 'delivered', label: t('seller.order.deliver', 'Mark delivered'), icon: <Users size={14} /> },
+		pending: {
+			status: 'confirmed',
+			label: t('seller.order.confirm', 'Confirm'),
+			icon: <Clock size={14} />,
+		},
+		confirmed: {
+			status: 'processing',
+			label: t('seller.order.process', 'Process'),
+			icon: <Package size={14} />,
+		},
+		processing: {
+			status: 'shipped',
+			label: t('seller.order.ship', 'Ship'),
+			icon: <TrendingUp size={14} />,
+		},
+		shipped: {
+			status: 'delivered',
+			label: t('seller.order.deliver', 'Mark delivered'),
+			icon: <Users size={14} />,
+		},
 	};
 	const action = next[order.status];
 	const handleAction = async () => {
@@ -304,17 +295,11 @@ function OrderRow({
 	return (
 		<div className={styles.orderRow}>
 			<div className="flex-1 min-w-0">
-				<p className={styles.orderNumber}>
-					#{order.order_number}
-				</p>
-				<p className={styles.orderDate}>
-					{new Date(order.created_at).toLocaleString()}
-				</p>
+				<p className={styles.orderNumber}>#{order.order_number}</p>
+				<p className={styles.orderDate}>{new Date(order.created_at).toLocaleString()}</p>
 			</div>
 			<div className="text-right">
-				<p className={styles.orderTotal}>
-					{order.total.toLocaleString()} YER
-				</p>
+				<p className={styles.orderTotal}>{order.total.toLocaleString()} YER</p>
 				<p className={styles.orderStatus} data-status={order.status}>
 					{t(`seller.order.status.${order.status}`, order.status)}
 				</p>
@@ -346,35 +331,21 @@ function ProductRow({
 		sold_count: number;
 		rating: number | null;
 	};
-	t: import("i18next").TFunction;
+	t: import('i18next').TFunction;
 }) {
 	const stockStatus =
-		product.stock === 0
-			? 'out_of_stock'
-			: product.stock < 10
-				? 'low_stock'
-				: 'in_stock';
+		product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'in_stock';
 	return (
-		<Link
-			to={`/seller/products/${product.id}`}
-			className={styles.productRow}
-		>
+		<Link to={`/seller/products/${product.id}`} className={styles.productRow}>
 			<div className="flex-1 min-w-0">
-				<p className={styles.productName}>
-					{product.name_en ?? product.name_ar}
-				</p>
+				<p className={styles.productName}>{product.name_en ?? product.name_ar}</p>
 				<p className={styles.productMeta}>
 					{t('seller.dashboard.sold', 'Sold')}: {product.sold_count}
 				</p>
 			</div>
 			<div className="text-right">
-				<p className={styles.productPrice}>
-					{product.price.toLocaleString()} YER
-				</p>
-				<p
-					className={styles.stockBadge}
-					data-stock={stockStatus}
-				>
+				<p className={styles.productPrice}>{product.price.toLocaleString()} YER</p>
+				<p className={styles.stockBadge} data-stock={stockStatus}>
 					{t(`seller.dashboard.stock.${stockStatus}`, stockStatus.replace('_', ' '))}
 				</p>
 			</div>

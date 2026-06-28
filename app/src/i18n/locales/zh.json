@@ -415,7 +415,45 @@
 		"tue": "周二",
 		"wed": "周三",
 		"thu": "周四",
-		"fri": "周五"
+		"fri": "周五",
+		"subtitle": "管理您的店铺、商品和订单。",
+		"kpi": {
+			"revenue": "收入",
+			"activeOrders": "活跃订单",
+			"pendingOrders": "待处理订单",
+			"lowStock": "低库存商品",
+			"actionRequired": "需要处理",
+			"restock": "请尽快补货"
+		},
+		"noStore": "您还没有店铺",
+		"noStoreHint": "请联系管理员开设店铺，或申请成为商家。",
+		"recentProducts": "最近商品",
+		"noOrders": "此筛选下暂无订单。",
+		"noProducts": "您还没有商品。添加第一个吧！",
+		"sold": "已售",
+		"filter": {
+			"all": "全部",
+			"pending": "待处理",
+			"confirmed": "已确认",
+			"shipped": "已发货"
+		},
+		"order": {
+			"confirm": "确认",
+			"process": "处理",
+			"ship": "发货",
+			"deliver": "标记已送达",
+			"status": {
+				"pending": "待处理",
+				"confirmed": "已确认",
+				"processing": "处理中",
+				"shipped": "已发货",
+				"delivered": "已送达",
+				"cancelled": "已取消"
+			}
+		},
+		"product": {
+			"new": "新建商品"
+		}
 	},
 	"customer": {
 		"myOrders": "我的订单",

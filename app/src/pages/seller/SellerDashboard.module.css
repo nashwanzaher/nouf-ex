@@ -1,0 +1,165 @@
+/* SellerDashboard.module.css — C.4 (real API integration) */
+
+.dashboard {
+	@apply p-4 md:p-6 space-y-6;
+}
+
+.header {
+	@apply flex items-start justify-between gap-4;
+}
+
+.title {
+	@apply text-2xl font-extrabold text-aliText;
+}
+
+.subtitle {
+	@apply text-sm text-aliTextMute mt-1;
+}
+
+.errorBanner {
+	@apply flex items-center gap-2 bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm;
+}
+
+.emptyState {
+	@apply flex flex-col items-center justify-center text-center p-12 bg-white border border-aliBorder rounded-2xl;
+}
+
+.emptyText {
+	@apply text-aliTextMute text-sm italic;
+}
+
+.kpiGrid {
+	@apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.kpiCard {
+	@apply flex items-start gap-3 bg-white border border-aliBorder rounded-xl p-4 shadow-sm;
+}
+
+.kpiIcon {
+	@apply w-10 h-10 flex items-center justify-center rounded-lg bg-aliOrange/10 text-aliOrange shrink-0;
+}
+
+.kpiLabel {
+	@apply text-xs text-aliTextMute font-medium;
+}
+
+.kpiValue {
+	@apply text-2xl font-extrabold text-aliText mt-0.5;
+}
+
+.kpiHint {
+	@apply text-xs text-aliOrange font-semibold mt-1;
+}
+
+.twoCol {
+	@apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+.card {
+	@apply bg-white border border-aliBorder rounded-2xl overflow-hidden;
+}
+
+.cardHeader {
+	@apply flex items-center justify-between gap-2 p-4 border-b border-aliBorder;
+}
+
+.cardTitle {
+	@apply text-base font-bold text-aliText;
+}
+
+.tabs {
+	@apply flex items-center gap-1 bg-aliSurface rounded-lg p-0.5;
+}
+
+.tab {
+	@apply px-2 py-1 rounded text-xs font-medium text-aliTextMute hover:text-aliText transition-colors;
+}
+
+.tabActive {
+	@apply bg-white text-aliText shadow-sm;
+}
+
+.cardBody {
+	@apply divide-y divide-aliBorder;
+}
+
+.orderRow {
+	@apply flex items-center gap-3 p-3 hover:bg-aliSurface transition-colors;
+}
+
+.orderNumber {
+	@apply text-sm font-bold text-aliText;
+}
+
+.orderDate {
+	@apply text-xs text-aliTextMute mt-0.5;
+}
+
+.orderTotal {
+	@apply text-sm font-bold text-aliText;
+}
+
+.orderStatus {
+	@apply text-[10px] font-bold uppercase tracking-wide text-aliTextMute mt-0.5;
+}
+
+.orderStatus[data-status='delivered'] {
+	@apply text-green-600;
+}
+
+.orderStatus[data-status='cancelled'] {
+	@apply text-red-600;
+}
+
+.orderStatus[data-status='shipped'] {
+	@apply text-blue-600;
+}
+
+.productRow {
+	@apply flex items-center gap-3 p-3 hover:bg-aliSurface transition-colors;
+}
+
+.productName {
+	@apply text-sm font-medium text-aliText line-clamp-1;
+}
+
+.productMeta {
+	@apply text-xs text-aliTextMute mt-0.5;
+}
+
+.productPrice {
+	@apply text-sm font-bold text-aliText;
+}
+
+.stockBadge {
+	@apply text-[10px] font-bold uppercase tracking-wide text-aliTextMute mt-0.5;
+}
+
+.stockBadge[data-stock='in_stock'] {
+	@apply text-green-600;
+}
+
+.stockBadge[data-stock='low_stock'] {
+	@apply text-aliOrange;
+}
+
+.stockBadge[data-stock='out_of_stock'] {
+	@apply text-red-600;
+}
+
+.btn {
+	@apply px-3 py-1.5 rounded-lg font-semibold text-sm transition-colors flex items-center gap-1 disabled:opacity-50;
+}
+
+.btnPrimary {
+	@apply bg-aliOrange text-white hover:bg-aliOrangeHover;
+}
+
+.btnGhost {
+	@apply text-aliText hover:text-aliOrange;
+}
+
+.btnSmall {
+	@apply text-xs;
+}

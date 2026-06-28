@@ -417,3 +417,155 @@ export function useUsers(): HookResult<User[]> {
 		return res.json();
 	});
 }
+
+// ─── Seller (C.4) ──────────────────────────────────────────
+
+import {
+	getSellerStoreMe,
+	updateSellerStore,
+	getSellerProducts,
+	getSellerProduct,
+	createSellerProduct,
+	updateSellerProduct,
+	deleteSellerProduct,
+	addSellerProductImage,
+	getSellerOrders,
+	getSellerOrder,
+	updateSellerOrderStatus,
+	getSellerAnalytics,
+	getSellerInventory,
+	getSellerPayouts,
+	getSellerDashboard,
+} from '../lib/api';
+import type {
+	SellerStore,
+	SellerOrder,
+	SellerOrderWithItems,
+	SellerAnalytics,
+	SellerInventoryItem,
+	SellerBalance,
+	SellerPayout,
+	SellerDashboard,
+	SellerProductCreate,
+	SellerStoreUpdate,
+} from '../lib/api';
+
+export function useSellerStore(): HookResult<SellerStore | null> {
+	return useDataHook(getSellerStoreMe);
+}
+
+export function useSellerProducts(): HookResult<{ items: Product[] }> {
+	return useDataHook(getSellerProducts);
+}
+
+export function useSellerProduct(
+	id: number | null,
+): HookResult<ProductWithDetails | null> {
+	return useDataHook(() => getSellerProduct(id ?? 0));
+}
+
+export function useSellerOrders(
+	status?: string,
+): HookResult<{ items: SellerOrder[] }> {
+	return useDataHook(() => getSellerOrders(status));
+}
+
+export function useSellerOrder(
+	id: number | null,
+): HookResult<SellerOrderWithItems | null> {
+	return useDataHook(() => getSellerOrder(id ?? 0));
+}
+
+export function useSellerAnalytics(): HookResult<SellerAnalytics | null> {
+	return useDataHook(getSellerAnalytics);
+}
+
+export function useSellerInventory(): HookResult<{
+	items: SellerInventoryItem[];
+} | null> {
+	return useDataHook(getSellerInventory);
+}
+
+export function useSellerPayouts(
+	limit = 50,
+	offset = 0,
+): HookResult<{
+	balance: SellerBalance;
+	items: SellerPayout[];
+	limit: number;
+	offset: number;
+} | null> {
+	return useDataHook(() => getSellerPayouts(limit, offset));
+}
+
+export function useSellerDashboard(): HookResult<SellerDashboard | null> {
+	return useDataHook(getSellerDashboard);
+}
+
+// Mutation helpers — callers invoke these and then call refreshAll()
+// to force the read hooks to re-fetch.
+export interface SellerMutations {
+	createProduct: (body: SellerProductCreate) => Promise<{ id: number }>;
+	updateProduct: (
+		id: number,
+		body: Partial<SellerProductCreate>,
+	) => Promise<ProductWithDetails>;
+	deleteProduct: (id: number) => Promise<{ id: number }>;
+	addProductImage: (
+		productId: number,
+		body: { url: string; alt_text?: string; sort_order?: number; is_primary?: boolean },
+	) => Promise<{ id: number }>;
+	updateStore: (id: number, body: SellerStoreUpdate) => Promise<SellerStore>;
+	updateOrderStatus: (
+		id: number,
+		body: { status: string; tracking_number?: string; note?: string },
+	) => Promise<SellerOrder>;
+	refreshAll: () => void;
+}
+
+export function useSellerMutations(): SellerMutations {
+	const [tick, setTick] = useState(0);
+	const refreshAll = useCallback(() => setTick((n) => n + 1), []);
+	const createProduct = useCallback(
+		(body: SellerProductCreate) => createSellerProduct(body),
+		[],
+	);
+	const updateProduct = useCallback(
+		(id: number, body: Partial<SellerProductCreate>) =>
+			updateSellerProduct(id, body),
+		[],
+	);
+	const deleteProduct = useCallback(
+		(id: number) => deleteSellerProduct(id),
+		[],
+	);
+	const addProductImage = useCallback(
+		(
+			productId: number,
+			body: { url: string; alt_text?: string; sort_order?: number; is_primary?: boolean },
+		) => addSellerProductImage(productId, body),
+		[],
+	);
+	const updateStore = useCallback(
+		(id: number, body: SellerStoreUpdate) => updateSellerStore(id, body),
+		[],
+	);
+	const updateOrderStatus = useCallback(
+		(
+			id: number,
+			body: { status: string; tracking_number?: string; note?: string },
+		) => updateSellerOrderStatus(id, body),
+		[],
+	);
+	// tick is intentionally read by the read hooks via dep arrays.
+	void tick;
+	return {
+		createProduct,
+		updateProduct,
+		deleteProduct,
+		addProductImage,
+		updateStore,
+		updateOrderStatus,
+		refreshAll,
+	};
+}

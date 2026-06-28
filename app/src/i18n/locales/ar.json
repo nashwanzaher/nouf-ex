@@ -196,7 +196,7 @@
 		"revenue": "الإيرادات",
 		"visitors": "الزوار",
 		"conversion": "معدل التحويل",
-		"recentOrders": "أحدث الطلبات",
+		"recentOrders": "الطلبات الأخيرة",
 		"topProducts": "أفضل المنتجات",
 		"thisMonth": "هذا الشهر",
 		"thisWeek": "هذا الأسبوع",
@@ -258,7 +258,45 @@
 		"tue": "الثلاثاء",
 		"wed": "الأربعاء",
 		"thu": "الخميس",
-		"fri": "الجمعة"
+		"fri": "الجمعة",
+		"subtitle": "إدارة متجرك ومنتجاتك وطلباتك.",
+		"kpi": {
+			"revenue": "الإيرادات",
+			"activeOrders": "الطلبات النشطة",
+			"pendingOrders": "طلبات معلقة",
+			"lowStock": "منتجات قاربت على النفاد",
+			"actionRequired": "يتطلب إجراء",
+			"restock": "أعد التخزين قريباً"
+		},
+		"noStore": "ليس لديك متجر بعد",
+		"noStoreHint": "تواصل مع الإدارة لإنشاء متجرك، أو تقدّم بطلب للحصول على صفة تاجر.",
+		"recentProducts": "المنتجات الأخيرة",
+		"noOrders": "لا توجد طلبات بهذا التصفية بعد.",
+		"noProducts": "ليس لديك منتجات بعد. أضف أول منتج!",
+		"sold": "تم البيع",
+		"filter": {
+			"all": "الكل",
+			"pending": "معلق",
+			"confirmed": "مؤكد",
+			"shipped": "تم الشحن"
+		},
+		"order": {
+			"confirm": "تأكيد",
+			"process": "تجهيز",
+			"ship": "شحن",
+			"deliver": "تسليم",
+			"status": {
+				"pending": "معلق",
+				"confirmed": "مؤكد",
+				"processing": "قيد التجهيز",
+				"shipped": "تم الشحن",
+				"delivered": "تم التسليم",
+				"cancelled": "ملغى"
+			}
+		},
+		"product": {
+			"new": "منتج جديد"
+		}
 	},
 	"customer": {
 		"myOrders": "طلباتي",

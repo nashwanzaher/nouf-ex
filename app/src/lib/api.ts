@@ -295,6 +295,130 @@ export interface HomeStats {
 	categories: Category[];
 }
 
+// ─── Seller (C.4) ──────────────────────────────────────────
+
+export interface SellerStore {
+	id: number;
+	owner_id: number;
+	store_name: string;
+	slug: string | null;
+	name_ar: string;
+	name_en: string | null;
+	description: string | null;
+	logo_url: string | null;
+	banner_url: string | null;
+	phone: string | null;
+	city: string | null;
+	governorate: string | null;
+	rating: number | null;
+	is_active: boolean;
+	is_verified: boolean;
+}
+
+export interface SellerOrder {
+	id: number;
+	order_number: string;
+	customer_id: number;
+	customer_email?: string;
+	store_id: number | null;
+	status: string;
+	payment_status: string | null;
+	payment_method: string | null;
+	subtotal: number;
+	shipping_cost: number;
+	discount: number;
+	total: number;
+	timeline: unknown[] | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface SellerOrderWithItems extends SellerOrder {
+	items: Array<{
+		id: number;
+		product_id: number;
+		quantity: number;
+		unit_price: number;
+		total_price: number;
+	}>;
+}
+
+export interface SellerAnalytics {
+	store_id: number;
+	total_orders: number;
+	delivered_orders: number;
+	cancelled_orders: number;
+	unique_customers: number;
+	today_orders: number;
+	gross_revenue: number;
+	total_revenue: number;
+}
+
+export interface SellerInventoryItem {
+	id: number;
+	name_ar: string;
+	name_en: string | null;
+	sku: string | null;
+	stock: number;
+	sold_count: number;
+	is_active: boolean;
+	stock_status: 'in_stock' | 'low_stock' | 'out_of_stock';
+}
+
+export interface SellerPayout {
+	id: number;
+	type: string;
+	amount: number;
+	balance_after: number;
+	reference_type: string | null;
+	reference_id: number | null;
+	description: string | null;
+	created_at: string;
+}
+
+export interface SellerBalance {
+	available: number;
+	pending: number;
+}
+
+export interface SellerDashboard {
+	store_id: number;
+	active_orders: number;
+	pending_orders: number;
+	revenue: number;
+	low_stock_products: number;
+}
+
+export interface SellerProductCreate {
+	name_ar: string;
+	name_en?: string;
+	name_zh?: string;
+	slug: string;
+	sku?: string;
+	category_id: number;
+	price: number;
+	original_price?: number;
+	stock?: number;
+	description?: string;
+	main_image?: string;
+	images?: string[];
+	features?: Array<Record<string, unknown>>;
+	badges?: string[];
+	metadata?: Record<string, unknown>;
+}
+
+export interface SellerStoreUpdate {
+	store_name?: string;
+	name_ar?: string;
+	name_en?: string;
+	description?: string;
+	logo_url?: string;
+	banner_url?: string;
+	phone?: string;
+	city?: string;
+	governorate?: string;
+}
+
 export interface ApiResponse<T> {
 	success: boolean;
 	data: T;
@@ -771,6 +895,107 @@ export async function redeemCoupon(body: RedeemCouponBody): Promise<{ id: number
 		method: 'POST',
 		body: JSON.stringify(body),
 	});
+}
+
+// ─── Seller API  (C.3) ──────────────────────────────────────
+
+export async function getSellerStoreMe(): Promise<SellerStore> {
+	return apiRequest('/seller/stores/me');
+}
+
+export async function updateSellerStore(
+	id: number,
+	body: SellerStoreUpdate,
+): Promise<SellerStore> {
+	return apiRequest(`/seller/stores/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function createSellerProduct(
+	body: SellerProductCreate,
+): Promise<{ id: number }> {
+	return apiRequest('/seller/products', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function getSellerProducts(): Promise<{ items: Product[] }> {
+	return apiRequest('/seller/products');
+}
+
+export async function getSellerProduct(
+	id: number,
+): Promise<ProductWithDetails> {
+	return apiRequest(`/seller/products/${id}`);
+}
+
+export async function updateSellerProduct(
+	id: number,
+	body: Partial<SellerProductCreate>,
+): Promise<ProductWithDetails> {
+	return apiRequest(`/seller/products/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function deleteSellerProduct(id: number): Promise<{ id: number }> {
+	return apiRequest(`/seller/products/${id}`, { method: 'DELETE' });
+}
+
+export async function addSellerProductImage(
+	productId: number,
+	body: { url: string; alt_text?: string; sort_order?: number; is_primary?: boolean },
+): Promise<{ id: number }> {
+	return apiRequest(`/seller/products/${productId}/images`, {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function getSellerOrders(
+	status?: string,
+): Promise<{ items: SellerOrder[] }> {
+	const q = status ? `?status=${encodeURIComponent(status)}` : '';
+	return apiRequest(`/seller/orders${q}`);
+}
+
+export async function getSellerOrder(
+	id: number,
+): Promise<SellerOrderWithItems> {
+	return apiRequest(`/seller/orders/${id}`);
+}
+
+export async function updateSellerOrderStatus(
+	id: number,
+	body: { status: string; tracking_number?: string; note?: string },
+): Promise<SellerOrder> {
+	return apiRequest(`/seller/orders/${id}/status`, {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function getSellerAnalytics(): Promise<SellerAnalytics> {
+	return apiRequest('/seller/analytics');
+}
+
+export async function getSellerInventory(): Promise<{ items: SellerInventoryItem[] }> {
+	return apiRequest('/seller/inventory');
+}
+
+export async function getSellerPayouts(
+	limit = 50,
+	offset = 0,
+): Promise<{ balance: SellerBalance; items: SellerPayout[]; limit: number; offset: number }> {
+	return apiRequest(`/seller/payouts?limit=${limit}&offset=${offset}`);
+}
+
+export async function getSellerDashboard(): Promise<SellerDashboard> {
+	return apiRequest('/seller/dashboard');
 }
 
 // ─── Refunds API  (P1-6) ─────────────────────────────────────

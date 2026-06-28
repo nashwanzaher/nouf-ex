@@ -1,0 +1,95 @@
+# Nouf-ex - CODEOWNERS
+# D.8 in MASTER_PLAN.md - automatic reviewer assignment based on the
+# files a PR touches. GitHub auto-requests review from the listed
+# users/teams when a PR changes a matching path. See
+# https://docs.github.com/en/repositories/managing-your-repository/setting-up-collaboration-on-github-repository/about-code-owners
+#
+# Format: <pattern>   <owner>
+# Patterns use GitHub path glob syntax. The LAST matching rule wins
+# (so order matters - more specific rules should come after more
+# general ones). Lines starting with `#` are comments.
+
+# === Default: 1 maintainer is required on every PR =============
+/*                                                    @nashwanzaher
+
+# === Security-critical: require extra scrutiny ==================
+/app/server/middleware.ts                          @nashwanzaher
+/app/server/routes/auth.cts                        @nashwanzaher
+/app/server/routes/auth-2fa.cts                    @nashwanzaher
+/app/server/lib/auth.cts                           @nashwanzaher
+/app/server/lib/totp.cts                           @nashwanzaher
+/app/server/lib/backup-codes.cts                    @nashwanzaher
+/app/server/lib/partial-token.cts                  @nashwanzaher
+/app/src/lib/api.ts                                @nashwanzaher
+/app/.env*                                          @nashwanzaher
+SECRETS.md                                          @nashwanzaher
+/docs/architecture/security.md                      @nashwanzaher
+
+# === Database migrations: DBA review ============================
+/database/migrations/                               @nashwanzaher
+/database/roles.sql                                 @nashwanzaher
+/database/README.md                                 @nashwanzaher
+
+# === CI / deployment: DevOps review ============================
+/.github/workflows/                                 @nashwanzaher
+/Dockerfile                                         @nashwanzaher
+/docker-compose.yml                                 @nashwanzaher
+/docs/operations/                                   @nashwanzaher
+/docs/development/ci-cd.md                          @nashwanzaher
+
+# === Database schema: notify DBA team ==========================
+/database/schema.sql                                @nashwanzaher
+/database/schema-extra.sql                          @nashwanzaher
+
+# === API routes: backend team lead ==============================
+/app/server/                                        @nashwanzaher
+/app/server/routes/                                 @nashwanzaher
+/app/server/lib/                                    @nashwanzaher
+
+# === Frontend pages: frontend team lead ========================
+/app/src/pages/                                     @nashwanzaher
+/app/src/components/                                @nashwanzaher
+/app/src/hooks/                                     @nashwanzaher
+/app/src/context/                                   @nashwanzaher
+
+# === Documentation: docs reviewer ==============================
+/docs/                                               @nashwanzaher
+/app/README.md                                      @nashwanzaher
+/app/server/README.md                               @nashwanzaher
+/README.md                                          @nashwanzaher
+/CONTRIBUTING.md                                   @nashwanzaher
+/CHANGELOG.md                                       @nashwanzaher
+
+# === Tests: qa team ===========================================
+/tests/                                              @nashwanzaher
+/app/src/**/__tests__/                              @nashwanzaher
+/app/server/tests/                                  @nashwanzaher
+/app/vitest.config.ts                               @nashwanzaher
+
+# === MCP server: AI team ========================================
+/mcp-server/                                        @nashwanzaher
+/.github/copilot-instructions.md                    @nashwanzaher
+
+# === Tools and scripts: devops team ===========================
+/scripts/                                            @nashwanzaher
+/app/format-check.ps1                               @nashwanzaher
+/app/format.ps1                                     @nashwanzaher
+/app/lint.ps1                                       @nashwanzaher
+/app/tc.ps1                                         @nashwanzaher
+/app/test.ps1                                       @nashwanzaher
+
+# === Legacy: history dirs need no review =======================
+/archive/                                           @nashwanzaher
+/.github/audit-checks.ps1                          @nashwanzaher
+/.github/copilot-instructions.md                    @nashwanzaher
+
+# === Auto-merge candidates (Dependabot + lockfiles) ===========
+# When Dependabot opens a PR, we want to auto-merge after CI
+# passes. The CODEOWNERS for these paths is set to the empty list
+# so no human review is requested.
+/.github/dependabot.yml                              @nashwanzaher
+/package.json                                       @nashwanzaher
+/package-lock.json                                  @nashwanzaher
+/app/package-lock.json                              @nashwanzaher
+/mcp-server/package.json                            @nashwanzaher
+/mcp-server/package-lock.json                       @nashwanzaher

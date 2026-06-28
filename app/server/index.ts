@@ -45,6 +45,7 @@ import { shippingRouter } from './routes/shipping.cts';
 import { storeFollowersRouter } from './routes/store-followers.cts';
 import { addressesRouter } from './routes/addresses.cts';
 import { messagesRouter } from './routes/messages.cts';
+import { sellerRouter } from './routes/seller.cts';
 
 // Note: `import 'dotenv/config'` above already loaded .env.
 // Keep this comment as a marker so future readers know not to
@@ -180,6 +181,7 @@ app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/seller', sellerRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/coupons', couponsRouter);
 app.use('/api/refunds', refundsRouter);

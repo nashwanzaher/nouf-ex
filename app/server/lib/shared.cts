@@ -532,3 +532,103 @@ export const wishlistItemIdParamSchema = z.object({
 export const notificationIdParamSchema = z.object({
 	id: z.coerce.number().int().positive(),
 });
+
+// ── Seller (merchant self-service) ─────────────────────────────
+//
+// C.3 in MASTER_PLAN.md — closes the 12 missing seller endpoints
+// documented in phase10_merchant_flow.ps1 §3. The merchant can
+// self-manage their store + products + orders + analytics without
+// being promoted to admin.
+//
+// All schemas are `z.strict()` so unknown fields are rejected with
+// 400 (consistent with the rest of the API).
+
+/** Body for POST /api/seller/products — full product create. */
+export const sellerProductCreateSchema = z
+	.object({
+		name_ar: z.string().trim().min(2).max(200),
+		name_en: z.string().trim().min(2).max(200).optional(),
+		name_zh: z.string().trim().min(2).max(200).optional(),
+		slug: z
+			.string()
+			.trim()
+			.min(2)
+			.max(200)
+			.regex(/^[a-z0-9-]+$/, 'slug must be lowercase letters, digits, or hyphens'),
+		sku: z.string().trim().min(1).max(50).optional(),
+		category_id: z.number().int().positive(),
+		price: z.number().nonnegative(),
+		original_price: z.number().nonnegative().optional(),
+		stock: z.number().int().nonnegative().default(0),
+		description: z.string().trim().max(4000).optional(),
+		main_image: z.string().trim().url().optional(),
+		images: z.array(z.string().trim().url()).max(20).optional(),
+		features: z.array(z.record(z.string(), z.unknown())).max(50).optional(),
+		badges: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+	})
+	.strict();
+
+/** Body for PATCH /api/seller/products/:id — partial update. */
+export const sellerProductUpdateSchema = z
+	.object({
+		name_ar: z.string().trim().min(2).max(200).optional(),
+		name_en: z.string().trim().min(2).max(200).optional(),
+		name_zh: z.string().trim().min(2).max(200).optional(),
+		sku: z.string().trim().min(1).max(50).optional(),
+		price: z.number().nonnegative().optional(),
+		original_price: z.number().nonnegative().optional(),
+		stock: z.number().int().nonnegative().optional(),
+		description: z.string().trim().max(4000).optional(),
+		main_image: z.string().trim().url().optional(),
+		images: z.array(z.string().trim().url()).max(20).optional(),
+		features: z.array(z.record(z.string(), z.unknown())).max(50).optional(),
+		badges: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+	})
+	.strict();
+
+/** Path params for /api/seller/products/:id */
+export const sellerProductIdParamSchema = z.object({
+	id: z.coerce.number().int().positive(),
+});
+
+/** Body for PATCH /api/seller/stores/:id — merchant edits their own store. */
+export const sellerStoreUpdateSchema = z
+	.object({
+		store_name: z.string().trim().min(2).max(100).optional(),
+		name_ar: z.string().trim().min(2).max(100).optional(),
+		name_en: z.string().trim().min(2).max(100).optional(),
+		description: z.string().trim().max(4000).optional(),
+		logo_url: z.string().trim().url().optional(),
+		banner_url: z.string().trim().url().optional(),
+		phone: z.string().trim().min(5).max(20).optional(),
+		city: z.string().trim().min(1).max(50).optional(),
+		governorate: z.string().trim().min(2).max(50).optional(),
+	})
+	.strict();
+
+/** Body for POST /api/seller/orders/:id/status — merchant updates order. */
+export const sellerOrderStatusUpdateSchema = z
+	.object({
+		status: z.enum([
+			'confirmed',
+			'processing',
+			'shipped',
+			'delivered',
+			'cancelled',
+		]),
+		tracking_number: z.string().trim().min(3).max(100).optional(),
+		note: z.string().trim().max(500).optional(),
+	})
+	.strict();
+
+/** Body for POST /api/seller/products/:id/images — add image to product. */
+export const sellerProductImageAddSchema = z
+	.object({
+		url: z.string().trim().url(),
+		alt_text: z.string().trim().max(200).optional(),
+		sort_order: z.number().int().nonnegative().default(0),
+		is_primary: z.boolean().default(false),
+	})
+	.strict();

@@ -52,6 +52,16 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 
 		const safeUser = { id: userId, email, full_name: name, role };
 		const token = signAuthToken({ sub: userId, role });
+
+		// Fire bilingual welcome notification (best-effort, non-blocking).
+		// (C.1 in MASTER_PLAN.md — real welcome notification on signup)
+		try {
+			const { onWelcome } = await import('../lib/notifications/events.cts');
+			await onWelcome({ userId, name });
+		} catch (notifyErr) {
+			console.error('[auth.register] welcome notification failed:', notifyErr);
+		}
+
 		sendSuccess(res, { user: safeUser, token }, 201, 'User registered successfully');
 	} catch (err) {
 		const pg = err as { code?: string };

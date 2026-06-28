@@ -218,12 +218,36 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 		const result = (await db
 			.prepare(
 				`UPDATE payments SET status = 'completed', paid_at = NOW(), updated_at = NOW()
-          WHERE id = ? RETURNING order_id`,
+          WHERE id = ? RETURNING order_id, amount`,
 			)
-			.get(id)) as { order_id: number } | undefined;
+			.get(id)) as { order_id: number; amount: number } | undefined;
 		await db
 			.prepare(`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`)
 			.run(result!.order_id);
+
+		// Fire bilingual i18n notification to the customer (best-effort).
+		// (C.1 in MASTER_PLAN.md — real payment confirmation notification)
+		try {
+			const { onPaymentConfirmed } = await import(
+				'../lib/notifications/events.cts'
+			);
+			const orderRow = (await db
+				.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
+				.get(result!.order_id)) as
+				| { order_number: string; customer_id: number }
+				| undefined;
+			if (orderRow) {
+				await onPaymentConfirmed({
+					orderId: result!.order_id,
+					customerId: orderRow.customer_id,
+					orderNumber: orderRow.order_number,
+					amount: Number(result!.amount),
+				});
+			}
+		} catch (notifyErr) {
+			console.error('[payments] notification dispatch failed:', notifyErr);
+		}
+
 		sendSuccess(res, { order_id: result!.order_id }, 'Payment confirmed');
 	} catch (err) {
 		return sendError(res, err);

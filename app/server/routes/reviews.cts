@@ -113,6 +113,37 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.prepare('UPDATE products SET rating = ?, review_count = ? WHERE id = ?')
 			.run(avg.toFixed(1), ratingData.count, productId);
 
+		// Fire bilingual i18n notification to the merchant (best-effort).
+		// (C.1 in MASTER_PLAN.md — real review-posted notification)
+		try {
+			const { onReviewPosted } = await import(
+				'../lib/notifications/events.cts'
+			);
+			const productInfo = (await db
+				.prepare('SELECT name_en, name_ar, store_id FROM products WHERE id = ?')
+				.get(productId)) as
+				| { name_en: string | null; name_ar: string; store_id: number }
+				| undefined;
+			if (productInfo) {
+				const storeRow = (await db
+					.prepare('SELECT owner_id FROM stores WHERE id = ?')
+					.get(productInfo.store_id)) as
+					| { owner_id: number }
+					| undefined;
+				if (storeRow) {
+					await onReviewPosted({
+						productId,
+						productName: productInfo.name_en ?? productInfo.name_ar,
+						merchantId: storeRow.owner_id,
+						rating,
+						comment: comment ?? undefined,
+					});
+				}
+			}
+		} catch (notifyErr) {
+			console.error('[reviews] notification dispatch failed:', notifyErr);
+		}
+
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Review submitted successfully');
 	} catch (err) {
 		return sendError(res, err);

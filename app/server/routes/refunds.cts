@@ -38,6 +38,43 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
          VALUES (?, ?, ?, ?, 'requested', NOW(), NOW()) RETURNING id`,
 			)
 			.get(order_id, userId, amount, reason)) as { id: number };
+
+		// Fire bilingual i18n notifications (customer + merchant).
+		// Best-effort — never blocks the response.
+		// (C.1 in MASTER_PLAN.md — real refund-requested notification)
+		try {
+			const { onRefundRequested } = await import(
+				'../lib/notifications/events.cts'
+			);
+			const orderRow = (await db
+				.prepare(
+					'SELECT order_number, customer_id, store_id FROM orders WHERE id = ?',
+				)
+				.get(order_id)) as
+				| { order_number: string; customer_id: number; store_id: number | null }
+				| undefined;
+			if (orderRow) {
+				const storeRow = orderRow.store_id
+					? ((await db
+							.prepare('SELECT owner_id FROM stores WHERE id = ?')
+							.get(orderRow.store_id)) as
+							| { owner_id: number }
+							| undefined)
+					: undefined;
+				if (storeRow) {
+					await onRefundRequested({
+						orderId: order_id,
+						orderNumber: orderRow.order_number,
+						customerId: orderRow.customer_id,
+						merchantId: storeRow.owner_id,
+						amount,
+					});
+				}
+			}
+		} catch (notifyErr) {
+			console.error('[refunds] notification dispatch failed:', notifyErr);
+		}
+
 		sendSuccess(res, result, 'Refund requested');
 	} catch (err) {
 		return sendError(res, err);
@@ -94,6 +131,34 @@ refundsRouter.post(
 						);
 				}
 			}
+
+			// Fire bilingual i18n notification to the customer (best-effort).
+			// (C.1 in MASTER_PLAN.md — real refund-resolved notification)
+			try {
+				const { onRefundResolved } = await import(
+					'../lib/notifications/events.cts'
+				);
+				const orderRow = (await db
+					.prepare(
+						'SELECT order_number, customer_id FROM orders WHERE id = ?',
+					)
+					.get(result.order_id)) as
+					| { order_number: string; customer_id: number }
+					| undefined;
+				if (orderRow) {
+					await onRefundResolved({
+						orderId: result.order_id,
+						orderNumber: orderRow.order_number,
+						customerId: orderRow.customer_id,
+						amount: result.amount,
+						status: finalStatus === 'processed' ? 'approved' : 'rejected',
+						reason: adminNotes ?? undefined,
+					});
+				}
+			} catch (notifyErr) {
+				console.error('[refunds] resolve notification failed:', notifyErr);
+			}
+
 			sendSuccess(res, { id, status: finalStatus }, 'Refund resolved');
 		} catch (err) {
 			return sendError(res, err);

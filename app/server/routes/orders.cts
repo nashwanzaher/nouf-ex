@@ -290,18 +290,52 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			'Order created successfully',
 		);
 
-		// Fire notifications to the customer (and merchant) AFTER the
-		// transaction has committed. We do this best-effort: any failure
-		// here is logged but never blocks the order response.
+		// Fire bilingual i18n notifications to the customer AND the merchant
+		// AFTER the transaction has committed. We do this best-effort: any
+		// failure here is logged but never blocks the order response.
+		// (C.1 in MASTER_PLAN.md — real notifications with i18n + merchant alert)
 		try {
-			const { notify } = await import('../lib/notifications/dispatcher.cts');
-			await notify({
-				userId: customerId,
-				type: 'order',
-				title: `Order ${orderNumber} placed`,
-				body: `Your order for ${finalTotal.toLocaleString()} YER has been placed and is awaiting confirmation.`,
-				data: { order_id: orderId, order_number: orderNumber, total: finalTotal },
-			});
+			const { onOrderPlaced } = await import(
+				'../lib/notifications/events.cts'
+			);
+			// Look up the merchant (store owner) and a product display name
+			// for the notification body.
+			const [storeRow, firstProductRow] = await Promise.all([
+				db
+					.prepare('SELECT owner_id, store_name FROM stores WHERE id = ?')
+					.get(resolvedStoreId) as Promise<
+						| { owner_id: number; store_name: string }
+						| undefined
+					>,
+				items.length >= 1
+					? (db
+							.prepare(
+								'SELECT name_en, name_ar FROM products WHERE id = $1',
+							)
+							.get(items[0].productId) as Promise<
+								| { name_en: string | null; name_ar: string }
+								| undefined
+							>)
+					: Promise.resolve(undefined),
+			]);
+			const merchantId = storeRow?.owner_id;
+			const productName =
+				firstProductRow?.name_en ??
+				firstProductRow?.name_ar ??
+				(items.length === 1 ? 'item' : `${items.length} items`);
+			if (merchantId) {
+				await onOrderPlaced({
+					orderId,
+					customerId,
+					merchantId,
+					orderNumber,
+					total: finalTotal,
+					itemCount: items.length,
+					paymentMethod: normalisedPaymentMethod,
+					trackingUrl: `https://noufex.example.com/orders/${orderId}`,
+					productName,
+				});
+			}
 		} catch (notifyErr) {
 			console.error('[orders] notification dispatch failed:', notifyErr);
 		}

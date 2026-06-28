@@ -21,7 +21,23 @@
 		"orders": "Orders",
 		"searchPlaceholder": "Search products...",
 		"allCategories": "All Categories",
-		"cartLabel": "Cart"
+		"cartLabel": "Cart",
+		"aiMode": "AI Mode",
+		"manufacturers": "Manufacturers",
+		"globalSupply": "Global Supply"
+	},
+	"product": {
+		"badge": {
+			"bestseller": "Hot",
+			"new": "New"
+		},
+		"addToCart": {
+			"idle": "Add to Cart",
+			"added": "Added!"
+		}
+	},
+	"home": {
+		"tradeAssurance": "Trade Assurance"
 	},
 	"auth": {
 		"loginTitle": "Login",

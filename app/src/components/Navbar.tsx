@@ -205,7 +205,7 @@ export default function Navbar() {
 									onClick={() => changeLang(code)}
 									className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${i18n.language === code ? 'bg-aliOrange text-white shadow' : 'text-aliTextMute hover:text-aliText'}`}
 								>
-									{code === 'ar' ? 'العربية' : code === 'en' ? 'EN' : '中文'}
+									{t(`lang.${code}`)}
 								</button>
 							))}
 						</div>
@@ -328,7 +328,7 @@ export default function Navbar() {
 						)}
 					</div>
 					<Link to="/" className="text-aliOrange font-semibold hover:underline">
-						AI Mode
+						{t('nav.aiMode')}
 					</Link>
 					<Link
 						to="/search"
@@ -340,13 +340,13 @@ export default function Navbar() {
 						to="/categories"
 						className="text-aliText hover:text-aliOrange transition-colors flex items-center gap-1"
 					>
-						Manufacturers <BadgeCheck size={14} className="text-aliOrange" />
+						{t('nav.manufacturers')} <BadgeCheck size={14} className="text-aliOrange" />
 					</Link>
 					<Link
 						to="/deals"
 						className="text-aliText hover:text-aliOrange transition-colors flex items-center gap-1"
 					>
-						<Globe size={14} /> Global Supply
+						<Globe size={14} /> {t('nav.globalSupply')}
 					</Link>
 				</div>
 			</div>
@@ -396,7 +396,7 @@ export default function Navbar() {
 								onClick={() => setMobileOpen(false)}
 								className="flex items-center gap-2 px-3 py-2 text-aliText hover:bg-aliSurface rounded-lg"
 							>
-								<Globe size={16} /> AI Mode
+								<Globe size={16} /> {t('nav.aiMode')}
 							</Link>
 							<Link
 								to="/search"
@@ -423,7 +423,7 @@ export default function Navbar() {
 									onClick={() => changeLang(code)}
 									className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${i18n.language === code ? 'bg-aliOrange text-white' : 'bg-aliSurface text-aliTextMute'}`}
 								>
-									{code === 'ar' ? 'العربية' : code === 'en' ? 'English' : '中文'}
+									{t(`lang.${code}`)}
 								</button>
 							))}
 						</div>

@@ -1,0 +1,298 @@
+# Production Deployment — Manual Approval Process
+
+> **D.5 in MASTER_PLAN.md** — manual approval workflow for production.
+> **Last reviewed:** 2026-06-28
+> **Standard:** [GitHub Actions — Using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) · [GitHub — Deployment protection rules](https://docs.github.com/en/deployment/protecting-deployments/configuring-and-managing-deployments/configuring-deployment-protection-rules)
+
+This document is the **canonical reference** for promoting builds
+from staging to production. The process is **deliberately slower**
+than staging — every production deploy must have a human
+reviewer approve it.
+
+---
+
+## 1. Overview
+
+```
+Push to main
+  │
+  ▼  (auto)
+ci.yml runs
+  │ Lint + Typecheck + Test + Build (in parallel with PR)
+  │ DB Integration + Server Boot (push to main only)
+  │
+  ▼  (auto, on push to main)
+deploy-staging.yml
+  │ Build artefacts → SCP to staging → restart → smoke
+  │
+  ▼  (auto, when version tag is pushed)
+deploy-prod.yml (workflow_dispatch)
+  │ Validate semver tag → run smoke against staging
+  │ ▒▒▒ MANUAL APPROVAL ▒▒▒  (2 reviewers required)
+  ▼  (auto, on approval)
+Deploy to production → restart → smoke
+```
+
+---
+
+## 2. How to trigger a production deploy
+
+There are two methods. The version-tag method is the preferred one
+because it is immutable and audit-friendly.
+
+### 2.1 Method A — version tag (preferred)
+
+```sh
+# 1. Update version in CHANGELOG.md + package.json files.
+# 2. Commit the version bump.
+git add CHANGELOG.md app/package.json mcp-server/package.json
+git commit -m "chore(release): v0.2.0"
+
+# 3. Tag the commit. The tag MUST be a semver.
+git tag -a v0.2.0 -m "v0.2.0 — see CHANGELOG.md"
+
+# 4. Push the tag.
+git push origin main --tags
+
+# 5. The deploy-prod.yml workflow triggers. Open the run in
+#    GitHub Actions, find the "production" environment's pending
+#    approval, and click "Approve".
+gh run list --workflow=deploy-prod.yml
+gh run view <run-id> --web   # opens the approval page
+```
+
+### 2.2 Method B — manual dispatch (fallback)
+
+```sh
+# 1. Open GitHub → Actions → Deploy to Production.
+# 2. Click "Run workflow", select the branch (main), and provide
+#    a reason in the input field.
+# 3. Same manual approval process as Method A.
+```
+
+---
+
+## 3. Configuring the `production` environment
+
+In **Settings → Environments → production → Configure**, set up:
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| **Required reviewers** | 2 specific users (or 1 user + 1 team) | Two-person rule for production. |
+| **Wait timer** | 5 minutes | A 5-minute cool-off period before the deploy can start (after approval). Lets the approver cancel if they change their mind. |
+| **Deployment branches** | `main` only (and `v*` tags) | Restrict production to verified branches. |
+| **Environment secrets** | `PROD_SSH_KEY`, `PROD_HOST`, `PROD_USER`, `PROD_URL`, `AUTH_SECRET_PROD`, `DB_PASSWORD_PROD`, `DATABASE_URL_PROD` | Production-only secrets; never visible to PRs. |
+| **Environment variables** | `NODE_ENV=production`, `API_PORT=3000`, `ALLOWED_ORIGINS` | Per-environment config. |
+
+### 3.1 `gh` CLI to create the environment
+
+```sh
+# One-time setup
+gh api repos/:owner/:repo/environments/production \
+  --method PUT \
+  --field wait_timer=5 \
+  --field prevent_self_review=false \
+  --field reviewers[]=alice \
+  --field reviewers[]=bob \
+  --field deployment_branch_policy[protected_branches]=true \
+  --field deployment_branch_policy[custom_branch_policies]=true
+```
+
+---
+
+## 4. The `deploy-prod.yml` workflow
+
+The workflow is dispatched manually (via version tag or
+`workflow_dispatch`). It runs the same smoke tests as staging and
+additionally validates the production database connection.
+
+This is a reference example — adapt to your actual production host.
+
+```yaml
+# .github/workflows/deploy-prod.yml
+name: Deploy to Production
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are we deploying? (POSTED IN CHANGELOG)'
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false   # DO NOT cancel in-progress prod deploys
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ secrets.PROD_URL }}
+    steps:
+      - name: Validate semver tag
+        if: github.event_name == 'push'
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag $TAG is not semver. Use vX.Y.Z format."
+            exit 1
+          fi
+          echo "Deploying semver tag: $TAG"
+
+      - name: Pre-deploy safety check
+        run: |
+          # Tag must be ahead of main (i.e. main points to the tagged commit
+          # or to a descendant of it).
+          if ! git merge-base --is-ancestor ${{ github.sha }} origin/main; then
+            echo "::error::Tag ${{ github.sha }} is not an ancestor of main."
+            exit 1
+          fi
+          echo "Safety check passed: tag is on main."
+
+      - name: Download build artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: noufex-build
+          path: build/
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+      - name: Upload artefacts to production
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} \
+            "mkdir -p /opt/noufex/build/app/dist /opt/noufex/build/app/server"
+          scp -r build/app/dist/. ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/noufex/build/app/dist/
+          scp build/app/server/index.js ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/noufex/build/app/server/
+
+      - name: Apply env + restart stack on production
+        env:
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET_PROD }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD_PROD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PROD }}
+        run: |
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} <<'EOF'
+            set -e
+            cd /opt/noufex
+            # Migrations first (idempotent).
+            (cd app && npm ci --no-audit --no-fund && npm run db:setup) || true
+            # Atomic artefact swap.
+            mv build/app/dist/* app/dist/ 2>/dev/null || true
+            mv build/app/server/index.js app/server/
+            rm -rf build
+            # Write the env file with PROD values.
+            cat > .env <<EOT
+            NODE_ENV=production
+            API_PORT=3000
+            HOST=0.0.0.0
+            SERVE_STATIC=true
+            STATIC_PATH=/app/dist
+            DB_HOST=${DB_HOST:-localhost}
+            DB_PORT=${DB_PORT:-5432}
+            DB_NAME=${DB_NAME:-noufex_db}
+            DB_USER=${DB_USER:-noufex_app}
+            DB_PASSWORD=${DB_PASSWORD}
+            DATABASE_URL=${DATABASE_URL}
+            AUTH_SECRET=${AUTH_SECRET}
+            ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://noufex.example.com}
+            LOG_LEVEL=info
+            EOT
+            # Restart the production stack.
+            cd /opt/noufex
+            docker compose restart noufex
+          EOF
+
+      - name: Wait + smoke checks
+        run: |
+          BASE="${{ secrets.PROD_URL }}"
+          echo "Waiting for $BASE/api/health ..."
+          for i in $(seq 1 30); do
+            CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/health" 2>/dev/null || echo 000)
+            if [ "$CODE" = "200" ]; then
+              echo "Production API ready after ${i}s"
+              break
+            fi
+            sleep 2
+          done
+          HEALTH=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/health")
+          READY=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/ready")
+          STATS=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/stats/home")
+          if [ "$HEALTH" != "200" ] || [ "$READY" != "200" ] || [ "$STATS" != "200" ]; then
+            echo "::error::Production smoke failed"
+            exit 1
+          fi
+          echo "Production smoke passed: health=$HEALTH ready=$READY stats=$STATS"
+
+      - name: Confirm in production channel
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "## :rocket: Deployed ${{ github.ref_name }} to production." >> $GITHUB_STEP_SUMMARY
+            echo "URL: ${{ secrets.PROD_URL }}" >> $GITHUB_STEP_SUMMARY
+          fi
+```
+
+---
+
+## 5. Rollback
+
+If a production deploy goes bad:
+
+1. Open **Settings → Environments → production → Deployments**.
+2. Find the most recent successful deploy, click **Revert** (or
+   `gh api` `POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun`).
+3. The production stack restarts with the previous build artefacts.
+
+OR, for a manual rollback to a known-good version:
+
+```sh
+# 1. Re-tag the previous good commit.
+git checkout v0.1.0
+git tag -a v0.1.1 -m "Rollback to v0.1.0 baseline"
+git push origin v0.1.1
+
+# 2. The deploy-prod.yml workflow will trigger. Review + approve.
+# 3. The stack gets the v0.1.0 artefacts again.
+```
+
+---
+
+## 6. Post-deploy checklist
+
+After a successful production deploy, within 30 minutes:
+
+- [ ] Health endpoint returns 200 (`/api/health`).
+- [ ] Readiness endpoint returns 200 with `checks.db.ok=true` (`/api/ready`).
+- [ ] PHASE 0 E2E spec passes (22 assertions: login + bad creds + register).
+- [ ] PHASE 16 spec passes (21 assertions: SPA + CSP + headers).
+- [ ] nginx logs show no 5xx errors.
+- [ ] API logs (stdout) show no `unhandled_error` events.
+- [ ] Postgres connection pool is healthy (`SELECT count(*) FROM pg_stat_activity`).
+- [ ] Docker container is `Up (healthy)`.
+- [ ] `auth/login` rate-limiter is NOT exhausted.
+- [ ] `admin/audit-log` has a fresh entry for the deployer's action.
+- [ ] Write a dated entry in `docs/audit/deploy-<version>-<date>.md` describing
+      the deploy, including reviewer names.
+
+---
+
+## References
+
+- [.github/workflows/deploy-staging.yml](../workflows/deploy-staging.yml) — staging auto-deploy (D.4)
+- [.github/workflows/deploy-prod.yml](../workflows/deploy-prod.yml) — this file
+- [.github/branch-protection.md](../branch-protection.md) — required status checks (D.3)
+- [deployment.md](../../development/operations/deployment.md) — production deploy guide
+- [SECRETS.md](../SECRETS.md) — secrets management (D.2)
+- [monitoring.md](../../development/operations/monitoring.md) — observability + runbooks
+- [rollback procedure](../../development/operations/deployment.md#12-rollback-procedure)

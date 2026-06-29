@@ -70,6 +70,11 @@ const SellerAnalytics = lazyPage(() => import('./pages/seller/SellerAnalytics'))
 // Admin — biggest bundle (recharts, full data tables); isolated so
 // the 99% of visitors who never visit /admin never download it.
 const AdminDashboard = lazyPage(() => import('./pages/admin/AdminDashboard'));
+const UsersManagement = lazyPage(() => import('./pages/admin/UsersManagement'));
+const StoresManagement = lazyPage(() => import('./pages/admin/StoresManagement'));
+const DisputesManagement = lazyPage(() => import('./pages/admin/DisputesManagement'));
+const ReportsAnalytics = lazyPage(() => import('./pages/admin/ReportsAnalytics'));
+const AdminOverview = lazyPage(() => import('./pages/admin/AdminOverview'));
 
 /** Wrap a page in ProtectedRoute + Suspense so the loader shows during
  *  the chunk download AND the auth check. */
@@ -154,6 +159,26 @@ export default function App() {
 									)}
 								/>
 								<Route path="/admin" element={guard(['admin'], AdminDashboard)} />
+								<Route
+									path="/admin/users"
+									element={guard(['admin'], UsersManagement)}
+								/>
+								<Route
+									path="/admin/overview"
+									element={guard(['admin'], AdminOverview)}
+								/>
+								<Route
+									path="/admin/stores"
+									element={guard(['admin'], StoresManagement)}
+								/>
+								<Route
+									path="/admin/disputes"
+									element={guard(['admin'], DisputesManagement)}
+								/>
+								<Route
+									path="/admin/reports"
+									element={guard(['admin'], ReportsAnalytics)}
+								/>
 								<Route path="/auth/login" element={<Login />} />
 								<Route path="/auth/register" element={<Register />} />
 								<Route path="/auth/forgot-password" element={<ForgotPassword />} />

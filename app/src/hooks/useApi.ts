@@ -27,6 +27,13 @@ import {
 	validateCoupon,
 	getNotifications,
 	ApiError,
+	getAdminUsers,
+	getAdminStores,
+	getAdminProducts,
+	getAdminOrders,
+	getAdminDisputes,
+	getAdminAuditLog,
+	getAdminStats,
 } from '../lib/api';
 import type {
 	Product,
@@ -519,4 +526,64 @@ export function useSellerMutations(): SellerMutations {
 		updateOrderStatus,
 		refreshAll,
 	};
+}
+
+// ─── Admin (K.1) ──────────────────────────────────────────────
+//
+// All admin hooks are read-only — page-level mutation flows call
+// the api.ts patchAdmin* functions directly. This keeps the hooks
+// layer thin (just fetch + cache + error) and matches the rest of
+// the hooks in this file.
+
+export function useAdminUsers(
+	params: { role?: string; is_active?: string; limit?: number; offset?: number } = {},
+) {
+	return useDataHook((signal) => getAdminUsers(params, { signal }));
+}
+
+export function useAdminStores(
+	params: { is_active?: boolean; is_verified?: boolean; limit?: number; offset?: number } = {},
+) {
+	return useDataHook((signal) => getAdminStores(params, { signal }));
+}
+
+export function useAdminProducts(
+	params: {
+		is_active?: boolean;
+		is_featured?: boolean;
+		store_id?: number;
+		category_id?: number;
+		limit?: number;
+		offset?: number;
+	} = {},
+) {
+	return useDataHook((signal) => getAdminProducts(params, { signal }));
+}
+
+export function useAdminOrders(
+	params: { status?: string; payment_status?: string; limit?: number; offset?: number } = {},
+) {
+	return useDataHook((signal) => getAdminOrders(params, { signal }));
+}
+
+export function useAdminDisputes(
+	params: { status?: string; limit?: number; offset?: number } = {},
+) {
+	return useDataHook((signal) => getAdminDisputes(params, { signal }));
+}
+
+export function useAdminAuditLog(
+	params: {
+		actor_id?: number;
+		action?: string;
+		target_type?: string;
+		limit?: number;
+		offset?: number;
+	} = {},
+) {
+	return useDataHook((signal) => getAdminAuditLog(params, { signal }));
+}
+
+export function useAdminStats() {
+	return useDataHook((signal) => getAdminStats({ signal }));
 }

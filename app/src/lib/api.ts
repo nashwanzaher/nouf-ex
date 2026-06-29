@@ -1011,6 +1011,335 @@ export async function resolveRefund(
 	});
 }
 
+// ─── Admin (K.1) ──────────────────────────────────────────────
+//
+// Endpoints under /api/admin/* (see server/routes/admin.cts).
+// All require adminAuth. Backend enforces self-protection
+// (admin can't ban/demote themselves).
+
+export interface AdminStats {
+	counts: {
+		users: number;
+		stores: number;
+		products: number;
+		orders: number;
+		reviews: number;
+		disputes: number;
+	};
+	flags: {
+		openDisputes: number;
+		pendingOrders: number;
+		paidOrders: number;
+		suspendedUsers: number;
+		inactiveStores: number;
+	};
+	recent7d: {
+		orders: number;
+		users: number;
+	};
+	revenueYer: number;
+}
+
+/**
+ * Admin-view of a user — has more fields than the public `User`
+ * interface (status fields, verification flags, last-login, etc.).
+ * Self-contained (does not extend `User`) because the underlying
+ * nullable semantics differ — e.g. `last_login: string | null`
+ * where `User.last_login?: string`.
+ */
+export interface AdminUser {
+	id: number;
+	email: string;
+	full_name: string;
+	avatar: string | null;
+	role: 'customer' | 'merchant' | 'admin';
+	status: 'active' | 'suspended' | 'banned';
+	is_verified: number;
+	email_verified: number;
+	phone_verified: number;
+	two_factor_enabled: number;
+	preferred_language: string | null;
+	gender: string | null;
+	phone: string | null;
+	last_login: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+/**
+ * Admin-view of a store — adds `is_verified` (Store type only has
+ * `is_active`).
+ */
+export interface AdminStore extends Omit<Store, 'is_verified'> {
+	is_verified: number;
+}
+
+/**
+ * Admin-view of a product — adds `is_active` and `is_featured`
+ * (Product type doesn't expose these).
+ */
+export interface AdminProduct extends Omit<Product, never> {
+	is_active: number;
+	is_featured: number;
+}
+
+/**
+ * Admin-view of an order — adds optional customer info for the
+ * admin who may not have the customer's profile resolved.
+ */
+export interface AdminOrder extends Order {
+	customer_email?: string;
+	customer_name?: string;
+}
+
+export interface AdminDispute {
+	id: number;
+	order_id: number;
+	raised_by: number;
+	against_type: 'store' | 'courier' | 'platform';
+	against_id: number | null;
+	category: string;
+	description: string;
+	evidence_urls: string[] | null;
+	status: 'open' | 'investigating' | 'resolved' | 'rejected';
+	resolution: string | null;
+	admin_notes: string | null;
+	resolved_by: number | null;
+	resolved_at: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface AdminAuditLogEntry {
+	id: number;
+	actor_id: number;
+	actor_email: string | null;
+	action: string;
+	target_type: string;
+	target_id: number;
+	before_state: Record<string, unknown> | null;
+	after_state: Record<string, unknown> | null;
+	created_at: string;
+}
+
+export interface AdminUserListResponse {
+	users: AdminUser[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
+export interface AdminStoreListResponse {
+	stores: AdminStore[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
+export interface AdminProductListResponse {
+	products: AdminProduct[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
+export interface AdminOrderListResponse {
+	orders: AdminOrder[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
+export interface AdminDisputeListResponse {
+	disputes: AdminDispute[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
+export interface AdminAuditLogResponse {
+	entries: AdminAuditLogEntry[];
+	total: number;
+	limit: number;
+	offset: number;
+}
+
+export interface AdminUserUpdateBody {
+	status?: 'active' | 'suspended' | 'banned';
+	role?: 'customer' | 'merchant' | 'admin';
+	is_verified?: boolean;
+	email_verified?: boolean;
+	phone_verified?: boolean;
+}
+
+export interface AdminStoreUpdateBody {
+	is_active?: boolean;
+	is_verified?: boolean;
+	trust_level?: 'basic' | 'verified' | 'premium';
+}
+
+export interface AdminProductUpdateBody {
+	is_active?: boolean;
+	is_featured?: boolean;
+	category_id?: number;
+}
+
+export interface AdminOrderStatusUpdateBody {
+	status: string;
+	admin_notes?: string;
+}
+
+export interface AdminDisputeUpdateBody {
+	status?: 'open' | 'investigating' | 'resolved' | 'rejected';
+	resolution?: string;
+	admin_notes?: string;
+}
+
+// ─── Reads ──────────────────────────────────────────────
+
+export async function getAdminUsers(
+	params: { role?: string; is_active?: string; limit?: number; offset?: number } = {},
+	options?: RequestOptions,
+): Promise<AdminUserListResponse> {
+	const q = new URLSearchParams();
+	if (params.role) q.set('role', params.role);
+	if (params.is_active) q.set('is_active', params.is_active);
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	const qs = q.toString();
+	return apiRequest(`/admin/users${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+}
+
+export async function getAdminStores(
+	params: { is_active?: boolean; is_verified?: boolean; limit?: number; offset?: number } = {},
+	options?: RequestOptions,
+): Promise<AdminStoreListResponse> {
+	const q = new URLSearchParams();
+	if (params.is_active !== undefined) q.set('is_active', String(params.is_active));
+	if (params.is_verified !== undefined) q.set('is_verified', String(params.is_verified));
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	const qs = q.toString();
+	return apiRequest(`/admin/stores${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+}
+
+export async function getAdminProducts(
+	params: {
+		is_active?: boolean;
+		is_featured?: boolean;
+		store_id?: number;
+		category_id?: number;
+		limit?: number;
+		offset?: number;
+	} = {},
+	options?: RequestOptions,
+): Promise<AdminProductListResponse> {
+	const q = new URLSearchParams();
+	if (params.is_active !== undefined) q.set('is_active', String(params.is_active));
+	if (params.is_featured !== undefined) q.set('is_featured', String(params.is_featured));
+	if (params.store_id !== undefined) q.set('store_id', String(params.store_id));
+	if (params.category_id !== undefined) q.set('category_id', String(params.category_id));
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	const qs = q.toString();
+	return apiRequest(`/admin/products${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+}
+
+export async function getAdminOrders(
+	params: { status?: string; payment_status?: string; limit?: number; offset?: number } = {},
+	options?: RequestOptions,
+): Promise<AdminOrderListResponse> {
+	const q = new URLSearchParams();
+	if (params.status) q.set('status', params.status);
+	if (params.payment_status) q.set('payment_status', params.payment_status);
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	const qs = q.toString();
+	return apiRequest(`/admin/orders${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+}
+
+export async function getAdminDisputes(
+	params: { status?: string; limit?: number; offset?: number } = {},
+	options?: RequestOptions,
+): Promise<AdminDisputeListResponse> {
+	const q = new URLSearchParams();
+	if (params.status) q.set('status', params.status);
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	const qs = q.toString();
+	return apiRequest(`/admin/disputes${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+}
+
+export async function getAdminAuditLog(
+	params: {
+		actor_id?: number;
+		action?: string;
+		target_type?: string;
+		limit?: number;
+		offset?: number;
+	} = {},
+	options?: RequestOptions,
+): Promise<AdminAuditLogResponse> {
+	const q = new URLSearchParams();
+	if (params.actor_id !== undefined) q.set('actor_id', String(params.actor_id));
+	if (params.action) q.set('action', params.action);
+	if (params.target_type) q.set('target_type', params.target_type);
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	const qs = q.toString();
+	return apiRequest(`/admin/audit-log${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+}
+
+export async function getAdminStats(options?: RequestOptions): Promise<AdminStats> {
+	return apiRequest('/admin/stats', { signal: options?.signal });
+}
+
+// ─── Mutations ──────────────────────────────────────────────
+
+export async function patchAdminUser(id: number, body: AdminUserUpdateBody): Promise<AdminUser> {
+	return apiRequest(`/admin/users/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function patchAdminStore(id: number, body: AdminStoreUpdateBody): Promise<AdminStore> {
+	return apiRequest(`/admin/stores/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function patchAdminProduct(
+	id: number,
+	body: AdminProductUpdateBody,
+): Promise<AdminProduct> {
+	return apiRequest(`/admin/products/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function patchAdminOrderStatus(
+	id: number,
+	body: AdminOrderStatusUpdateBody,
+): Promise<AdminOrder> {
+	return apiRequest(`/admin/orders/${id}/status`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function patchAdminDispute(
+	id: number,
+	body: AdminDisputeUpdateBody,
+): Promise<AdminDispute> {
+	return apiRequest(`/admin/disputes/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
 // ─── Re-export ──────────────────────────────────────────────
 
 export { ApiError };

@@ -847,8 +847,7 @@ export default function ReportsAnalytics() {
 								<p className="text-xl font-mono font-bold text-[#111111]">
 									{statsLoading ? (
 										<span className="inline-flex items-center gap-1 text-[#AAAAAA]">
-											<Loader2 className="w-3 h-3 animate-spin" />
-											…
+											<Loader2 className="w-3 h-3 animate-spin" />…
 										</span>
 									) : (
 										m.value

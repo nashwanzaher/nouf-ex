@@ -1336,12 +1336,12 @@ export async function getAdminAuditLog(
 	// (server/routes/admin.cts:364) but the client surface uses
 	// 'entries' as the canonical name. Map here so callers don't
 	// have to translate.
-	const raw = (await apiRequest<{
+	const raw = await apiRequest<{
 		log: AdminAuditLogEntry[];
 		total: number;
 		limit: number;
 		offset: number;
-	}>(`/admin/audit-log${qs ? `?${qs}` : ''}`, { signal: options?.signal }));
+	}>(`/admin/audit-log${qs ? `?${qs}` : ''}`, { signal: options?.signal });
 	return { entries: raw.log, total: raw.total, limit: raw.limit, offset: raw.offset };
 }
 
@@ -1463,16 +1463,11 @@ export async function getConversation(
 	});
 }
 
-export async function getUnreadMessageCount(
-	options?: RequestOptions,
-): Promise<{ count: number }> {
+export async function getUnreadMessageCount(options?: RequestOptions): Promise<{ count: number }> {
 	return apiRequest('/messages/unread-count', { signal: options?.signal });
 }
 
-export async function markMessageRead(
-	id: number,
-	options?: RequestOptions,
-): Promise<void> {
+export async function markMessageRead(id: number, options?: RequestOptions): Promise<void> {
 	return apiRequest(`/messages/${id}/read`, {
 		method: 'PUT',
 		signal: options?.signal,
@@ -1500,9 +1495,7 @@ export async function setup2FA(): Promise<TwoFactorSetupResponse> {
 	return apiRequest('/auth/2fa/setup', { method: 'POST' });
 }
 
-export async function enable2FA(body: {
-	code: string;
-}): Promise<TwoFactorEnableResponse> {
+export async function enable2FA(body: { code: string }): Promise<TwoFactorEnableResponse> {
 	return apiRequest('/auth/2fa/enable', {
 		method: 'POST',
 		body: JSON.stringify(body),
@@ -1519,9 +1512,7 @@ export async function verify2FA(body: {
 	});
 }
 
-export async function disable2FA(body: {
-	password: string;
-}): Promise<{ disabled: boolean }> {
+export async function disable2FA(body: { password: string }): Promise<{ disabled: boolean }> {
 	return apiRequest('/auth/2fa/disable', {
 		method: 'POST',
 		body: JSON.stringify(body),

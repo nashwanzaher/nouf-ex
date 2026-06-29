@@ -660,9 +660,7 @@ export default function SellerOrders() {
 			// processing → shipped → delivered. We pick the next status
 			// based on the current status. Admins use force_status;
 			// sellers use this normal flow.
-			const orderNum = String(
-				(order.id ?? '').replace(/^#/, ''),
-			);
+			const orderNum = String((order.id ?? '').replace(/^#/, ''));
 			const next: Record<Order['status'], Order['status'] | null> = {
 				new: 'processing',
 				processing: 'shipped',
@@ -693,47 +691,44 @@ export default function SellerOrders() {
 	// from /api/seller/orders/:id so the modal can show items,
 	// timeline, etc. The list endpoint (used above) only returns the
 	// order summary for performance.
-	const openOrderDetail = useCallback(
-		async (order: Order) => {
-			setSelectedOrder(order);
-			setDetailError(null);
-			const orderId = Number(String(order.id).replace(/^#/, ''));
-			if (!orderId) return; // mock row — nothing to fetch
-			setDetailLoading(true);
-			try {
-				const detail: SellerOrderWithItems = await getSellerOrder(orderId);
-				setSelectedOrder((prev) =>
-					prev
-						? {
-								...prev,
-								items: detail.items.map((it) => ({
-									name: `منتج #${it.product_id}`,
-									qty: it.quantity,
-									price: `${it.unit_price.toLocaleString('ar-EG')} ر.ي`,
-								})),
-								paymentMethod: detail.payment_method ?? '—',
-								timeline: Array.isArray(detail.timeline)
-									? detail.timeline.map((step) => {
-											const s = step as Record<string, unknown>;
-											return {
-												status: String(s.status ?? s.label ?? ''),
-												time: String(s.time ?? s.at ?? ''),
-												done: Boolean(s.done ?? s.completed ?? true),
-											};
-										})
-									: [],
-							}
-						: prev,
-				);
-			} catch (err) {
-				const msg = err instanceof Error ? err.message : String(err);
-				setDetailError(msg);
-			} finally {
-				setDetailLoading(false);
-			}
-		},
-		[],
-	);
+	const openOrderDetail = useCallback(async (order: Order) => {
+		setSelectedOrder(order);
+		setDetailError(null);
+		const orderId = Number(String(order.id).replace(/^#/, ''));
+		if (!orderId) return; // mock row — nothing to fetch
+		setDetailLoading(true);
+		try {
+			const detail: SellerOrderWithItems = await getSellerOrder(orderId);
+			setSelectedOrder((prev) =>
+				prev
+					? {
+							...prev,
+							items: detail.items.map((it) => ({
+								name: `منتج #${it.product_id}`,
+								qty: it.quantity,
+								price: `${it.unit_price.toLocaleString('ar-EG')} ر.ي`,
+							})),
+							paymentMethod: detail.payment_method ?? '—',
+							timeline: Array.isArray(detail.timeline)
+								? detail.timeline.map((step) => {
+										const s = step as Record<string, unknown>;
+										return {
+											status: String(s.status ?? s.label ?? ''),
+											time: String(s.time ?? s.at ?? ''),
+											done: Boolean(s.done ?? s.completed ?? true),
+										};
+									})
+								: [],
+						}
+					: prev,
+			);
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			setDetailError(msg);
+		} finally {
+			setDetailLoading(false);
+		}
+	}, []);
 
 	return (
 		<DashboardShell

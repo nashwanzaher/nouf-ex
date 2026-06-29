@@ -61,3 +61,7 @@ login-page-fixed.png
 .l.txt
 .p.txt
 .d.txt
+
+# Husky internal state (husky 9+ writes _/ files at git install time)
+.husky/_/
+.husky/.gitignore

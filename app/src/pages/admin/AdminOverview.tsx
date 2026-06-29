@@ -34,12 +34,7 @@ import {
 	ResponsiveContainer,
 	Legend,
 } from 'recharts';
-import {
-	useAdminStats,
-	useAdminStores,
-	useAdminDisputes,
-	useSystemHealth,
-} from '@/hooks/useApi';
+import { useAdminStats, useAdminStores, useAdminDisputes, useSystemHealth } from '@/hooks/useApi';
 import type { AdminStore, AdminDispute } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
 
@@ -90,10 +85,7 @@ function formatRelativeAge(iso: string | null | undefined, locale: string): stri
 
 /** Translate a dispute status enum (server side: open/investigating/
  *  resolved/rejected) into the dashboard's chip styling. */
-const DISPUTE_STATUS_STYLES: Record<
-	AdminDispute['status'],
-	{ label: string; color: string }
-> = {
+const DISPUTE_STATUS_STYLES: Record<AdminDispute['status'], { label: string; color: string }> = {
 	open: { label: 'جديد', color: 'bg-red-500' },
 	investigating: { label: 'قيد المراجعة', color: 'bg-amber-500' },
 	resolved: { label: 'محلول', color: 'bg-emerald-500' },
@@ -132,13 +124,10 @@ export default function AdminOverview() {
 	// Platform health from /api/ready (server/index.ts:108-131).
 	// Public endpoint; "degraded" surfaces as a normal state in the
 	// hook, not as an error, so the dashboard always renders.
-	const { data: health, loading: healthLoading, refetch: refetchHealth } =
-		useSystemHealth();
+	const { data: health, loading: healthLoading, refetch: refetchHealth } = useSystemHealth();
 	const dbOk = health?.checks?.db?.ok ?? null;
 	const dbMs = health?.checks?.db?.ms ?? null;
-	const uptimeHours = health
-		? Math.floor(health.uptime_s / 3600)
-		: null;
+	const uptimeHours = health ? Math.floor(health.uptime_s / 3600) : null;
 
 	// Pending verifications — unverified stores awaiting approval
 	// (/api/admin/stores?is_verified=false). Until C.4 ships the
@@ -402,10 +391,7 @@ export default function AdminOverview() {
 					<CardContent className="px-5 pb-5">
 						{pendingStoresLoading && pendingVerifications.length === 0 ? (
 							<div className="flex items-center justify-center py-10 text-[#6B6B6B]">
-								<Activity
-									className="w-4 h-4 ml-2 animate-spin"
-									strokeWidth={1.5}
-								/>
+								<Activity className="w-4 h-4 ml-2 animate-spin" strokeWidth={1.5} />
 								<span className="text-sm font-cairo">جاري التحميل…</span>
 							</div>
 						) : pendingVerifications.length === 0 ? (
@@ -491,10 +477,7 @@ export default function AdminOverview() {
 					<CardContent className="px-5 pb-5">
 						{disputesLoading && activeDisputes.length === 0 ? (
 							<div className="flex items-center justify-center py-10 text-[#6B6B6B]">
-								<Activity
-									className="w-4 h-4 ml-2 animate-spin"
-									strokeWidth={1.5}
-								/>
+								<Activity className="w-4 h-4 ml-2 animate-spin" strokeWidth={1.5} />
 								<span className="text-sm font-cairo">جاري التحميل…</span>
 							</div>
 						) : activeDisputes.length === 0 ? (
@@ -555,7 +538,9 @@ export default function AdminOverview() {
 					<div className="flex items-center justify-between mb-4">
 						<div className="flex items-center gap-2">
 							<Activity className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
-							<h3 className="text-[#111111] font-cairo font-bold text-sm">حالة المنصة</h3>
+							<h3 className="text-[#111111] font-cairo font-bold text-sm">
+								حالة المنصة
+							</h3>
 						</div>
 						<Button
 							type="button"
@@ -661,7 +646,9 @@ export default function AdminOverview() {
 						<div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8]">
 							<Clock className="w-4 h-4 text-[#6B6B6B]" strokeWidth={1.5} />
 							<div>
-								<p className="text-xs text-[#6B6B6B] font-cairo">استجابة قاعدة البيانات</p>
+								<p className="text-xs text-[#6B6B6B] font-cairo">
+									استجابة قاعدة البيانات
+								</p>
 								<p className="text-sm font-mono font-bold text-[#111111]">
 									{healthLoading || dbMs === null ? '…' : `${dbMs}ms`}
 								</p>

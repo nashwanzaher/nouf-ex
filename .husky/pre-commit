@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+# Pre-commit hook — runs `lint-staged` (which is npm run pre-commit).
+# Hooks dir is configured via `git config core.hooksPath .husky` —
+# direct shell, no husky.sh shim needed since we only have one hook.
+#
+# What it does:
+#   1. Re-stages the files lint-staged wants to touch (it adds them
+#      back to the index after --fix / prettier --write).
+#   2. Runs lint-staged against the staged subset.
+#
+# To bypass locally (e.g. WIP commits): `git commit --no-verify`.
+
+# Bail noisily (instead of silently) if anything fails — the
+# developer will see the lint/prettier output and fix it before
+# re-committing.
+set -e
+
+cd app
+npx lint-staged
+

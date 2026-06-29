@@ -1340,6 +1340,235 @@ export async function patchAdminDispute(
 	});
 }
 
+// ─── K.4 client wrappers (server routes that lacked a client fn) ─────
+//
+// Verbatim extracted from §11.1.c of docs/MASTER_PLAN.md (2026-06-29).
+// Each entry corresponds to a route in app/server/routes/*.cts that
+// had no matching function in lib/api.ts — see the audit table for
+// file:line cross-references.
+
+// ── Messaging (app/server/routes/messages.cts) ──
+
+export interface Message {
+	id: number;
+	sender_id: number;
+	recipient_id: number;
+	subject: string;
+	body: string;
+	related_product_id: number | null;
+	related_store_id: number | null;
+	related_order_id: number | null;
+	is_read: number;
+	read_at: string | null;
+	created_at: string;
+	sender_email?: string | null;
+	recipient_email?: string | null;
+}
+
+export interface MessageThread extends Message {
+	peer_id: number;
+	peer_email: string;
+	direction: 'sent' | 'received';
+}
+
+export interface InboxResponse {
+	messages: MessageThread[];
+	total: number;
+	unread: number;
+}
+
+export async function sendMessage(body: {
+	recipient_id: number;
+	subject: string;
+	body: string;
+	related_product_id?: number | null;
+	related_store_id?: number | null;
+	related_order_id?: number | null;
+}): Promise<{ id: number }> {
+	return apiRequest('/messages/', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function getInbox(): Promise<InboxResponse> {
+	return apiRequest('/messages/inbox');
+}
+
+export async function getSent(): Promise<InboxResponse> {
+	return apiRequest('/messages/sent');
+}
+
+export async function getConversation(
+	peerId: number,
+	options?: RequestOptions,
+): Promise<Message[]> {
+	return apiRequest(`/messages/conversation?peer_id=${peerId}`, {
+		signal: options?.signal,
+	});
+}
+
+export async function getUnreadMessageCount(
+	options?: RequestOptions,
+): Promise<{ count: number }> {
+	return apiRequest('/messages/unread-count', { signal: options?.signal });
+}
+
+export async function markMessageRead(
+	id: number,
+	options?: RequestOptions,
+): Promise<void> {
+	return apiRequest(`/messages/${id}/read`, {
+		method: 'PUT',
+		signal: options?.signal,
+	});
+}
+
+// ── 2FA (app/server/routes/auth-2fa.cts) ──
+
+export interface TwoFactorSetupResponse {
+	secret: string;
+	otpauth_url: string;
+	backup_codes: string[];
+}
+
+export interface TwoFactorEnableResponse {
+	enabled: boolean;
+}
+
+export interface TwoFactorVerifyResponse {
+	token: string;
+	partial_token: string;
+}
+
+export async function setup2FA(): Promise<TwoFactorSetupResponse> {
+	return apiRequest('/auth/2fa/setup', { method: 'POST' });
+}
+
+export async function enable2FA(body: {
+	code: string;
+}): Promise<TwoFactorEnableResponse> {
+	return apiRequest('/auth/2fa/enable', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function verify2FA(body: {
+	partial_token: string;
+	code: string;
+}): Promise<TwoFactorVerifyResponse> {
+	return apiRequest('/auth/2fa/verify', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function disable2FA(body: {
+	password: string;
+}): Promise<{ disabled: boolean }> {
+	return apiRequest('/auth/2fa/disable', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function regenerateBackupCodes(): Promise<{
+	backup_codes: string[];
+}> {
+	return apiRequest('/auth/2fa/backup-codes/regenerate', { method: 'POST' });
+}
+
+// ── Search (app/server/routes/catalog.cts:387) ──
+
+export async function searchProducts(params: {
+	q: string;
+	limit?: number;
+	offset?: number;
+}): Promise<Product[]> {
+	const q = new URLSearchParams();
+	q.set('q', params.q);
+	if (params.limit !== undefined) q.set('limit', String(params.limit));
+	if (params.offset !== undefined) q.set('offset', String(params.offset));
+	return apiRequest(`/search?${q.toString()}`);
+}
+
+// ── Cart helpers (app/server/routes/cart.cts) ──
+
+export async function getCartCount(
+	userId: number,
+	options?: RequestOptions,
+): Promise<{ count: number }> {
+	return apiRequest(`/cart/count/${userId}`, {
+		signal: options?.signal,
+	});
+}
+
+export async function updateCartItem(
+	id: number,
+	body: { quantity?: number; variant?: Record<string, string> },
+): Promise<{ id: number; quantity: number; variant: string | null }> {
+	return apiRequest(`/cart/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+// ── Notifications unread count ──
+
+export async function getUnreadNotificationCount(
+	userId: number,
+	options?: RequestOptions,
+): Promise<{ count: number }> {
+	return apiRequest(`/notifications/unread-count/${userId}`, {
+		signal: options?.signal,
+	});
+}
+
+// ── Payment providers (app/server/routes/payments.cts:18) ──
+
+export interface PaymentProviderListEntry {
+	id: string;
+	name: string;
+	enabled: boolean;
+	currency: string[];
+}
+
+export async function getPaymentProviders(
+	options?: RequestOptions,
+): Promise<PaymentProviderListEntry[]> {
+	return apiRequest('/payments/methods', { signal: options?.signal });
+}
+
+// ── Store followers (app/server/routes/store-followers.cts) ──
+
+/** Check whether the authenticated user follows `store_id`. The server
+ *  (line 28) compares req.user.id with the optional `user_id` query
+ *  param — so for the common case (look up self), only `store_id` is
+ *  needed. The server ignores `user_id` for the caller's own role. */
+export interface StoreFollowStatus {
+	store_id: number;
+	user_id: number;
+	following: boolean;
+	preferences: {
+		notify_new_products: boolean;
+		notify_offers: boolean;
+		since: string;
+	} | null;
+}
+
+export async function checkStoreFollowStatus(
+	body: { store_id: number; user_id?: number },
+	options?: RequestOptions,
+): Promise<StoreFollowStatus> {
+	const q = new URLSearchParams();
+	q.set('store_id', String(body.store_id));
+	if (body.user_id !== undefined) q.set('user_id', String(body.user_id));
+	return apiRequest(`/store-followers/check?${q.toString()}`, {
+		signal: options?.signal,
+	});
+}
+
 // ─── Re-export ──────────────────────────────────────────────
 
 export { ApiError };

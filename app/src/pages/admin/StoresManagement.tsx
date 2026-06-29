@@ -30,6 +30,14 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+// NOTE: staged imports for the K.1 wiring pass (see mapAdminStoreToView
+// below). The hooks/context are intentionally unused right now — the
+// component still renders from the `storesData` mock table while the
+// real /api/admin/stores backend is being rolled out page-by-page.
+// Underscore prefix keeps ESLint happy without losing the intent.
+import { useAdminStores as _useAdminStores } from '@/hooks/useApi';
+import { patchAdminStore as _patchAdminStore, type AdminStore } from '@/lib/api';
+import { useApp as _useApp } from '@/context/AppContext';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -50,9 +58,31 @@ interface StoreRecord {
 	docCount: number;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
-/* ------------------------------------------------------------------ */
+type StoreStatus = 'active' | 'suspended' | 'pending' | 'rejected';
+type _StoreStatusAlias = StoreStatus; // keep type referenced for future statusConfig typing
+
+/** Map the AdminStore shape from /api/admin/stores
+ *  (server/routes/admin.cts:95-148) to the table's view model.
+ *  Fields NOT exposed by the API get placeholder values.
+ *  Prefixed with `_` because the component still renders the
+ *  `storesData` mock table while the real backend is rolled out. */
+function _mapAdminStoreToView(store: AdminStore): StoreRecord {
+	return {
+		id: store.id,
+		name: store.store_name,
+		merchant: '—', // not exposed
+		email: '—', // not exposed
+		phone: '—', // not exposed
+		category: '—', // not exposed
+		status: store.is_active ? 'active' : 'suspended',
+		trustBadge: store.is_verified ? 'verified' : 'none',
+		rating: store.rating ?? 0,
+		productsCount: 0, // not exposed
+		joinedDate: store.created_at,
+		governorate: store.governorate ?? '—',
+		docCount: 0, // not exposed
+	};
+}
 const storesData: StoreRecord[] = [
 	{
 		id: 1,

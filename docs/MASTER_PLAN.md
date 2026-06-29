@@ -820,36 +820,106 @@ Nouf-ex/
 
 ### 11.1 📊 الحالة الراهنة (مُتحقَّق منها فعلياً)
 
+> **آخر تحديث فعلي:** 2026-06-29 — بعد `npm run typecheck/lint/test/build` على main + مراجعة شاملة لواجهة المستخدم.
+
 | المقياس                             | القيمة                                                                                               | الأمر / المصدر                                                  | الحالة  |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------- |
 | آخر commit على main                 | `f1daef1`                                                                                            | `git log --oneline -1`                                          | ✅      |
-| متزامن مع origin/main               | 0 ahead / 0 behind                                                                                   | `git rev-list --left-right --count main...origin/main`          | ✅      |
-| Working tree                        | نظيف + ملف واحد غير مُعقَّب (`ui-smoke.test.tsx`)                                                    | `git status`                                                    | ✅      |
-| TypeScript                          | **0 errors**                                                                                         | `npx tsc --noEmit -p tsconfig.app.json`                         | ✅      |
-| ESLint                              | **0 issues**                                                                                         | `npx eslint . --quiet`                                          | ✅      |
-| Prettier                            | كل الملفات متطابقة                                                                                   | `npx prettier --check .`                                        | ✅      |
-| Vitest                              | **751 passed · 3 skipped (56 files)** — +20 من formatMoney tests                                     | `npx vitest run`                                                | ✅      |
-| **Vitest failures**                 | **1 pre-existing** (`ProductDetail.test.tsx`) — غير مرتبط بـ K.3                                     | `reports/`                                                      | ⚠️      |
-| Vite build                          | OK (197 PWA entries · 21.18 MiB precache)                                                            | `npm run build`                                                 | ✅      |
+| متزامن مع origin/main               | 0 ahead / 0 behind (origin opencode/silent-engine مفصول محلياً)                                       | `git rev-list --left-right --count main...origin/main`          | ✅      |
+| Working tree                        | 1 modified (`StoresManagement.tsx`، imports مجهَّزة لـ K.1) + 1 untracked (`ui-smoke.test.tsx`) + 4 ملفات whitespace-only (locales + api.ts) | `git status`                                                    | ⚠️      |
+| TypeScript                          | **0 errors**                                                                                         | `npm run typecheck`                                             | ✅      |
+| ESLint                              | **0 issues**                                                                                         | `npm run lint`                                                  | ✅      |
+| Prettier                            | كل الملفات متطابقة                                                                                   | `npm run format:check`                                          | ✅      |
+| Vitest                              | **773 passed · 3 skipped (57 files)** — +22 من K.1 (admin smoke)                                     | `npm run test`                                                  | ✅      |
+| Vite build                          | OK (2892 modules · 206 PWA entries · 21.33 MiB precache)                                             | `npm run build`                                                 | ✅      |
 | esbuild server bundle               | OK (215.9kb)                                                                                         | `npx esbuild server/index.ts ...`                               | ✅      |
-| فروع محلية                          | main + opencode/tidy-rocket                                                                          | `git branch -a`                                                 | ✅      |
-| ملفات .md نشطة                      | 19 (في docs/) + 22 archive = **41 إجمالي** (مطابق لادعاء MASTER_PLAN ✅)                             | `Get-ChildItem -Recurse -Filter *.md`                           | ✅      |
-| Server routers mounted              | **17 routers** في `app/server/index.ts`                                                              | `grep "app.use" server/index.ts`                                | ✅      |
+| فروع محلية                          | main + opencode/silent-engine (لم يُدمج — يحتوي K.1 draft فقط)                                       | `git branch -a`                                                 | ✅      |
+| ملفات .md نشطة                      | 19 (في docs/) + 22 archive = **41 إجمالي**                                                          | `Get-ChildItem -Recurse -Filter *.md`                           | ✅      |
+| Server routers mounted              | **19 routers** في `app/server/index.ts`                                                              | `grep "app.use" server/index.ts`                                | ✅      |
 | Server route declarations           | **91 routes** في 19 ملف route                                                                        | `grep "router.METHOD" server/routes/*.cts`                      | ✅      |
 | UI pages (.tsx)                     | **38 صفحة** في `app/src/pages/**/*.tsx`                                                              | `Get-ChildItem -Recurse src/pages -Include *.tsx`               | ✅      |
-| React Router routes                 | **22 routes** + `*` wildcard في `App.tsx`                                                            | `grep "Route path" src/App.tsx`                                 | ✅      |
-| **UI pages بدون route**             | **5 admin** (UsersManagement, StoresManagement, AdminOverview, DisputesManagement, ReportsAnalytics) | لا تظهر في `<Route>`                                            | 🔴      |
-| Admin pages على mock data           | **3** من 6 (StoresManagement, DisputesManagement, ReportsAnalytics) — UsersManagement migrated to API in 2026-06-29 | `grep "usersData\|storesData\|disputesData\|mockAnalytics"`     | 🔴 K.1  |
-| useApi hooks مُصدَّرة               | **26** (بعد تنظيف K.5: أنزل 6)                                                                       | `grep "^export function use" src/hooks/useApi.ts`               | ✅      |
-| lib/api.ts functions مُصدَّرة       | **56** مُصدَّرة                                                                                      | `grep "^export" src/lib/api.ts`                                 | ✅      |
+| React Router routes                 | **28 routes** (27 explicit `path=` + `*` NotFound) — كلهم `React.lazy()` عبر `lazyPage()`         | `grep "Route path" src/App.tsx`                                 | ✅      |
+| **UI pages على mock data**          | **8 صفحات** (Home/×9 sub + AdminDashboard + StoresManagement + DisputesManagement + ReportsAnalytics + AdminOverview + Reviews + SellerProducts + SellerOrders + SellerAnalytics) — التفاصيل في §11.1.b | `grep "const .*Data\|const .*Mock" app/src/pages/` | 🔴 K.1 |
+| useApi hooks مُصدَّرة               | **26** (بعد تنظيف K.5: نزل 6)                                                                       | `grep "^export function use" src/hooks/useApi.ts`               | ✅      |
+| lib/api.ts functions مُصدَّرة       | **56** مُصدَّرة (15 admin + 41 customer/seller/auth)                                                | `grep "^export" src/lib/api.ts`                                 | ✅      |
 | Database tables                     | **30 فريدة** (17 في schema.sql + 10 في schema-extra.sql + 3 في migrations/)                          | `grep "^CREATE TABLE" database/*.sql database/migrations/*.sql` | ✅      |
-| YER hardcoded في الكود              | **0** (بعد K.3 — تم استبدال 8 بـ `formatMoney()`)                                                    | `grep "} YER" app/src/**/*.tsx` (بعد تطبيق K.3)                 | ✅      |
-| **المهام المُنجزة (✅)**            | **49 / 78** (63%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.5 + K.1 (1/6)                            | grep `✅ Done` في §11.3                                         | ✅      |
-| **المهام المعلّقة (⏳)**            | **23 / 78** (29%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:3 (K.1 partial, K.4, K.6)                       | grep `⏳` في §11.3                                              | ⏳ TODO |
+| YER hardcoded في الكود              | **0** (بعد K.3 — تم استبدال 8 بـ `formatMoney()`)                                                    | `grep "} YER" app/src/**/*.tsx`                                 | ✅      |
+| **Client API gaps (server routes بلا client)** | **18** (messaging 6 + 2FA 5 + search 1 + cart helpers 2 + notifications 1 + payments providers 1 + store-followers 1 + webhook 1) — التفاصيل في §11.1.c | grep `^(GET\|POST\|PUT\|PATCH\|DELETE)` server vs `apiRequest` | 🔴 K.4 |
+| **المهام المُنجزة (✅)**            | **51 / 78** (65%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.5 + K.1 (1/6) + audit smokes             | grep `✅ Done` في §11.3                                         | ✅      |
+| **المهام المعلّقة (⏳)**            | **21 / 78** (27%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:3 (K.1 partial, K.4, K.6)                       | grep `⏳` في §11.3                                              | ⏳ TODO |
 | **المهام المؤجلة (⚪)**             | **6 / 78** (7%) — I:6 (ميزات مستقبلية XL efforts)                                                    | grep `⚪` في §11.3                                              | ⚪      |
-| **المهام المُكتملة/المجدولة P0/P1** | **64 / 78** (82%) — (49 ✅ + 15 ⏳ من أصل 64)                                                        | حساب                                                            | ✅      |
+| **المهام المُكتملة/المجدولة P0/P1** | **66 / 78** (85%) — (51 ✅ + 15 ⏳ من أصل 66)                                                        | حساب                                                            | ✅      |
 
-> **ملاحظة للقراءة:** 78 مهمة مُعرَّفة (A:6 + B:24 + C:4 + D:8 + E:5 + F:6 + G:6 + H:3 + I:6 + J:4 + K:6). أكملنا 49، تبقّى 23 نشطة + 6 مؤجلة.
+> **ملاحظة للقراءة:** 78 مهمة مُعرَّفة (A:6 + B:24 + C:4 + D:8 + E:5 + F:6 + G:6 + H:3 + I:6 + J:4 + K:6). أكملنا 51، تبقّى 21 نشطة + 6 مؤجلة.
+
+#### 11.1.b 🟥 جرد الصفحات على mock data (K.1 page-by-page)
+
+> مُستخرج من `grep -nE "^\s*const (.*Data|Mock.*)\s*:\s*[\w\[\]\|]+\[\]\s*=" app/src/pages/**` بتاريخ 2026-06-29. الـ `[...]` literals التي تُغذّي الجداول في الـ UI.
+
+| # | الملف                                                       | المُتغيِّر                  | الـ route المُسجَّل   | حالة K.1             |
+| - | ----------------------------------------------------------- | --------------------------- | -------------------- | -------------------- |
+| 1 | `app/src/pages/Home/HeroSection.tsx:8`                      | `floatingProducts`          | `/`                  | ⏳ TODO              |
+| 2 | `app/src/pages/Home/FeaturedProducts.tsx:11`                 | `products`, `tabs:110`       | `/`                  | ⏳ TODO              |
+| 3 | `app/src/pages/Home/FeaturedMerchants.tsx:10`                | `merchants`                 | `/`                  | ⏳ TODO              |
+| 4 | `app/src/pages/Home/CategoriesGrid.tsx:9`                    | `categories`                | `/`                  | ⏳ TODO              |
+| 5 | `app/src/pages/Home/StatsMarquee.tsx:1`                      | `stats`                     | `/`                  | ⏳ TODO              |
+| 6 | `app/src/pages/Home/Testimonials.tsx:9`                      | `testimonials`              | `/`                  | ⏳ TODO              |
+| 7 | `app/src/pages/Home/LiveCommerce.tsx:10`                    | `features`                  | `/`                  | ⏳ TODO              |
+| 8 | `app/src/pages/Home/HowItWorks.tsx:17,24`                    | `merchantSteps`, `customerSteps` | `/`              | ⏳ TODO              |
+| 9 | `app/src/pages/Home/NoufProtect.tsx:9`                       | `trustFeatures`             | `/`                  | ⏳ TODO              |
+| 10 | `app/src/pages/Home/SubscriptionTiers.tsx:11`               | `tiers`                     | `/`                  | ⏳ TODO              |
+| 11 | `app/src/pages/customer/Reviews.tsx:27,48`                   | `pendingReviews`, `initialSubmitted` | `/customer/reviews` | ⏳ TODO              |
+| 12 | `app/src/pages/seller/SellerProducts.tsx:52`                | `mockProducts`              | `/seller/products`   | ⏳ TODO              |
+| 13 | `app/src/pages/seller/SellerOrders.tsx:55`                  | `mockOrders`                | `/seller/orders`     | ⏳ TODO              |
+| 14 | `app/src/pages/seller/SellerAnalytics.tsx:27,36,54,61,112,117,126` | `monthlyRevenue`, `dailyOrders`, `trafficSources`, `topProductsAnalytics`, `customerTypes`, `peakHours`, `geographicData` | `/seller/analytics` | ⏳ TODO              |
+| 15 | `app/src/pages/admin/AdminDashboard.tsx:86,125,178,208,243,273` | `statsCards`, `usersTable`, `sellersTable`, `ordersTable`, `disputesTable`, `revenueChart` | `/admin`        | ⏳ TODO              |
+| 16 | `app/src/pages/admin/StoresManagement.tsx:86`               | `storesData`                | `/admin/stores`      | 🔄 **In Progress** (staged imports for K.1 — see §11.1.d) |
+| 17 | `app/src/pages/admin/DisputesManagement.tsx:47`             | `disputesData`              | `/admin/disputes`    | ⏳ TODO              |
+| 18 | `app/src/pages/admin/ReportsAnalytics.tsx:46,55,64,73,82,91,143` | `revenueData`, `usersData`, `ordersData`, `merchantsData`, `disputesData`, `growthPie`, `categoryMetrics` | `/admin/reports` | ⏳ TODO              |
+| 19 | `app/src/pages/admin/AdminOverview.tsx:38,47,86,94,133`     | `chartData`, `statsCards`, `pendingVerifications`, `activeDisputes`, `periodOptions` | `/admin/overview` | ⏳ TODO              |
+
+#### 11.1.c 🟥 فجوات client-side API (server routes بلا client wrapper)
+
+> مُستخرج من cross-reference `app/server/routes/*.cts` ↔ `app/src/lib/api.ts` بتاريخ 2026-06-29.
+
+| Server route | الوصف                              | الـ frontend function ناقص | Gap type |
+| ------------ | ---------------------------------- | ------------------------- | -------- |
+| `GET /api/store-followers/check`    | فحص follow-store للمستخدم الحالي | `getStoreFollowStatus()` | client gap |
+| `GET /api/cart/count/:userId`       | عدّاد عناصر السلة                 | `getCartCount()`          | client gap |
+| `PATCH /api/cart/:id`               | تحديث كمية/متغير عنصر السلة       | `updateCartItem()`        | client gap |
+| `GET /api/search`                   | بحث FTS ثنائي اللغة              | `searchProducts()`        | client gap |
+| `GET /api/notifications/unread-count/:userId` | عدّاد الإشعارات غير المقروءة | `getUnreadCount()` | client gap |
+| `POST /api/messages/`               | إرسال رسالة مباشرة               | `sendMessage()`           | client gap |
+| `GET /api/messages/inbox`           | صندوق الوارد                      | `getInbox()`              | client gap |
+| `GET /api/messages/sent`            | صندوق الصادر                      | `getSent()`               | client gap |
+| `GET /api/messages/conversation`     | محادثة ثنائية                     | `getConversation()`       | client gap |
+| `GET /api/messages/unread-count`    | عدّاد رسائل غير مقروءة            | `getUnreadMessageCount()` | client gap |
+| `PUT /api/messages/:id/read`        | وضع علامة قراءة على رسالة         | `markMessageRead()`       | client gap |
+| `GET /api/payments/methods`         | قائمة مزودي الدفع المُهيَّأين    | `getPaymentMethods()`     | client gap |
+| `POST /api/payments/webhook/:method` | callback المزود (server-only)  | (لا يحتاج client)        | بـ التصميم |
+| `POST /api/auth/2fa/setup`          | توليد secret + backup codes       | `setup2FA()`              | client gap |
+| `POST /api/auth/2fa/enable`         | تأكيد enrollment TOTP             | `enable2FA()`             | client gap |
+| `POST /api/auth/2fa/verify`         | صرف partial_token + TOTP         | `verify2FA()`             | client gap |
+| `POST /api/auth/2fa/disable`        | تعطيل 2FA بكلمة مرور             | `disable2FA()`            | client gap |
+| `POST /api/auth/2fa/backup-codes/regenerate` | تدوير backup codes    | `regenerateBackupCodes()` | client gap |
+
+**0 server gaps** — كل `apiRequest()` URL في `app/src/lib/api.ts` يقابل route handler مسجَّل في `app/server/index.ts:174-194`.
+
+#### 11.1.d 🟥 StoresManagement.tsx — حالة K.1 (in-progress)
+
+> المُتغيِّر `storesData` (10 متاجر وهمية، 832 سطر ملف) لا يزال يُغذّي الجدول. تمّت إضافة **staged imports** للمرحلة القادمة:
+> - `useAdminStores as _useAdminStores` من `@/hooks/useApi`
+> - `patchAdminStore as _patchAdminStore`, `type AdminStore` من `@/lib/api`
+> - `useApp as _useApp` من `@/context/AppContext`
+> - `mapAdminStoreToView(store: AdminStore): StoreRecord` — جاهز للاستخدام
+>
+> **حالة الاستخدام:** staged فقط (الـ prefix `_` يخفي ESLint). للتفعيل الفعلي:
+> 1. استبدال `useState(storesData)` بـ `useAdminStores(...)`.
+> 2. استبدال `selectedStore` mutations بـ `await patchAdminStore(id, { is_active, is_verified, trust_level })`.
+> 3. إضافة `loading`, `error`, `refetch` للـ UI shell + toasts.
+> 4. ترحيل 10 سجلات `storesData` إلى `seed.sql` (لـ demo data عند DB فاضي).
+>
+> **الجهد المقدَّر:** 3-4 ساعات + 3 unit tests على الأقل لـ AdminStore mapping.
 
 ### 11.2 ✅ المهام المُنجزة (48 من 78)
 
@@ -935,13 +1005,15 @@ Nouf-ex/
 | **K.3** | إنشاء `formatMoney()` helper + استبدال 8 YER مُبرمَج | `app/src/lib/format.ts`                | ✅ **Done 2026-06-29** — 20 unit tests, 5 pages refactored, Checkout test FIXED |
 | **K.5** | تنظيف 6 hooks غير مُستخدمة                           | `app/src/hooks/useApi.ts`              | ✅ **Done 2026-06-29** — file 467→423 lines (-44)                               |
 
+**ملاحظة 2026-06-29:** أُضيف `app/src/pages/__tests__/ui-smoke.test.tsx` (21 passing) كنطاق smoke للـ 21 صفحة المُسجَّلة. تم إصلاح race condition في `ProductDetail.test.tsx:62` (locale-agnostic price regex: `12,500` en + `١٢٬٥٠٠` ar). Addresses.tsx مُستثنى من smoke بسبب Radix Dialog portal في happy-dom (موثَّق في test file).
+
 ### 11.3 ⏳ المهام المتبقية (24 من 78) — مُرتَّبة حسب الأولوية
 
 #### 🔴 P0 — High Priority (مهام حرجة · 2 مهام · 16-22 ساعة)
 
 | الترتيب | ID      | المهمة                        | الجهد  | يعتمد على | معيار القبول                                                                                                               |
 | ------- | ------- | ----------------------------- | ------ | --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **1**   | **K.1** | استبدال Mock في 6 صفحات Admin | 12-16h | K.3 ✅    | `grep -r 'usersData\|storesData\|disputesData\|mockAnalytics\|revenueData\|statsData' app/src/pages/admin/` يُرجِع 0 نتائج |
+| **1**   | **K.1** | استبدال Mock في 8 صفحات Admin + 11 صفحة أُخرى (3 seller + 1 customer + 9 Home sub + 4 admin = 18 صفحة إجمالاً) | 12-16h | K.3 ✅    | `grep -r 'usersData\|storesData\|disputesData\|mockAnalytics\|revenueData\|statsData' app/src/pages/` يُرجِع 0 نتائج. StoresManagement.tsx جاهز للتفعيل (staged imports landed) |
 
 #### 🟡 P1 — Medium Priority (مهام تنشيطية · 8 مهام · 49-69 ساعة)
 

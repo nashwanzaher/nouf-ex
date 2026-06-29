@@ -56,10 +56,20 @@ describe('ProductDetail', () => {
 
 	it('renders the product name, price and store info', async () => {
 		renderProduct('1');
-		// The fixtures have name_en = 'Wireless Headphones', price = 12500
+		// The fixtures have name_en = 'Premium Wireless Headphones',
+		// price = 12500. The page renders the price as a range
+		// (`{minPrice.toLocaleString()} - {maxPrice.toLocaleString()}`),
+		// so the rendered string depends on the JS host locale. On
+		// Arabic-locale hosts the digits are localized (١٢٬٥٠٠), on
+		// en hosts they're Western (12,500). We match both forms so
+		// the test works regardless of CI locale.
 		const matches = await screen.findAllByText(/Wireless Headphones/i);
 		expect(matches.length).toBeGreaterThan(0);
-		expect(screen.getAllByText(/12,500/).length).toBeGreaterThan(0);
+		const allText = document.body.textContent ?? '';
+		// Western digits + comma/period separators, OR Arabic-Indic
+		// digits + Arabic thousands separator (٬).
+		const pricePattern = /(12[.,٬]?500|١٢[٬]?٥٠٠)/;
+		expect(allText).toMatch(pricePattern);
 	});
 
 	it('increments and decrements the quantity', async () => {

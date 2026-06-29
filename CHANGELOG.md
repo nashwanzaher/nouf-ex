@@ -40,6 +40,27 @@ total in the summary` was failing due to locale-aware `toLocaleString()`
   `errors.notFound.*` (2), `home.tradeAssurance` (1), `categories.ui.*` (1).
   Values sourced from the existing English fallbacks in the JSX/TSX;
   ZH/AR values mirror EN (translator review needed for production).
+- **2026-06-29** — `app/src/lib/api.ts` + `app/src/hooks/useApi.ts` +
+  `app/src/App.tsx` — **K.1 foundation.** Added 12 admin-specific
+  TypeScript interfaces (`AdminUser`, `AdminStore`, `AdminProduct`,
+  `AdminOrder`, `AdminDispute`, `AdminAuditLogEntry`, `AdminStats`,
+  plus 5 update-body types — all mirroring the exact shapes of the
+  existing /api/admin/* server responses in
+  [`app/server/routes/admin.cts`](app/server/routes/admin.cts)).
+  Added 12 client functions: 7 GETs (`getAdminUsers`,
+  `getAdminStores`, `getAdminProducts`, `getAdminOrders`,
+  `getAdminDisputes`, `getAdminAuditLog`, `getAdminStats`) and 5
+  PATCHes (`patchAdminUser`, `patchAdminStore`,
+  `patchAdminProduct`, `patchAdminOrderStatus`,
+  `patchAdminDispute`). Each wraps `URLSearchParams` for clean query
+  construction. Added 7 hooks (`useAdminUsers`, …) that follow the
+  exact one-liner pattern of the existing `useSeller*` hooks
+  (reusing `useDataHook` for AbortController + 401 handling).
+  Added 5 new `<Route>` entries in
+  [`App.tsx`](app/src/App.tsx): `/admin/users`, `/admin/overview`,
+  `/admin/stores`, `/admin/disputes`, `/admin/reports` — all
+  guarded with `role=['admin']`. Page refactor (using these hooks
+  + the 6 mock-data arrays) follows in the next commit.
 - **2026-06-29** — `app/src/hooks/useApi.ts` — **K.5 complete**. Removed **6
   unused hooks** + **5 unused imports**: `useUsers` (read stale
   `/data/users.json` — will be replaced by `useAdminUsers` in K.1),

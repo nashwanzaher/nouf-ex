@@ -2,7 +2,8 @@
 	"lang": {
 		"ar": "العربية",
 		"en": "English",
-		"zh": "中文"
+		"zh": "中文",
+		"": ""
 	},
 	"nav": {
 		"home": "Home",
@@ -24,10 +25,19 @@
 		"cartLabel": "Cart",
 		"aiMode": "AI Mode",
 		"manufacturers": "Manufacturers",
-		"globalSupply": "Global Supply"
+		"globalSupply": "Global Supply",
+		"imageSearch": "Search by image",
+		"rfq": "Request for Quotation",
+		"save": "Save",
+		"topBar": "Nouf-ex — Yemen & Middle East Marketplace",
+		"tradeAssurance": "Trade Assurance",
+		"verified": "Verified"
 	},
 	"product": {
-		"addToCart": "Add to Cart",
+		"addToCart": {
+			"added": "",
+			"idle": ""
+		},
 		"buyNow": "Buy Now",
 		"wishlist": "Wishlist",
 		"inStock": "In Stock",
@@ -94,7 +104,11 @@
 		"noReviewsYet": "No reviews yet",
 		"decreaseQty": "Decrease quantity",
 		"increaseQty": "Increase quantity",
-		"closeLightbox": "Close"
+		"closeLightbox": "Close",
+		"badge": {
+			"bestseller": "",
+			"new": ""
+		}
 	},
 	"home": {
 		"welcomeTitle": "Welcome to Nouf-ex",
@@ -158,7 +172,8 @@
 		"hotSearchFurniture": "Traditional Furniture",
 		"hotSearchSidrHoney": "Sidr Honey",
 		"hotSearchYemeniSilver": "Yemeni Silver",
-		"hotSearchPerfumes": "Perfumes"
+		"hotSearchPerfumes": "Perfumes",
+		"tradeAssurance": ""
 	},
 	"auth": {
 		"loginTitle": "Login",
@@ -220,7 +235,25 @@
 		"today": "Today",
 		"totalSales": "Total Sales",
 		"pendingOrders": "Pending Orders",
-		"dashboard": "Dashboard",
+		"dashboard": {
+			"actionRequired": "Action required",
+			"kpi": {
+				"activeOrders": "Active Orders",
+				"lowStock": "Low-stock products",
+				"pendingOrders": "Pending Orders",
+				"revenue": "Revenue"
+			},
+			"noOrders": "No orders in this filter yet.",
+			"noProducts": "You have no products yet. Add your first one!",
+			"noStore": "You do not have a store yet",
+			"noStoreHint": "Contact an admin to set up your store, or apply for merchant status.",
+			"recentOrders": "Recent Orders",
+			"recentProducts": "Recent Products",
+			"restock": "Restock soon",
+			"sold": "Sold",
+			"subtitle": "Manage your store, products, and orders.",
+			"title": "Seller Dashboard"
+		},
 		"storeSettings": "Store Settings",
 		"storeName": "Store Name",
 		"viewStore": "View Store",
@@ -313,7 +346,116 @@
 		},
 		"product": {
 			"new": "New Product"
-		}
+		},
+		"addNewProduct": "Add New Product",
+		"analyticsSubtitle": "Analyze your store performance and sales",
+		"barcodeLabel": "Barcode",
+		"barcodePlaceholder": "Or scan with scanner",
+		"brandPlaceholder": "Brand",
+		"breadcrumbAnalytics": "Dashboard / Analytics",
+		"breadcrumbOrders": "Dashboard / Orders",
+		"breadcrumbProducts": "Dashboard / Products",
+		"categoryLabel": "Category",
+		"changeStatus": "Change status",
+		"comparePriceLabel": "Compare-at\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tprice",
+		"customerInfo": "Customer Info",
+		"dailyOrders": "Daily Orders",
+		"dateRange": "Date range",
+		"descriptionLabel": "Product description",
+		"descriptionPlaceholder": "Write detailed product description...",
+		"dragImagesHere": "Drag images here or click to select",
+		"export": "Export",
+		"exportCsv": "Export CSV",
+		"geographicDistribution": "Geographic Distribution",
+		"heightCm": "Height (cm)",
+		"imageLimits": "PNG, JPG up to 5MB — max 8 images",
+		"import": "Import",
+		"inStock": "in stock",
+		"itemUnit": "items",
+		"last30Days": "Last 30 days",
+		"lastMonth": "Last month",
+		"monthlyRevenue": "Monthly Revenue",
+		"newVsReturning": "New vs Returning Customers",
+		"next": "Next",
+		"nextPage": "Next",
+		"noOrdersMatch": "No orders match your search criteria",
+		"noProductsMatch": "No products match your search criteria",
+		"payment": "Payment",
+		"paymentMethod": "Payment method",
+		"paymentSection": "Payment",
+		"paymentStatus": "Payment status",
+		"peakHours": "Peak Hours",
+		"prevPage": "Previous",
+		"prevStep": "Previous",
+		"priceLabel": "Price",
+		"printInvoice": "Print Invoice",
+		"productNameLabel": "Product name",
+		"productNamePlaceholder": "Enter product name",
+		"productsList": "Products",
+		"productsSubtitle": "Manage and add products to your store",
+		"publishProduct": "Publish Product",
+		"qty": "Qty",
+		"readyToPublish": "Ready to publish",
+		"resetFilters": "Reset filters",
+		"reviewBeforePublish": "Review product info before publishing",
+		"reviewProductName": "Product name",
+		"reviewStatus": "Status",
+		"saveDraft": "Save Draft",
+		"searchOrderPlaceholder": "Order number, customer name...",
+		"searchProductPlaceholder": "Search products...",
+		"selectAll": "Select all",
+		"selectCategory": "Select category",
+		"selectOrder": "Select order",
+		"selectVariant": "Select variant",
+		"shippingClassLabel": "Shipping class",
+		"shippingExpress": "Express shipping",
+		"shippingFree": "Free shipping",
+		"shippingStandard": "Standard shipping",
+		"skuPlaceholder": "Product SKU",
+		"sortBestSelling": "Best selling",
+		"sortNewest": "Newest",
+		"sortPrice": "Price",
+		"statAvgOrder": "Average Order Value",
+		"statOrders": "Total Orders",
+		"statRevenue": "Total Revenue",
+		"statusActive": "Active",
+		"statusDisabled": "Disabled",
+		"statusLow": "Low",
+		"statusOut": "Out",
+		"stepBasics": "Basic Info",
+		"stepImages": "Images",
+		"stepPricing": "Pricing & Stock",
+		"stepReview": "Review",
+		"stepShipping": "Shipping",
+		"stepVariants": "Variants",
+		"stockLabel": "Stock",
+		"tableCarts": "Carts",
+		"tableOrders": "Orders",
+		"tableProduct": "Product",
+		"tableViews": "Views",
+		"thActions": "Actions",
+		"thImage": "Image",
+		"thPrice": "Price",
+		"thProductName": "Product name",
+		"thSales": "Sales",
+		"thStatus": "Status",
+		"thStock": "Stock",
+		"timeline": "Order Timeline",
+		"total": "Total",
+		"track": "Track",
+		"trafficSources": "Traffic Sources",
+		"uploadImages": "Upload product images",
+		"variantColor": "Color",
+		"variantHelpText": "Add variants like color and size",
+		"variantMaterial": "Material",
+		"variantName": "Variant name",
+		"variantNameLabel": "Variant",
+		"variantSize": "Size",
+		"variantValuesPlaceholder": "red, blue, green",
+		"view": "View",
+		"viewGrid": "Grid view",
+		"viewList": "List view",
+		"widthCm": "Width (cm)"
 	},
 	"customer": {
 		"myOrders": "My Orders",
@@ -515,7 +657,11 @@
 		"showLess": "Show Less",
 		"noResults": "No results found",
 		"tryAgain": "Try again",
-		"viewAll": "View All"
+		"viewAll": "View All",
+		"all": "All",
+		"backToHome": "Back to home",
+		"items": "",
+		"remove": "Remove"
 	},
 	"trust": {
 		"noufProtect": "Nouf-Protect",
@@ -556,7 +702,8 @@
 			"sortRating": "Rating",
 			"sortLabel": "Sort by",
 			"noProducts": "No products found",
-			"tryAdjustingFilters": "Try adjusting your filters"
+			"tryAdjustingFilters": "Try adjusting your filters",
+			"priceMax": "Maximum price"
 		}
 	},
 	"addresses": {
@@ -590,7 +737,29 @@
 		"labelSetDefaultCheckbox": "Set as default address",
 		"saveEdit": "Save Changes",
 		"saveAdd": "Add Address",
-		"cancel": "Cancel"
+		"cancel": "Cancel",
+		"addNew": "Add",
+		"building": "Building / Floor / Apartment",
+		"city": "City",
+		"createSuccess": "Address added",
+		"default": "Default",
+		"defaultSet": "Default address updated",
+		"delete": "Delete",
+		"deleteError": "Could not delete",
+		"deleteSuccess": "Address deleted",
+		"district": "District",
+		"emptyHint": "Add an address to speed up checkout and order tracking.",
+		"fullName": "Full name",
+		"governorate": "Governorate",
+		"label": "Label (e.g. Home, Office)",
+		"loadError": "Could not load addresses",
+		"notes": "Delivery notes",
+		"phone": "Phone",
+		"saveError": "Could not save address",
+		"selectGov": "Select…",
+		"setAsDefault": "Set as default address",
+		"street": "Street",
+		"updateSuccess": "Address updated"
 	},
 	"checkout": {
 		"guestTitle": "Sign in to checkout",
@@ -720,7 +889,11 @@
 			"catFashion": "Fashion",
 			"catFood": "Food",
 			"catJewelry": "Jewelry",
-			"catHome": "Home"
+			"catHome": "Home",
+			"compareAdd": "Add to compare",
+			"compareRemove": "Remove from compare",
+			"viewGrid": "Grid view",
+			"viewList": "List view"
 		}
 	},
 	"deals": {
@@ -891,7 +1064,9 @@
 		"countryUs": "United States",
 		"countryUk": "United Kingdom",
 		"countryMalaysia": "Malaysia",
-		"categoryFallback": "Category {id}"
+		"categoryFallback": "Category {id}",
+		"allCategories": "All categories",
+		"sortByLabel": "Sort by"
 	},
 	"reviews": {
 		"title": "My Reviews",
@@ -920,5 +1095,11 @@
 		"labelPhotos": "Photos (optional)",
 		"addPhoto": "Add",
 		"submit": "Submit review"
+	},
+	"errors": {
+		"notFound": {
+			"desc": "The page you are looking for does not exist or has been moved.",
+			"title": "Page not found"
+		}
 	}
 }

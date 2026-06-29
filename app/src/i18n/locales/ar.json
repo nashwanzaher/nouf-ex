@@ -2,14 +2,15 @@
 	"lang": {
 		"ar": "العربية",
 		"en": "English",
-		"zh": "中文"
+		"zh": "中文",
+		"": ""
 	},
 	"nav": {
 		"home": "الرئيسية",
 		"categories": "التصنيفات",
 		"deals": "العروض",
 		"search": "بحث",
-		"imageSearch": "بحث بالصورة",
+		"imageSearch": "Search by image",
 		"login": "تسجيل الدخول",
 		"register": "إنشاء حساب",
 		"cart": "سلة التسوق",
@@ -23,10 +24,10 @@
 		"aiMode": "وضع AI",
 		"manufacturers": "المصنعون",
 		"globalSupply": "التوريد العالمي",
-		"verified": "موثق",
-		"tradeAssurance": "ضمان التجارة",
-		"topBar": "Nouf-ex — سوق اليمن والشرق الأوسط",
-		"rfq": "طلب عرض أسعار",
+		"verified": "Verified",
+		"tradeAssurance": "Trade Assurance",
+		"topBar": "Nouf-ex — Yemen & Middle East Marketplace",
+		"rfq": "Request for Quotation",
 		"hotProducts": "الأكثر مبيعاً",
 		"fastCustomization": "تخصيص سريع",
 		"hotSearches": "عمليات البحث الشائعة",
@@ -60,7 +61,7 @@
 		"activeDeals": "عرض نشط",
 		"endingSoon": "تنتهي قريباً",
 		"verifiedProducts": "منتجات موثقة",
-		"save": "وفر",
+		"save": "Save",
 		"onlyLeft": "تبقى فقط",
 		"left": "قطع",
 		"moq": "حد أدنى",
@@ -95,7 +96,10 @@
 		"termsOfService": "شروط الخدمة"
 	},
 	"product": {
-		"addToCart": "أضف للسلة",
+		"addToCart": {
+			"added": "",
+			"idle": ""
+		},
 		"buyNow": "اشتري الآن",
 		"wishlist": "المفضلة",
 		"inStock": "متوفر",
@@ -162,7 +166,11 @@
 		"noReviewsYet": "لا توجد مراجعات بعد",
 		"decreaseQty": "إنقاص الكمية",
 		"increaseQty": "زيادة الكمية",
-		"closeLightbox": "إغلاق"
+		"closeLightbox": "إغلاق",
+		"badge": {
+			"bestseller": "",
+			"new": ""
+		}
 	},
 	"cart": {
 		"cartTitle": "سلة التسوق",
@@ -203,7 +211,25 @@
 		"today": "اليوم",
 		"totalSales": "إجمالي المبيعات",
 		"pendingOrders": "طلبات قيد الانتظار",
-		"dashboard": "لوحة المعلومات",
+		"dashboard": {
+			"actionRequired": "Action required",
+			"kpi": {
+				"activeOrders": "Active Orders",
+				"lowStock": "Low-stock products",
+				"pendingOrders": "Pending Orders",
+				"revenue": "Revenue"
+			},
+			"noOrders": "No orders in this filter yet.",
+			"noProducts": "You have no products yet. Add your first one!",
+			"noStore": "You do not have a store yet",
+			"noStoreHint": "Contact an admin to set up your store, or apply for merchant status.",
+			"recentOrders": "Recent Orders",
+			"recentProducts": "Recent Products",
+			"restock": "Restock soon",
+			"sold": "Sold",
+			"subtitle": "Manage your store, products, and orders.",
+			"title": "Seller Dashboard"
+		},
 		"storeSettings": "إعدادات المتجر",
 		"storeName": "اسم المتجر",
 		"viewStore": "عرض المتجر",
@@ -296,7 +322,116 @@
 		},
 		"product": {
 			"new": "منتج جديد"
-		}
+		},
+		"addNewProduct": "Add New Product",
+		"analyticsSubtitle": "Analyze your store performance and sales",
+		"barcodeLabel": "Barcode",
+		"barcodePlaceholder": "Or scan with scanner",
+		"brandPlaceholder": "Brand",
+		"breadcrumbAnalytics": "Dashboard / Analytics",
+		"breadcrumbOrders": "Dashboard / Orders",
+		"breadcrumbProducts": "Dashboard / Products",
+		"categoryLabel": "Category",
+		"changeStatus": "Change status",
+		"comparePriceLabel": "Compare-at\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tprice",
+		"customerInfo": "Customer Info",
+		"dailyOrders": "Daily Orders",
+		"dateRange": "Date range",
+		"descriptionLabel": "Product description",
+		"descriptionPlaceholder": "Write detailed product description...",
+		"dragImagesHere": "Drag images here or click to select",
+		"export": "Export",
+		"exportCsv": "Export CSV",
+		"geographicDistribution": "Geographic Distribution",
+		"heightCm": "Height (cm)",
+		"imageLimits": "PNG, JPG up to 5MB — max 8 images",
+		"import": "Import",
+		"inStock": "in stock",
+		"itemUnit": "items",
+		"last30Days": "Last 30 days",
+		"lastMonth": "Last month",
+		"monthlyRevenue": "Monthly Revenue",
+		"newVsReturning": "New vs Returning Customers",
+		"next": "Next",
+		"nextPage": "Next",
+		"noOrdersMatch": "No orders match your search criteria",
+		"noProductsMatch": "No products match your search criteria",
+		"payment": "Payment",
+		"paymentMethod": "Payment method",
+		"paymentSection": "Payment",
+		"paymentStatus": "Payment status",
+		"peakHours": "Peak Hours",
+		"prevPage": "Previous",
+		"prevStep": "Previous",
+		"priceLabel": "Price",
+		"printInvoice": "Print Invoice",
+		"productNameLabel": "Product name",
+		"productNamePlaceholder": "Enter product name",
+		"productsList": "Products",
+		"productsSubtitle": "Manage and add products to your store",
+		"publishProduct": "Publish Product",
+		"qty": "Qty",
+		"readyToPublish": "Ready to publish",
+		"resetFilters": "Reset filters",
+		"reviewBeforePublish": "Review product info before publishing",
+		"reviewProductName": "Product name",
+		"reviewStatus": "Status",
+		"saveDraft": "Save Draft",
+		"searchOrderPlaceholder": "Order number, customer name...",
+		"searchProductPlaceholder": "Search products...",
+		"selectAll": "Select all",
+		"selectCategory": "Select category",
+		"selectOrder": "Select order",
+		"selectVariant": "Select variant",
+		"shippingClassLabel": "Shipping class",
+		"shippingExpress": "Express shipping",
+		"shippingFree": "Free shipping",
+		"shippingStandard": "Standard shipping",
+		"skuPlaceholder": "Product SKU",
+		"sortBestSelling": "Best selling",
+		"sortNewest": "Newest",
+		"sortPrice": "Price",
+		"statAvgOrder": "Average Order Value",
+		"statOrders": "Total Orders",
+		"statRevenue": "Total Revenue",
+		"statusActive": "Active",
+		"statusDisabled": "Disabled",
+		"statusLow": "Low",
+		"statusOut": "Out",
+		"stepBasics": "Basic Info",
+		"stepImages": "Images",
+		"stepPricing": "Pricing & Stock",
+		"stepReview": "Review",
+		"stepShipping": "Shipping",
+		"stepVariants": "Variants",
+		"stockLabel": "Stock",
+		"tableCarts": "Carts",
+		"tableOrders": "Orders",
+		"tableProduct": "Product",
+		"tableViews": "Views",
+		"thActions": "Actions",
+		"thImage": "Image",
+		"thPrice": "Price",
+		"thProductName": "Product name",
+		"thSales": "Sales",
+		"thStatus": "Status",
+		"thStock": "Stock",
+		"timeline": "Order Timeline",
+		"total": "Total",
+		"track": "Track",
+		"trafficSources": "Traffic Sources",
+		"uploadImages": "Upload product images",
+		"variantColor": "Color",
+		"variantHelpText": "Add variants like color and size",
+		"variantMaterial": "Material",
+		"variantName": "Variant name",
+		"variantNameLabel": "Variant",
+		"variantSize": "Size",
+		"variantValuesPlaceholder": "red, blue, green",
+		"view": "View",
+		"viewGrid": "Grid view",
+		"viewList": "List view",
+		"widthCm": "Width (cm)"
 	},
 	"customer": {
 		"myOrders": "طلباتي",
@@ -498,7 +633,11 @@
 		"showLess": "عرض أقل",
 		"noResults": "لا توجد نتائج",
 		"tryAgain": "حاول مرة أخرى",
-		"viewAll": "عرض الكل"
+		"viewAll": "عرض الكل",
+		"all": "All",
+		"backToHome": "Back to home",
+		"items": "",
+		"remove": "Remove"
 	},
 	"trust": {
 		"noufProtect": "نوف بروتكت",
@@ -538,7 +677,8 @@
 			"sortPriceDesc": "السعر: من الأعلى",
 			"sortRating": "التقييم",
 			"noProducts": "لا توجد منتجات",
-			"tryAdjustingFilters": "جرب تعديل الفلاتر"
+			"tryAdjustingFilters": "جرب تعديل الفلاتر",
+			"priceMax": "Maximum price"
 		}
 	},
 	"addresses": {
@@ -572,7 +712,29 @@
 		"labelSetDefaultCheckbox": "تعيين كعنوان افتراضي",
 		"saveEdit": "حفظ التعديلات",
 		"saveAdd": "إضافة العنوان",
-		"cancel": "إلغاء"
+		"cancel": "إلغاء",
+		"addNew": "Add",
+		"building": "Building / Floor / Apartment",
+		"city": "City",
+		"createSuccess": "Address added",
+		"default": "Default",
+		"defaultSet": "Default address updated",
+		"delete": "Delete",
+		"deleteError": "Could not delete",
+		"deleteSuccess": "Address deleted",
+		"district": "District",
+		"emptyHint": "Add an address to speed up checkout and order tracking.",
+		"fullName": "Full name",
+		"governorate": "Governorate",
+		"label": "Label (e.g. Home, Office)",
+		"loadError": "Could not load addresses",
+		"notes": "Delivery notes",
+		"phone": "Phone",
+		"saveError": "Could not save address",
+		"selectGov": "Select…",
+		"setAsDefault": "Set as default address",
+		"street": "Street",
+		"updateSuccess": "Address updated"
 	},
 	"checkout": {
 		"guestTitle": "سجّل الدخول للمتابعة",
@@ -824,7 +986,8 @@
 		"hotSearchFurniture": "أثاث تقليدي",
 		"hotSearchSidrHoney": "عسل سدر",
 		"hotSearchYemeniSilver": "فضة يمنية",
-		"hotSearchPerfumes": "عطور"
+		"hotSearchPerfumes": "عطور",
+		"tradeAssurance": ""
 	},
 	"hero": {
 		"overline": "منصة التجارة الإلكترونية الأولى في اليمن",
@@ -864,7 +1027,11 @@
 			"priceLabel": "السعر",
 			"sortLabel": "ترتيب",
 			"prev": "السابق",
-			"next": "التالي"
+			"next": "التالي",
+			"compareAdd": "Add to compare",
+			"compareRemove": "Remove from compare",
+			"viewGrid": "Grid view",
+			"viewList": "List view"
 		}
 	},
 	"deals": {
@@ -1035,7 +1202,9 @@
 		"countryUs": "الولايات المتحدة",
 		"countryUk": "المملكة المتحدة",
 		"countryMalaysia": "ماليزيا",
-		"categoryFallback": "فئة {id}"
+		"categoryFallback": "فئة {id}",
+		"allCategories": "All categories",
+		"sortByLabel": "Sort by"
 	},
 	"reviews": {
 		"title": "تقييماتي",
@@ -1064,5 +1233,11 @@
 		"labelPhotos": "الصور (اختياري)",
 		"addPhoto": "إضافة",
 		"submit": "إرسال التقييم"
+	},
+	"errors": {
+		"notFound": {
+			"desc": "The page you are looking for does not exist or has been moved.",
+			"title": "Page not found"
+		}
 	}
 }

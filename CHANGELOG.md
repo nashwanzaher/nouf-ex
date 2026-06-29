@@ -13,7 +13,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **2026-06-29** — `app/src/i18n/locales/{en,ar,zh}.json` — **K.2 complete**.
+  Added **171 i18n keys** to each locale (en went from 828 → 999 keys).
+  These are the keys referenced by `t('...', fallback)` calls in the
+  React codebase that were missing from all three locales. Most notable
+  additions: `seller.dashboard.*` (12), `seller.*` product-wizard (64),
+  `seller.*` orders page (18), `seller.*` analytics page (14),
+  `addresses.*` (21), `nav.*` (5), `search.ui.*` (4), `product.badge.*` (2),
+  `errors.notFound.*` (2), `home.tradeAssurance` (1), `categories.ui.*` (1).
+  Values sourced from the existing English fallbacks in the JSX/TSX;
+  ZH/AR values mirror EN (translator review needed for production).
+
 ### Changed
+- **2026-06-29** — `docs/MASTER_PLAN.md` — K.2 marked ✅ Done; totals in §11
+  updated (30 → 29 tasks remaining, ~114 → ~108 hours, 87% → 89% complete).
+- **2026-06-29** — `docs/MASTER_PLAN.md` — Pre-existing flaky tests
+  documented: `Checkout.test.tsx > shows the cart total in the summary`
+  and `ProductDetail.test.tsx > renders the product name, price and
+  store info` fail at `screen.findAllByText(/25,000|12,500/)` due to
+  `toLocaleString()` locale-aware formatting breaking the regex match.
+  Verified on `main` WITHOUT K.2 changes (same failures). Pre-existing
+  test bug, NOT caused by K.2. Tracked in §11.8 Risk Register.
+- **2026-06-28** — `docs/MASTER_PLAN.md` — Replaced guessed numbers with values
 - **2026-06-28** — `docs/MASTER_PLAN.md` — Replaced guessed numbers with values
   measured directly from the code after running `npm run typecheck/lint/test/build`
   on `main`. Header table now reports: Vitest **4.1.9** (was "Vitest 2"),

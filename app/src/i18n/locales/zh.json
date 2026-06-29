@@ -2,14 +2,15 @@
 	"lang": {
 		"ar": "العربية",
 		"en": "English",
-		"zh": "中文"
+		"zh": "中文",
+		"": ""
 	},
 	"nav": {
 		"home": "首页",
 		"categories": "分类",
 		"deals": "优惠",
 		"search": "搜索",
-		"imageSearch": "以图搜图",
+		"imageSearch": "Search by image",
 		"login": "登录",
 		"register": "注册",
 		"cart": "购物车",
@@ -25,10 +26,18 @@
 		"cartLabel": "购物车",
 		"aiMode": "AI 模式",
 		"manufacturers": "厂商",
-		"globalSupply": "全球供应"
+		"globalSupply": "全球供应",
+		"rfq": "Request for Quotation",
+		"save": "Save",
+		"topBar": "Nouf-ex — Yemen & Middle East Marketplace",
+		"tradeAssurance": "Trade Assurance",
+		"verified": "Verified"
 	},
 	"product": {
-		"addToCart": "加入购物车",
+		"addToCart": {
+			"added": "",
+			"idle": ""
+		},
 		"buyNow": "立即购买",
 		"wishlist": "收藏",
 		"inStock": "有货",
@@ -95,7 +104,11 @@
 		"noReviewsYet": "暂无评论",
 		"decreaseQty": "减少数量",
 		"increaseQty": "增加数量",
-		"closeLightbox": "关闭"
+		"closeLightbox": "关闭",
+		"badge": {
+			"bestseller": "",
+			"new": ""
+		}
 	},
 	"home": {
 		"welcomeTitle": "欢迎来到Nouf-ex",
@@ -298,7 +311,8 @@
 		"hotSearchFurniture": "传统家具",
 		"hotSearchSidrHoney": "西德蜂蜜",
 		"hotSearchYemeniSilver": "也门银饰",
-		"hotSearchPerfumes": "香水"
+		"hotSearchPerfumes": "香水",
+		"tradeAssurance": ""
 	},
 	"auth": {
 		"loginTitle": "登录",
@@ -360,7 +374,25 @@
 		"today": "今日",
 		"totalSales": "总销量",
 		"pendingOrders": "待处理订单",
-		"dashboard": "仪表板",
+		"dashboard": {
+			"actionRequired": "Action required",
+			"kpi": {
+				"activeOrders": "Active Orders",
+				"lowStock": "Low-stock products",
+				"pendingOrders": "Pending Orders",
+				"revenue": "Revenue"
+			},
+			"noOrders": "No orders in this filter yet.",
+			"noProducts": "You have no products yet. Add your first one!",
+			"noStore": "You do not have a store yet",
+			"noStoreHint": "Contact an admin to set up your store, or apply for merchant status.",
+			"recentOrders": "Recent Orders",
+			"recentProducts": "Recent Products",
+			"restock": "Restock soon",
+			"sold": "Sold",
+			"subtitle": "Manage your store, products, and orders.",
+			"title": "Seller Dashboard"
+		},
 		"storeSettings": "店铺设置",
 		"storeName": "店铺名称",
 		"viewStore": "查看店铺",
@@ -453,7 +485,116 @@
 		},
 		"product": {
 			"new": "新建商品"
-		}
+		},
+		"addNewProduct": "Add New Product",
+		"analyticsSubtitle": "Analyze your store performance and sales",
+		"barcodeLabel": "Barcode",
+		"barcodePlaceholder": "Or scan with scanner",
+		"brandPlaceholder": "Brand",
+		"breadcrumbAnalytics": "Dashboard / Analytics",
+		"breadcrumbOrders": "Dashboard / Orders",
+		"breadcrumbProducts": "Dashboard / Products",
+		"categoryLabel": "Category",
+		"changeStatus": "Change status",
+		"comparePriceLabel": "Compare-at\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tprice",
+		"customerInfo": "Customer Info",
+		"dailyOrders": "Daily Orders",
+		"dateRange": "Date range",
+		"descriptionLabel": "Product description",
+		"descriptionPlaceholder": "Write detailed product description...",
+		"dragImagesHere": "Drag images here or click to select",
+		"export": "Export",
+		"exportCsv": "Export CSV",
+		"geographicDistribution": "Geographic Distribution",
+		"heightCm": "Height (cm)",
+		"imageLimits": "PNG, JPG up to 5MB — max 8 images",
+		"import": "Import",
+		"inStock": "in stock",
+		"itemUnit": "items",
+		"last30Days": "Last 30 days",
+		"lastMonth": "Last month",
+		"monthlyRevenue": "Monthly Revenue",
+		"newVsReturning": "New vs Returning Customers",
+		"next": "Next",
+		"nextPage": "Next",
+		"noOrdersMatch": "No orders match your search criteria",
+		"noProductsMatch": "No products match your search criteria",
+		"payment": "Payment",
+		"paymentMethod": "Payment method",
+		"paymentSection": "Payment",
+		"paymentStatus": "Payment status",
+		"peakHours": "Peak Hours",
+		"prevPage": "Previous",
+		"prevStep": "Previous",
+		"priceLabel": "Price",
+		"printInvoice": "Print Invoice",
+		"productNameLabel": "Product name",
+		"productNamePlaceholder": "Enter product name",
+		"productsList": "Products",
+		"productsSubtitle": "Manage and add products to your store",
+		"publishProduct": "Publish Product",
+		"qty": "Qty",
+		"readyToPublish": "Ready to publish",
+		"resetFilters": "Reset filters",
+		"reviewBeforePublish": "Review product info before publishing",
+		"reviewProductName": "Product name",
+		"reviewStatus": "Status",
+		"saveDraft": "Save Draft",
+		"searchOrderPlaceholder": "Order number, customer name...",
+		"searchProductPlaceholder": "Search products...",
+		"selectAll": "Select all",
+		"selectCategory": "Select category",
+		"selectOrder": "Select order",
+		"selectVariant": "Select variant",
+		"shippingClassLabel": "Shipping class",
+		"shippingExpress": "Express shipping",
+		"shippingFree": "Free shipping",
+		"shippingStandard": "Standard shipping",
+		"skuPlaceholder": "Product SKU",
+		"sortBestSelling": "Best selling",
+		"sortNewest": "Newest",
+		"sortPrice": "Price",
+		"statAvgOrder": "Average Order Value",
+		"statOrders": "Total Orders",
+		"statRevenue": "Total Revenue",
+		"statusActive": "Active",
+		"statusDisabled": "Disabled",
+		"statusLow": "Low",
+		"statusOut": "Out",
+		"stepBasics": "Basic Info",
+		"stepImages": "Images",
+		"stepPricing": "Pricing & Stock",
+		"stepReview": "Review",
+		"stepShipping": "Shipping",
+		"stepVariants": "Variants",
+		"stockLabel": "Stock",
+		"tableCarts": "Carts",
+		"tableOrders": "Orders",
+		"tableProduct": "Product",
+		"tableViews": "Views",
+		"thActions": "Actions",
+		"thImage": "Image",
+		"thPrice": "Price",
+		"thProductName": "Product name",
+		"thSales": "Sales",
+		"thStatus": "Status",
+		"thStock": "Stock",
+		"timeline": "Order Timeline",
+		"total": "Total",
+		"track": "Track",
+		"trafficSources": "Traffic Sources",
+		"uploadImages": "Upload product images",
+		"variantColor": "Color",
+		"variantHelpText": "Add variants like color and size",
+		"variantMaterial": "Material",
+		"variantName": "Variant name",
+		"variantNameLabel": "Variant",
+		"variantSize": "Size",
+		"variantValuesPlaceholder": "red, blue, green",
+		"view": "View",
+		"viewGrid": "Grid view",
+		"viewList": "List view",
+		"widthCm": "Width (cm)"
 	},
 	"customer": {
 		"myOrders": "我的订单",
@@ -626,7 +767,11 @@
 		"showLess": "收起",
 		"noResults": "未找到结果",
 		"tryAgain": "重试",
-		"viewAll": "查看全部"
+		"viewAll": "查看全部",
+		"all": "All",
+		"backToHome": "Back to home",
+		"items": "",
+		"remove": "Remove"
 	},
 	"trust": {
 		"noufProtect": "Nouf-Protect保护",
@@ -667,7 +812,8 @@
 			"sortRating": "评分",
 			"sortLabel": "排序方式",
 			"noProducts": "未找到商品",
-			"tryAdjustingFilters": "请尝试调整筛选条件"
+			"tryAdjustingFilters": "请尝试调整筛选条件",
+			"priceMax": "Maximum price"
 		}
 	},
 	"addresses": {
@@ -701,7 +847,29 @@
 		"labelSetDefaultCheckbox": "设为默认地址",
 		"saveEdit": "保存修改",
 		"saveAdd": "添加地址",
-		"cancel": "取消"
+		"cancel": "取消",
+		"addNew": "Add",
+		"building": "Building / Floor / Apartment",
+		"city": "City",
+		"createSuccess": "Address added",
+		"default": "Default",
+		"defaultSet": "Default address updated",
+		"delete": "Delete",
+		"deleteError": "Could not delete",
+		"deleteSuccess": "Address deleted",
+		"district": "District",
+		"emptyHint": "Add an address to speed up checkout and order tracking.",
+		"fullName": "Full name",
+		"governorate": "Governorate",
+		"label": "Label (e.g. Home, Office)",
+		"loadError": "Could not load addresses",
+		"notes": "Delivery notes",
+		"phone": "Phone",
+		"saveError": "Could not save address",
+		"selectGov": "Select…",
+		"setAsDefault": "Set as default address",
+		"street": "Street",
+		"updateSuccess": "Address updated"
 	},
 	"checkout": {
 		"guestTitle": "登录以继续结账",
@@ -790,7 +958,11 @@
 			"priceLabel": "价格",
 			"sortLabel": "排序",
 			"prev": "上一页",
-			"next": "下一页"
+			"next": "下一页",
+			"compareAdd": "Add to compare",
+			"compareRemove": "Remove from compare",
+			"viewGrid": "Grid view",
+			"viewList": "List view"
 		}
 	},
 	"deals": {
@@ -960,7 +1132,9 @@
 		"countryUs": "美国",
 		"countryUk": "英国",
 		"countryMalaysia": "马来西亚",
-		"categoryFallback": "分类 {id}"
+		"categoryFallback": "分类 {id}",
+		"allCategories": "All categories",
+		"sortByLabel": "Sort by"
 	},
 	"reviews": {
 		"title": "我的评价",
@@ -989,5 +1163,11 @@
 		"labelPhotos": "照片（可选）",
 		"addPhoto": "添加",
 		"submit": "提交评价"
+	},
+	"errors": {
+		"notFound": {
+			"desc": "The page you are looking for does not exist or has been moved.",
+			"title": "Page not found"
+		}
 	}
 }

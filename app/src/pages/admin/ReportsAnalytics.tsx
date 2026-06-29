@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
 	BarChart3,
 	Users,
@@ -9,6 +9,7 @@ import {
 	TrendingUp,
 	TrendingDown,
 	Download,
+	Loader2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,9 @@ import {
 	ResponsiveContainer,
 	Legend,
 } from 'recharts';
+import { useAdminStats } from '@/hooks/useApi';
+import type { AdminStats } from '@/lib/api';
+import { formatMoney } from '@/lib/format';
 
 /* ------------------------------------------------------------------ */
 /*  Chart colors                                                       */
@@ -43,6 +47,13 @@ const PURPLE = '#8B5CF6';
 /* ------------------------------------------------------------------ */
 /*  Mock data generators                                               */
 /* ------------------------------------------------------------------ */
+// NOTE: Time-series chart data (revenueData / usersData / ordersData /
+// merchantsData / disputesData / growthPie) is kept as a temporary
+// fixture. /api/admin/stats only returns aggregate counters and the
+// 7-day delta — it has no historical bucket endpoint. A dedicated
+// /api/admin/analytics/timeseries?bucket=month (C.7) is needed to
+// feed these charts from the DB. The KPI cards below already use
+// real data from useAdminStats.
 const revenueData = [
 	{ name: 'يناير', value: 32000, orders: 2400, commission: 4800 },
 	{ name: 'فبراير', value: 35000, orders: 2800, commission: 5250 },
@@ -140,47 +151,242 @@ const periodOptions = ['أسبوع', 'شهر', 'ربع سنة', 'سنة'];
 /* ------------------------------------------------------------------ */
 /*  Summary metrics per category                                       */
 /* ------------------------------------------------------------------ */
-const categoryMetrics: Record<
-	string,
-	{ label: string; value: string; change: string; up: boolean }[]
-> = {
-	revenue: [
-		{ label: 'إجمالي الإيرادات', value: '$٢١٢,٢٠٠', change: '+١٥٪', up: true },
-		{ label: 'الطلبات', value: '١٧,٧٠٠', change: '+٢٣٪', up: true },
-		{ label: 'العمولات', value: '$٣٣,٣٣٠', change: '+١٨٪', up: true },
-		{ label: 'متوسط الطلب', value: '$٤٥', change: '-٣٪', up: false },
-	],
-	users: [
-		{ label: 'المستخدمون الجدد', value: '٦,١٠٠', change: '+١٢٪', up: true },
-		{ label: 'النشطون', value: '٧,٢٠٠', change: '+٨٪', up: true },
-		{ label: 'معدل الاحتفاظ', value: '٧٨٪', change: '+٥٪', up: true },
-		{ label: 'الراحلون', value: '٦٤٥', change: '-٨٪', up: true },
-	],
-	merchants: [
-		{ label: 'المتاجر الجديدة', value: '١٢٨', change: '+٢٠٪', up: true },
-		{ label: 'الموثقة', value: '١٨٠', change: '+١٥٪', up: true },
-		{ label: 'قيد المراجعة', value: '٤٥', change: '-١٠٪', up: true },
-		{ label: 'معدل الرضا', value: '٤.٣', change: '+٢٪', up: true },
-	],
-	orders: [
-		{ label: 'إجمالي الطلبات', value: '١٧,٧٠٠', change: '+٢٣٪', up: true },
-		{ label: 'المكتملة', value: '١٦,٠٠٠', change: '+٢٥٪', up: true },
-		{ label: 'الملغاة', value: '٨٧٠', change: '-١٢٪', up: true },
-		{ label: 'المسترجعة', value: '٥٠٠', change: '-٢٠٪', up: true },
-	],
-	disputes: [
-		{ label: 'النزاعات المقدمة', value: '٨٩', change: '+٥٪', up: false },
-		{ label: 'المحلولة', value: '٧٥', change: '+١٠٪', up: true },
-		{ label: 'معدل الحل', value: '٨٤٪', change: '+٤٪', up: true },
-		{ label: 'متوسط الأيام', value: '٢.٧', change: '-١٫٥', up: true },
-	],
-	growth: [
-		{ label: 'نمو الإيرادات', value: '٤٥٪', change: '+١٢٪', up: true },
-		{ label: 'نمو المستخدمين', value: '٦٠٪', change: '+٨٪', up: true },
-		{ label: 'أكبر محافظة', value: 'صنعاء', change: '٤٥٪', up: true },
-		{ label: 'نمو المتاجر', value: '٣٥٪', change: '+١٥٪', up: true },
-	],
+// KPI cards are now built from the live /api/admin/stats payload
+// (server/routes/admin-read.cts:329). Fields the endpoint doesn't
+// expose (commission rate, churned users, governorate split, …)
+// render as "—" with `up: null` so the JSX swaps the trend arrow
+// for a muted dash — honest about the data we *don't* have until
+// C.7 ships a richer analytics endpoint.
+interface CategoryMetric {
+	label: string;
+	value: string;
+	change: string;
+	up: boolean | null;
+}
+
+const PLACEHOLDER: CategoryMetric = {
+	label: '',
+	value: '—',
+	change: '—',
+	up: null,
 };
+
+function formatPct(value: number | null | undefined, locale = 'ar-EG'): string {
+	if (value == null || Number.isNaN(value)) return '—';
+	const sign = value >= 0 ? '+' : '';
+	return `${sign}${value.toLocaleString(locale)}٪`;
+}
+
+function formatInt(value: number | null | undefined, locale = 'ar-EG'): string {
+	if (value == null || Number.isNaN(value)) return '—';
+	return value.toLocaleString(locale);
+}
+
+// Typed defaults so `counts.foo` narrows correctly without `?? {}` (which
+// would widen the type to `{}` and lose every property check).
+const EMPTY_COUNTS: AdminStats['counts'] = {
+	users: 0,
+	stores: 0,
+	products: 0,
+	orders: 0,
+	reviews: 0,
+	disputes: 0,
+};
+const EMPTY_FLAGS: AdminStats['flags'] = {
+	openDisputes: 0,
+	pendingOrders: 0,
+	paidOrders: 0,
+	suspendedUsers: 0,
+	inactiveStores: 0,
+};
+const EMPTY_RECENT: AdminStats['recent7d'] = { orders: 0, users: 0 };
+
+function buildCategoryMetrics(
+	categoryId: string,
+	stats: AdminStats | null | undefined,
+): CategoryMetric[] {
+	const counts = stats?.counts ?? EMPTY_COUNTS;
+	const flags = stats?.flags ?? EMPTY_FLAGS;
+	const recent = stats?.recent7d ?? EMPTY_RECENT;
+	const revenue = stats?.revenueYer ?? 0;
+	const orders = counts.orders;
+	const avgOrder = orders > 0 ? Math.round(revenue / orders) : null;
+
+	switch (categoryId) {
+		case 'revenue':
+			return [
+				{
+					label: 'إجمالي الإيرادات',
+					value: revenue ? formatMoney(revenue) : PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'إجمالي الطلبات',
+					value: formatInt(orders),
+					change: formatPct(recent.orders),
+					up: recent.orders >= 0,
+				},
+				{
+					label: 'الطلبات المدفوعة',
+					value: formatInt(flags.paidOrders),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'متوسط قيمة الطلب',
+					value: avgOrder != null ? formatMoney(avgOrder) : '—',
+					change: '—',
+					up: null,
+				},
+			];
+		case 'users':
+			return [
+				{
+					label: 'إجمالي المستخدمين',
+					value: formatInt(counts.users),
+					change: formatPct(recent.users),
+					up: recent.users >= 0,
+				},
+				{
+					label: 'المستخدمون الموقوفون',
+					value: formatInt(flags.suspendedUsers),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'معدل الاحتفاظ',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'الراحلون',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+			];
+		case 'merchants':
+			return [
+				{
+					label: 'إجمالي المتاجر',
+					value: formatInt(counts.stores),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'المتاجر غير النشطة',
+					value: formatInt(flags.inactiveStores),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'قيد التوثيق',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'معدل الرضا',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+			];
+		case 'orders':
+			return [
+				{
+					label: 'إجمالي الطلبات',
+					value: formatInt(orders),
+					change: formatPct(recent.orders),
+					up: recent.orders >= 0,
+				},
+				{
+					label: 'المدفوعة',
+					value: formatInt(flags.paidOrders),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'قيد الانتظار',
+					value: formatInt(flags.pendingOrders),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'الملغاة / المسترجعة',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+			];
+		case 'disputes':
+			return [
+				{
+					label: 'إجمالي النزاعات',
+					value: formatInt(counts.disputes),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'النزاعات المفتوحة',
+					value: formatInt(flags.openDisputes),
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'معدل الحل',
+					value:
+						counts.disputes && flags.openDisputes != null
+							? formatPct(
+									Math.round(
+										((counts.disputes - flags.openDisputes) / counts.disputes) *
+											100,
+									),
+								)
+							: '—',
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'متوسط الأيام',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+			];
+		case 'growth':
+			return [
+				{
+					label: 'نمو المستخدمين (٧ أيام)',
+					value: formatPct(recent.users),
+					change: '—',
+					up: recent.users >= 0,
+				},
+				{
+					label: 'نمو الطلبات (٧ أيام)',
+					value: formatPct(recent.orders),
+					change: '—',
+					up: recent.orders >= 0,
+				},
+				{
+					label: 'أكبر محافظة',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+				{
+					label: 'نمو المتاجر',
+					value: PLACEHOLDER.value,
+					change: '—',
+					up: null,
+				},
+			];
+		default:
+			return [PLACEHOLDER, PLACEHOLDER, PLACEHOLDER, PLACEHOLDER];
+	}
+}
 
 /* ------------------------------------------------------------------ */
 /*  CSV export helper                                                  */
@@ -201,8 +407,17 @@ export default function ReportsAnalytics() {
 	const [activeCategory, setActiveCategory] = useState('revenue');
 	const [period, setPeriod] = useState('شهر');
 
+	// Live KPIs from /api/admin/stats (server/routes/admin-read.cts:329).
+	// The endpoint aggregates counters + 7-day deltas in one CTE-style
+	// query. Time-series bucket data isn't part of the response, so the
+	// charts below keep their 6-month historical fixture (TODO C.7).
+	const { data: stats, loading: statsLoading, error: statsError } = useAdminStats();
+	const metrics = useMemo(
+		() => buildCategoryMetrics(activeCategory, stats),
+		[activeCategory, stats],
+	);
+
 	const currentCategory = categories.find((c) => c.id === activeCategory)!;
-	const metrics = categoryMetrics[activeCategory] ?? [];
 	const currentDateRange = '١ يناير - ٣٠ يونيو ٢٠٢٤';
 
 	const handleExportCSV = () => {
@@ -622,7 +837,7 @@ export default function ReportsAnalytics() {
 				})}
 			</div>
 
-			{/* ── Metrics ── */}
+			{/* ── Metrics (live /api/admin/stats) ── */}
 			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 				{metrics.map((m, i) => (
 					<Card key={i} className="border-0 shadow-sm">
@@ -630,15 +845,30 @@ export default function ReportsAnalytics() {
 							<p className="text-xs text-[#6B6B6B] font-cairo mb-1">{m.label}</p>
 							<div className="flex items-center justify-between">
 								<p className="text-xl font-mono font-bold text-[#111111]">
-									{m.value}
+									{statsLoading ? (
+										<span className="inline-flex items-center gap-1 text-[#AAAAAA]">
+											<Loader2 className="w-3 h-3 animate-spin" />
+											…
+										</span>
+									) : (
+										m.value
+									)}
 								</p>
 								<span
-									className={`flex items-center gap-0.5 text-[10px] font-cairo font-semibold ${m.up ? 'text-emerald-500' : 'text-red-500'}`}
+									className={`flex items-center gap-0.5 text-[10px] font-cairo font-semibold ${
+										m.up === true
+											? 'text-emerald-500'
+											: m.up === false
+												? 'text-red-500'
+												: 'text-[#AAAAAA]'
+									}`}
 								>
-									{m.up ? (
+									{m.up === true ? (
 										<TrendingUp className="w-3 h-3" />
-									) : (
+									) : m.up === false ? (
 										<TrendingDown className="w-3 h-3" />
+									) : (
+										<span className="opacity-50">·</span>
 									)}
 									{m.change}
 								</span>
@@ -647,6 +877,12 @@ export default function ReportsAnalytics() {
 					</Card>
 				))}
 			</div>
+
+			{statsError && (
+				<div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm font-cairo">
+					تعذّر تحميل الإحصائيات: {statsError}
+				</div>
+			)}
 
 			{/* ── Chart Card ── */}
 			<Card className="border-0 shadow-sm">

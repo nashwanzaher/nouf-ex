@@ -4,68 +4,42 @@
  * What this catches:
  * - Hooks returning null/undefined that the page doesn't handle
  * - Missing i18n keys that throw at render
- * - Undefined routes / Link targets
+ * - Unhandled API endpoints (MSW fetch-spy throws on unmapped URLs)
  * - React strict-mode warnings (mount/unmount cycle errors)
  *
  * What this DOES NOT catch:
  * - Visual regressions
- * - Click flow / form submissions (those need Vitest + msw or Playwright)
+ * - Click flow / form submissions (those need Playwright)
  *
- * The DB-backed hooks (useSellerDashboard, useOrders, ...) are stubbed
- * with react-test-renderer-friendly mocks so we don't need a live DB.
+ * Implementation note: instead of `vi.mock('@/lib/api', ...) + vi.mock(
+ * '@/hooks/useApi', ...) + globalThis.fetch = vi.fn().mockResolvedValue([])`
+ * (the old "everything returns empty" pattern), we now route every
+ * fetch through MSW handlers via `tests/mocks/fetch-spy.ts`. The handlers
+ * mirror what the real backend returns, so a page that doesn't handle a
+ * field correctly will fail with "unhandled GET /api/..." or a render
+ * crash — both real, observable bugs.
  */
+
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { Suspense, type ReactNode } from 'react';
+import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
 import { AppProvider } from '@/context/AppContext';
 import { CartProvider } from '@/context/CartContext';
 
-// ─── lib/api stub ───────────────────────────────────────────────
-// Several pages call `getAddresses`, `getOrders`, `getNotifications`
-// etc. directly from `@/lib/api` inside `useEffect` (rather than via
-// the `@/hooks/useApi` hook indirection). We mock the whole `@/lib/api`
-// module so the useEffect path resolves cleanly without firing a
-// real fetch.
-vi.mock('@/lib/api', async (importOriginal) => {
-	const actual = (await importOriginal()) as Record<string, unknown>;
-	const identity = (..._args: unknown[]) => [];
-	return new Proxy(actual, {
-		get: (target, prop: string | symbol) => {
-			if (typeof prop === 'symbol') return (target as Record<symbol, unknown>)[prop];
-			const value = (target as Record<string, unknown>)[prop];
-			if (typeof value !== 'function') return value;
-			// Replace every exported function with a no-op that
-			// resolves to an empty array. This is intentionally
-			// broad: the smoke test only verifies the page RENDERS,
-			// not that real network calls succeed.
-			return (..._args: unknown[]) => {
-				void identity;
-				return Promise.resolve([]);
-			};
-		},
-	});
-});
+// ─── HTTP interception ────────────────────────────────────────────
+// The fetch-spy patches `globalThis.fetch` so every call inside a
+// component is intercepted at the network boundary. Unmapped URLs
+// throw — this is the production-grade signal that a page is asking
+// for something the test infrastructure doesn't know about, which is
+// almost always an actual bug (typo'd path, unwired hook, etc.).
+beforeAll(() => installFetchSpy());
+afterAll(() => uninstallFetchSpy());
 
-// ─── fetch stub ─────────────────────────────────────────────────
-// Any direct `fetch(...)` call (e.g. fallbacks not covered by the
-// `@/lib/api` mock) resolves with an empty success envelope.
-const originalFetch = globalThis.fetch;
-beforeAll(() => {
-	globalThis.fetch = vi.fn().mockImplementation(async () => {
-		return new Response(JSON.stringify({ success: true, data: [] }), {
-			status: 200,
-			headers: { 'content-type': 'application/json' },
-		});
-	});
-});
-afterAll(() => {
-	globalThis.fetch = originalFetch;
-});
-
-// Wrap every page in the providers it needs (in the real app, App.tsx
-// wraps everything in AppProvider + CartProvider). We pass the same
-// wrappers here so the page renders the way it does in production.
+// Wrap every page in the providers it needs. In production App.tsx
+// wraps everything in AppProvider + CartProvider; the smoke test
+// matches that to render pages the way real users see them.
 function Providers({ children }: { children: ReactNode }) {
 	return (
 		<AppProvider>
@@ -74,7 +48,7 @@ function Providers({ children }: { children: ReactNode }) {
 	);
 }
 
-// ─── i18n stub ───────────────────────────────────────────────────
+// ─── i18n stub ─────────────────────────────────────────────────────
 // Provide a t() that returns the fallback (second arg) so we can
 // detect missing keys without spinning up the real i18next.
 vi.mock('react-i18next', () => ({
@@ -86,136 +60,13 @@ vi.mock('react-i18next', () => ({
 	initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
-// ─── hooks stub ──────────────────────────────────────────────────
-// All hooks that touch the API are stubbed with stable defaults.
-// This lets us render the page WITHOUT a live DB and verify the
-// page doesn't crash, throws on undefined data, or has bad keys.
-vi.mock('@/hooks/useApi', () => {
-	const emptyList = () => ({ data: [], loading: false, error: null, refetch: vi.fn() });
-	const emptyResult = () => ({ data: null, loading: false, error: null, refetch: vi.fn() });
-	const emptyMutation = () => ({
-		mutate: vi.fn(),
-		mutateAsync: vi.fn().mockResolvedValue({ id: 0 }),
-		data: undefined,
-		isLoading: false,
-		error: null,
-		reset: vi.fn(),
-	});
-	return {
-		// ── reads (single object) ──────────────────────────────
-		useSellerDashboard: () => ({ ...emptyResult(), data: null }),
-		useSellerStore: () => ({ ...emptyResult(), data: null }),
-		useSellerProduct: () => ({ ...emptyResult(), data: null }),
-		useSellerOrder: () => ({ ...emptyResult(), data: null }),
-		useSellerAnalytics: () => ({ ...emptyResult(), data: null }),
-		useAdminStats: () => ({ ...emptyResult(), data: null }),
-		useOrder: () => ({ ...emptyResult(), data: null }),
-		useProduct: () => ({ ...emptyResult(), data: null }),
-		useStore: () => ({ ...emptyResult(), data: null }),
-		useHomeStats: () => ({ ...emptyResult(), data: null }),
-		// ── reads (list) ───────────────────────────────────────
-		useOrders: emptyList,
-		useOrderItems: emptyList,
-		useUserAddresses: emptyList,
-		useShippingMethods: emptyList,
-		useWishlistItems: emptyList,
-		useServerWishlist: emptyList,
-		useNotifications: emptyList,
-		useProducts: emptyList,
-		useStores: emptyList,
-		useCategories: emptyList,
-		useReviews: emptyList,
-		useStoreReviews: emptyList,
-		// ── reads (paginated {items}) ──────────────────────────
-		useSellerProducts: () => ({
-			data: { items: [] },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useSellerOrders: () => ({
-			data: { items: [] },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useSellerInventory: () => ({
-			data: { items: [] },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useSellerPayouts: () => ({
-			data: { balance: { available: 0, pending: 0 }, items: [] },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useAdminUsers: () => ({
-			data: { users: [], total: 0, limit: 0, offset: 0 },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useAdminStores: () => ({
-			data: { stores: [], total: 0, limit: 0, offset: 0 },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useAdminProducts: () => ({
-			data: { products: [], total: 0, limit: 0, offset: 0 },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useAdminOrders: () => ({
-			data: { orders: [], total: 0, limit: 0, offset: 0 },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useAdminDisputes: () => ({
-			data: { disputes: [], total: 0, limit: 0, offset: 0 },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		useAdminAuditLog: () => ({
-			data: { entries: [], total: 0, limit: 0, offset: 0 },
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		// /api/ready probe — public readiness check. Mocked so the
-		// AdminOverview health cards don't break the smoke test.
-		useSystemHealth: () => ({
-			data: {
-				status: 'ready' as const,
-				uptime_s: 0,
-				checks: { db: { ok: true, ms: 0 } },
-			},
-			loading: false,
-			error: null,
-			refetch: vi.fn(),
-		}),
-		// ── mutations ──────────────────────────────────────────
-		useSellerMutations: () => ({ updateOrderStatus: vi.fn(), refreshAll: vi.fn() }),
-		useCouponValidation: () => emptyMutation(),
-		usePlaceOrder: () => emptyMutation(),
-	};
-});
-
-// ─── recharts stub ───────────────────────────────────────────────
-// recharts' ResponsiveContainer reports "width(0)/height(0) of chart
-// should be greater than 0" when rendered under happy-dom (no layout
-// engine → bounding rect is 0×0). Replacing every named export with
-// a null-returning stub keeps the page tree intact while silencing
-// the warnings so the smoke test can finish. The full list of recharts
-// exports (verified via `Object.keys(require('recharts'))`) is stubbed
-// individually — we don't wrap in a Proxy because vi.mock's mocked
-// module harness does not pass Proxy objects through cleanly across
-// all Node versions.
+// ─── recharts stub ─────────────────────────────────────────────────
+// recharts' ResponsiveContainer reports "width(0)/height(0)" warnings
+// when rendered under happy-dom (no layout engine). Replacing every
+// named export with a null-returning stub keeps the page tree intact
+// while silencing the warnings so the smoke test can finish. We do
+// NOT do this through MSW because recharts never makes an HTTP call —
+// it's a DOM measurement problem, not a network problem.
 vi.mock('recharts', () => {
 	const stub = () => null;
 	const passthrough = ({ children }: { children: React.ReactNode }) => children ?? null;
@@ -269,7 +120,7 @@ vi.mock('recharts', () => {
 		Customized: stub,
 		DefaultLegendContent: stub,
 		DefaultTooltipContent: stub,
-		// Geometry shapes (used internally by recharts)
+		// Geometry shapes (recharts internals)
 		Curve: stub,
 		Dot: stub,
 		Cross: stub,
@@ -310,7 +161,8 @@ import ForgotPassword from '../auth/ForgotPassword';
 import ResetPassword from '../auth/ResetPassword';
 import NotFound from '../NotFound';
 import Home from '../Home';
-// NOTE: Addresses.tsx is intentionally NOT imported here. Its dialog-
+
+// NOTE: Addresses.tsx is intentionally NOT imported here. Its dialog
 // form body triggers a happy-dom render-loop that hangs the worker
 // (the Radix Dialog portal can't reconcile with React 19 + jsdom).
 // We document this gap in docs/MASTER_PLAN.md §11 and revisit it once
@@ -345,10 +197,8 @@ const pages: { name: string; Component: React.ComponentType }[] = [
 describe('UI smoke — every page renders without crashing', () => {
 	beforeEach(() => cleanup());
 
-	// Mark pages that re-render indefinitely under happy-dom (Dialog
-	// portals + jsdom) as ".todo" so the suite can finish. Each one
-	// is documented in docs/MASTER_PLAN.md §11 (gap analysis) with
-	// the actual root cause and the plan to wire it later.
+	// Pages excluded from the smoke run go in this set. Each entry
+	// must be documented in docs/MASTER_PLAN.md §11 (gap analysis).
 	const TODOS = new Set<string>([]);
 
 	for (const { name, Component } of pages) {

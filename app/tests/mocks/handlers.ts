@@ -548,4 +548,285 @@ export const handlers = [
 	http.post('*/api/payments/:id/confirm', async ({ params }) => {
 		return HttpResponse.json({ success: true, data: { order_id: 1, id: Number(params.id) } });
 	}),
+
+	// ── Admin endpoints (privileged — K.1 fixture data) ─────────────────
+	// These mirror `/api/admin/*` server responses. Used by ui-smoke
+	// tests so the admin pages exercise the same JSON shape the real
+	// backend would return, instead of an empty `[]` proxy.
+	http.get('*/api/admin/stats', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				counts: {
+					users: 15240,
+					stores: 1280,
+					products: 4250,
+					orders: 17700,
+					reviews: 6230,
+					disputes: 89,
+				},
+				flags: {
+					openDisputes: 12,
+					pendingOrders: 138,
+					paidOrders: 16820,
+					suspendedUsers: 23,
+					inactiveStores: 47,
+				},
+				recent7d: { orders: 318, users: 412 },
+				revenueYer: 212200,
+			},
+		});
+	}),
+	http.get('*/api/admin/users', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				users: [
+					{
+						id: 1,
+						email: 'admin@noufex.test',
+						full_name: 'مدير النظام',
+						avatar: null,
+						role: 'admin',
+						status: 'active',
+						is_verified: 1,
+						email_verified: 1,
+						phone_verified: 1,
+						two_factor_enabled: 0,
+						preferred_language: 'ar',
+						gender: null,
+						phone: '+967700000001',
+						last_login: '2026-06-28T10:15:00Z',
+						created_at: '2024-01-01T00:00:00Z',
+						updated_at: '2026-06-28T10:15:00Z',
+					},
+					{
+						id: 4,
+						email: 'merchant2@shop.test',
+						full_name: 'خالد التاجر',
+						avatar: null,
+						role: 'merchant',
+						status: 'suspended',
+						is_verified: 0,
+						email_verified: 1,
+						phone_verified: 0,
+						two_factor_enabled: 0,
+						preferred_language: 'ar',
+						gender: 'male',
+						phone: '+967733333333',
+						last_login: '2026-05-10T11:00:00Z',
+						created_at: '2025-01-20T12:00:00Z',
+						updated_at: '2026-06-15T09:00:00Z',
+					},
+				],
+				total: 2,
+				limit: 20,
+				offset: 0,
+			},
+		});
+	}),
+	http.get('*/api/admin/stores', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				stores: [
+					{
+						id: 1,
+						owner_id: 2,
+						store_name: 'متجر الأناقة اليمنية',
+						store_name_en: 'Yemeni Elegance Store',
+						store_name_zh: '也门优雅商店',
+						slug: 'yemeni-elegance',
+						description: '',
+						description_en: '',
+						description_zh: '',
+						logo: '',
+						banner: '',
+						location: 'صنعاء',
+						governorate: 'صنعاء',
+						trust_level: 'verified',
+						response_rate: 95,
+						on_time_delivery: 92,
+						rating: 4.7,
+						review_count: 234,
+						products_count: 128,
+						sales_count: 1240,
+						followers_count: 870,
+						since_year: '2024',
+						is_active: 1,
+						is_verified: 1,
+						created_at: '2024-01-15T10:00:00Z',
+						updated_at: '2026-06-29T08:30:00Z',
+					},
+				],
+				total: 1,
+				limit: 20,
+				offset: 0,
+			},
+		});
+	}),
+	http.patch('*/api/admin/users/:id', async ({ params }) => {
+		return HttpResponse.json({
+			success: true,
+			data: { id: Number(params.id), status: 'active', role: 'customer' },
+		});
+	}),
+	http.patch('*/api/admin/stores/:id', async ({ params }) => {
+		return HttpResponse.json({
+			success: true,
+			data: { id: Number(params.id), is_active: true, is_verified: true },
+		});
+	}),
+	http.get('*/api/admin/audit-log', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				log: [
+					{
+						id: 1,
+						user_id: 1,
+						action: 'user.ban',
+						entity_type: 'user',
+						entity_id: '4',
+						old_values: { status: 'active' },
+						new_values: { status: 'suspended' },
+						ip_address: '127.0.0.1',
+						user_agent: 'Mozilla/5.0',
+						created_at: '2026-06-15T09:00:00Z',
+					},
+				],
+				total: 1,
+				limit: 50,
+				offset: 0,
+			},
+		});
+	}),
+
+	// ── Seller endpoints (merchant self-service) ──────────────────────
+	http.get('*/api/seller/dashboard', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				store_id: 1,
+				active_orders: 8,
+				pending_orders: 3,
+				revenue: 145000,
+				low_stock_products: 4,
+			},
+		});
+	}),
+	http.get('*/api/seller/products', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				items: [
+					{
+						id: 1,
+						store_id: 1,
+						category_id: 1,
+						name_ar: 'سماعات لاسلكية',
+						name_en: 'Wireless Headphones',
+						name_zh: '无线耳机',
+						description: 'صوت عالي الجودة',
+						description_en: 'High quality sound',
+						description_zh: '高品质音效',
+						price: 12500,
+						original_price: 15000,
+						currency: 'YER',
+						moq: 1,
+						stock: 50,
+						sold_count: 124,
+						rating: 4.8,
+						review_count: 24,
+						features: [],
+						specifications: {},
+						badges: [],
+						colors: [],
+						sizes: [],
+						main_image: '/category-electronics.jpg',
+						is_active: 1,
+						is_featured: 1,
+						deal_discount: 0,
+						deal_ends_at: '',
+						created_at: '2024-01-01T00:00:00Z',
+						updated_at: '2026-06-29T08:30:00Z',
+					},
+				],
+				total: 1,
+				limit: 50,
+				offset: 0,
+			},
+		});
+	}),
+	http.get('*/api/seller/orders', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				items: [
+					{
+						id: 101,
+						order_number: 'ORD-1243',
+						customer_id: 3,
+						customer_email: 'customer1@buyer.test',
+						store_id: 1,
+						status: 'processing',
+						payment_status: 'paid',
+						payment_method: 'cod',
+						subtotal: 128000,
+						shipping_cost: 3500,
+						discount: 0,
+						total: 131500,
+						timeline: '[{"status":"ordered","time":"2024-06-15T10:30:00Z"}]',
+						created_at: '2024-06-15T10:30:00Z',
+						updated_at: '2026-06-29T08:30:00Z',
+					},
+				],
+				total: 1,
+				limit: 50,
+				offset: 0,
+			},
+		});
+	}),
+	http.get('*/api/seller/analytics', () => {
+		return HttpResponse.json({
+			success: true,
+			data: {
+				store_id: 1,
+				total_orders: 145,
+				delivered_orders: 132,
+				cancelled_orders: 4,
+				unique_customers: 87,
+				today_orders: 3,
+				gross_revenue: 1845000,
+				total_revenue: 1654000,
+			},
+		});
+	}),
+
+	// ── Public health endpoints ─────────────────────────────────────────
+	http.get('*/api/health', () => {
+		return HttpResponse.json({
+			status: 'ok',
+			uptime_s: 3600,
+			ts: new Date().toISOString(),
+		});
+	}),
+	http.get('*/api/ready', () => {
+		return HttpResponse.json({
+			status: 'ready',
+			uptime_s: 3600,
+			checks: { db: { ok: true, ms: 5 } },
+		});
+	}),
+
+	// ── Messages endpoints (K.6 — used by Messages.tsx) ───────────────
+	http.get('*/api/messages/inbox', () => {
+		return HttpResponse.json({ success: true, data: { messages: [], total: 0, unread: 0 } });
+	}),
+	http.get('*/api/messages/sent', () => {
+		return HttpResponse.json({ success: true, data: { messages: [], total: 0, unread: 0 } });
+	}),
+	http.get('*/api/messages/unread-count', () => {
+		return HttpResponse.json({ success: true, data: { count: 0 } });
+	}),
 ];

@@ -14,17 +14,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
 	getProducts,
 	getProduct,
-	getFeaturedProducts,
-	getDeals,
 	getStores,
 	getStore,
 	getCategories,
 	getReviews,
 	getHomeStats,
 	getOrders,
-	getOrder,
 	createOrder,
-	getCart,
 	getWishlist,
 	getAddresses,
 	getShippingMethods,
@@ -163,11 +159,8 @@ export function useOrders(): HookResult<Order[]> {
 	return useDataHook((signal) => getOrders(undefined, { signal }));
 }
 
-export function useOrder(id: number | null): HookResult<OrderWithItems | null> {
-	return useDataHook(async (signal) =>
-		id ? ((await getOrder(id, { signal })) as OrderWithItems) : null,
-	);
-}
+// (Removed useOrder in K.5 — was orphaned. When a CustomerOrderDetail
+// page is needed, re-introduce from git history.)
 
 export function useUserAddresses(userId: number | null): HookResult<Address[]> {
 	return useDataHook(async (signal) =>
@@ -179,16 +172,10 @@ export function useShippingMethods(weightKg = 1): HookResult<ShippingMethod[]> {
 	return useDataHook((signal) => getShippingMethods(weightKg, { signal }));
 }
 
-// ─── Cart / Wishlist (server-backed) ────────────────────────────────
-// These only make sense for authenticated users; they map the local
-// CartContext state to the server. Anonymous users fall back to
-// the local CartContext state in CartContext.tsx.
-
-export function useServerCart(userId: number | null): HookResult<CartItem[]> {
-	return useDataHook(async (signal) =>
-		userId ? getCart(userId, { signal }) : Promise.resolve([] as CartItem[]),
-	);
-}
+// ─── Wishlist (server-backed) ────────────────────────────────────────
+// Only makes sense for authenticated users; CartContext handles the
+// local fallback for anonymous users (the legacy useServerCart hook
+// has been removed — see K.5 cleanup).
 
 export function useServerWishlist(userId: number | null): HookResult<WishlistItem[]> {
 	return useDataHook(async (signal) =>
@@ -304,13 +291,9 @@ export function useProduct(id: number | null): HookResult<Product | null> {
 	});
 }
 
-export function useFeaturedProducts(): HookResult<Product[]> {
-	return useDataHook((signal) => getFeaturedProducts({ signal }));
-}
-
-export function useDeals(): HookResult<Product[]> {
-	return useDataHook((signal) => getDeals({ signal }));
-}
+// (Removed useFeaturedProducts + useDeals in K.5 — were orphaned.
+// Replace by `useProducts({ featured: true })` /
+// `useProducts({ onSale: true })` if needed.)
 
 // ─── Stores ─────────────────────────────────────────────
 
@@ -359,17 +342,8 @@ function readLocalStorage<T>(key: string): T {
 	}
 }
 
-export function useCartItems(): HookResult<CartItem[]> {
-	const [data, setData] = useState<CartItem[]>(() => readLocalStorage<CartItem[]>('noufex_cart'));
-	const loading = false;
-	const error: string | null = null;
-
-	const load = useCallback(() => {
-		setData(readLocalStorage<CartItem[]>('noufex_cart'));
-	}, []);
-
-	return { data, loading, error, refetch: load };
-}
+// (Removed useCartItems in K.5 — was reading from deprecated
+// localStorage 'noufex_cart' key. CartContext is the source of truth.
 
 // ─── Wishlist (localStorage) ────────────────────────────────
 
@@ -409,14 +383,9 @@ export function useNotifications(): HookResult<Notification[]> {
 	});
 }
 
-// ─── Users ──────────────────────────────────────────────────
-
-export function useUsers(): HookResult<User[]> {
-	return useDataHook(async () => {
-		const res = await fetch('/data/users.json');
-		return res.json();
-	});
-}
+// (Removed useUsers in K.5 — was reading from /data/users.json
+// static fixture. The next phase (K.1 Admin pages) will use the
+// real /api/admin/users endpoint instead.
 
 // ─── Seller (C.4) ──────────────────────────────────────────
 

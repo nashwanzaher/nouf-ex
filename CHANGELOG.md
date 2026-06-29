@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+
 - **2026-06-29** — `app/src/i18n/locales/{en,ar,zh}.json` — **K.2 complete**.
   Added **171 i18n keys** to each locale (en went from 828 → 999 keys).
   These are the keys referenced by `t('...', fallback)` calls in the
@@ -24,14 +25,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `errors.notFound.*` (2), `home.tradeAssurance` (1), `categories.ui.*` (1).
   Values sourced from the existing English fallbacks in the JSX/TSX;
   ZH/AR values mirror EN (translator review needed for production).
+- **2026-06-29** — `app/src/hooks/useApi.ts` — **K.5 complete**. Removed **6
+  unused hooks** + **5 unused imports**: `useUsers` (read stale
+  `/data/users.json` — will be replaced by `useAdminUsers` in K.1),
+  `useCartItems` (read localStorage `noufex_cart` — CartContext is
+  source of truth), `useServerCart` (replaced by CartContext for
+  anonymous users), `useOrder` (no consumer — re-introduce when a
+  CustomerOrderDetail page is built), `useFeaturedProducts` /
+  `useDeals` (replaced by `useProducts({ featured: true })` /
+  `useProducts({ onSale: true })`). File went from 467 → 423 lines
+  (-44). The seller hooks (`useSellerStore`, `useSellerProduct`,
+  `useSellerOrder`, `useSellerAnalytics`, `useSellerInventory`,
+  `useSellerPayouts`) were audited and KEPT — they're needed by the
+  upcoming K.1 (Admin pages → API) task.
 
 ### Changed
+
+- **2026-06-29** — `docs/MASTER_PLAN.md` — K.5 marked ✅ Done; totals in §11
+  updated (29 → 28 tasks remaining, ~108 → ~106 hours, 89% → 90%
+  complete). Sprint 1 Day 2 now ✅ for K.5 portion.
 - **2026-06-29** — `docs/MASTER_PLAN.md` — K.2 marked ✅ Done; totals in §11
   updated (30 → 29 tasks remaining, ~114 → ~108 hours, 87% → 89% complete).
 - **2026-06-29** — `docs/MASTER_PLAN.md` — Pre-existing flaky tests
   documented: `Checkout.test.tsx > shows the cart total in the summary`
   and `ProductDetail.test.tsx > renders the product name, price and
-  store info` fail at `screen.findAllByText(/25,000|12,500/)` due to
+store info` fail at `screen.findAllByText(/25,000|12,500/)` due to
   `toLocaleString()` locale-aware formatting breaking the regex match.
   Verified on `main` WITHOUT K.2 changes (same failures). Pre-existing
   test bug, NOT caused by K.2. Tracked in §11.8 Risk Register.
@@ -67,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   reading `tests/reports/phase04_cart.log`, LastWrite 2026-06-28 01:33).
 - **2026-06-27** — Repository restructured into an academic Diátaxis-aligned
   layout. New folders: `tests/`, `docs/{architecture,development,operations,
-  planning,testing}/`. All `phase*.ps1` and test logs moved into `tests/`.
+planning,testing}/`. All `phase*.ps1` and test logs moved into `tests/`.
 - **2026-06-27** — Adopted IEEE 829-2008 + ISO/IEC/IEEE 29119 + ISTQB CTFL
   for the testing program. Standards documented under
   [`docs/testing/standards/`](docs/testing/standards/).
@@ -75,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   ([`tests/e2e/helpers/PS_TestHelpers.ps1`](tests/e2e/helpers/PS_TestHelpers.ps1)).
 
 ### Fixed
+
 - **2026-06-28** — `app/server/routes/cart.cts` — Fixed route shadowing where
   the general `GET /:userId` catch-all was registered first, blocking
   `GET /count/:userId` and `DELETE /clear/:userId` (Phase 4 E2E:
@@ -98,10 +117,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   where the Wave-1 emoji (📋) was rendered as `` (mojibake from
   Latin-1 ↔ UTF-8 round-trip). Restored to 📋 (U+1F4CB).
 - **2026-06-27** — `app/server/index.ts` — Replaced `import dotenv from 'dotenv'`
-  + separate `dotenv.config()` with the side-effect import `import 'dotenv/config'`
-  to ensure `.env` is loaded BEFORE the shared module reads `process.env.DATABASE_URL`.
+  - separate `dotenv.config()` with the side-effect import `import 'dotenv/config'`
+    to ensure `.env` is loaded BEFORE the shared module reads `process.env.DATABASE_URL`.
 
 ### Added
+
 - **2026-06-27** — PHASE 02 — Public Catalog E2E tests (catalog list/filters,
   product detail, featured, deals, stores, store reviews, categories tree,
   category by slug). Script: [`tests/e2e/phase02_public_catalog.ps1`](tests/e2e/phase02_public_catalog.ps1).
@@ -120,6 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.1.0] — 2026-06-21
 
 ### Added
+
 - Initial release of Nouf-ex (B2B/B2C e-commerce platform, Yemen market).
 - Frontend (React 19 + Vite 7 + Tailwind + shadcn/ui, AR/EN/ZH i18n).
 - Backend (Express 5 + PostgreSQL 17 + `pg`).

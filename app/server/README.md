@@ -9,10 +9,31 @@ process when `app/dist/` is present.
 ```
 app/server/
 ├── index.ts                  # Express entrypoint (run via `tsx`)
+├── middleware.ts             # Security headers, request id, rate limit, auth
 ├── db/
 │   └── pg-wrapper.cts        # async wrapper around pg.Pool
 │                             # (mimics the better-sqlite3 API the
 │                             #  route handlers were written against)
+├── routes/
+│   ├── catalog.cts           # GET /products, GET /search, GET /home-stats
+│   ├── auth.cts              # POST /login, /register, /me, /change-password
+│   ├── auth-2fa.cts          # TOTP setup, verify, disable, backup codes
+│   ├── cart.cts              # GET/POST/PATCH/DELETE /cart, /cart/clear
+│   ├── wishlist.cts          # GET/POST/DELETE /wishlist
+│   ├── orders.cts            # CRUD for /orders
+│   ├── payments.cts          # Idempotent /payments, /payments/:id/confirm
+│   ├── coupons.cts           # /coupons/validate, /coupons/redeem
+│   ├── refunds.cts           # /refunds (request + admin resolve)
+│   ├── reviews.cts           # GET /reviews, POST /reviews
+│   ├── notifications.cts     # GET /notifications + unread-count
+│   ├── addresses.cts         # CRUD /addresses
+│   ├── shipping.cts          # GET /shipping/methods
+│   ├── messages.cts          # /messages/inbox /sent /conversation
+│   ├── store-followers.cts   # /store-followers/check
+│   ├── stats.cts             # GET /stats/home (public)
+│   ├── admin.cts             # PATCH /admin/* (privileged mutations)
+│   ├── admin-read.cts        # GET /admin/* (privileged reads + CTE stats)
+│   └── seller.cts            # /seller/* (merchant self-service)
 └── tests/
     ├── api-server.test.ts    # supertest against the Express app
     └── schema.test.ts        # structural checks on database/*.sql
@@ -27,6 +48,58 @@ npm run api:prod              # same with NODE_ENV=production
 npm run api:build             # esbuild → server/index.js (single binary)
 ```
 
+## Middleware stack (order matters)
+
+Loaded in [`index.ts`](./index.ts) — changing the order can break auth
+or rate-limit semantics:
+
+1. `configureTrustProxy(app)` — trust X-Forwarded-* from the configured
+   proxy hops (used for IP-based rate limiting).
+2. `requestId` — injects a UUID v4 `req.id`, surfaces it in logs and
+   the `X-Request-Id` response header for client-side tracing.
+3. `securityHeaders` — sets CSP, HSTS, X-Frame-Options (deny-by-default
+   framing), Referrer-Policy, and the Permitted Cross-Domain Policies.
+4. `cors({ origin: ALLOWED_ORIGINS, credentials: true })` — comma-
+   separated allowlist from `ALLOWED_ORIGINS` env var; credentials on.
+5. `express.json({ limit: '10mb' })` — body parsing with a sane cap so
+   a single large payload can't OOM the process.
+6. `express.urlencoded({ extended: true })` — form-encoded fallback.
+7. `optionalAuth` — populates `req.user` from `Authorization: Bearer …`
+   if a valid HMAC token is present. **Never throws** — endpoints that
+   require auth call `requireAuth`/`adminAuth` to enforce.
+8. `requestLogger` — logs one structured line per request (method,
+   path, status, latency, request id).
+
+## Health & readiness (public, log-skipped)
+
+Two endpoints are mounted directly on `app` (not on a router) and
+excluded from the request log so health checks don't drown out signal:
+
+| Endpoint      | Response                                                      | Auth |
+| ------------- | ------------------------------------------------------------- | ---- |
+| `GET /health` | `{ status, uptime_s, ts }`                                    | None |
+| `GET /ready`  | `{ status: 'ready'\|'degraded', uptime_s, checks: { db } }`    | None |
+
+- Both are behind `healthRateLimit({ max: 30 / s })` to keep K8s
+  liveness probes from hammering the process.
+- `/ready` runs `SELECT 1` with a 2 s timeout (Promise.race) and
+  responds 503 if either the query fails or the timeout fires.
+- The frontend `useSystemHealth()` hook (K.6.3) calls `/ready` so the
+  admin dashboard "Platform Health" cards reflect the live DB.
+
+## Authentication
+
+- **HMAC-signed JWT** (`jsonwebtoken`) with `JWT_SECRET` as the shared
+  secret. Token claims: `{ sub: userId, email, role, iat, exp }`.
+- Password hashing: **`scrypt`** via Node's `crypto.scryptSync` with a
+  random 16-byte salt per user (stored as `salt:hash`).
+  `database/seed.sql` contains seed users with real working passwords.
+- `optionalAuth` → `req.user` (id, email, role, status). Endpoints use
+  three guards (in [`middleware.ts`](./middleware.ts)):
+  - `requireAuth(req, res, next)` — 401 if no `req.user`
+  - `requireRole(...roles)` — 403 if role mismatch
+  - `adminAuth` — sugar for `requireRole('admin')` + status check
+
 ## Database access
 
 All SQL goes through `db.prepare(...).all/get/run/tx`. The wrapper:
@@ -35,15 +108,50 @@ All SQL goes through `db.prepare(...).all/get/run/tx`. The wrapper:
 - Normalises SQLite idioms (`datetime('now')`, `is_<col> = 1/0`) → Postgres.
 - Exposes `db.tx(fn)` for `BEGIN / COMMIT / ROLLBACK`.
 
-Add new helpers or zod schemas under `app/server/` (e.g. `schemas/`,
-`middleware/`) as the surface grows.
+**Convention**: each route file owns its own Zod schemas for query/body
+validation. The schema is `.strict()` so unknown fields are rejected
+with a 400 — this is the single source of truth for "what does this
+endpoint accept?".
+
+## Rate limiting
+
+- Per-user for `/api/*` (defaults to 100 req / 60 s, keyed on
+  `req.user?.id ?? req.ip`).
+- Per-IP for `/health` and `/ready` (30 req / s, see above).
+- Implementation: in-memory bucket (acceptable for a single-process
+  deployment). To scale horizontally, swap the in-memory store for
+  Redis — the interface in `middleware.ts` is deliberately a single
+  object so the swap is mechanical.
 
 ## Tests
 
 ```sh
 npm test                                      # all
 npx vitest run app/server/tests/api-server    # one file
+npx vitest run app/server/tests/schema       # DB structural checks
 ```
 
 The `pg` driver is mocked globally in [`../tests/setup.ts`](../tests/setup.ts)
 so the suite runs offline.
+
+## Adding a new route (checklist)
+
+1. Create `app/server/routes/<name>.cts` exporting a default `Router`.
+2. Mount it in [`index.ts`](./index.ts) after `optionalAuth` so
+   `req.user` is populated.
+3. Define a Zod schema in the same file; pass it to the route handler
+   for query/body validation.
+4. If the endpoint touches user data, gate it with `requireAuth` (or
+   `adminAuth` for /admin/*).
+5. Use `db.prepare(...).all/get/run` for SQL — never import `pg` directly.
+6. Add a happy-path + a 400/401 test in `app/server/tests/`.
+7. If the endpoint needs client glue, add a typed wrapper to
+   `app/src/lib/api.ts` and a hook to `app/src/hooks/useApi.ts`.
+
+## Background jobs
+
+- A `setInterval(sweeper, 60_000)` evicts expired rate-limit + used-jti
+  rows. The interval is set in `index.ts`; no separate worker process.
+- Anything beyond "cleanup on a tick" (email send, image processing) is
+  out of scope today — keep it sync in the request handler or move to
+  a proper queue (tracked as Phase I backlog).

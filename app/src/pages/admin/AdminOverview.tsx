@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	Users,
 	Store,
@@ -16,6 +17,7 @@ import {
 	Check,
 	X,
 	BarChart3,
+	FileText,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,8 +33,70 @@ import {
 	ResponsiveContainer,
 	Legend,
 } from 'recharts';
-import { useAdminStats } from '@/hooks/useApi';
+import {
+	useAdminStats,
+	useAdminStores,
+	useAdminDisputes,
+} from '@/hooks/useApi';
+import type { AdminStore, AdminDispute } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
+
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+/** Format an ISO timestamp as Arabic date (e.g. "٢٠٢٤/٠٦/١٨").
+ *  Uses Intl.DateTimeFormat with Arabic-Indic digits so it matches
+ *  the visual style of the rest of the dashboard. */
+function formatArabicDate(iso: string | null | undefined): string {
+	if (!iso) return '—';
+	try {
+		return new Intl.DateTimeFormat('ar-EG-u-nu-arab', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+		}).format(new Date(iso));
+	} catch {
+		return '—';
+	}
+}
+
+/** Convert an ISO timestamp to a short Arabic relative-age string
+ *  (e.g. "٢ ساعة", "يوم", "يومان"). Matches the previous mock-data
+ *  styling so the UI doesn't visually jump after the refactor. */
+function formatRelativeAge(iso: string | null | undefined, locale: string): string {
+	if (!iso) return '—';
+	const created = new Date(iso).getTime();
+	if (Number.isNaN(created)) return '—';
+	const diffMs = Date.now() - created;
+	const minutes = Math.floor(diffMs / 60_000);
+	const hours = Math.floor(diffMs / 3_600_000);
+	const days = Math.floor(diffMs / 86_400_000);
+
+	if (locale === 'ar') {
+		if (minutes < 60) return `${minutes.toLocaleString('ar-EG')} دقيقة`;
+		if (hours < 24) return `${hours.toLocaleString('ar-EG')} ساعة`;
+		if (days === 1) return 'يوم';
+		if (days === 2) return 'يومان';
+		if (days < 11) return `${days.toLocaleString('ar-EG')} أيام`;
+		return `${days.toLocaleString('ar-EG')} يوم`;
+	}
+	if (minutes < 60) return `${minutes}m`;
+	if (hours < 24) return `${hours}h`;
+	return `${days}d`;
+}
+
+/** Translate a dispute status enum (server side: open/investigating/
+ *  resolved/rejected) into the dashboard's chip styling. */
+const DISPUTE_STATUS_STYLES: Record<
+	AdminDispute['status'],
+	{ label: string; color: string }
+> = {
+	open: { label: 'جديد', color: 'bg-red-500' },
+	investigating: { label: 'قيد المراجعة', color: 'bg-amber-500' },
+	resolved: { label: 'محلول', color: 'bg-emerald-500' },
+	rejected: { label: 'مرفوض', color: 'bg-gray-400' },
+};
 
 /* ------------------------------------------------------------------ */
 /*  Mock data (kept for the chart only — the stat cards below are    */
@@ -47,59 +111,14 @@ const chartData = [
 	{ name: 'يونيو', revenue: 45200, orders: 3800, users: 1400 },
 ];
 
-const pendingVerifications = [
-	{ id: 1, store: 'متجر الأناقة', merchant: 'أحمد عبدالله', date: '٢٠٢٤/٠٦/١٨', docs: 3 },
-	{ id: 2, store: 'إلكترونيات الغد', merchant: 'خالد محسن', date: '٢٠٢٤/٠٦/١٧', docs: 2 },
-	{ id: 3, store: 'التمور الفاخرة', merchant: 'فاطمة السعدي', date: '٢٠٢٤/٠٦/١٧', docs: 4 },
-	{ id: 4, store: 'حرف يدوية', merchant: 'عبدالرحمن علي', date: '٢٠٢٤/٠٦/١٦', docs: 2 },
-	{ id: 5, store: 'عطور الجنوب', merchant: 'سمية حسن', date: '٢٠٢٤/٠٦/١٥', docs: 3 },
-];
-
-const activeDisputes = [
-	{
-		id: 'D-1024',
-		type: 'منتج تالف',
-		buyer: 'علي محمود',
-		merchant: 'متجر الإلكترون',
-		status: 'جديد',
-		statusColor: 'bg-red-500',
-		age: '٢ ساعة',
-	},
-	{
-		id: 'D-1023',
-		type: 'لم يستلم',
-		buyer: 'سارة أحمد',
-		merchant: 'أناقة اليمن',
-		status: 'قيد المراجعة',
-		statusColor: 'bg-amber-500',
-		age: '٥ ساعات',
-	},
-	{
-		id: 'D-1022',
-		type: 'منتج مغاير',
-		buyer: 'محمد سعيد',
-		merchant: 'تمور صنعاء',
-		status: 'قيد الحل',
-		statusColor: 'bg-blue-500',
-		age: 'يوم',
-	},
-	{
-		id: 'D-1021',
-		type: 'رد مبلغ',
-		buyer: 'نورة خالد',
-		merchant: 'إلكترونيات الغد',
-		status: 'قيد المراجعة',
-		statusColor: 'bg-amber-500',
-		age: 'يومان',
-	},
-];
-
 const periodOptions = ['أسبوع', 'شهر', 'سنة'];
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export default function AdminOverview() {
+	const { i18n } = useTranslation();
+	const locale = i18n.language === 'en' ? 'en' : 'ar';
 	const [period, setPeriod] = useState('شهر');
 
 	// Real stats from /api/admin/stats (server/routes/admin.cts:377-417).
@@ -107,6 +126,49 @@ export default function AdminOverview() {
 	// single round-trip via a CTE; falls back to 0s while loading.
 	const { data: stats, loading: statsLoading } = useAdminStats();
 	const recentGrowth = stats?.recent7d;
+
+	// Pending verifications — unverified stores awaiting approval
+	// (/api/admin/stores?is_verified=false). Until C.4 ships the
+	// merchant-name join, we render "—" for the merchant field.
+	const { data: pendingStoresData, loading: pendingStoresLoading } = useAdminStores({
+		is_verified: false,
+		limit: 5,
+	});
+	const pendingVerifications = useMemo(
+		() =>
+			(pendingStoresData?.stores ?? []).map((s: AdminStore) => ({
+				id: s.id,
+				store: s.store_name,
+				merchant: '—',
+				date: formatArabicDate(s.created_at),
+				docs: 0,
+			})),
+		[pendingStoresData],
+	);
+
+	// Active disputes — open disputes the admin should triage
+	// (/api/admin/disputes?status=open). resolved/rejected are
+	// mapped through DISPUTE_STATUS_STYLES for the chip color.
+	const { data: disputesData, loading: disputesLoading } = useAdminDisputes({
+		status: 'open',
+		limit: 5,
+	});
+	const activeDisputes = useMemo(
+		() =>
+			(disputesData?.disputes ?? []).map((d: AdminDispute) => {
+				const status = DISPUTE_STATUS_STYLES[d.status] ?? DISPUTE_STATUS_STYLES.open;
+				return {
+					id: `D-${d.id}`,
+					type: d.category,
+					buyer: '—',
+					merchant: '—',
+					status: status.label,
+					statusColor: status.color,
+					age: formatRelativeAge(d.created_at, locale),
+				};
+			}),
+		[disputesData, locale],
+	);
 	const summaryCards = [
 		{
 			label: 'إجمالي المستخدمين',
@@ -325,42 +387,71 @@ export default function AdminOverview() {
 						</Button>
 					</CardHeader>
 					<CardContent className="px-5 pb-5">
-						<div className="space-y-3">
-							{pendingVerifications.map((v) => (
-								<div
-									key={v.id}
-									className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8] hover:bg-[#F3EDE4]/50 transition-colors"
-								>
-									<Avatar className="w-10 h-10 shrink-0">
-										<AvatarFallback className="bg-[#D4A853]/20 text-[#D4A853] font-cairo text-sm font-bold">
-											{v.store.charAt(0)}
-										</AvatarFallback>
-									</Avatar>
-									<div className="flex-1 min-w-0">
-										<p className="text-sm font-cairo font-semibold text-[#111111] truncate">
-											{v.store}
-										</p>
-										<p className="text-[11px] text-[#6B6B6B] font-cairo">
-											{v.merchant} · {v.date}
-										</p>
-									</div>
-									<Badge
-										variant="secondary"
-										className="bg-blue-50 text-blue-600 font-cairo text-[10px] shrink-0"
+						{pendingStoresLoading && pendingVerifications.length === 0 ? (
+							<div className="flex items-center justify-center py-10 text-[#6B6B6B]">
+								<Activity
+									className="w-4 h-4 ml-2 animate-spin"
+									strokeWidth={1.5}
+								/>
+								<span className="text-sm font-cairo">جاري التحميل…</span>
+							</div>
+						) : pendingVerifications.length === 0 ? (
+							<div className="flex flex-col items-center justify-center py-10 text-center">
+								<Check
+									className="w-8 h-8 text-emerald-500 mb-2"
+									strokeWidth={1.5}
+								/>
+								<p className="text-sm font-cairo text-[#6B6B6B]">
+									لا يوجد متاجر بانتظار التحقق
+								</p>
+							</div>
+						) : (
+							<div className="space-y-3">
+								{pendingVerifications.map((v) => (
+									<div
+										key={v.id}
+										className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8] hover:bg-[#F3EDE4]/50 transition-colors"
 									>
-										{v.docs} مستندات
-									</Badge>
-									<div className="flex gap-1 shrink-0">
-										<button className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center">
-											<Check className="w-3.5 h-3.5" />
-										</button>
-										<button className="w-7 h-7 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
-											<X className="w-3.5 h-3.5" />
-										</button>
+										<Avatar className="w-10 h-10 shrink-0">
+											<AvatarFallback className="bg-[#D4A853]/20 text-[#D4A853] font-cairo text-sm font-bold">
+												{v.store.charAt(0)}
+											</AvatarFallback>
+										</Avatar>
+										<div className="flex-1 min-w-0">
+											<p className="text-sm font-cairo font-semibold text-[#111111] truncate">
+												{v.store}
+											</p>
+											<p className="text-[11px] text-[#6B6B6B] font-cairo">
+												{v.merchant} · {v.date}
+											</p>
+										</div>
+										<Badge
+											variant="secondary"
+											className="bg-blue-50 text-blue-600 font-cairo text-[10px] shrink-0"
+										>
+											<FileText className="w-3 h-3 ml-1 inline" />
+											{v.docs} مستندات
+										</Badge>
+										<div className="flex gap-1 shrink-0">
+											<button
+												type="button"
+												title="قبول"
+												className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center"
+											>
+												<Check className="w-3.5 h-3.5" />
+											</button>
+											<button
+												type="button"
+												title="رفض"
+												className="w-7 h-7 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+											>
+												<X className="w-3.5 h-3.5" />
+											</button>
+										</div>
 									</div>
-								</div>
-							))}
-						</div>
+								))}
+							</div>
+						)}
 					</CardContent>
 				</Card>
 
@@ -385,42 +476,62 @@ export default function AdminOverview() {
 						</Button>
 					</CardHeader>
 					<CardContent className="px-5 pb-5">
-						<div className="space-y-2">
-							{activeDisputes.map((d) => (
-								<div
-									key={d.id}
-									className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8] hover:bg-red-50/30 transition-colors"
-								>
-									<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50 shrink-0">
-										<AlertTriangle
-											className="w-4 h-4 text-[#EF4444]"
-											strokeWidth={1.5}
-										/>
-									</div>
-									<div className="flex-1 min-w-0">
-										<div className="flex items-center gap-2 mb-0.5">
-											<p className="text-sm font-cairo font-semibold text-[#111111]">
-												{d.id}
+						{disputesLoading && activeDisputes.length === 0 ? (
+							<div className="flex items-center justify-center py-10 text-[#6B6B6B]">
+								<Activity
+									className="w-4 h-4 ml-2 animate-spin"
+									strokeWidth={1.5}
+								/>
+								<span className="text-sm font-cairo">جاري التحميل…</span>
+							</div>
+						) : activeDisputes.length === 0 ? (
+							<div className="flex flex-col items-center justify-center py-10 text-center">
+								<Check
+									className="w-8 h-8 text-emerald-500 mb-2"
+									strokeWidth={1.5}
+								/>
+								<p className="text-sm font-cairo text-[#6B6B6B]">
+									لا يوجد نزاعات نشطة
+								</p>
+							</div>
+						) : (
+							<div className="space-y-2">
+								{activeDisputes.map((d) => (
+									<div
+										key={d.id}
+										className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8] hover:bg-red-50/30 transition-colors"
+									>
+										<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50 shrink-0">
+											<AlertTriangle
+												className="w-4 h-4 text-[#EF4444]"
+												strokeWidth={1.5}
+											/>
+										</div>
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center gap-2 mb-0.5">
+												<p className="text-sm font-cairo font-semibold text-[#111111]">
+													{d.id}
+												</p>
+												<span
+													className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-cairo ${d.statusColor}`}
+												>
+													{d.status}
+												</span>
+											</div>
+											<p className="text-[11px] text-[#6B6B6B] font-cairo truncate">
+												{d.type} · {d.buyer} vs {d.merchant}
 											</p>
-											<span
-												className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-cairo ${d.statusColor}`}
-											>
-												{d.status}
+										</div>
+										<div className="text-left shrink-0">
+											<span className="text-[11px] text-[#6B6B6B] font-cairo flex items-center gap-1">
+												<Clock className="w-3 h-3" />
+												{d.age}
 											</span>
 										</div>
-										<p className="text-[11px] text-[#6B6B6B] font-cairo truncate">
-											{d.buyer} vs {d.merchant}
-										</p>
 									</div>
-									<div className="text-left shrink-0">
-										<span className="text-[11px] text-[#6B6B6B] font-cairo flex items-center gap-1">
-											<Clock className="w-3 h-3" />
-											{d.age}
-										</span>
-									</div>
-								</div>
-							))}
-						</div>
+								))}
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			</div>

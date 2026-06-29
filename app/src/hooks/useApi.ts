@@ -574,9 +574,9 @@ export function useAdminDisputes(
 
 export function useAdminAuditLog(
 	params: {
-		actor_id?: number;
 		action?: string;
-		target_type?: string;
+		entity_type?: string;
+		user_id?: number;
 		limit?: number;
 		offset?: number;
 	} = {},

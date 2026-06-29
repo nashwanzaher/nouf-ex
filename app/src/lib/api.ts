@@ -1112,13 +1112,14 @@ export interface AdminDispute {
 
 export interface AdminAuditLogEntry {
 	id: number;
-	actor_id: number;
-	actor_email: string | null;
+	user_id: number | null;
 	action: string;
-	target_type: string;
-	target_id: number;
-	before_state: Record<string, unknown> | null;
-	after_state: Record<string, unknown> | null;
+	entity_type: string;
+	entity_id: string | null;
+	old_values: Record<string, unknown> | null;
+	new_values: Record<string, unknown> | null;
+	ip_address: string | null;
+	user_agent: string | null;
 	created_at: string;
 }
 
@@ -1272,22 +1273,32 @@ export async function getAdminDisputes(
 
 export async function getAdminAuditLog(
 	params: {
-		actor_id?: number;
 		action?: string;
-		target_type?: string;
+		entity_type?: string;
+		user_id?: number;
 		limit?: number;
 		offset?: number;
 	} = {},
 	options?: RequestOptions,
 ): Promise<AdminAuditLogResponse> {
 	const q = new URLSearchParams();
-	if (params.actor_id !== undefined) q.set('actor_id', String(params.actor_id));
+	if (params.user_id !== undefined) q.set('user_id', String(params.user_id));
 	if (params.action) q.set('action', params.action);
-	if (params.target_type) q.set('target_type', params.target_type);
+	if (params.entity_type) q.set('entity_type', params.entity_type);
 	if (params.limit !== undefined) q.set('limit', String(params.limit));
 	if (params.offset !== undefined) q.set('offset', String(params.offset));
 	const qs = q.toString();
-	return apiRequest(`/admin/audit-log${qs ? `?${qs}` : ''}`, { signal: options?.signal });
+	// The server response shape is { log, total, limit, offset }
+	// (server/routes/admin.cts:364) but the client surface uses
+	// 'entries' as the canonical name. Map here so callers don't
+	// have to translate.
+	const raw = (await apiRequest<{
+		log: AdminAuditLogEntry[];
+		total: number;
+		limit: number;
+		offset: number;
+	}>(`/admin/audit-log${qs ? `?${qs}` : ''}`, { signal: options?.signal }));
+	return { entries: raw.log, total: raw.total, limit: raw.limit, offset: raw.offset };
 }
 
 export async function getAdminStats(options?: RequestOptions): Promise<AdminStats> {

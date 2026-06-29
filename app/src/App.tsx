@@ -75,6 +75,7 @@ const StoresManagement = lazyPage(() => import('./pages/admin/StoresManagement')
 const DisputesManagement = lazyPage(() => import('./pages/admin/DisputesManagement'));
 const ReportsAnalytics = lazyPage(() => import('./pages/admin/ReportsAnalytics'));
 const AdminOverview = lazyPage(() => import('./pages/admin/AdminOverview'));
+const AdminAuditLog = lazyPage(() => import('./pages/admin/AdminAuditLog'));
 
 /** Wrap a page in ProtectedRoute + Suspense so the loader shows during
  *  the chunk download AND the auth check. */
@@ -178,6 +179,10 @@ export default function App() {
 								<Route
 									path="/admin/reports"
 									element={guard(['admin'], ReportsAnalytics)}
+								/>
+								<Route
+									path="/admin/audit-log"
+									element={guard(['admin'], AdminAuditLog)}
 								/>
 								<Route path="/auth/login" element={<Login />} />
 								<Route path="/auth/register" element={<Register />} />

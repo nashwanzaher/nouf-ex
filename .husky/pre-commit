@@ -17,3 +17,4 @@ set -e
 
 cd app
 npx lint-staged
+

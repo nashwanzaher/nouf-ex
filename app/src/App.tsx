@@ -60,6 +60,7 @@ const Wishlist = lazyPage(() => import('./pages/customer/Wishlist'));
 const Reviews = lazyPage(() => import('./pages/customer/Reviews'));
 const Addresses = lazyPage(() => import('./pages/customer/Addresses'));
 const Notifications = lazyPage(() => import('./pages/customer/Notifications'));
+const Messages = lazyPage(() => import('./pages/Messages'));
 
 // Seller area — same idea, isolated from the customer bundle.
 const SellerDashboard = lazyPage(() => import('./pages/seller/SellerDashboard'));
@@ -76,6 +77,8 @@ const DisputesManagement = lazyPage(() => import('./pages/admin/DisputesManageme
 const ReportsAnalytics = lazyPage(() => import('./pages/admin/ReportsAnalytics'));
 const AdminOverview = lazyPage(() => import('./pages/admin/AdminOverview'));
 const AdminAuditLog = lazyPage(() => import('./pages/admin/AdminAuditLog'));
+const AdminProducts = lazyPage(() => import('./pages/admin/AdminProducts'));
+const AdminOrders = lazyPage(() => import('./pages/admin/AdminOrders'));
 
 /** Wrap a page in ProtectedRoute + Suspense so the loader shows during
  *  the chunk download AND the auth check. */
@@ -183,6 +186,21 @@ export default function App() {
 								<Route
 									path="/admin/audit-log"
 									element={guard(['admin'], AdminAuditLog)}
+								/>
+								<Route
+									path="/admin/all-products"
+									element={guard(['admin'], AdminProducts)}
+								/>
+								<Route
+									path="/admin/all-orders"
+									element={guard(['admin'], AdminOrders)}
+								/>
+								<Route
+									path="/messages"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										Messages,
+									)}
 								/>
 								<Route path="/auth/login" element={<Login />} />
 								<Route path="/auth/register" element={<Register />} />

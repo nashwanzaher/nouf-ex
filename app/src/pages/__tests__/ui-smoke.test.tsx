@@ -286,6 +286,8 @@ import Notifications from '../customer/Notifications';
 import AdminDashboard from '../admin/AdminDashboard';
 import AdminOverview from '../admin/AdminOverview';
 import AdminAuditLog from '../admin/AdminAuditLog';
+import AdminProducts from '../admin/AdminProducts';
+import AdminOrders from '../admin/AdminOrders';
 import UsersManagement from '../admin/UsersManagement';
 import StoresManagement from '../admin/StoresManagement';
 import DisputesManagement from '../admin/DisputesManagement';
@@ -320,6 +322,8 @@ const pages: { name: string; Component: React.ComponentType }[] = [
 	{ name: 'AdminDashboard', Component: AdminDashboard },
 	{ name: 'AdminOverview', Component: AdminOverview },
 	{ name: 'AdminAuditLog', Component: AdminAuditLog },
+	{ name: 'AdminProducts', Component: AdminProducts },
+	{ name: 'AdminOrders', Component: AdminOrders },
 	{ name: 'UsersManagement', Component: UsersManagement },
 	{ name: 'StoresManagement', Component: StoresManagement },
 	{ name: 'DisputesManagement', Component: DisputesManagement },

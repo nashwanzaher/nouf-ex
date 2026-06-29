@@ -61,6 +61,34 @@ total in the summary` was failing due to locale-aware `toLocaleString()`
   `/admin/stores`, `/admin/disputes`, `/admin/reports` — all
   guarded with `role=['admin']`. Page refactor (using these hooks
   + the 6 mock-data arrays) follows in the next commit.
+- **2026-06-29** — `app/src/pages/admin/UsersManagement.tsx` — **K.1
+  page refactor #1 (UsersManagement).** Removed the 178-line
+  `usersData` mock array. Replaced client-side role/status text
+  matching with the `useAdminUsers({ role, is_active, limit, offset })`
+  hook — the server now does the role/status filtering via SQL
+  `WHERE`, the client only handles the free-text search. Added a
+  `mapAdminUserToView(user: AdminUser): UserRecord` mapper that
+  renames the API fields (`full_name`→`name`, `created_at`→`registeredDate`,
+  `last_login`→`lastLogin`) so the table column shape stays unchanged.
+  Status enum migrated from the old 3-value `{active, suspended, pending}`
+  to the real 3-value `{active, suspended, banned}` from
+  `server/routes/admin.cts:46-58` — `pending` is gone (the API never
+  had it; the mock added it by mistake). `toggleStatus(user.id)`
+  replaced with a real `useCallback(async (target: UserRecord) => {...
+  await patchAdminUser(target.id, { status: next }); ... addAppToast({...});
+  ... await refetchUsers() })` — wired through the new `useApp()` toast
+  with `type: 'success' | 'error'` (the actual Toast interface shape).
+  Pagination changed: removed the client-side slice and
+  `paginatedUsers` array — the page now trusts the server's
+  `usersResponse.total` for `totalPages` and sends `limit` + `offset`
+  as query params on every refetch. Dropped the governorate
+  filter, store-name column, governorate row in the detail modal,
+  and the "إجمالي الطلبات" panel — none of those are exposed by
+  the API. Added `formatDate()` and `formatDateTime()` helpers for
+  ISO timestamps. `governorates` array + `MapPin` import dropped
+  (the modal no longer has a map pin). 768 → 610 lines (-159).
+  Validated: `npx tsc` 0 errors, `npx eslint` 0 issues,
+  `npx prettier` clean.
 - **2026-06-29** — `app/src/hooks/useApi.ts` — **K.5 complete**. Removed **6
   unused hooks** + **5 unused imports**: `useUsers` (read stale
   `/data/users.json` — will be replaced by `useAdminUsers` in K.1),

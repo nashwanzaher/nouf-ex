@@ -786,7 +786,7 @@ Nouf-ex/
 
 | ID              | المهمة                                                                                                                                | الجهد          | الأولوية | الحالة                                                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **K.1**         | استبدال Mock Data في 6 صفحات Admin (4,742 سطر) بـ API حقيقي                                                                           | 12-16 ساعة     | 🔴 P0    | ⏳ TODO                                                                                                                                              |
+| **K.1**         | استبدال Mock Data في 6 صفحات Admin (4,742 سطر) بـ API حقيقي                                                                           | 12-16 ساعة     | 🔴 P0    | 🔄 **In Progress (2026-06-29)** — foundation done + UsersManagement refactored. 5 pages left (StoresManagement, DisputesManagement, ReportsAnalytics, AdminDashboard, AdminOverview). |
 | **K.2**         | إضافة 165 مفتاح i18n مفقود في en.json/ar.json/zh.json                                                                                 | 4-6 ساعات      | 🔴 P0    | ✅ **Done (2026-06-29)** — 171 keys added to each of en/ar/zh (en: 828 → 999 keys). See [CHANGELOG.md §Unreleased](../../CHANGELOG.md) for details   |
 | **K.3**         | إنشاء `formatMoney()` helper + استبدال 8 مواضع hardcoded YER (بدل 7)                                                                  | 2-3 ساعات      | 🟡 P1    | ✅ **Done (2026-06-29)** — `app/src/lib/format.ts` (~200 lines, 20 unit tests) + 5 pages refactored. Checkout test FIXED (was pre-existing failure). |
 | **K.4**         | إنشاء UI لـ 12 admin endpoints + 8 customer endpoints                                                                                 | 16-24 ساعة     | 🟡 P1    | ⏳ TODO                                                                                                                                              |
@@ -839,17 +839,17 @@ Nouf-ex/
 | UI pages (.tsx)                     | **38 صفحة** في `app/src/pages/**/*.tsx`                                                              | `Get-ChildItem -Recurse src/pages -Include *.tsx`               | ✅      |
 | React Router routes                 | **22 routes** + `*` wildcard في `App.tsx`                                                            | `grep "Route path" src/App.tsx`                                 | ✅      |
 | **UI pages بدون route**             | **5 admin** (UsersManagement, StoresManagement, AdminOverview, DisputesManagement, ReportsAnalytics) | لا تظهر في `<Route>`                                            | 🔴      |
-| Admin pages على mock data           | **4** من 6 (UsersManagement, StoresManagement, DisputesManagement, ReportsAnalytics)                 | `grep "usersData\|storesData\|disputesData\|mockAnalytics"`     | 🔴 K.1  |
+| Admin pages على mock data           | **3** من 6 (StoresManagement, DisputesManagement, ReportsAnalytics) — UsersManagement migrated to API in 2026-06-29 | `grep "usersData\|storesData\|disputesData\|mockAnalytics"`     | 🔴 K.1  |
 | useApi hooks مُصدَّرة               | **26** (بعد تنظيف K.5: أنزل 6)                                                                       | `grep "^export function use" src/hooks/useApi.ts`               | ✅      |
 | lib/api.ts functions مُصدَّرة       | **56** مُصدَّرة                                                                                      | `grep "^export" src/lib/api.ts`                                 | ✅      |
 | Database tables                     | **30 فريدة** (17 في schema.sql + 10 في schema-extra.sql + 3 في migrations/)                          | `grep "^CREATE TABLE" database/*.sql database/migrations/*.sql` | ✅      |
 | YER hardcoded في الكود              | **0** (بعد K.3 — تم استبدال 8 بـ `formatMoney()`)                                                    | `grep "} YER" app/src/**/*.tsx` (بعد تطبيق K.3)                 | ✅      |
-| **المهام المُنجزة (✅)**            | **48 / 78** (62%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.5                                         | grep `✅ Done` في §11.3                                         | ✅      |
-| **المهام المعلّقة (⏳)**            | **24 / 78** (31%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:3 (K.1, K.4, K.6)                                | grep `⏳` في §11.3                                              | ⏳ TODO |
+| **المهام المُنجزة (✅)**            | **49 / 78** (63%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.5 + K.1 (1/6)                            | grep `✅ Done` في §11.3                                         | ✅      |
+| **المهام المعلّقة (⏳)**            | **23 / 78** (29%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:3 (K.1 partial, K.4, K.6)                       | grep `⏳` في §11.3                                              | ⏳ TODO |
 | **المهام المؤجلة (⚪)**             | **6 / 78** (7%) — I:6 (ميزات مستقبلية XL efforts)                                                    | grep `⚪` في §11.3                                              | ⚪      |
-| **المهام المُكتملة/المجدولة P0/P1** | **63 / 78** (81%) — (48 ✅ + 15 ⏳ من أصل 63)                                                        | حساب                                                            | ✅      |
+| **المهام المُكتملة/المجدولة P0/P1** | **64 / 78** (82%) — (49 ✅ + 15 ⏳ من أصل 64)                                                        | حساب                                                            | ✅      |
 
-> **ملاحظة للقراءة:** 78 مهمة مُعرَّفة (A:6 + B:24 + C:4 + D:8 + E:5 + F:6 + G:6 + H:3 + I:6 + J:4 + K:6). أكملنا 48، تبقّى 24 نشطة + 6 مؤجلة.
+> **ملاحظة للقراءة:** 78 مهمة مُعرَّفة (A:6 + B:24 + C:4 + D:8 + E:5 + F:6 + G:6 + H:3 + I:6 + J:4 + K:6). أكملنا 49، تبقّى 23 نشطة + 6 مؤجلة.
 
 ### 11.2 ✅ المهام المُنجزة (48 من 78)
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
 	Users,
 	Search,
@@ -8,10 +8,7 @@ import {
 	Ban,
 	CheckCircle,
 	XCircle,
-	Phone,
-	Mail,
 	Calendar,
-	MapPin,
 	Store,
 	Clock,
 	Filter,
@@ -22,237 +19,103 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useAdminUsers } from '@/hooks/useApi';
+import { patchAdminUser, type AdminUser } from '@/lib/api';
+import { useApp } from '@/context/AppContext';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
+type UserStatus = 'active' | 'suspended' | 'banned';
+type UserRole = 'customer' | 'merchant' | 'admin';
+
+/**
+ * View model for the table. Mirrors the AdminUser shape from
+ * /api/admin/users (server/routes/admin.cts:46-58) but renames a
+ * few fields and drops columns the admin users endpoint does not
+ * expose (governorate / store / ordersCount).
+ */
 interface UserRecord {
 	id: number;
 	name: string;
 	email: string;
-	phone: string;
-	role: 'customer' | 'merchant' | 'admin';
-	store?: string;
-	status: 'active' | 'suspended' | 'pending';
-	governorate: string;
+	phone: string | null;
+	role: UserRole;
+	status: UserStatus;
 	registeredDate: string;
-	ordersCount: number;
-	lastLogin: string;
+	lastLogin: string | null;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
-/* ------------------------------------------------------------------ */
-const usersData: UserRecord[] = [
-	{
-		id: 1,
-		name: 'أحمد عبدالله',
-		email: 'ahmed@example.com',
-		phone: '777-123-456',
-		role: 'customer',
-		status: 'active',
-		governorate: 'صنعاء',
-		registeredDate: '٢٠٢٤/٠١/١٥',
-		ordersCount: 12,
-		lastLogin: '٢٠٢٤/٠٦/٢٠',
-	},
-	{
-		id: 2,
-		name: 'خالد محسن',
-		email: 'khaled@store.com',
-		phone: '777-234-567',
-		role: 'merchant',
-		store: 'إلكترونيات الغد',
-		status: 'active',
-		governorate: 'عدن',
-		registeredDate: '٢٠٢٣/١١/٢٠',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٩',
-	},
-	{
-		id: 3,
-		name: 'فاطمة السعدي',
-		email: 'fatima@dates.com',
-		phone: '777-345-678',
-		role: 'merchant',
-		store: 'التمور الفاخرة',
-		status: 'active',
-		governorate: 'تعز',
-		registeredDate: '٢٠٢٤/٠٢/١٠',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٨',
-	},
-	{
-		id: 4,
-		name: 'محمد العنسي',
-		email: 'admin@noufex.com',
-		phone: '777-999-000',
-		role: 'admin',
-		status: 'active',
-		governorate: 'صنعاء',
-		registeredDate: '٢٠٢٣/٠٧/٠١',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/٢٠',
-	},
-	{
-		id: 5,
-		name: 'سارة أحمد',
-		email: 'sara@example.com',
-		phone: '777-456-789',
-		role: 'customer',
-		status: 'active',
-		governorate: 'الحديدة',
-		registeredDate: '٢٠٢٤/٠٣/٠٥',
-		ordersCount: 8,
-		lastLogin: '٢٠٢٤/٠٦/١٧',
-	},
-	{
-		id: 6,
-		name: 'عبدالرحمن علي',
-		email: 'abdo@craft.com',
-		phone: '777-567-890',
-		role: 'merchant',
-		store: 'حرف يدوية',
-		status: 'pending',
-		governorate: 'إب',
-		registeredDate: '٢٠٢٤/٠٥/٢٠',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٥',
-	},
-	{
-		id: 7,
-		name: 'سمية حسن',
-		email: 'samia@perfume.com',
-		phone: '777-678-901',
-		role: 'merchant',
-		store: 'عطور الجنوب',
-		status: 'active',
-		governorate: 'عدن',
-		registeredDate: '٢٠٢٤/٠١/٢٥',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٩',
-	},
-	{
-		id: 8,
-		name: 'علي محمود',
-		email: 'ali@example.com',
-		phone: '777-789-012',
-		role: 'customer',
-		status: 'suspended',
-		governorate: 'صنعاء',
-		registeredDate: '٢٠٢٤/٠٤/١٢',
-		ordersCount: 3,
-		lastLogin: '٢٠٢٤/٠٥/٣٠',
-	},
-	{
-		id: 9,
-		name: 'نورة خالد',
-		email: 'noura@example.com',
-		phone: '777-890-123',
-		role: 'customer',
-		status: 'active',
-		governorate: 'تعز',
-		registeredDate: '٢٠٢٤/٠٢/٢٨',
-		ordersCount: 15,
-		lastLogin: '٢٠٢٤/٠٦/١٨',
-	},
-	{
-		id: 10,
-		name: 'يوسف سعيد',
-		email: 'yousef@tech.com',
-		phone: '777-901-234',
-		role: 'merchant',
-		store: 'تك ستور',
-		status: 'active',
-		governorate: 'صنعاء',
-		registeredDate: '٢٠٢٣/١٢/١٠',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/٢٠',
-	},
-	{
-		id: 11,
-		name: 'هند عبدالرحمن',
-		email: 'hind@fashion.com',
-		phone: '777-012-345',
-		role: 'merchant',
-		store: 'أزياء الهدى',
-		status: 'active',
-		governorate: 'عدن',
-		registeredDate: '٢٠٢٤/٠٣/٠١',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٦',
-	},
-	{
-		id: 12,
-		name: 'صالح محمد',
-		email: 'saleh@example.com',
-		phone: '777-111-222',
-		role: 'customer',
-		status: 'pending',
-		governorate: 'إب',
-		registeredDate: '٢٠٢٤/٠٦/١٠',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٨',
-	},
-	{
-		id: 13,
-		name: 'ليلى أحمد',
-		email: 'laila@home.com',
-		phone: '777-222-333',
-		role: 'merchant',
-		store: 'أثاث المنزل',
-		status: 'active',
-		governorate: 'صنعاء',
-		registeredDate: '٢٠٢٤/٠١/١٠',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٦/١٩',
-	},
-	{
-		id: 14,
-		name: 'مازن عبدالله',
-		email: 'mazen@example.com',
-		phone: '777-333-444',
-		role: 'customer',
-		status: 'active',
-		governorate: 'الحديدة',
-		registeredDate: '٢٠٢٤/٠٥/٠٥',
-		ordersCount: 6,
-		lastLogin: '٢٠٢٤/٠٦/٢٠',
-	},
-	{
-		id: 15,
-		name: 'ريم خالد',
-		email: 'reem@beauty.com',
-		phone: '777-444-555',
-		role: 'merchant',
-		store: 'جمال الطبيعة',
-		status: 'suspended',
-		governorate: 'تعز',
-		registeredDate: '٢٠٢٤/٠٢/١٥',
-		ordersCount: 0,
-		lastLogin: '٢٠٢٤/٠٥/٢٥',
-	},
-];
+function mapAdminUserToView(user: AdminUser): UserRecord {
+	return {
+		id: user.id,
+		name: user.full_name,
+		email: user.email,
+		phone: user.phone,
+		role: user.role,
+		status: user.status,
+		registeredDate: user.created_at,
+		lastLogin: user.last_login,
+	};
+}
 
-const roleConfig = {
+const roleConfig: Record<UserRole, { label: string; color: string }> = {
 	customer: { label: 'عميل', color: 'bg-blue-50 text-blue-600 border-blue-200' },
 	merchant: { label: 'تاجر', color: 'bg-amber-50 text-[#D4A853] border-amber-200' },
 	admin: { label: 'مدير', color: 'bg-purple-50 text-purple-600 border-purple-200' },
 };
 
-const statusConfig = {
-	active: {
-		label: 'نشط',
-		color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-		icon: CheckCircle,
-	},
-	suspended: { label: 'معطل', color: 'bg-red-50 text-red-500 border-red-200', icon: XCircle },
-	pending: { label: 'معلق', color: 'bg-amber-50 text-amber-600 border-amber-200', icon: Clock },
-};
+/** Status enum from /api/admin/users (server). The previous mock used
+ *  'pending' for suspended users; the real API distinguishes 'suspended'
+ *  (temporary) from 'banned' (permanent).
+ */
+const statusConfig: Record<UserStatus, { label: string; color: string; icon: typeof CheckCircle }> =
+	{
+		active: {
+			label: 'نشط',
+			color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+			icon: CheckCircle,
+		},
+		suspended: {
+			label: 'معطل',
+			color: 'bg-amber-50 text-amber-600 border-amber-200',
+			icon: XCircle,
+		},
+		banned: { label: 'محظور', color: 'bg-red-50 text-red-500 border-red-200', icon: XCircle },
+	};
 
-const governorates = ['الكل', 'صنعاء', 'عدن', 'تعز', 'الحديدة', 'إب'];
-const roles = ['الكل', 'عميل', 'تاجر', 'مدير'];
-const statuses = ['الكل', 'نشط', 'معطل', 'معلق'];
+/** Filter dropdowns. Values match the API enum (NOT a free-form string) so
+ *  useAdminUsers can pass them straight through to the query string.
+ */
+const roleFilterOptions: { label: string; value: '' | UserRole }[] = [
+	{ label: 'الكل', value: '' },
+	{ label: 'عميل', value: 'customer' },
+	{ label: 'تاجر', value: 'merchant' },
+	{ label: 'مدير', value: 'admin' },
+];
+const statusFilterOptions: { label: string; value: '' | UserStatus }[] = [
+	{ label: 'الكل', value: '' },
+	{ label: 'نشط', value: 'active' },
+	{ label: 'معطل', value: 'suspended' },
+	{ label: 'محظور', value: 'banned' },
+];
+
+/** ISO timestamp → compact display. Returns em-dash for null/missing
+ *  (e.g. a user who has never logged in has `last_login = null`).
+ */
+function formatDate(iso: string | null | undefined): string {
+	if (!iso) return '—';
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return '—';
+	return d.toISOString().slice(0, 10);
+}
+
+function formatDateTime(iso: string | null | undefined): string {
+	if (!iso) return '—';
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return '—';
+	return d.toISOString().slice(0, 16).replace('T', ' ');
+}
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -261,45 +124,78 @@ export default function UsersManagement() {
 	const [search, setSearch] = useState('');
 	const [roleFilter, setRoleFilter] = useState('الكل');
 	const [statusFilter, setStatusFilter] = useState('الكل');
-	const [govFilter, setGovFilter] = useState('الكل');
 	const [currentPage, setCurrentPage] = useState(1);
 	const [pageSize, setPageSize] = useState(10);
 	const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
 	const [showFilters, setShowFilters] = useState(false);
 
-	/* ── Filtering ── */
+	/* ── Hook + derived state ── */
+	const { addToast: addAppToast } = useApp();
+
+	// Build API query params. Empty string means "no filter" → skip param.
+	const apiParams = useMemo(() => {
+		const p: {
+			role?: UserRole;
+			is_active?: UserStatus;
+			limit: number;
+			offset: number;
+		} = { limit: pageSize, offset: (currentPage - 1) * pageSize };
+		const roleOption = roleFilterOptions.find((o) => o.label === roleFilter);
+		if (roleOption?.value) p.role = roleOption.value;
+		const statusOption = statusFilterOptions.find((o) => o.label === statusFilter);
+		if (statusOption?.value) p.is_active = statusOption.value;
+		return p;
+	}, [roleFilter, statusFilter, pageSize, currentPage]);
+
+	const {
+		data: usersResponse,
+		loading,
+		error: _fetchError,
+		refetch: refetchUsers,
+	} = useAdminUsers(apiParams);
+
+	// Map AdminUser → view-model (drops columns the API does not expose).
+	const allUsers = useMemo<UserRecord[]>(
+		() => (usersResponse?.users ?? []).map(mapAdminUserToView),
+		[usersResponse],
+	);
+
+	// Client-side text filter across name/email/phone.
 	const filteredUsers = useMemo(() => {
-		return usersData.filter((u) => {
-			const matchesSearch =
-				search === '' ||
-				u.name.includes(search) ||
-				u.email.includes(search) ||
-				u.phone.includes(search);
-			const matchesRole =
-				roleFilter === 'الكل' ||
-				(roleFilter === 'عميل' && u.role === 'customer') ||
-				(roleFilter === 'تاجر' && u.role === 'merchant') ||
-				(roleFilter === 'مدير' && u.role === 'admin');
-			const matchesStatus =
-				statusFilter === 'الكل' ||
-				(statusFilter === 'نشط' && u.status === 'active') ||
-				(statusFilter === 'معطل' && u.status === 'suspended') ||
-				(statusFilter === 'معلق' && u.status === 'pending');
-			const matchesGov = govFilter === 'الكل' || u.governorate === govFilter;
-			return matchesSearch && matchesRole && matchesStatus && matchesGov;
-		});
-	}, [search, roleFilter, statusFilter, govFilter]);
+		if (!search.trim()) return allUsers;
+		const needle = search.toLowerCase();
+		return allUsers.filter(
+			(u) =>
+				u.name.toLowerCase().includes(needle) ||
+				u.email.toLowerCase().includes(needle) ||
+				(u.phone ?? '').toLowerCase().includes(needle),
+		);
+	}, [allUsers, search]);
 
-	/* ── Pagination ── */
-	const totalPages = Math.ceil(filteredUsers.length / pageSize);
-	const paginatedUsers = useMemo(() => {
-		const start = (currentPage - 1) * pageSize;
-		return filteredUsers.slice(start, start + pageSize);
-	}, [filteredUsers, currentPage, pageSize]);
+	const totalCount = usersResponse?.total ?? 0;
+	const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-	const toggleStatus = (_userId: number) => {
-		/* mock: no-op */
-	};
+	/* ── Status toggle (PATCH /api/admin/users/:id) ── */
+	const toggleStatus = useCallback(
+		async (target: UserRecord) => {
+			const next: UserStatus = target.status === 'active' ? 'suspended' : 'active';
+			try {
+				await patchAdminUser(target.id, { status: next });
+				addAppToast({
+					type: 'success',
+					message: next === 'active' ? 'تم تفعيل الحساب' : 'تم تفعيل الحساب',
+				});
+				await refetchUsers();
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				addAppToast({
+					type: 'error',
+					message: 'فشل تحديث الحساب' + (message ? ': ' + message : ''),
+				});
+			}
+		},
+		[addAppToast, refetchUsers],
+	);
 
 	return (
 		<div className="space-y-5">
@@ -346,9 +242,9 @@ export default function UsersManagement() {
 								aria-label="Role filter"
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
-								{roles.map((r) => (
-									<option key={r} value={r}>
-										{r === 'الكل' ? 'الدور' : r}
+								{roleFilterOptions.map((o) => (
+									<option key={o.label} value={o.label}>
+										{o.label}
 									</option>
 								))}
 							</select>
@@ -362,25 +258,9 @@ export default function UsersManagement() {
 								aria-label="Status filter"
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
-								{statuses.map((s) => (
-									<option key={s} value={s}>
-										{s === 'الكل' ? 'الحالة' : s}
-									</option>
-								))}
-							</select>
-
-							<select
-								value={govFilter}
-								onChange={(e) => {
-									setGovFilter(e.target.value);
-									setCurrentPage(1);
-								}}
-								aria-label="Governorate filter"
-								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
-							>
-								{governorates.map((g) => (
-									<option key={g} value={g}>
-										{g === 'الكل' ? 'المحافظة' : g}
+								{statusFilterOptions.map((o) => (
+									<option key={o.label} value={o.label}>
+										{o.label}
 									</option>
 								))}
 							</select>
@@ -397,6 +277,11 @@ export default function UsersManagement() {
 				</CardContent>
 			</Card>
 
+			{loading && (
+				<div className="text-center py-8 text-sm text-[#6B6B6B] font-cairo">
+					جاري التحميل…
+				</div>
+			)}
 			{/* ── Users Table ── */}
 			<Card className="border-0 shadow-sm overflow-hidden">
 				<div className="overflow-x-auto">
@@ -424,7 +309,7 @@ export default function UsersManagement() {
 							</tr>
 						</thead>
 						<tbody>
-							{paginatedUsers.map((user) => {
+							{filteredUsers.map((user) => {
 								const role = roleConfig[user.role];
 								const status = statusConfig[user.status];
 								const StatusIcon = status.icon;
@@ -458,21 +343,6 @@ export default function UsersManagement() {
 												{role.label}
 											</Badge>
 										</td>
-										<td className="px-4 py-3 hidden lg:table-cell">
-											{user.store ? (
-												<span className="text-sm font-cairo text-[#111111] flex items-center gap-1">
-													<Store
-														className="w-3.5 h-3.5 text-[#D4A853]"
-														strokeWidth={1.5}
-													/>
-													{user.store}
-												</span>
-											) : (
-												<span className="text-sm text-[#AAAAAA] font-cairo">
-													—
-												</span>
-											)}
-										</td>
 										<td className="px-4 py-3">
 											<Badge
 												variant="outline"
@@ -484,7 +354,7 @@ export default function UsersManagement() {
 										</td>
 										<td className="px-4 py-3 hidden sm:table-cell">
 											<span className="text-xs font-cairo text-[#6B6B6B]">
-												{user.registeredDate}
+												{formatDate(user.registeredDate)}
 											</span>
 										</td>
 										<td className="px-4 py-3">
@@ -497,7 +367,7 @@ export default function UsersManagement() {
 													<Eye className="w-4 h-4" strokeWidth={1.5} />
 												</button>
 												<button
-													onClick={() => toggleStatus(user.id)}
+													onClick={() => toggleStatus(user)}
 													className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
 														user.status === 'active'
 															? 'hover:bg-red-50 text-[#6B6B6B] hover:text-red-500'
@@ -522,7 +392,7 @@ export default function UsersManagement() {
 					</table>
 				</div>
 
-				{paginatedUsers.length === 0 && (
+				{filteredUsers.length === 0 && (
 					<div className="py-12 text-center">
 						<Users
 							className="w-12 h-12 text-[#AAAAAA] mx-auto mb-3"
@@ -652,50 +522,20 @@ export default function UsersManagement() {
 
 								<TabsContent value="info" className="space-y-3 mt-3">
 									<InfoRow
-										icon={Mail}
-										label="البريد"
-										value={selectedUser.email}
-									/>
-									<InfoRow
-										icon={Phone}
-										label="الهاتف"
-										value={selectedUser.phone}
-									/>
-									<InfoRow
-										icon={MapPin}
-										label="المحافظة"
-										value={selectedUser.governorate}
-									/>
-									<InfoRow
 										icon={Calendar}
 										label="تاريخ التسجيل"
-										value={selectedUser.registeredDate}
+										value={formatDate(selectedUser.registeredDate)}
 									/>
 									<InfoRow
 										icon={Clock}
 										label="آخر دخول"
-										value={selectedUser.lastLogin}
+										value={formatDateTime(selectedUser.lastLogin)}
 									/>
-									{selectedUser.store && (
-										<InfoRow
-											icon={Store}
-											label="المتجر"
-											value={selectedUser.store}
-										/>
-									)}
 								</TabsContent>
 
 								<TabsContent value="orders" className="mt-3">
 									{selectedUser.role === 'customer' ? (
 										<div className="space-y-2">
-											<div className="flex items-center justify-between p-3 rounded-xl bg-[#F8F8F8]">
-												<span className="text-sm text-[#6B6B6B] font-cairo">
-													إجمالي الطلبات
-												</span>
-												<span className="text-lg font-mono font-bold text-[#111111]">
-													{selectedUser.ordersCount}
-												</span>
-											</div>
 											<p className="text-xs text-[#6B6B6B] font-cairo">
 												سجل الطلبات الكامل قريباً
 											</p>
@@ -722,7 +562,8 @@ export default function UsersManagement() {
 													تسجيل دخول ناجح
 												</p>
 												<p className="text-[11px] text-[#6B6B6B] font-cairo">
-													{selectedUser.lastLogin} · IP: 192.168.1.1
+													{formatDateTime(selectedUser.lastLogin)} · IP:
+													192.168.1.1
 												</p>
 											</div>
 										</div>
@@ -733,7 +574,7 @@ export default function UsersManagement() {
 													تم إنشاء الحساب
 												</p>
 												<p className="text-[11px] text-[#6B6B6B] font-cairo">
-													{selectedUser.registeredDate}
+													{formatDate(selectedUser.registeredDate)}
 												</p>
 											</div>
 										</div>

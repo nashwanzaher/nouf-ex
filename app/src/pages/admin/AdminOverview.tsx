@@ -31,9 +31,12 @@ import {
 	ResponsiveContainer,
 	Legend,
 } from 'recharts';
+import { useAdminStats } from '@/hooks/useApi';
+import { formatMoney } from '@/lib/format';
 
 /* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
+/*  Mock data (kept for the chart only — the stat cards below are    */
+/*  driven by /api/admin/stats)                                       */
 /* ------------------------------------------------------------------ */
 const chartData = [
 	{ name: 'يناير', revenue: 32000, orders: 2400, users: 800 },
@@ -42,45 +45,6 @@ const chartData = [
 	{ name: 'أبريل', revenue: 42000, orders: 3500, users: 1200 },
 	{ name: 'مايو', revenue: 38000, orders: 3100, users: 1050 },
 	{ name: 'يونيو', revenue: 45200, orders: 3800, users: 1400 },
-];
-
-const statsCards = [
-	{
-		label: 'إجمالي المستخدمين',
-		value: '١٥,٢٤٠',
-		change: '+١٢٪',
-		up: true,
-		icon: Users,
-		iconColor: 'text-blue-500',
-		iconBg: 'bg-blue-50',
-	},
-	{
-		label: 'المتاجر النشطة',
-		value: '١,٢٨٠',
-		change: '+٨٪',
-		up: true,
-		icon: Store,
-		iconColor: 'text-[#D4A853]',
-		iconBg: 'bg-amber-50',
-	},
-	{
-		label: 'الطلبات هذا الشهر',
-		value: '٨,٤٥٠',
-		change: '+٢٣٪',
-		up: true,
-		icon: ShoppingBag,
-		iconColor: 'text-emerald-500',
-		iconBg: 'bg-emerald-50',
-	},
-	{
-		label: 'الإيرادات',
-		value: '$٤٥,٢٠٠',
-		change: '+١٥٪',
-		up: true,
-		icon: DollarSign,
-		iconColor: 'text-amber-500',
-		iconBg: 'bg-amber-50',
-	},
 ];
 
 const pendingVerifications = [
@@ -138,12 +102,59 @@ const periodOptions = ['أسبوع', 'شهر', 'سنة'];
 export default function AdminOverview() {
 	const [period, setPeriod] = useState('شهر');
 
+	// Real stats from /api/admin/stats (server/routes/admin.cts:377-417).
+	// The endpoint aggregates counts, 7-day deltas, and revenue in a
+	// single round-trip via a CTE; falls back to 0s while loading.
+	const { data: stats, loading: statsLoading } = useAdminStats();
+	const recentGrowth = stats?.recent7d;
+	const summaryCards = [
+		{
+			label: 'إجمالي المستخدمين',
+			value: stats?.counts?.users ?? 0,
+			icon: Users,
+			iconColor: 'text-blue-500',
+			iconBg: 'bg-blue-50',
+			delta: stats?.recent7d?.users,
+		},
+		{
+			label: 'المتاجر النشطة',
+			value: stats?.counts?.stores ?? 0,
+			icon: Store,
+			iconColor: 'text-[#D4A853]',
+			iconBg: 'bg-amber-50',
+			delta: null,
+		},
+		{
+			label: 'الطلبات',
+			value: stats?.counts?.orders ?? 0,
+			icon: ShoppingBag,
+			iconColor: 'text-emerald-500',
+			iconBg: 'bg-emerald-50',
+			delta: recentGrowth?.orders,
+		},
+		{
+			label: 'الإيرادات',
+			value: stats?.revenueYer ?? 0,
+			icon: DollarSign,
+			iconColor: 'text-amber-500',
+			iconBg: 'bg-amber-50',
+			isCurrency: true as const,
+			delta: null,
+		},
+	];
+
 	return (
 		<div className="space-y-6">
-			{/* ── Stats Cards ── */}
+			{/* ── Stats Cards (live /api/admin/stats) ── */}
 			<div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-				{statsCards.map((stat, i) => {
+				{summaryCards.map((stat, i) => {
 					const Icon = stat.icon;
+					const delta = stat.delta ?? 0;
+					const deltaUp = delta >= 0;
+					const display =
+						stat.isCurrency && stat.value > 0
+							? formatMoney(stat.value)
+							: stat.value.toLocaleString('ar-EG');
 					return (
 						<Card key={i} className="border-0 shadow-sm">
 							<CardContent className="p-4 md:p-5">
@@ -156,19 +167,23 @@ export default function AdminOverview() {
 											strokeWidth={1.5}
 										/>
 									</div>
-									<div
-										className={`flex items-center gap-1 text-xs font-cairo font-semibold ${stat.up ? 'text-emerald-500' : 'text-red-500'}`}
-									>
-										{stat.up ? (
-											<TrendingUp className="w-3 h-3" />
-										) : (
-											<TrendingDown className="w-3 h-3" />
-										)}
-										{stat.change}
-									</div>
+									{delta !== null && (
+										<div
+											className={`flex items-center gap-1 text-xs font-cairo font-semibold ${
+												deltaUp ? 'text-emerald-500' : 'text-red-500'
+											}`}
+										>
+											{deltaUp ? (
+												<TrendingUp className="w-3 h-3" />
+											) : (
+												<TrendingDown className="w-3 h-3" />
+											)}
+											{Math.abs(delta).toLocaleString('ar-EG')}
+										</div>
+									)}
 								</div>
 								<p className="text-2xl md:text-[28px] font-mono font-bold text-[#111111] leading-tight">
-									{stat.value}
+									{statsLoading ? '…' : display}
 								</p>
 								<p className="text-xs text-[#6B6B6B] font-cairo mt-1">
 									{stat.label}

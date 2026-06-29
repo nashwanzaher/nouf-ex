@@ -153,12 +153,7 @@ export default function StoresManagement() {
 		return params;
 	}, [activeTab, pageSize, currentPage]);
 
-	const {
-		data: storesResponse,
-		loading,
-		error,
-		refetch,
-	} = useAdminStores(apiParams);
+	const { data: storesResponse, loading, error, refetch } = useAdminStores(apiParams);
 
 	/* ── Derived state ── */
 	// Map API rows into the view-model. Until C.4 ships the merchant
@@ -274,11 +269,7 @@ export default function StoresManagement() {
 			{error && (
 				<div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">
 					تعذّر تحميل المتاجر: {error}
-					<button
-						type="button"
-						className="ml-2 underline"
-						onClick={() => void refetch()}
-					>
+					<button type="button" className="ml-2 underline" onClick={() => void refetch()}>
 						إعادة المحاولة
 					</button>
 				</div>
@@ -449,7 +440,10 @@ export default function StoresManagement() {
 														title="عرض"
 														type="button"
 													>
-														<Eye className="w-4 h-4" strokeWidth={1.5} />
+														<Eye
+															className="w-4 h-4"
+															strokeWidth={1.5}
+														/>
 													</button>
 													{store.status === 'pending' && (
 														<button
@@ -475,7 +469,11 @@ export default function StoresManagement() {
 																	? 'hover:bg-red-50 text-[#6B6B6B] hover:text-red-500'
 																	: 'hover:bg-emerald-50 text-[#6B6B6B] hover:text-emerald-500'
 															}`}
-															title={store.status === 'active' ? 'تعليق' : 'إعادة تفعيل'}
+															title={
+																store.status === 'active'
+																	? 'تعليق'
+																	: 'إعادة تفعيل'
+															}
 															type="button"
 														>
 															{store.status === 'active' ? (
@@ -524,9 +522,7 @@ export default function StoresManagement() {
 				{/* Pagination */}
 				{totalCount > pageSize && (
 					<div className="flex items-center justify-between px-4 py-3 border-t border-[#F5F5F5]">
-						<span className="text-xs text-[#6B6B6B] font-cairo">
-							{totalCount} متجر
-						</span>
+						<span className="text-xs text-[#6B6B6B] font-cairo">{totalCount} متجر</span>
 						<div className="flex items-center gap-1">
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -551,9 +547,7 @@ export default function StoresManagement() {
 								</button>
 							))}
 							<button
-								onClick={() =>
-									setCurrentPage((p) => Math.min(totalPages, p + 1))
-								}
+								onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 								disabled={currentPage === totalPages}
 								type="button"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30"
@@ -606,10 +600,7 @@ export default function StoresManagement() {
 														<Icon className="w-3 h-3" />
 													) : null;
 												})()}
-												{
-													trustBadgeConfig[selectedStore.trustBadge]
-														.label
-												}
+												{trustBadgeConfig[selectedStore.trustBadge].label}
 											</Badge>
 										)}
 									</div>
@@ -617,7 +608,11 @@ export default function StoresManagement() {
 							</div>
 
 							<div className="space-y-3 mt-2">
-								<InfoRow icon={Users} label="التاجر" value={selectedStore.merchant} />
+								<InfoRow
+									icon={Users}
+									label="التاجر"
+									value={selectedStore.merchant}
+								/>
 								<InfoRow icon={Mail} label="البريد" value={selectedStore.email} />
 								<InfoRow icon={Phone} label="الهاتف" value={selectedStore.phone} />
 								<InfoRow

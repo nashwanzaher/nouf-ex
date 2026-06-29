@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
-	Store,
 	Search,
 	ChevronLeft,
 	ChevronRight,
@@ -30,18 +29,16 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-// NOTE: staged imports for the K.1 wiring pass (see mapAdminStoreToView
-// below). The hooks/context are intentionally unused right now — the
-// component still renders from the `storesData` mock table while the
-// real /api/admin/stores backend is being rolled out page-by-page.
-// Underscore prefix keeps ESLint happy without losing the intent.
-import { useAdminStores as _useAdminStores } from '@/hooks/useApi';
-import { patchAdminStore as _patchAdminStore, type AdminStore } from '@/lib/api';
-import { useApp as _useApp } from '@/context/AppContext';
+import { useAdminStores } from '@/hooks/useApi';
+import { patchAdminStore, type AdminStore } from '@/lib/api';
+import { useApp } from '@/context/AppContext';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
+type StoreStatus = 'pending' | 'active' | 'suspended' | 'rejected';
+type TrustBadge = 'none' | 'verified' | 'golden' | 'diamond';
+
 interface StoreRecord {
 	id: number;
 	name: string;
@@ -49,8 +46,8 @@ interface StoreRecord {
 	email: string;
 	phone: string;
 	category: string;
-	status: 'pending' | 'active' | 'suspended' | 'rejected';
-	trustBadge: 'none' | 'verified' | 'golden' | 'diamond';
+	status: StoreStatus;
+	trustBadge: TrustBadge;
 	rating: number;
 	productsCount: number;
 	joinedDate: string;
@@ -58,185 +55,34 @@ interface StoreRecord {
 	docCount: number;
 }
 
-type StoreStatus = 'active' | 'suspended' | 'pending' | 'rejected';
-type _StoreStatusAlias = StoreStatus; // keep type referenced for future statusConfig typing
-
 /** Map the AdminStore shape from /api/admin/stores
- *  (server/routes/admin.cts:95-148) to the table's view model.
- *  Fields NOT exposed by the API get placeholder values.
- *  Prefixed with `_` because the component still renders the
- *  `storesData` mock table while the real backend is rolled out. */
-function _mapAdminStoreToView(store: AdminStore): StoreRecord {
+ *  (server/routes/admin.cts:95-144) to the table's view model.
+ *  Fields NOT exposed by /api/admin/stores get placeholder values
+ *  (em-dash) so the column structure is preserved. */
+function mapAdminStoreToView(store: AdminStore): StoreRecord {
 	return {
 		id: store.id,
 		name: store.store_name,
-		merchant: '—', // not exposed
-		email: '—', // not exposed
-		phone: '—', // not exposed
-		category: '—', // not exposed
+		// owner_id, owner name/email/phone, category_id, products_count,
+		// docCount are not in the /admin/stores SELECT * projection.
+		merchant: '—',
+		email: '—',
+		phone: '—',
+		category: '—',
 		status: store.is_active ? 'active' : 'suspended',
 		trustBadge: store.is_verified ? 'verified' : 'none',
 		rating: store.rating ?? 0,
-		productsCount: 0, // not exposed
+		productsCount: 0,
 		joinedDate: store.created_at,
 		governorate: store.governorate ?? '—',
-		docCount: 0, // not exposed
+		docCount: 0,
 	};
 }
-const storesData: StoreRecord[] = [
-	{
-		id: 1,
-		name: 'إلكترونيات الغد',
-		merchant: 'خالد محسن',
-		email: 'khaled@store.com',
-		phone: '777-234-567',
-		category: 'إلكترونيات',
-		status: 'pending',
-		trustBadge: 'none',
-		rating: 0,
-		productsCount: 45,
-		joinedDate: '٢٠٢٣/١١/٢٠',
-		governorate: 'عدن',
-		docCount: 3,
-	},
-	{
-		id: 2,
-		name: 'التمور الفاخرة',
-		merchant: 'فاطمة السعدي',
-		email: 'fatima@dates.com',
-		phone: '777-345-678',
-		category: 'غذائية',
-		status: 'pending',
-		trustBadge: 'none',
-		rating: 0,
-		productsCount: 28,
-		joinedDate: '٢٠٢٤/٠٢/١٠',
-		governorate: 'تعز',
-		docCount: 4,
-	},
-	{
-		id: 3,
-		name: 'حرف يدوية',
-		merchant: 'عبدالرحمن علي',
-		email: 'abdo@craft.com',
-		phone: '777-567-890',
-		category: 'حرف',
-		status: 'pending',
-		trustBadge: 'none',
-		rating: 0,
-		productsCount: 62,
-		joinedDate: '٢٠٢٤/٠٥/٢٠',
-		governorate: 'إب',
-		docCount: 2,
-	},
-	{
-		id: 4,
-		name: 'عطور الجنوب',
-		merchant: 'سمية حسن',
-		email: 'samia@perfume.com',
-		phone: '777-678-901',
-		category: 'عطور',
-		status: 'pending',
-		trustBadge: 'none',
-		rating: 0,
-		productsCount: 35,
-		joinedDate: '٢٠٢٤/٠١/٢٥',
-		governorate: 'عدن',
-		docCount: 3,
-	},
-	{
-		id: 5,
-		name: 'متجر الأناقة',
-		merchant: 'أحمد عبدالله',
-		email: 'ahmed@style.com',
-		phone: '777-123-456',
-		category: 'أزياء',
-		status: 'pending',
-		trustBadge: 'none',
-		rating: 0,
-		productsCount: 80,
-		joinedDate: '٢٠٢٤/٠٦/١٨',
-		governorate: 'صنعاء',
-		docCount: 3,
-	},
-	{
-		id: 6,
-		name: 'تك ستور',
-		merchant: 'يوسف سعيد',
-		email: 'yousef@tech.com',
-		phone: '777-901-234',
-		category: 'إلكترونيات',
-		status: 'active',
-		trustBadge: 'verified',
-		rating: 4.5,
-		productsCount: 120,
-		joinedDate: '٢٠٢٣/١٢/١٠',
-		governorate: 'صنعاء',
-		docCount: 5,
-	},
-	{
-		id: 7,
-		name: 'أزياء الهدى',
-		merchant: 'هند عبدالرحمن',
-		email: 'hind@fashion.com',
-		phone: '777-012-345',
-		category: 'أزياء',
-		status: 'active',
-		trustBadge: 'golden',
-		rating: 4.8,
-		productsCount: 200,
-		joinedDate: '٢٠٢٤/٠٣/٠١',
-		governorate: 'عدن',
-		docCount: 4,
-	},
-	{
-		id: 8,
-		name: 'أثاث المنزل',
-		merchant: 'ليلى أحمد',
-		email: 'laila@home.com',
-		phone: '777-222-333',
-		category: 'أثاث',
-		status: 'active',
-		trustBadge: 'verified',
-		rating: 4.2,
-		productsCount: 55,
-		joinedDate: '٢٠٢٤/٠١/١٠',
-		governorate: 'صنعاء',
-		docCount: 3,
-	},
-	{
-		id: 9,
-		name: 'جمال الطبيعة',
-		merchant: 'ريم خالد',
-		email: 'reem@beauty.com',
-		phone: '777-444-555',
-		category: 'جمال',
-		status: 'suspended',
-		trustBadge: 'none',
-		rating: 3.1,
-		productsCount: 40,
-		joinedDate: '٢٠٢٤/٠٢/١٥',
-		governorate: 'تعز',
-		docCount: 2,
-	},
-	{
-		id: 10,
-		name: 'كتب المعرفة',
-		merchant: 'عبدالله صالح',
-		email: 'abdullah@books.com',
-		phone: '777-555-666',
-		category: 'كتب',
-		status: 'rejected',
-		trustBadge: 'none',
-		rating: 0,
-		productsCount: 0,
-		joinedDate: '٢٠٢٤/٠٤/٢٠',
-		governorate: 'الحديدة',
-		docCount: 1,
-	},
-];
 
-const statusConfig = {
+const statusConfig: Record<
+	StoreStatus,
+	{ label: string; color: string; icon: typeof CheckCircle }
+> = {
 	pending: {
 		label: 'قيد المراجعة',
 		color: 'bg-amber-50 text-amber-600 border-amber-200',
@@ -255,26 +101,31 @@ const statusConfig = {
 	},
 };
 
-const trustBadgeConfig = {
+const trustBadgeConfig: Record<
+	TrustBadge,
+	{ label: string; icon: typeof Shield | null; color: string }
+> = {
 	none: { label: 'بدون', icon: null, color: 'text-[#AAAAAA]' },
 	verified: { label: 'موثق', icon: Shield, color: 'text-blue-500 bg-blue-50' },
 	golden: { label: 'ذهبي', icon: Crown, color: 'text-[#D4A853] bg-amber-50' },
 	diamond: { label: 'ماسي', icon: Gem, color: 'text-purple-500 bg-purple-50' },
 };
 
-const statusTabs = [
+/* Status tab keys; matches the StoreStatus union + 'all'. Counts are
+ * computed dynamically from the server response. */
+const STATUS_TABS: { key: 'all' | StoreStatus; label: string }[] = [
 	{ key: 'all', label: 'الكل' },
-	{ key: 'pending', label: 'قيد المراجعة', count: 5 },
-	{ key: 'active', label: 'نشط', count: 3 },
-	{ key: 'suspended', label: 'موقوف', count: 1 },
-	{ key: 'rejected', label: 'مرفوض', count: 1 },
+	{ key: 'pending', label: 'قيد المراجعة' },
+	{ key: 'active', label: 'نشط' },
+	{ key: 'suspended', label: 'موقوف' },
+	{ key: 'rejected', label: 'مرفوض' },
 ];
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export default function StoresManagement() {
-	const [activeTab, setActiveTab] = useState('all');
+	const [activeTab, setActiveTab] = useState<'all' | StoreStatus>('all');
 	const [search, setSearch] = useState('');
 	const [currentPage, setCurrentPage] = useState(1);
 	const [selectedStore, setSelectedStore] = useState<StoreRecord | null>(null);
@@ -282,34 +133,156 @@ export default function StoresManagement() {
 	const [rejectReason, setRejectReason] = useState('');
 	const [pageSize] = useState(10);
 
-	/* ── Filtering ── */
+	const { addToast } = useApp();
+
+	/* ── Server query ── */
+	// Translate the active tab into the API filter. The admin endpoint
+	// supports `is_active=true|false` so a `pending`/`rejected` client
+	// tab is treated as "all" — the client filter below narrows further.
+	const apiParams = useMemo(() => {
+		const params: {
+			limit: number;
+			offset: number;
+			is_active?: boolean;
+			is_verified?: boolean;
+		} = { limit: pageSize, offset: (currentPage - 1) * pageSize };
+		if (activeTab === 'active') params.is_active = true;
+		if (activeTab === 'suspended') params.is_active = false;
+		// verified → backend filter; golden/diamond map to verified=1 for
+		// now (admin endpoint does not differentiate gold vs diamond).
+		return params;
+	}, [activeTab, pageSize, currentPage]);
+
+	const {
+		data: storesResponse,
+		loading,
+		error,
+		refetch,
+	} = useAdminStores(apiParams);
+
+	/* ── Derived state ── */
+	// Map API rows into the view-model. Until C.4 ships the merchant
+	// join, we leave merchant/email/phone/category as "—".
+	const allStores = useMemo<StoreRecord[]>(
+		() => (storesResponse?.stores ?? []).map(mapAdminStoreToView),
+		[storesResponse],
+	);
+
+	// Client-side text filter across name (we don't have merchant/email yet).
+	const textFiltered = useMemo(() => {
+		if (!search.trim()) return allStores;
+		const needle = search.toLowerCase();
+		return allStores.filter((s) => s.name.toLowerCase().includes(needle));
+	}, [allStores, search]);
+
+	// `pending` / `rejected` tabs cannot be enforced server-side today
+	// (no flag in stores table), so we filter them client-side. For a
+	// sparse seed set this is fine; once K.6 ships we'll switch to a
+	// dedicated query param.
 	const filteredStores = useMemo(() => {
-		return storesData.filter((s) => {
-			const matchesSearch =
-				search === '' ||
-				s.name.includes(search) ||
-				s.merchant.includes(search) ||
-				s.email.includes(search);
-			const matchesTab = activeTab === 'all' || s.status === activeTab;
-			return matchesSearch && matchesTab;
-		});
-	}, [search, activeTab]);
+		if (activeTab === 'all') return textFiltered;
+		if (activeTab === 'active' || activeTab === 'suspended') return textFiltered;
+		return textFiltered.filter((s) => s.status === activeTab);
+	}, [textFiltered, activeTab]);
 
 	const paginatedStores = useMemo(() => {
 		const start = (currentPage - 1) * pageSize;
 		return filteredStores.slice(start, start + pageSize);
 	}, [filteredStores, currentPage, pageSize]);
 
-	const totalPages = Math.ceil(filteredStores.length / pageSize) || 1;
+	const totalCount = storesResponse?.total ?? 0;
+	const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-	const handleVerifyAction = (_action: 'accept' | 'reject' | 'request') => {
-		/* Mock: close modal */
-		setVerifyStore(null);
-		setRejectReason('');
-	};
+	/* ── Status counts for tabs (dynamic from server response) ── */
+	const statusCounts = useMemo(() => {
+		const counts: Record<'all' | StoreStatus, number> = {
+			all: allStores.length,
+			pending: 0,
+			active: 0,
+			suspended: 0,
+			rejected: 0,
+		};
+		for (const s of allStores) counts[s.status] += 1;
+		return counts;
+	}, [allStores]);
+
+	/* ── Server mutations ── */
+	// The K.1 admin PATCH endpoints write to admin_audit_log on every
+	// successful change. We surface the result via toast + refetch().
+	const handleSuspendToggle = useCallback(
+		async (target: StoreRecord) => {
+			// active → suspended via is_active=false; suspended → active
+			// requires also setting is_verified (admin endpoint contract
+			// — see server/routes/admin.cts:500-525). When reactivating a
+			// previously-unverified store, fall back to verified=true so
+			// the store comes back into the verified bucket.
+			const nextActive = target.status !== 'active';
+			const nextBody: Parameters<typeof patchAdminStore>[1] = {
+				is_active: nextActive,
+			};
+			if (nextActive) nextBody.is_verified = true;
+			try {
+				await patchAdminStore(target.id, nextBody);
+				addToast({
+					type: 'success',
+					message: nextActive ? 'تم تفعيل المتجر' : 'تم تعليق المتجر',
+				});
+				await refetch();
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				addToast({ type: 'error', message: 'فشل تحديث المتجر: ' + message });
+			}
+		},
+		[addToast, refetch],
+	);
+
+	const handleVerifyAction = useCallback(
+		async (_action: 'accept' | 'reject' | 'request', target: StoreRecord) => {
+			try {
+				if (_action === 'accept') {
+					await patchAdminStore(target.id, {
+						is_verified: true,
+						is_active: true,
+					});
+					addToast({ type: 'success', message: 'تم توثيق المتجر' });
+				} else if (_action === 'reject') {
+					await patchAdminStore(target.id, { is_active: false });
+					addToast({ type: 'success', message: 'تم رفض المتجر' });
+				} else {
+					// 'request' = ask for more documents. No API flag
+					// exists for this in /api/admin/stores yet — fall
+					// back to a deferred message until K.6 ships the
+					// request_docs route.
+					addToast({
+						type: 'info',
+						message: 'سيتم إرسال طلب المستندات إلى التاجر (K.6).',
+					});
+				}
+				await refetch();
+				setVerifyStore(null);
+				setRejectReason('');
+			} catch (err) {
+				const message = err instanceof Error ? err.message : String(err);
+				addToast({ type: 'error', message: 'فشل تحديث المتجر: ' + message });
+			}
+		},
+		[addToast, refetch],
+	);
 
 	return (
 		<div className="space-y-5">
+			{error && (
+				<div className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">
+					تعذّر تحميل المتاجر: {error}
+					<button
+						type="button"
+						className="ml-2 underline"
+						onClick={() => void refetch()}
+					>
+						إعادة المحاولة
+					</button>
+				</div>
+			)}
 			{/* ── Search ── */}
 			<Card className="border-0 shadow-sm">
 				<CardContent className="p-4">
@@ -320,7 +293,7 @@ export default function StoresManagement() {
 						/>
 						<input
 							type="text"
-							placeholder="اسم المتجر، التاجر..."
+							placeholder="اسم المتجر..."
 							value={search}
 							onChange={(e) => {
 								setSearch(e.target.value);
@@ -334,13 +307,14 @@ export default function StoresManagement() {
 
 			{/* ── Filter Tabs ── */}
 			<div className="flex flex-wrap gap-2">
-				{statusTabs.map((tab) => (
+				{STATUS_TABS.map((tab) => (
 					<button
 						key={tab.key}
 						onClick={() => {
 							setActiveTab(tab.key);
 							setCurrentPage(1);
 						}}
+						type="button"
 						className={`px-4 py-2 rounded-xl text-sm font-cairo font-medium transition-all ${
 							activeTab === tab.key
 								? 'bg-[#D4A853] text-[#1A1612] shadow-sm'
@@ -348,17 +322,9 @@ export default function StoresManagement() {
 						}`}
 					>
 						{tab.label}
-						{tab.count !== undefined && activeTab !== tab.key && (
-							<span
-								className={`mr-1.5 text-[10px] px-1.5 py-0.5 rounded-full ${
-									tab.key === 'pending'
-										? 'bg-amber-100 text-amber-600'
-										: tab.key === 'suspended' || tab.key === 'rejected'
-											? 'bg-red-100 text-red-500'
-											: 'bg-[#F8F8F8] text-[#6B6B6B]'
-								}`}
-							>
-								{tab.count}
+						{activeTab !== tab.key && (
+							<span className="mr-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[#F8F8F8] text-[#6B6B6B]">
+								{statusCounts[tab.key]}
 							</span>
 						)}
 					</button>
@@ -375,7 +341,7 @@ export default function StoresManagement() {
 									المتجر
 								</th>
 								<th className="px-4 py-3 text-right text-xs font-cairo font-semibold text-[#6B6B6B] hidden md:table-cell">
-									التصنيف
+									المحافظة
 								</th>
 								<th className="px-4 py-3 text-right text-xs font-cairo font-semibold text-[#6B6B6B]">
 									الحالة
@@ -392,132 +358,162 @@ export default function StoresManagement() {
 							</tr>
 						</thead>
 						<tbody>
-							{paginatedStores.map((store) => {
-								const status = statusConfig[store.status];
-								const StatusIcon = status.icon;
-								const trust = trustBadgeConfig[store.trustBadge];
-								const TrustIcon = trust.icon;
-								return (
-									<tr
-										key={store.id}
-										className="border-b border-[#F5F5F5] hover:bg-[#F8F8F8]/50 transition-colors"
+							{loading && paginatedStores.length === 0 ? (
+								<tr>
+									<td
+										colSpan={6}
+										className="px-4 py-8 text-center text-sm text-[#AAAAAA] font-cairo"
 									>
-										<td className="px-4 py-3">
-											<div className="flex items-center gap-3">
-												<Avatar className="w-9 h-9 shrink-0">
-													<AvatarFallback className="bg-[#D4A853]/20 text-[#D4A853] font-cairo font-bold text-sm">
-														{store.name.charAt(0)}
-													</AvatarFallback>
-												</Avatar>
-												<div className="min-w-0">
-													<p className="text-sm font-cairo font-semibold text-[#111111] truncate">
-														{store.name}
-													</p>
-													<p className="text-[11px] text-[#6B6B6B] font-cairo truncate">
-														{store.merchant}
-													</p>
+										جاري التحميل…
+									</td>
+								</tr>
+							) : (
+								paginatedStores.map((store) => {
+									const status = statusConfig[store.status];
+									const StatusIcon = status.icon;
+									const trust = trustBadgeConfig[store.trustBadge];
+									const TrustIcon = trust.icon;
+									return (
+										<tr
+											key={store.id}
+											className="border-b border-[#F5F5F5] hover:bg-[#F8F8F8]/50 transition-colors"
+										>
+											<td className="px-4 py-3">
+												<div className="flex items-center gap-3">
+													<Avatar className="w-9 h-9 shrink-0">
+														<AvatarFallback className="bg-[#D4A853]/20 text-[#D4A853] font-cairo font-bold text-sm">
+															{store.name.charAt(0)}
+														</AvatarFallback>
+													</Avatar>
+													<div className="min-w-0">
+														<p className="text-sm font-cairo font-semibold text-[#111111] truncate">
+															{store.name}
+														</p>
+														<p className="text-[11px] text-[#6B6B6B] font-cairo truncate">
+															{store.merchant}
+														</p>
+													</div>
 												</div>
-											</div>
-										</td>
-										<td className="px-4 py-3 hidden md:table-cell">
-											<span className="text-xs font-cairo text-[#6B6B6B]">
-												{store.category}
-											</span>
-										</td>
-										<td className="px-4 py-3">
-											<Badge
-												variant="outline"
-												className={`font-cairo text-[10px] gap-1 ${status.color}`}
-											>
-												<StatusIcon className="w-3 h-3" />
-												{status.label}
-											</Badge>
-										</td>
-										<td className="px-4 py-3 hidden lg:table-cell">
-											{TrustIcon ? (
+											</td>
+											<td className="px-4 py-3 hidden md:table-cell">
+												<span className="text-xs font-cairo text-[#6B6B6B]">
+													{store.governorate}
+												</span>
+											</td>
+											<td className="px-4 py-3">
 												<Badge
 													variant="outline"
-													className={`font-cairo text-[10px] gap-1 ${trust.color} border-0`}
+													className={`font-cairo text-[10px] gap-1 ${status.color}`}
 												>
-													<TrustIcon className="w-3 h-3" />
-													{trust.label}
+													<StatusIcon className="w-3 h-3" />
+													{status.label}
 												</Badge>
-											) : (
-												<span className="text-xs text-[#AAAAAA] font-cairo">
-													—
-												</span>
-											)}
-										</td>
-										<td className="px-4 py-3 hidden sm:table-cell">
-											{store.rating > 0 ? (
-												<div className="flex items-center gap-1">
-													<Star
-														className="w-3.5 h-3.5 text-[#D4A853]"
-														strokeWidth={2}
-													/>
-													<span className="text-xs font-mono text-[#111111]">
-														{store.rating}
+											</td>
+											<td className="px-4 py-3 hidden lg:table-cell">
+												{TrustIcon ? (
+													<Badge
+														variant="outline"
+														className={`font-cairo text-[10px] gap-1 ${trust.color} border-0`}
+													>
+														<TrustIcon className="w-3 h-3" />
+														{trust.label}
+													</Badge>
+												) : (
+													<span className="text-xs text-[#AAAAAA] font-cairo">
+														—
 													</span>
+												)}
+											</td>
+											<td className="px-4 py-3 hidden sm:table-cell">
+												{store.rating > 0 ? (
+													<div className="flex items-center gap-1">
+														<Star
+															className="w-3.5 h-3.5 text-[#D4A853]"
+															strokeWidth={2}
+														/>
+														<span className="text-xs font-mono text-[#111111]">
+															{store.rating}
+														</span>
+													</div>
+												) : (
+													<span className="text-xs text-[#AAAAAA] font-cairo">
+														—
+													</span>
+												)}
+											</td>
+											<td className="px-4 py-3">
+												<div className="flex items-center justify-center gap-1">
+													<button
+														onClick={() => setSelectedStore(store)}
+														className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-blue-50 text-[#6B6B6B] hover:text-blue-500 transition-colors"
+														title="عرض"
+														type="button"
+													>
+														<Eye className="w-4 h-4" strokeWidth={1.5} />
+													</button>
+													{store.status === 'pending' && (
+														<button
+															onClick={() => setVerifyStore(store)}
+															className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-emerald-50 text-[#6B6B6B] hover:text-emerald-500 transition-colors"
+															title="تحقق"
+															type="button"
+														>
+															<FileText
+																className="w-4 h-4"
+																strokeWidth={1.5}
+															/>
+														</button>
+													)}
+													{(store.status === 'active' ||
+														store.status === 'suspended') && (
+														<button
+															onClick={() => {
+																void handleSuspendToggle(store);
+															}}
+															className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+																store.status === 'active'
+																	? 'hover:bg-red-50 text-[#6B6B6B] hover:text-red-500'
+																	: 'hover:bg-emerald-50 text-[#6B6B6B] hover:text-emerald-500'
+															}`}
+															title={store.status === 'active' ? 'تعليق' : 'إعادة تفعيل'}
+															type="button"
+														>
+															{store.status === 'active' ? (
+																<Ban
+																	className="w-4 h-4"
+																	strokeWidth={1.5}
+																/>
+															) : (
+																<Check
+																	className="w-4 h-4"
+																	strokeWidth={1.5}
+																/>
+															)}
+														</button>
+													)}
+													<button
+														className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-amber-50 text-[#6B6B6B] hover:text-amber-500 transition-colors"
+														title="رسالة"
+														type="button"
+													>
+														<MessageSquare
+															className="w-4 h-4"
+															strokeWidth={1.5}
+														/>
+													</button>
 												</div>
-											) : (
-												<span className="text-xs text-[#AAAAAA] font-cairo">
-													—
-												</span>
-											)}
-										</td>
-										<td className="px-4 py-3">
-											<div className="flex items-center justify-center gap-1">
-												<button
-													onClick={() => setSelectedStore(store)}
-													className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-blue-50 text-[#6B6B6B] hover:text-blue-500 transition-colors"
-													title="عرض"
-												>
-													<Eye className="w-4 h-4" strokeWidth={1.5} />
-												</button>
-												{store.status === 'pending' && (
-													<button
-														onClick={() => setVerifyStore(store)}
-														className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-emerald-50 text-[#6B6B6B] hover:text-emerald-500 transition-colors"
-														title="تحقق"
-													>
-														<FileText
-															className="w-4 h-4"
-															strokeWidth={1.5}
-														/>
-													</button>
-												)}
-												{store.status === 'active' && (
-													<button
-														className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50 text-[#6B6B6B] hover:text-red-500 transition-colors"
-														title="تعليق"
-													>
-														<Ban
-															className="w-4 h-4"
-															strokeWidth={1.5}
-														/>
-													</button>
-												)}
-												<button
-													className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-amber-50 text-[#6B6B6B] hover:text-amber-500 transition-colors"
-													title="رسالة"
-												>
-													<MessageSquare
-														className="w-4 h-4"
-														strokeWidth={1.5}
-													/>
-												</button>
-											</div>
-										</td>
-									</tr>
-								);
-							})}
+											</td>
+										</tr>
+									);
+								})
+							)}
 						</tbody>
 					</table>
 				</div>
 
-				{paginatedStores.length === 0 && (
+				{paginatedStores.length === 0 && !loading && (
 					<div className="py-12 text-center">
-						<Store
+						<FileText
 							className="w-12 h-12 text-[#AAAAAA] mx-auto mb-3"
 							strokeWidth={1.5}
 						/>
@@ -526,15 +522,16 @@ export default function StoresManagement() {
 				)}
 
 				{/* Pagination */}
-				{filteredStores.length > pageSize && (
+				{totalCount > pageSize && (
 					<div className="flex items-center justify-between px-4 py-3 border-t border-[#F5F5F5]">
 						<span className="text-xs text-[#6B6B6B] font-cairo">
-							{filteredStores.length} متجر
+							{totalCount} متجر
 						</span>
 						<div className="flex items-center gap-1">
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 								disabled={currentPage === 1}
+								type="button"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30"
 							>
 								<ChevronRight className="w-4 h-4" />
@@ -543,6 +540,7 @@ export default function StoresManagement() {
 								<button
 									key={p}
 									onClick={() => setCurrentPage(p)}
+									type="button"
 									className={`w-8 h-8 rounded-lg text-xs font-cairo font-medium ${
 										currentPage === p
 											? 'bg-[#D4A853] text-[#1A1612]'
@@ -553,8 +551,11 @@ export default function StoresManagement() {
 								</button>
 							))}
 							<button
-								onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+								onClick={() =>
+									setCurrentPage((p) => Math.min(totalPages, p + 1))
+								}
 								disabled={currentPage === totalPages}
+								type="button"
 								className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#F8F8F8] disabled:opacity-30"
 							>
 								<ChevronLeft className="w-4 h-4" />
@@ -605,7 +606,10 @@ export default function StoresManagement() {
 														<Icon className="w-3 h-3" />
 													) : null;
 												})()}
-												{trustBadgeConfig[selectedStore.trustBadge].label}
+												{
+													trustBadgeConfig[selectedStore.trustBadge]
+														.label
+												}
 											</Badge>
 										)}
 									</div>
@@ -613,11 +617,7 @@ export default function StoresManagement() {
 							</div>
 
 							<div className="space-y-3 mt-2">
-								<InfoRow
-									icon={Users}
-									label="التاجر"
-									value={selectedStore.merchant}
-								/>
+								<InfoRow icon={Users} label="التاجر" value={selectedStore.merchant} />
 								<InfoRow icon={Mail} label="البريد" value={selectedStore.email} />
 								<InfoRow icon={Phone} label="الهاتف" value={selectedStore.phone} />
 								<InfoRow
@@ -669,6 +669,7 @@ export default function StoresManagement() {
 													return (
 														<button
 															key={key}
+															type="button"
 															className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-cairo font-medium border transition-all ${
 																selectedStore.trustBadge === key
 																	? `${badge.color} border-current`
@@ -747,6 +748,11 @@ export default function StoresManagement() {
 											</span>
 										</div>
 									))}
+									{verifyStore.docCount === 0 && (
+										<p className="text-xs text-[#AAAAAA] font-cairo col-span-2">
+											لا توجد مستندات بعد.
+										</p>
+									)}
 								</div>
 							</div>
 
@@ -781,14 +787,14 @@ export default function StoresManagement() {
 							{/* Actions */}
 							<div className="flex gap-2 mt-4">
 								<Button
-									onClick={() => handleVerifyAction('accept')}
+									onClick={() => handleVerifyAction('accept', verifyStore)}
 									className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-cairo gap-1"
 								>
 									<Check className="w-4 h-4" />
 									قبول وتوثيق
 								</Button>
 								<Button
-									onClick={() => handleVerifyAction('request')}
+									onClick={() => handleVerifyAction('request', verifyStore)}
 									variant="outline"
 									className="font-cairo gap-1 border-amber-400 text-amber-600 hover:bg-amber-50"
 								>
@@ -796,7 +802,7 @@ export default function StoresManagement() {
 									طلب مستندات
 								</Button>
 								<Button
-									onClick={() => handleVerifyAction('reject')}
+									onClick={() => handleVerifyAction('reject', verifyStore)}
 									variant="outline"
 									className="font-cairo gap-1 border-red-300 text-red-500 hover:bg-red-50"
 								>

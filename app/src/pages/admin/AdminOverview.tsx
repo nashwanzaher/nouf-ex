@@ -18,6 +18,7 @@ import {
 	X,
 	BarChart3,
 	FileText,
+	RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ import {
 	useAdminStats,
 	useAdminStores,
 	useAdminDisputes,
+	useSystemHealth,
 } from '@/hooks/useApi';
 import type { AdminStore, AdminDispute } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
@@ -126,6 +128,17 @@ export default function AdminOverview() {
 	// single round-trip via a CTE; falls back to 0s while loading.
 	const { data: stats, loading: statsLoading } = useAdminStats();
 	const recentGrowth = stats?.recent7d;
+
+	// Platform health from /api/ready (server/index.ts:108-131).
+	// Public endpoint; "degraded" surfaces as a normal state in the
+	// hook, not as an error, so the dashboard always renders.
+	const { data: health, loading: healthLoading, refetch: refetchHealth } =
+		useSystemHealth();
+	const dbOk = health?.checks?.db?.ok ?? null;
+	const dbMs = health?.checks?.db?.ms ?? null;
+	const uptimeHours = health
+		? Math.floor(health.uptime_s / 3600)
+		: null;
 
 	// Pending verifications — unverified stores awaiting approval
 	// (/api/admin/stores?is_verified=false). Until C.4 ships the
@@ -536,52 +549,130 @@ export default function AdminOverview() {
 				</Card>
 			</div>
 
-			{/* ── Platform Health ── */}
+			{/* ── Platform Health (live /api/ready) ── */}
 			<Card className="border-0 shadow-sm">
 				<CardContent className="p-4 md:p-5">
-					<div className="flex items-center gap-2 mb-4">
-						<Activity className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
-						<h3 className="text-[#111111] font-cairo font-bold text-sm">حالة المنصة</h3>
+					<div className="flex items-center justify-between mb-4">
+						<div className="flex items-center gap-2">
+							<Activity className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
+							<h3 className="text-[#111111] font-cairo font-bold text-sm">حالة المنصة</h3>
+						</div>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							disabled={healthLoading}
+							onClick={() => void refetchHealth()}
+							className="text-[#6B6B6B] hover:text-[#111111] font-cairo text-xs"
+						>
+							<RefreshCw
+								className={`w-3 h-3 ml-1 ${healthLoading ? 'animate-spin' : ''}`}
+								strokeWidth={1.5}
+							/>
+							تحديث
+						</Button>
 					</div>
 					<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-						<div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50">
-							<div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+						{/* Server: db.ok from /api/ready checks */}
+						<div
+							className={`flex items-center gap-3 p-3 rounded-xl ${
+								dbOk === true
+									? 'bg-emerald-50'
+									: dbOk === false
+										? 'bg-red-50'
+										: 'bg-[#F8F8F8]'
+							}`}
+						>
+							<div
+								className={`w-2 h-2 rounded-full ${
+									dbOk === true
+										? 'bg-emerald-500 animate-pulse'
+										: dbOk === false
+											? 'bg-red-500'
+											: 'bg-gray-400'
+								}`}
+							/>
 							<div>
 								<p className="text-xs text-[#6B6B6B] font-cairo">الخادم</p>
-								<p className="text-sm font-cairo font-bold text-emerald-600">
-									يعمل
+								<p
+									className={`text-sm font-cairo font-bold ${
+										dbOk === true
+											? 'text-emerald-600'
+											: dbOk === false
+												? 'text-red-600'
+												: 'text-[#6B6B6B]'
+									}`}
+								>
+									{healthLoading
+										? '…'
+										: dbOk === true
+											? 'يعمل'
+											: dbOk === false
+												? 'معطل'
+												: 'غير معروف'}
 								</p>
 							</div>
 							<Server
-								className="w-4 h-4 text-emerald-400 mr-auto"
+								className={`w-4 h-4 mr-auto ${
+									dbOk === true
+										? 'text-emerald-400'
+										: dbOk === false
+											? 'text-red-400'
+											: 'text-[#AAAAAA]'
+								}`}
 								strokeWidth={1.5}
 							/>
 						</div>
 
+						{/* Stability: 100% if db.ok, otherwise 0%. We don't have
+						    a multi-window SLA yet — full SLO matrix is C.7 work. */}
 						<div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8]">
 							<Zap className="w-4 h-4 text-[#D4A853]" strokeWidth={1.5} />
 							<div>
 								<p className="text-xs text-[#6B6B6B] font-cairo">الاستقرار</p>
-								<p className="text-sm font-mono font-bold text-[#111111]">٩٩.٩٪</p>
+								<p className="text-sm font-mono font-bold text-[#111111]">
+									{healthLoading
+										? '…'
+										: dbOk === true
+											? '١٠٠٪'
+											: dbOk === false
+												? '٠٪'
+												: '—'}
+								</p>
 							</div>
 						</div>
 
+						{/* Uptime: derived from /api/ready's uptime_s field.
+						    No active-session counter is exposed by the server
+						    yet (would need a sessions table; tracked as C.7). */}
 						<div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50">
 							<Globe className="w-4 h-4 text-blue-500" strokeWidth={1.5} />
 							<div>
-								<p className="text-xs text-[#6B6B6B] font-cairo">الجلسات النشطة</p>
-								<p className="text-sm font-mono font-bold text-blue-600">٣٢٠</p>
+								<p className="text-xs text-[#6B6B6B] font-cairo">زمن التشغيل</p>
+								<p className="text-sm font-mono font-bold text-blue-600">
+									{healthLoading || uptimeHours === null
+										? '…'
+										: `${uptimeHours.toLocaleString('ar-EG')} ساعة`}
+								</p>
 							</div>
 						</div>
 
+						{/* Response time: db.ms from /api/ready */}
 						<div className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F8F8]">
 							<Clock className="w-4 h-4 text-[#6B6B6B]" strokeWidth={1.5} />
 							<div>
-								<p className="text-xs text-[#6B6B6B] font-cairo">متوسط الاستجابة</p>
-								<p className="text-sm font-mono font-bold text-[#111111]">١٢٠ms</p>
+								<p className="text-xs text-[#6B6B6B] font-cairo">استجابة قاعدة البيانات</p>
+								<p className="text-sm font-mono font-bold text-[#111111]">
+									{healthLoading || dbMs === null ? '…' : `${dbMs}ms`}
+								</p>
 							</div>
 						</div>
 					</div>
+					{health?.checks?.db?.detail && (
+						<p className="text-xs text-red-600 font-cairo mt-3">
+							تفاصيل الخطأ: {health.checks.db.detail}
+						</p>
+					)}
 				</CardContent>
 			</Card>
 

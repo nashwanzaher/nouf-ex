@@ -807,6 +807,50 @@ export async function getHomeStats(options?: RequestOptions): Promise<HomeStats>
 	return apiRequest('/stats/home', { signal: options?.signal });
 }
 
+// ─── System Health API (K.6.3) ───────────────────────────────
+//
+// /api/ready (server/index.ts:108-131) is a PUBLIC endpoint that
+// returns a readiness probe with DB round-trip latency. It does
+// NOT follow the standard `{ success, data }` envelope — the body
+// is the payload directly — so we can't reuse `apiRequest()`. Use
+// raw fetch() and parse the JSON shape ourselves.
+//
+// The token is NOT sent on purpose: this endpoint is unauthenticated
+// and we want the call to succeed even when the user is logged out
+// (so the admin dashboard can render health during incidents).
+
+export interface SystemHealthCheck {
+	ok: boolean;
+	ms: number;
+	detail?: string;
+}
+
+export interface SystemHealth {
+	status: 'ready' | 'degraded';
+	uptime_s: number;
+	checks: {
+		db: SystemHealthCheck;
+	};
+}
+
+export async function getSystemHealth(options?: RequestOptions): Promise<SystemHealth> {
+	const url = `${API_BASE}/ready`;
+	const response = await fetch(url, {
+		// No Authorization header — endpoint is public. Sending a
+		// token is harmless but pointless (the server reads no user).
+		signal: options?.signal,
+	});
+	const json = (await response.json()) as SystemHealth;
+	if (!response.ok || json.status === 'degraded') {
+		// We still return the body so the UI can show degraded state
+		// instead of erroring out. Throwing here would force every
+		// health-card to show an error banner — the readiness probe
+		// is supposed to surface "degraded" as a normal state.
+		return json;
+	}
+	return json;
+}
+
 // ─── Payments API  (P0-2) ────────────────────────────────────
 
 export interface CreatePaymentBody {

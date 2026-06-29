@@ -34,6 +34,7 @@ import {
 	getAdminDisputes,
 	getAdminAuditLog,
 	getAdminStats,
+	getSystemHealth,
 } from '../lib/api';
 import type {
 	Product,
@@ -586,4 +587,12 @@ export function useAdminAuditLog(
 
 export function useAdminStats() {
 	return useDataHook((signal) => getAdminStats({ signal }));
+}
+
+/** /api/ready — public readiness probe. Used by the admin dashboard
+ *  "Platform Health" section. The hook surfaces `degraded` as a
+ *  normal data state (not an error) — see `getSystemHealth` in
+ *  lib/api.ts for the rationale. */
+export function useSystemHealth() {
+	return useDataHook((signal) => getSystemHealth({ signal }));
 }

@@ -187,6 +187,18 @@ vi.mock('@/hooks/useApi', () => {
 			error: null,
 			refetch: vi.fn(),
 		}),
+		// /api/ready probe — public readiness check. Mocked so the
+		// AdminOverview health cards don't break the smoke test.
+		useSystemHealth: () => ({
+			data: {
+				status: 'ready' as const,
+				uptime_s: 0,
+				checks: { db: { ok: true, ms: 0 } },
+			},
+			loading: false,
+			error: null,
+			refetch: vi.fn(),
+		}),
 		// ── mutations ──────────────────────────────────────────
 		useSellerMutations: () => ({ updateOrderStatus: vi.fn(), refreshAll: vi.fn() }),
 		useCouponValidation: () => emptyMutation(),

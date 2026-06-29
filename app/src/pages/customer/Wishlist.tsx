@@ -8,12 +8,7 @@ import { useAuth } from '@/context/AppContext';
 import { useServerWishlist } from '@/hooks/useApi';
 import { removeFromWishlist as apiRemoveFromWishlist, addToCart as apiAddToCart } from '@/lib/api';
 import type { WishlistItem as ApiWishlistItem } from '@/lib/api';
-
-/** Format a price number into Arabic display string */
-function formatYer(amount: number): string {
-	if (!Number.isFinite(amount)) return '—';
-	return `${amount.toLocaleString('en-US')} ر.ي`;
-}
+import { formatMoney } from '@/lib/format';
 
 /** Pick the right name field based on the current language */
 function getName(item: ApiWishlistItem, lang: string): string {
@@ -44,7 +39,7 @@ function StarRating({ rating }: { rating: number | string | undefined }) {
 }
 
 export default function Wishlist() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { user, isAuthenticated } = useAuth();
 	const userId = isAuthenticated && user ? Number(user.id) : null;
 
@@ -296,11 +291,18 @@ export default function Wishlist() {
 
 											<div className="flex items-center gap-2 mt-2">
 												<span className="font-mono font-bold text-[#D4A853]">
-													{formatYer(price)}
+													{formatMoney(Number(price), {
+														lang: i18n.language as 'ar' | 'en' | 'zh',
+													})}
 												</span>
 												{hasDiscount && (
 													<span className="font-mono text-xs text-[#AAAAAA] line-through">
-														{formatYer(originalPrice)}
+														{formatMoney(Number(originalPrice), {
+															lang: i18n.language as
+																| 'ar'
+																| 'en'
+																| 'zh',
+														})}
 													</span>
 												)}
 											</div>

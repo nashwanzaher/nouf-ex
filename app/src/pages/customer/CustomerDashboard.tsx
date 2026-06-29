@@ -23,6 +23,7 @@ import {
 	Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatMoneyCompact } from '@/lib/format';
 import { useOrders } from '@/hooks/useApi';
 import { useWishlistItems, useNotifications } from '@/hooks/useApi';
 import styles from './CustomerDashboard.module.css';
@@ -136,19 +137,6 @@ function statusTimeline(status: string): string[] {
 			return ['ordered'];
 		default:
 			return ['ordered'];
-	}
-}
-
-function formatYER(amount: number, lang: 'ar' | 'en' | 'zh'): string {
-	// Compact formatter for dashboard cards. YER is the local currency;
-	// we use Intl.NumberFormat with the right locale and suffix the
-	// currency code.
-	try {
-		const locale = lang === 'ar' ? 'ar-YE' : lang === 'zh' ? 'zh-CN' : 'en-US';
-		const n = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount);
-		return lang === 'ar' ? `${n} ر.ي` : `${n} YER`;
-	} catch {
-		return `${amount} YER`;
 	}
 }
 
@@ -544,9 +532,14 @@ export default function CustomerDashboard() {
 													<p
 														className={`text-sm font-bold ${styles.priceOrange}`}
 													>
-														{formatYER(
+														{formatMoneyCompact(
 															Number(order.total ?? 0),
-															i18n.language as 'ar' | 'en' | 'zh',
+															{
+																lang: i18n.language as
+																	| 'ar'
+																	| 'en'
+																	| 'zh',
+															},
 														)}
 													</p>
 												</div>
@@ -625,10 +618,9 @@ export default function CustomerDashboard() {
 												<p
 													className={`text-sm font-bold mt-2 ${styles.priceOrange}`}
 												>
-													{formatYER(
-														wn.price ?? 0,
-														i18n.language as 'ar' | 'en' | 'zh',
-													)}
+													{formatMoneyCompact(wn.price ?? 0, {
+														lang: i18n.language as 'ar' | 'en' | 'zh',
+													})}
 												</p>
 											</div>
 										);

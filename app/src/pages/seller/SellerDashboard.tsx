@@ -27,6 +27,7 @@ import {
 	Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatMoney } from '@/lib/format';
 import {
 	useSellerDashboard,
 	useSellerProducts,
@@ -36,7 +37,8 @@ import {
 import styles from './SellerDashboard.module.css';
 
 export default function SellerDashboard() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
+	const lang: 'ar' | 'en' | 'zh' = (i18n.language as 'ar' | 'en' | 'zh') || 'en';
 	const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'shipped'>('all');
 	const statusFilter = filter === 'all' ? undefined : filter;
 
@@ -170,6 +172,7 @@ export default function SellerDashboard() {
 								key={order.id}
 								order={order}
 								t={t}
+								lang={lang}
 								onUpdateStatus={mutations.updateOrderStatus}
 								onRefresh={mutations.refreshAll}
 							/>
@@ -198,7 +201,7 @@ export default function SellerDashboard() {
 							</p>
 						)}
 						{products.data?.items.slice(0, 6).map((p) => (
-							<ProductRow key={p.id} product={p} t={t} />
+							<ProductRow key={p.id} product={p} t={t} lang={lang} />
 						))}
 					</div>
 				</section>
@@ -222,10 +225,9 @@ function KpiCard({
 	hint?: string;
 	format?: 'currency';
 }) {
-	const formatted =
-		format === 'currency'
-			? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value) + ' YER'
-			: value.toLocaleString();
+	const { i18n } = useTranslation();
+	const lang = (i18n.language as 'ar' | 'en' | 'zh') || 'en';
+	const formatted = format === 'currency' ? formatMoney(value, { lang }) : value.toLocaleString();
 	return (
 		<div className={styles.kpiCard}>
 			<div className={styles.kpiIcon}>{icon}</div>
@@ -241,6 +243,7 @@ function KpiCard({
 function OrderRow({
 	order,
 	t,
+	lang,
 	onUpdateStatus,
 	onRefresh,
 }: {
@@ -252,6 +255,7 @@ function OrderRow({
 		created_at: string;
 	};
 	t: import('i18next').TFunction;
+	lang: 'ar' | 'en' | 'zh';
 	onUpdateStatus: (
 		id: number,
 		body: { status: string; tracking_number?: string },
@@ -299,7 +303,7 @@ function OrderRow({
 				<p className={styles.orderDate}>{new Date(order.created_at).toLocaleString()}</p>
 			</div>
 			<div className="text-right">
-				<p className={styles.orderTotal}>{order.total.toLocaleString()} YER</p>
+				<p className={styles.orderTotal}>{formatMoney(order.total, { lang })}</p>
 				<p className={styles.orderStatus} data-status={order.status}>
 					{t(`seller.order.status.${order.status}`, order.status)}
 				</p>
@@ -321,6 +325,7 @@ function OrderRow({
 function ProductRow({
 	product,
 	t,
+	lang,
 }: {
 	product: {
 		id: number;
@@ -332,6 +337,7 @@ function ProductRow({
 		rating: number | null;
 	};
 	t: import('i18next').TFunction;
+	lang: 'ar' | 'en' | 'zh';
 }) {
 	const stockStatus =
 		product.stock === 0 ? 'out_of_stock' : product.stock < 10 ? 'low_stock' : 'in_stock';
@@ -344,7 +350,7 @@ function ProductRow({
 				</p>
 			</div>
 			<div className="text-right">
-				<p className={styles.productPrice}>{product.price.toLocaleString()} YER</p>
+				<p className={styles.productPrice}>{formatMoney(product.price, { lang })}</p>
 				<p className={styles.stockBadge} data-stock={stockStatus}>
 					{t(`seller.dashboard.stock.${stockStatus}`, stockStatus.replace('_', ' '))}
 				</p>

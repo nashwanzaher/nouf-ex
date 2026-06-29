@@ -784,15 +784,15 @@ Nouf-ex/
 
 > **الـ Prefix:** `K.` (جديد) — Phase K مُخصّص لـ "Gap Remediation"
 
-| ID              | المهمة                                                                                                                                | الجهد          | الأولوية | الحالة                                                                                                                                             |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **K.1**         | استبدال Mock Data في 6 صفحات Admin (4,742 سطر) بـ API حقيقي                                                                           | 12-16 ساعة     | 🔴 P0    | ⏳ TODO                                                                                                                                            |
-| **K.2**         | إضافة 165 مفتاح i18n مفقود في en.json/ar.json/zh.json                                                                                 | 4-6 ساعات      | 🔴 P0    | ✅ **Done (2026-06-29)** — 171 keys added to each of en/ar/zh (en: 828 → 999 keys). See [CHANGELOG.md §Unreleased](../../CHANGELOG.md) for details |
-| **K.3**         | إنشاء `formatMoney()` helper + استبدال 8 مواضع hardcoded YER (بدل 7)                                                                  | 2-3 ساعات      | 🟡 P1    | ⏳ TODO                                                                                                                                            |
-| **K.4**         | إنشاء UI لـ 12 admin endpoints + 8 customer endpoints                                                                                 | 16-24 ساعة     | 🟡 P1    | ⏳ TODO                                                                                                                                            |
-| **K.5**         | تنظيف hooks غير مُستخدمة (تم تنظيف **6**: useUsers, useCartItems, useServerCart, useOrder, useFeaturedProducts, useDeals + 5 imports) | 1-2 ساعة       | 🟡 P2    | ✅ **Done (2026-06-29)** — 6 hooks removed + 5 imports dropped · file went from 467 → 423 lines                                                    |
-| **K.6**         | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages)                                                                     | 12-18 ساعة     | 🟡 P1    | ⏳ TODO                                                                                                                                            |
-| **المجموع (K)** | **6 مهام**                                                                                                                            | **47-69 ساعة** | —        | ⏳ TODO                                                                                                                                            |
+| ID              | المهمة                                                                                                                                | الجهد          | الأولوية | الحالة                                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **K.1**         | استبدال Mock Data في 6 صفحات Admin (4,742 سطر) بـ API حقيقي                                                                           | 12-16 ساعة     | 🔴 P0    | ⏳ TODO                                                                                                                                              |
+| **K.2**         | إضافة 165 مفتاح i18n مفقود في en.json/ar.json/zh.json                                                                                 | 4-6 ساعات      | 🔴 P0    | ✅ **Done (2026-06-29)** — 171 keys added to each of en/ar/zh (en: 828 → 999 keys). See [CHANGELOG.md §Unreleased](../../CHANGELOG.md) for details   |
+| **K.3**         | إنشاء `formatMoney()` helper + استبدال 8 مواضع hardcoded YER (بدل 7)                                                                  | 2-3 ساعات      | 🟡 P1    | ✅ **Done (2026-06-29)** — `app/src/lib/format.ts` (~200 lines, 20 unit tests) + 5 pages refactored. Checkout test FIXED (was pre-existing failure). |
+| **K.4**         | إنشاء UI لـ 12 admin endpoints + 8 customer endpoints                                                                                 | 16-24 ساعة     | 🟡 P1    | ⏳ TODO                                                                                                                                              |
+| **K.5**         | تنظيف hooks غير مُستخدمة (تم تنظيف **6**: useUsers, useCartItems, useServerCart, useOrder, useFeaturedProducts, useDeals + 5 imports) | 1-2 ساعة       | 🟡 P2    | ✅ **Done (2026-06-29)** — 6 hooks removed + 5 imports dropped · file went from 467 → 423 lines                                                      |
+| **K.6**         | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages)                                                                     | 12-18 ساعة     | 🟡 P1    | ⏳ TODO                                                                                                                                              |
+| **المجموع (K)** | **6 مهام**                                                                                                                            | **47-69 ساعة** | —        | 3/6 ✅                                                                                                                                               |
 
 ---
 
@@ -805,7 +805,7 @@ Nouf-ex/
 | 1       | **K.2** | إضافة مفاتيح i18n       | —                            | ✅ **Done 2026-06-29**                   |
 | 2       | **K.5** | تنظيف hooks             | K.2 ✅                       | ✅ **Done 2026-06-29** (6 hooks removed) |
 | 3       | **K.1** | استبدال Mock بـ API     | K.4 (يوفّر الـ hooks)        | ⏳ TODO                                  |
-| 4       | **K.3** | formatMoney helper      | K.1 (يستخدمه في صفحات Admin) | ⏳ TODO                                  |
+| 4       | **K.3** | formatMoney helper      | K.1 (يستخدمه في صفحات Admin) | ✅ **Done 2026-06-29**                   |
 | 5       | **K.4** | UI للـ endpoints الميتة | K.6                          | ⏳ TODO                                  |
 | 6       | **K.6** | صفحات Admin جديدة       | —                            | ⏳ TODO                                  |
 
@@ -819,22 +819,22 @@ Nouf-ex/
 
 ### 11.1 📊 الحالة الراهنة (مُتحقَّق منها فعلياً)
 
-| المقياس                           | القيمة                                | الأمر / المصدر                          | الحالة  |
-| --------------------------------- | ------------------------------------- | --------------------------------------- | ------- |
-| آخر commit على main               | `f70eca9`                             | `git log --oneline -1`                  | ✅      |
-| متزامن مع origin/main             | 0 ahead / 0 behind                    | `git rev-list --left-right --count`     | ✅      |
-| Working tree                      | نظيف                                  | `git status`                            | ✅      |
-| TypeScript                        | 0 errors                              | `npx tsc --noEmit -p tsconfig.app.json` | ✅      |
-| ESLint                            | 0 issues                              | `npx eslint .`                          | ✅      |
-| Prettier                          | كل الملفات متطابقة                    | `npx prettier --check .`                | ✅      |
-| Vitest                            | **732 passed · 3 skipped (55 files)** | `npx vitest run`                        | ✅      |
-| Vite build                        | OK (197 PWA entries · 21.18 MiB)      | `npm run build`                         | ✅      |
-| esbuild server                    | OK (216.6kb)                          | `npx esbuild ...`                       | ✅      |
-| فروع محلية                        | main + opencode/tidy-rocket           | `git branch -a`                         | ✅      |
-| ملفات .md نشطة                    | 19                                    | `Get-ChildItem -Recurse docs/`          | ✅      |
-| المهام المُنجزة (A→D + K.2 + K.5) | **50/50 = 100%**                      | § 11.2 أدناه                            | ✅      |
-| المهام المتبقية (E→K \ K.2, K.5)  | **28/28 معلّقة**                      | § 11.3 أدناه                            | ⏳ TODO |
-| **نسبة الإنجاز الإجمالية**        | **90% (70/78)**                       | حساب                                    | ✅      |
+| المقياس                                 | القيمة                                | الأمر / المصدر                          | الحالة  |
+| --------------------------------------- | ------------------------------------- | --------------------------------------- | ------- |
+| آخر commit على main                     | `f70eca9`                             | `git log --oneline -1`                  | ✅      |
+| متزامن مع origin/main                   | 0 ahead / 0 behind                    | `git rev-list --left-right --count`     | ✅      |
+| Working tree                            | نظيف                                  | `git status`                            | ✅      |
+| TypeScript                              | 0 errors                              | `npx tsc --noEmit -p tsconfig.app.json` | ✅      |
+| ESLint                                  | 0 issues                              | `npx eslint .`                          | ✅      |
+| Prettier                                | كل الملفات متطابقة                    | `npx prettier --check .`                | ✅      |
+| Vitest                                  | **732 passed · 3 skipped (55 files)** | `npx vitest run`                        | ✅      |
+| Vite build                              | OK (197 PWA entries · 21.18 MiB)      | `npm run build`                         | ✅      |
+| esbuild server                          | OK (216.6kb)                          | `npx esbuild ...`                       | ✅      |
+| فروع محلية                              | main + opencode/tidy-rocket           | `git branch -a`                         | ✅      |
+| ملفات .md نشطة                          | 19                                    | `Get-ChildItem -Recurse docs/`          | ✅      |
+| المهام المُنجزة (A→D + K.2 + K.3 + K.5) | **51/51 = 100%**                      | § 11.2 أدناه                            | ✅      |
+| المهام المتبقية (E→K \ K.2, K.3, K.5)   | **27/27 معلّقة**                      | § 11.3 أدناه                            | ⏳ TODO |
+| **نسبة الإنجاز الإجمالية**              | **91% (71/78)**                       | حساب                                    | ✅      |
 
 ### 11.2 ✅ المهام المُنجزة (48 من 78)
 
@@ -912,14 +912,15 @@ Nouf-ex/
 | **D.7** | `.github/PULL_REQUEST_TEMPLATE.md`              | ✅ · 18-item checklist                 |
 | **D.8** | `.github/CODEOWNERS`                            | ✅ · 12 ownership sections             |
 
-#### 🅷 Phase K — Gap Remediation (2/6 ✅ · 33%)
+#### 🅷 Phase K — Gap Remediation (3/6 ✅ · 50%)
 
-| ID      | المهمة                     | الملف                                  | الحالة                                            |
-| ------- | -------------------------- | -------------------------------------- | ------------------------------------------------- |
-| **K.2** | إضافة 171 مفتاح i18n مفقود | `app/src/i18n/locales/{en,ar,zh}.json` | ✅ **Done 2026-06-29** — en 828→999 keys (+171)   |
-| **K.5** | تنظيف 6 hooks غير مُستخدمة | `app/src/hooks/useApi.ts`              | ✅ **Done 2026-06-29** — file 467→423 lines (-44) |
+| ID      | المهمة                                               | الملف                                  | الحالة                                                                          |
+| ------- | ---------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
+| **K.2** | إضافة 171 مفتاح i18n مفقود                           | `app/src/i18n/locales/{en,ar,zh}.json` | ✅ **Done 2026-06-29** — en 828→999 keys (+171)                                 |
+| **K.3** | إنشاء `formatMoney()` helper + استبدال 8 YER مُبرمَج | `app/src/lib/format.ts`                | ✅ **Done 2026-06-29** — 20 unit tests, 5 pages refactored, Checkout test FIXED |
+| **K.5** | تنظيف 6 hooks غير مُستخدمة                           | `app/src/hooks/useApi.ts`              | ✅ **Done 2026-06-29** — file 467→423 lines (-44)                               |
 
-### 11.3 ⏳ المهام المتبقية (28 من 78) — مُرتَّبة حسب الأولوية
+### 11.3 ⏳ المهام المتبقية (27 من 78) — مُرتَّبة حسب الأولوية
 
 #### 🔴 P0 — High Priority (مهام حرجة · 2 مهام · 16-22 ساعة)
 
@@ -930,17 +931,17 @@ Nouf-ex/
 
 #### 🟡 P1 — Medium Priority (مهام تنشيطية · 9 مهام · 51-71 ساعة)
 
-| الترتيب | ID      | المهمة                                                            | الجهد  | يعتمد على         | معيار القبول                              |
-| ------- | ------- | ----------------------------------------------------------------- | ------ | ----------------- | ----------------------------------------- |
-| **3**   | **K.3** | `formatMoney()` helper + استبدال 8 YER                            | 2-3h   | —                 | `grep -r '} YER' app/src/` يُرجِع 0 نتائج |
-| **4**   | **K.4** | UI لـ 12 admin + 8 customer endpoints                             | 16-24h | K.6 (صفحات جديدة) | 20 endpoint مربوط بصفحة UI                |
-| **5**   | **K.6** | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages) | 12-18h | K.4 (hooks)       | 4 routes جديدة في App.tsx                 |
-| **6**   | **F.4** | RFQ form (backend + UI + inbox)                                   | 6-8h   | K.3               | route جديد `/api/rfq` + صفحة UI           |
-| **7**   | **F.5** | Subscription tiers (real plan mgmt)                               | 4-6h   | —                 | route جديد + صفحة UI                      |
-| **8**   | **F.6** | Analytics dashboard (real data)                                   | 4-6h   | K.1               | ReportsAnalytics.tsx يستخدم API           |
-| **9**   | **F.1** | Image dimensions (CLS prevention)                                 | 2-3h   | —                 | Lighthouse CLS = 0                        |
-| **10**  | **F.2** | Merchant verification badges                                      | 2-3h   | —                 | badge يظهر في StorePage                   |
-| **11**  | **F.3** | Trade Assurance copy                                              | 1-2h   | —                 | Trust.tsx بنص escrow                      |
+| الترتيب   | ID          | المهمة                                                            | الجهد    | يعتمد على              | معيار القبول                                  |
+| --------- | ----------- | ----------------------------------------------------------------- | -------- | ---------------------- | --------------------------------------------- |
+| ~~**3**~~ | ~~**K.3**~~ | ~~`formatMoney()` helper + استبدال 8 YER~~                        | ~~2-3h~~ | ✅ **Done 2026-06-29** | ~~`grep -r '} YER' app/src/` يُرجِع 0 نتائج~~ |
+| **4**     | **K.4**     | UI لـ 12 admin + 8 customer endpoints                             | 16-24h   | K.6 (صفحات جديدة)      | 20 endpoint مربوط بصفحة UI                    |
+| **5**     | **K.6**     | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages) | 12-18h   | K.4 (hooks)            | 4 routes جديدة في App.tsx                     |
+| **6**     | **F.4**     | RFQ form (backend + UI + inbox)                                   | 6-8h     | K.3                    | route جديد `/api/rfq` + صفحة UI               |
+| **7**     | **F.5**     | Subscription tiers (real plan mgmt)                               | 4-6h     | —                      | route جديد + صفحة UI                          |
+| **8**     | **F.6**     | Analytics dashboard (real data)                                   | 4-6h     | K.1                    | ReportsAnalytics.tsx يستخدم API               |
+| **9**     | **F.1**     | Image dimensions (CLS prevention)                                 | 2-3h     | —                      | Lighthouse CLS = 0                            |
+| **10**    | **F.2**     | Merchant verification badges                                      | 2-3h     | —                      | badge يظهر في StorePage                       |
+| **11**    | **F.3**     | Trade Assurance copy                                              | 1-2h     | —                      | Trust.tsx بنص escrow                          |
 
 #### 🟡 P2 — Low Priority (تحسينات · 14 مهمة · 18-25 ساعة)
 
@@ -976,11 +977,11 @@ Nouf-ex/
 
 #### 📅 Sprint 1 (هذا الأسبوع · ~24 ساعة)
 
-| اليوم         | المهام                                   | الجهد  | الحالة                 |
-| ------------- | ---------------------------------------- | ------ | ---------------------- |
-| **اليوم 1**   | K.2 (i18n keys)                          | 4-6h   | ✅ **Done 2026-06-29** |
-| **اليوم 2**   | K.5 ✅ (تنظيف hooks) + K.3 (formatMoney) | 3-5h   | 🔄 Next (K.3)          |
-| **اليوم 3-4** | K.1 (Admin pages → API) — البداية        | 12-16h | ⏳ Pending             |
+| اليوم         | المهام                                      | الجهد  | الحالة                 |
+| ------------- | ------------------------------------------- | ------ | ---------------------- |
+| **اليوم 1**   | K.2 (i18n keys)                             | 4-6h   | ✅ **Done 2026-06-29** |
+| **اليوم 2**   | K.5 ✅ + K.3 ✅ (تنظيف hooks + formatMoney) | 3-5h   | ✅ Done                |
+| **اليوم 3-4** | K.1 (Admin pages → API) — البداية           | 12-16h | ⏳ Pending             |
 
 **المخرجات المُحدَّدة:**
 

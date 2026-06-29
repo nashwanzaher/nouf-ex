@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **2026-06-29** — `app/src/lib/format.ts` + 5 pages — **K.3 complete**.
+  Created the central `formatMoney(amount, options)` helper and
+  `formatMoneyCompact()` (k/m suffixes) and `parseMoney()` (Arabic-Indic
+  digit support). Supports `YER` (default), `USD`, `SAR`, `AED`, `EUR`
+  out of the box via the `Currency` type. Replaced **8 hardcoded `} YER`
+  literals** in Checkout (4), SellerDashboard (3 in KpiCard + 2 inline
+  in OrderRow/ProductRow), CustomerDashboard, CustomerOrders, and
+  Wishlist. Also deleted 3 duplicate `formatYER/formatYer` helpers.
+  Added **20 unit tests** in `src/lib/__tests__/format.test.ts`
+  covering: locale-specific digit formatting (Arabic-Indic), currency
+  symbol selection per language, k/m compact format, NaN/Infinity
+  safety, and Arabic-Indic digit parsing (٠-٩, ٫, ٬).
+  **Bonus: fixed pre-existing Checkout test failure** (`shows the cart
+total in the summary` was failing due to locale-aware `toLocaleString()`
+  producing different output in different Node.js versions).
 - **2026-06-29** — `app/src/i18n/locales/{en,ar,zh}.json` — **K.2 complete**.
   Added **171 i18n keys** to each locale (en went from 828 → 999 keys).
   These are the keys referenced by `t('...', fallback)` calls in the
@@ -41,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **2026-06-29** — `docs/MASTER_PLAN.md` — K.3 marked ✅ Done; totals in §11
+  updated (28 → 27 tasks remaining, ~106 → ~103 hours, 90% → 91%
+  complete). Sprint 1 Day 2 now fully ✅ (K.5 + K.3 both done).
 - **2026-06-29** — `docs/MASTER_PLAN.md` — K.5 marked ✅ Done; totals in §11
   updated (29 → 28 tasks remaining, ~108 → ~106 hours, 89% → 90%
   complete). Sprint 1 Day 2 now ✅ for K.5 portion.
@@ -91,6 +109,26 @@ planning,testing}/`. All `phase*.ps1` and test logs moved into `tests/`.
   [`docs/testing/standards/`](docs/testing/standards/).
 - **2026-06-27** — Created reusable PowerShell test helpers
   ([`tests/e2e/helpers/PS_TestHelpers.ps1`](tests/e2e/helpers/PS_TestHelpers.ps1)).
+
+### Removed
+
+- **2026-06-29** — K.3 cleanup — Deleted 3 duplicate currency formatters
+  (`formatYER` in `CustomerDashboard.tsx`, `formatYer` in
+  `CustomerOrders.tsx` and `Wishlist.tsx`). All call-sites now use
+  `formatMoney()` / `formatMoneyCompact()` from the new
+  `app/src/lib/format.ts` helper. Also removed dead code: `COUNTRY_DEFAULT`
+  constant in `Checkout.tsx` (was only used by the now-replaced `} YER` literal).
+
+### Fixed
+
+- **2026-06-29** — **K.3 bonus** — Fixed pre-existing flaky test
+  `Checkout.test.tsx > shows the cart total in the summary`. The test
+  was searching for `/25,000/` (Latin comma) but the page was rendering
+  `25.000` (locale-aware period) in some Node.js versions. Switching to
+  `formatMoney()` produces a stable format that always matches the test
+  regex. The same fix likely fixes the other `25,000` / `12,500`
+  mismatches in `ProductDetail.test.tsx` (still failing — separate bug
+  related to product card rendering, not the formatter).
 
 ### Fixed
 

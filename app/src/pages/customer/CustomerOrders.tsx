@@ -35,6 +35,7 @@ import CustomerSidebar from './CustomerSidebar';
 import { useAuth } from '@/context/AppContext';
 import { useOrders } from '@/hooks/useApi';
 import type { Order, OrderWithItems } from '@/hooks/useApi';
+import { formatMoney } from '@/lib/format';
 
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -131,14 +132,8 @@ function formatDate(iso: string): string {
 	}
 }
 
-function formatYer(amount: number | string): string {
-	const n = typeof amount === 'string' ? Number(amount) : amount;
-	if (!Number.isFinite(n)) return '—';
-	return `${n.toLocaleString('en-US')} ر.ي`;
-}
-
 export default function CustomerOrders() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { isAuthenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [activeFilter, setActiveFilter] = useState<'all' | OrderStatus>('all');
@@ -360,7 +355,12 @@ export default function CustomerOrders() {
 												</div>
 												<div className="flex items-center gap-3">
 													<p className="font-mono font-bold text-[#D4A853] text-lg">
-														{formatYer(total)}
+														{formatMoney(Number(total), {
+															lang: i18n.language as
+																| 'ar'
+																| 'en'
+																| 'zh',
+														})}
 													</p>
 													<button
 														type="button"

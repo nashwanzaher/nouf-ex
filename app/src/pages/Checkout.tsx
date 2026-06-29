@@ -41,14 +41,14 @@ import {
 	useCouponValidation,
 } from '@/hooks/useApi';
 import { createAddress, clearCart } from '@/lib/api';
+import { formatMoney } from '@/lib/format';
 import type { Address, CouponValidation, ShippingMethod } from '@/hooks/useApi';
-
-const COUNTRY_DEFAULT = 'YE';
 
 export default function Checkout() {
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const isRTL = i18n.language === 'ar';
+	const lang: 'ar' | 'en' | 'zh' = isRTL ? 'ar' : i18n.language === 'zh' ? 'zh' : 'en';
 	const { state: cartState, dispatch, cartTotal } = useCart();
 	const { user, isAuthenticated } = useAuth();
 	const { addToast: addAppToast } = useApp();
@@ -565,8 +565,10 @@ export default function Checkout() {
 												{i.name}
 											</div>
 											<div className="text-aliTextMute text-xs">
-												{i.quantity} × {i.price.toLocaleString()}{' '}
-												{COUNTRY_DEFAULT === 'YE' ? 'YER' : ''}
+												{i.quantity} ×{' '}
+												{formatMoney(Number(i.price ?? 0), {
+													lang: i18n.language as 'ar' | 'en' | 'zh',
+												})}
 											</div>
 										</div>
 										<button
@@ -646,7 +648,7 @@ export default function Checkout() {
 								{t('checkout.subtotal', 'Subtotal')}
 							</span>
 							<span className="font-semibold text-aliText">
-								{subtotal.toLocaleString()} YER
+								{formatMoney(subtotal, { lang })}
 							</span>
 						</div>
 						<div className="flex justify-between">
@@ -654,14 +656,14 @@ export default function Checkout() {
 								{t('checkout.shipping', 'Shipping')}
 							</span>
 							<span className="font-semibold text-aliText">
-								{shipping.toLocaleString()} YER
+								{formatMoney(shipping, { lang })}
 							</span>
 						</div>
 						{discount > 0 && (
 							<div className="flex justify-between text-aliOrange">
 								<span>{t('checkout.discount', 'Discount')}</span>
 								<span className="font-semibold">
-									− {discount.toLocaleString()} YER
+									− {formatMoney(discount, { lang })}
 								</span>
 							</div>
 						)}
@@ -670,7 +672,7 @@ export default function Checkout() {
 								{t('checkout.total', 'Total')}
 							</span>
 							<span className="font-bold text-aliOrange">
-								{total.toLocaleString()} YER
+								{formatMoney(total, { lang })}
 							</span>
 						</div>
 						{error && (

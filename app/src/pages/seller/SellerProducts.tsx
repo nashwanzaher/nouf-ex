@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,6 +26,11 @@ import {
 } from 'lucide-react';
 import DashboardShell from './DashboardShell';
 import { cn } from '@/lib/utils';
+import {
+	useSellerProducts,
+} from '@/hooks/useApi';
+import { deleteSellerProduct } from '@/lib/api';
+import { useApp } from '@/context/AppContext';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -942,7 +947,38 @@ export default function SellerProducts() {
 	const [wizardOpen, setWizardOpen] = useState(false);
 	const [products, setProducts] = useState<Product[]>(mockProducts);
 
-	const filtered = products.filter((p) => {
+	const { addToast } = useApp();
+	const { data: sellerProductsResponse, refetch: refetchSellerProducts } =
+		useSellerProducts();
+
+	// Build the local `products` list from the real API when available;
+	// fall back to the mock fixtures for offline / pre-auth render.
+	const apiProducts = useMemo<Product[]>(() => {
+		const resp = sellerProductsResponse as unknown as
+			| { items?: unknown[] }
+			| null;
+		const items: unknown[] = resp?.items ?? [];
+		return items.map((row): Product => {
+			const r = row as Record<string, unknown>;
+			const stock = Number(r.stock ?? 0);
+			return {
+				id: Number(r.id ?? 0),
+				name:
+					String(r.name_ar ?? r.name_en ?? r.name ?? '') || `#${r.id}`,
+				price: String(r.price ?? '0'),
+				stock,
+				status: stock === 0 ? 'out' : stock < 10 ? 'low' : 'active',
+				views: Number(r.views ?? 0),
+				orders: Number(r.sold_count ?? r.orders ?? 0),
+				image: String(r.main_image ?? ''),
+				category: String(r.category_id ?? ''),
+			};
+		});
+	}, [sellerProductsResponse]);
+
+	const dataProducts = apiProducts.length > 0 ? apiProducts : products;
+
+	const filtered = dataProducts.filter((p) => {
 		const matchesSearch =
 			p.name.toLowerCase().includes(search.toLowerCase()) || p.price.includes(search);
 		const matchesCategory = category === 'all' || p.category === category;
@@ -960,9 +996,20 @@ export default function SellerProducts() {
 		return 0;
 	});
 
-	const deleteProduct = (id: number) => {
-		setProducts((prev) => prev.filter((p) => p.id !== id));
-	};
+	const deleteProduct = useCallback(
+		async (id: number) => {
+			try {
+				await deleteSellerProduct(id);
+				setProducts((prev) => prev.filter((p) => p.id !== id));
+				addToast({ type: 'success', message: 'تم حذف المنتج' });
+				await refetchSellerProducts();
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				addToast({ type: 'error', message: 'فشل حذف المنتج: ' + msg });
+			}
+		},
+		[addToast, refetchSellerProducts],
+	);
 
 	return (
 		<DashboardShell

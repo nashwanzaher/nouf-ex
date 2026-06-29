@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSellerOrders } from '@/hooks/useApi';
+import { updateSellerOrderStatus, getSellerOrder } from '@/lib/api';
+import type { SellerOrderWithItems } from '@/lib/api';
+import { useApp } from '@/context/AppContext';
 import {
 	Search,
 	Download,
@@ -211,10 +215,22 @@ function StatusBadge({ status, label }: { status: string; label: string }) {
 /*  Order Detail Drawer                                                */
 /* ------------------------------------------------------------------ */
 
-function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
+function OrderDetailDrawer({
+	order,
+	onClose,
+	onChangeStatus,
+	detailLoading,
+	detailError,
+}: {
+	order: Order;
+	onClose: () => void;
+	onChangeStatus: (status: Order['status']) => void | Promise<void>;
+	detailLoading: boolean;
+	detailError: string | null;
+}) {
 	const { t } = useTranslation();
 	const [statusOpen, setStatusOpen] = useState(false);
-	const statusOptions = [
+	const statusOptions: { key: Order['status']; label: string; color: string }[] = [
 		{ key: 'new', label: t('seller.statusNew', 'New'), color: '#2563EB' },
 		{ key: 'processing', label: t('seller.statusProcessing', 'Processing'), color: '#F59E0B' },
 		{ key: 'shipped', label: t('seller.statusShipped', 'Shipped'), color: '#10B981' },
@@ -261,7 +277,22 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 						<div className="p-6 space-y-6">
 							{/* Status */}
 							<div className="flex items-center justify-between">
-								<StatusBadge status={order.status} label={order.statusLabel} />
+								<div className="flex items-center gap-2">
+									<StatusBadge status={order.status} label={order.statusLabel} />
+									{detailLoading && (
+										<span
+											className="text-[11px] text-[#6B6B6B] font-cairo"
+											aria-live="polite"
+										>
+											… جاري تحميل التفاصيل
+										</span>
+									)}
+								</div>
+								{detailError && (
+									<div className="text-xs text-red-600 font-cairo bg-red-50 px-3 py-1.5 rounded-lg">
+										تعذّر تحميل التفاصيل: {detailError}
+									</div>
+								)}
 								<div className="relative">
 									<button
 										onClick={() => setStatusOpen(!statusOpen)}
@@ -293,7 +324,10 @@ function OrderDetailDrawer({ order, onClose }: { order: Order; onClose: () => vo
 													{statusOptions.map((opt) => (
 														<button
 															key={opt.key}
-															onClick={() => setStatusOpen(false)}
+															onClick={() => {
+																setStatusOpen(false);
+																void onChangeStatus(opt.key);
+															}}
 															className="flex items-center gap-2 w-full px-4 py-2.5 hover:bg-[#F8F8F8] transition-colors text-right"
 														>
 															<span
@@ -571,16 +605,135 @@ function SummaryCards({
 
 export default function SellerOrders() {
 	const { t } = useTranslation();
+	const { addToast } = useApp();
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
 	const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+	const [detailLoading, setDetailLoading] = useState(false);
+	const [detailError, setDetailError] = useState<string | null>(null);
 
-	const filtered = mockOrders.filter((o) => {
+	const { data: ordersResp, refetch } = useSellerOrders(
+		statusFilter === 'all' ? undefined : statusFilter,
+	);
+
+	// Local Order shape vs the wire shape from /api/seller/orders (an
+	// `{ items: SellerOrder[] }` envelope). Map the wire payload to the
+	// local render model so the existing JSX continues to work; the
+	// offline mock fixture below covers pre-auth render.
+	const apiOrders = useMemo<Order[]>(() => {
+		const resp = ordersResp as unknown as { items?: unknown[] } | null;
+		const items = resp?.items ?? [];
+		return items.map((row): Order => {
+			const r = row as Record<string, unknown>;
+			return {
+				id: `#${String(r.order_number ?? r.id ?? '')}`,
+				customer: String(r.customer_email ?? r.customer_id ?? '—'),
+				phone: '—',
+				date: String(r.created_at ?? '').slice(0, 10),
+				amount: `${Number(r.total ?? 0).toLocaleString('ar-EG')} ر.ي`,
+				paymentStatus: String(r.payment_status ?? 'pending'),
+				status: String(r.status ?? 'pending') as Order['status'],
+				statusLabel: String(r.status ?? ''),
+				// Detail fields (items, address, paymentMethod, timeline) are
+				// fetched on demand from /api/seller/orders/:id when the
+				// detail modal opens — they are NOT in the list payload.
+				items: [],
+				address: '—',
+				paymentMethod: '—',
+				timeline: [],
+			};
+		});
+	}, [ordersResp]);
+
+	const dataOrders = apiOrders.length > 0 ? apiOrders : mockOrders;
+
+	const filtered = dataOrders.filter((o) => {
 		const matchesSearch =
 			o.customer.toLowerCase().includes(search.toLowerCase()) || o.id.includes(search);
 		const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
 		return matchesSearch && matchesStatus;
 	});
+
+	const advanceStatus = useCallback(
+		async (order: Order) => {
+			// Server-friendly state machine: pending → confirmed →
+			// processing → shipped → delivered. We pick the next status
+			// based on the current status. Admins use force_status;
+			// sellers use this normal flow.
+			const orderNum = String(
+				(order.id ?? '').replace(/^#/, ''),
+			);
+			const next: Record<Order['status'], Order['status'] | null> = {
+				new: 'processing',
+				processing: 'shipped',
+				shipped: 'delivered',
+				delivered: null,
+				cancelled: null,
+			};
+			const target = next[order.status];
+			if (!target) return;
+			try {
+				await updateSellerOrderStatus(Number(orderNum) || 0, {
+					status: target,
+				});
+				addToast({
+					type: 'success',
+					message: `تم تحديث الطلب ${orderNum}`,
+				});
+				await refetch();
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				addToast({ type: 'error', message: 'فشل تحديث الطلب: ' + msg });
+			}
+		},
+		[addToast, refetch],
+	);
+
+	// When the user opens an order from the list, fetch the detail
+	// from /api/seller/orders/:id so the modal can show items,
+	// timeline, etc. The list endpoint (used above) only returns the
+	// order summary for performance.
+	const openOrderDetail = useCallback(
+		async (order: Order) => {
+			setSelectedOrder(order);
+			setDetailError(null);
+			const orderId = Number(String(order.id).replace(/^#/, ''));
+			if (!orderId) return; // mock row — nothing to fetch
+			setDetailLoading(true);
+			try {
+				const detail: SellerOrderWithItems = await getSellerOrder(orderId);
+				setSelectedOrder((prev) =>
+					prev
+						? {
+								...prev,
+								items: detail.items.map((it) => ({
+									name: `منتج #${it.product_id}`,
+									qty: it.quantity,
+									price: `${it.unit_price.toLocaleString('ar-EG')} ر.ي`,
+								})),
+								paymentMethod: detail.payment_method ?? '—',
+								timeline: Array.isArray(detail.timeline)
+									? detail.timeline.map((step) => {
+											const s = step as Record<string, unknown>;
+											return {
+												status: String(s.status ?? s.label ?? ''),
+												time: String(s.time ?? s.at ?? ''),
+												done: Boolean(s.done ?? s.completed ?? true),
+											};
+										})
+									: [],
+							}
+						: prev,
+				);
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				setDetailError(msg);
+			} finally {
+				setDetailLoading(false);
+			}
+		},
+		[],
+	);
 
 	return (
 		<DashboardShell
@@ -733,7 +886,17 @@ export default function SellerOrders() {
 									</td>
 									<td className="px-4 py-3">
 										<button
-											onClick={() => setSelectedOrder(order)}
+											onClick={() => {
+												// Open the detail modal AND fetch the
+												// full record from /api/seller/orders/:id
+												// for items, timeline, etc. The status
+												// advance now lives in the modal footer
+												// (the dedicated "Advance" button) — it
+												// used to be hijacked into this click,
+												// which advanced the order every time the
+												// admin/operator just wanted to inspect it.
+												void openOrderDetail(order);
+											}}
 											title={t('seller.view', 'View')}
 											aria-label={t('seller.view', 'View')}
 											className="w-7 h-7 rounded-lg hover:bg-[#F3EDE4] flex items-center justify-center transition-colors"
@@ -803,6 +966,16 @@ export default function SellerOrders() {
 					<OrderDetailDrawer
 						order={selectedOrder}
 						onClose={() => setSelectedOrder(null)}
+						onChangeStatus={async (status) => {
+							// Update the underlying order object so the drawer
+							// reflects the new status, then persist via API.
+							setSelectedOrder((prev) =>
+								prev ? { ...prev, status, statusLabel: status } : prev,
+							);
+							await advanceStatus({ ...selectedOrder, status });
+						}}
+						detailLoading={detailLoading}
+						detailError={detailError}
 					/>
 				)}
 			</AnimatePresence>

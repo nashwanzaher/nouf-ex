@@ -839,14 +839,14 @@ Nouf-ex/
 | Server route declarations           | **91 routes** في 19 ملف route                                                                        | `grep "router.METHOD" server/routes/*.cts`                      | ✅      |
 | UI pages (.tsx)                     | **38 صفحة** في `app/src/pages/**/*.tsx`                                                              | `Get-ChildItem -Recurse src/pages -Include *.tsx`               | ✅      |
 | React Router routes                 | **28 routes** (27 explicit `path=` + `*` NotFound) — كلهم `React.lazy()` عبر `lazyPage()`         | `grep "Route path" src/App.tsx`                                 | ✅      |
-| **UI pages على mock data**          | **8 صفحات** (Home/×9 sub + AdminDashboard + StoresManagement + DisputesManagement + ReportsAnalytics + AdminOverview + Reviews + SellerProducts + SellerOrders + SellerAnalytics) — التفاصيل في §11.1.b | `grep "const .*Data\|const .*Mock" app/src/pages/` | 🔴 K.1 |
-| useApi hooks مُصدَّرة               | **26** (بعد تنظيف K.5: نزل 6)                                                                       | `grep "^export function use" src/hooks/useApi.ts`               | ✅      |
-| lib/api.ts functions مُصدَّرة       | **56** مُصدَّرة (15 admin + 41 customer/seller/auth)                                                | `grep "^export" src/lib/api.ts`                                 | ✅      |
+| **UI pages على mock data**          | **14 ملفاً يُغذّي mockData الإجمالي 17 ثابتاً** (Audit 2026-06-29 21:14) — التفاصيل في §11.1.b. StoresManagement + DisputesManagement + 3 من AdminOverview's constants انتقلوا إلى API_WIRED؛ ما زال 17 ثابتاً في 14 ملفاً. | grep -nE "^const \w+(Data\|Mock\w+)\s*:" app/src/pages/ | 🔴 K.1 (جزئي) |
+| useApi hooks مُصدَّرة               | **32** (منها 31 تربط api.ts wrapper + 1 orphan `useWishlistItems` على localStorage)              | `grep "^export function use" src/hooks/useApi.ts`               | ✅      |
+| lib/api.ts functions مُصدَّرة       | **74** مُصدَّرة (56 سابقة + 18 جديدة من K.4)                                                       | `grep "^export" src/lib/api.ts`                                 | ✅      |
 | Database tables                     | **30 فريدة** (17 في schema.sql + 10 في schema-extra.sql + 3 في migrations/)                          | `grep "^CREATE TABLE" database/*.sql database/migrations/*.sql` | ✅      |
 | YER hardcoded في الكود              | **0** (بعد K.3 — تم استبدال 8 بـ `formatMoney()`)                                                    | `grep "} YER" app/src/**/*.tsx`                                 | ✅      |
-| **Client API gaps (server routes بلا client)** | **18** (messaging 6 + 2FA 5 + search 1 + cart helpers 2 + notifications 1 + payments providers 1 + store-followers 1 + webhook 1) — التفاصيل في §11.1.c | grep `^(GET\|POST\|PUT\|PATCH\|DELETE)` server vs `apiRequest` | 🔴 K.4 |
-| **المهام المُنجزة (✅)**            | **51 / 78** (65%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.5 + K.1 (1/6) + audit smokes             | grep `✅ Done` في §11.3                                         | ✅      |
-| **المهام المعلّقة (⏳)**            | **21 / 78** (27%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:3 (K.1 partial, K.4, K.6)                       | grep `⏳` في §11.3                                              | ⏳ TODO |
+| **Client API gaps (server routes بلا client)** | **0** (مُغلَق بالكامل من K.4 — 17 wrapper تمّت إضافتها، 1 webhook server-only)              | grep -E "fetch.*\\b(" src/lib/api.ts                            | ✅ K.4 ✅ |
+| **المهام المُنجزة (✅)**            | **52 / 78** (67%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.4 + K.5 + K.1 (2/6) + K.6 (4/4) + audit smokes | grep `✅ Done` في §11.3                                         | ✅      |
+| **المهام المعلّقة (⏳)**            | **20 / 78** (26%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:2 (K.1 partial)                                 | grep `⏳` في §11.3                                              | ⏳ TODO |
 | **المهام المؤجلة (⚪)**             | **6 / 78** (7%) — I:6 (ميزات مستقبلية XL efforts)                                                    | grep `⚪` في §11.3                                              | ⚪      |
 | **المهام المُكتملة/المجدولة P0/P1** | **66 / 78** (85%) — (51 ✅ + 15 ⏳ من أصل 66)                                                        | حساب                                                            | ✅      |
 
@@ -854,7 +854,7 @@ Nouf-ex/
 
 #### 11.1.b 🟥 جرد الصفحات على mock data (K.1 page-by-page)
 
-> مُستخرج من `grep -nE "^\s*const (.*Data|Mock.*)\s*:\s*[\w\[\]\|]+\[\]\s*=" app/src/pages/**` بتاريخ 2026-06-29. الـ `[...]` literals التي تُغذّي الجداول في الـ UI.
+> مُستخرج من `grep -nE "^\s*const (.*Data|Mock.*)\s*:\s*[\w\[\]\|]+\[\]\s*=" app/src/pages/**` بتاريخ 2026-06-29. الـ `[...]` literals التي تُغذّي الجداول في الـ UI. مدقَّق فعلياً بـ grep في 2026-06-29 21:14.
 
 | # | الملف                                                       | المُتغيِّر                  | الـ route المُسجَّل   | حالة K.1             |
 | - | ----------------------------------------------------------- | --------------------------- | -------------------- | -------------------- |
@@ -869,57 +869,67 @@ Nouf-ex/
 | 9 | `app/src/pages/Home/NoufProtect.tsx:9`                       | `trustFeatures`             | `/`                  | ⏳ TODO              |
 | 10 | `app/src/pages/Home/SubscriptionTiers.tsx:11`               | `tiers`                     | `/`                  | ⏳ TODO              |
 | 11 | `app/src/pages/customer/Reviews.tsx:27,48`                   | `pendingReviews`, `initialSubmitted` | `/customer/reviews` | ⏳ TODO              |
-| 12 | `app/src/pages/seller/SellerProducts.tsx:52`                | `mockProducts`              | `/seller/products`   | ⏳ TODO              |
-| 13 | `app/src/pages/seller/SellerOrders.tsx:55`                  | `mockOrders`                | `/seller/orders`     | ⏳ TODO              |
+| 12 | `app/src/pages/seller/SellerProducts.tsx:57`                | `mockProducts`              | `/seller/products`   | 🔄 **HYBRID** (API wired via `useSellerProducts` + `deleteSellerProduct`; mock kept as fallback when API returns empty) |
+| 13 | `app/src/pages/seller/SellerOrders.tsx:58`                  | `mockOrders`                | `/seller/orders`     | 🔄 **HYBRID** (API wired via `useSellerOrders` + `updateSellerOrderStatus`; mock kept as fallback) |
 | 14 | `app/src/pages/seller/SellerAnalytics.tsx:27,36,54,61,112,117,126` | `monthlyRevenue`, `dailyOrders`, `trafficSources`, `topProductsAnalytics`, `customerTypes`, `peakHours`, `geographicData` | `/seller/analytics` | ⏳ TODO              |
 | 15 | `app/src/pages/admin/AdminDashboard.tsx:86,125,178,208,243,273` | `statsCards`, `usersTable`, `sellersTable`, `ordersTable`, `disputesTable`, `revenueChart` | `/admin`        | ⏳ TODO              |
-| 16 | `app/src/pages/admin/StoresManagement.tsx:86`               | `storesData`                | `/admin/stores`      | 🔄 **In Progress** (staged imports for K.1 — see §11.1.d) |
-| 17 | `app/src/pages/admin/DisputesManagement.tsx:47`             | `disputesData`              | `/admin/disputes`    | ⏳ TODO              |
+| 16 | `app/src/pages/admin/StoresManagement.tsx:299`               | — (`storesData` أُزيل بالكامل)  | `/admin/stores`      | ✅ **Done** (commit `d61eebd`) |
+| 17 | `app/src/pages/admin/DisputesManagement.tsx:228`             | — (`disputesData` أُزيل بالكامل) | `/admin/disputes`    | ✅ **Done** (commit `50688ee`) |
 | 18 | `app/src/pages/admin/ReportsAnalytics.tsx:46,55,64,73,82,91,143` | `revenueData`, `usersData`, `ordersData`, `merchantsData`, `disputesData`, `growthPie`, `categoryMetrics` | `/admin/reports` | ⏳ TODO              |
-| 19 | `app/src/pages/admin/AdminOverview.tsx:38,47,86,94,133`     | `chartData`, `statsCards`, `pendingVerifications`, `activeDisputes`, `periodOptions` | `/admin/overview` | ⏳ TODO              |
+| 19 | `app/src/pages/admin/AdminOverview.tsx:105,114,172,137,156` | `chartData`, `periodOptions`, `summaryCards-from-API`, `pendingVerifications-from-API`, `activeDisputes-from-API` | `/admin/overview` | 🔄 **MIXED** (3 من 5 ثوابت API_WIRED عبر `useAdminStats`/`useAdminStores`/`useAdminDisputes`؛ الـ chart + period لا يزالان mock) |
+
+**Audit ملخّص (2026-06-29 21:14):**
+- **STILL_MOCK:** 17 ثابتاً في 14 ملف (انظر أعمدة "حالة K.1" أعلاه).
+- **API_WIRED:** `#16 StoresManagement` + `#17 DisputesManagement` + 3 من AdminOverview (#19).
+- **HYBRID:** `#12 SellerProducts` + `#13 SellerOrders` (fallback عند API فارغ).
+- **MIXED:** `#19 AdminOverview` (chart-only stub + period dropdown ثابت).
+- **TODO فعلياً:** 11 ملفاً — Home (9 sub) + ReportsAnalytics + Reviews + SellerAnalytics + AdminDashboard.
+
+> **الـ Hook المطلوب لكل ثقب متبقيّ:**
+> - `Home/*` (9 ملفات) + `ReportsAnalytics` + `Reviews` + `SellerAnalytics` + `AdminDashboard`: تتطلّب endpoints وقت-سلسلة جديدة على backend (analytics/aggregations) — لا توجد في `app/server/routes/*` حالياً.
+> - **الحلّ البديل:** توسيع `/api/admin/stats` و `/api/seller/analytics` ليشمل الـ buckets الزمنية الشهرية/اليومية (`monthly_buckets`, `traffic_sources`, etc.).
+> - **الجهد المقدَّر:** 14 ملف × ~30 سطر SQL+route+wrapper+page = 18-24 ساعة.
 
 #### 11.1.c 🟥 فجوات client-side API (server routes بلا client wrapper)
 
-> مُستخرج من cross-reference `app/server/routes/*.cts` ↔ `app/src/lib/api.ts` بتاريخ 2026-06-29.
+> مُستخرج من cross-reference `app/server/routes/*.cts` ↔ `app/src/lib/api.ts` بتاريخ 2026-06-29 ومدقَّق فعلياً في 21:14.
 
-| Server route | الوصف                              | الـ frontend function ناقص | Gap type |
-| ------------ | ---------------------------------- | ------------------------- | -------- |
-| `GET /api/store-followers/check`    | فحص follow-store للمستخدم الحالي | `getStoreFollowStatus()` | client gap |
-| `GET /api/cart/count/:userId`       | عدّاد عناصر السلة                 | `getCartCount()`          | client gap |
-| `PATCH /api/cart/:id`               | تحديث كمية/متغير عنصر السلة       | `updateCartItem()`        | client gap |
-| `GET /api/search`                   | بحث FTS ثنائي اللغة              | `searchProducts()`        | client gap |
-| `GET /api/notifications/unread-count/:userId` | عدّاد الإشعارات غير المقروءة | `getUnreadCount()` | client gap |
-| `POST /api/messages/`               | إرسال رسالة مباشرة               | `sendMessage()`           | client gap |
-| `GET /api/messages/inbox`           | صندوق الوارد                      | `getInbox()`              | client gap |
-| `GET /api/messages/sent`            | صندوق الصادر                      | `getSent()`               | client gap |
-| `GET /api/messages/conversation`     | محادثة ثنائية                     | `getConversation()`       | client gap |
-| `GET /api/messages/unread-count`    | عدّاد رسائل غير مقروءة            | `getUnreadMessageCount()` | client gap |
-| `PUT /api/messages/:id/read`        | وضع علامة قراءة على رسالة         | `markMessageRead()`       | client gap |
-| `GET /api/payments/methods`         | قائمة مزودي الدفع المُهيَّأين    | `getPaymentMethods()`     | client gap |
-| `POST /api/payments/webhook/:method` | callback المزود (server-only)  | (لا يحتاج client)        | بـ التصميم |
-| `POST /api/auth/2fa/setup`          | توليد secret + backup codes       | `setup2FA()`              | client gap |
-| `POST /api/auth/2fa/enable`         | تأكيد enrollment TOTP             | `enable2FA()`             | client gap |
-| `POST /api/auth/2fa/verify`         | صرف partial_token + TOTP         | `verify2FA()`             | client gap |
-| `POST /api/auth/2fa/disable`        | تعطيل 2FA بكلمة مرور             | `disable2FA()`            | client gap |
-| `POST /api/auth/2fa/backup-codes/regenerate` | تدوير backup codes    | `regenerateBackupCodes()` | client gap |
+| Server route | الـ frontend function (مُحقَّق) | الحالة | ملف api.ts |
+| ------------ | ------------------------------ | ------ | ---------- |
+| `GET /api/store-followers/check`    | `checkStoreFollowStatus()`     | ✅      | `lib/api.ts:1571` |
+| `GET /api/cart/count/:userId`       | `getCartCount()`               | ✅      | `lib/api.ts:1509` |
+| `PATCH /api/cart/:id`               | `updateCartItem()`             | ✅      | `lib/api.ts:1518` |
+| `GET /api/search`                   | `searchProducts()`             | ✅      | `lib/api.ts:1495` |
+| `GET /api/notifications/unread-count/:userId` | `getUnreadNotificationCount()` | ✅ | `lib/api.ts:1530` |
+| `POST /api/messages/`               | `sendMessage()`                | ✅      | `lib/api.ts:1391` |
+| `GET /api/messages/inbox`           | `getInbox()`                    | ✅      | `lib/api.ts:1405` |
+| `GET /api/messages/sent`            | `getSent()`                     | ✅      | `lib/api.ts:1409` |
+| `GET /api/messages/conversation`     | `getConversation()`             | ✅      | `lib/api.ts:1413` |
+| `GET /api/messages/unread-count`    | `getUnreadMessageCount()`       | ✅      | `lib/api.ts:1422` |
+| `PUT /api/messages/:id/read`        | `markMessageRead()`             | ✅      | `lib/api.ts:1428` |
+| `GET /api/payments/methods`         | `getPaymentProviders()`         | ✅      | `lib/api.ts:1548` |
+| `POST /api/payments/webhook/:method` | (لا يحتاج client — provider callback) | ✅ BY DESIGN | n/a |
+| `POST /api/auth/2fa/setup`          | `setup2FA()`                    | ✅      | `lib/api.ts:1455` |
+| `POST /api/auth/2fa/enable`         | `enable2FA()`                   | ✅      | `lib/api.ts:1459` |
+| `POST /api/auth/2fa/verify`         | `verify2FA()`                   | ✅      | `lib/api.ts:1468` |
+| `POST /api/auth/2fa/disable`        | `disable2FA()`                  | ✅      | `lib/api.ts:1478` |
+| `POST /api/auth/2fa/backup-codes/regenerate` | `regenerateBackupCodes()` | ✅      | `lib/api.ts:1487` |
 
-**0 server gaps** — كل `apiRequest()` URL في `app/src/lib/api.ts` يقابل route handler مسجَّل في `app/server/index.ts:174-194`.
+**0 gaps متبقيّة** (commit `7dc4fef`). ثلاثة wrappers سُمِّيت بصيغة مختلفة عمّا اقترحته الـ MASTER_PLAN السابقة: `checkStoreFollowStatus`, `getUnreadNotificationCount`, `getPaymentProviders` — كلها موضَّحة أعلاه. **0 server gaps** — كل `apiRequest()` URL في `app/src/lib/api.ts` يقابل route handler مسجَّل في `app/server/index.ts:174-194`.
 
-#### 11.1.d 🟥 StoresManagement.tsx — حالة K.1 (in-progress)
+#### 11.1.d ✅ StoresManagement.tsx — حالة K.1 (مُكتمل)
 
-> المُتغيِّر `storesData` (10 متاجر وهمية، 832 سطر ملف) لا يزال يُغذّي الجدول. تمّت إضافة **staged imports** للمرحلة القادمة:
-> - `useAdminStores as _useAdminStores` من `@/hooks/useApi`
-> - `patchAdminStore as _patchAdminStore`, `type AdminStore` من `@/lib/api`
-> - `useApp as _useApp` من `@/context/AppContext`
-> - `mapAdminStoreToView(store: AdminStore): StoreRecord` — جاهز للاستخدام
->
-> **حالة الاستخدام:** staged فقط (الـ prefix `_` يخفي ESLint). للتفعيل الفعلي:
-> 1. استبدال `useState(storesData)` بـ `useAdminStores(...)`.
-> 2. استبدال `selectedStore` mutations بـ `await patchAdminStore(id, { is_active, is_verified, trust_level })`.
-> 3. إضافة `loading`, `error`, `refetch` للـ UI shell + toasts.
-> 4. ترحيل 10 سجلات `storesData` إلى `seed.sql` (لـ demo data عند DB فاضي).
->
-> **الجهد المقدَّر:** 3-4 ساعات + 3 unit tests على الأقل لـ AdminStore mapping.
+> تمّ التفعيل في commit `d61eebd`. الـ staged imports أُزيلت والـ hooks حقيقيّة الآن.
+
+- **`useAdminStores`** (L32 من `@/hooks/useApi`، بدون alias) → مستدعَى في `StoresManagement.tsx:156` كـ `const { data: storesResponse, loading, error, refetch } = useAdminStores(apiParams);`
+- **`patchAdminStore`** (L33 من `@/lib/api`، بدون alias) → مستدعَى في L220/L238/L244 كـ `await patchAdminStore(target.id, nextBody);`
+- **`type AdminStore`** (L33 من `@/lib/api`) → مستخدم كـ `parameter store: AdminStore` في `mapAdminStoreToView` (L62) وكمفتاح `Parameters<typeof patchAdminStore>[1]` (L215).
+- **`useApp`** (L34 من `@/context/AppContext`، بدون alias) → مستدعَى في L136 كـ `const { addToast } = useApp();` ويُستدعى بعد كل mutation.
+- **`mapAdminStoreToView(store: AdminStore): StoreRecord`** → L62-87، يُستدعى في L162: `() => (storesResponse?.stores ?? []).map(mapAdminStoreToView)`.
+
+**التحقّق:** الـ grep `storesData` في `StoresManagement.tsx` يرجع **0** matches — الكود الآن يقرأ من `/api/admin/stores` بالكامل.
+
+**التوصية:** تبقى خطوة `seed.sql` لترحيل 10 سجلات demo (مذكورة سابقاً كـ "الجهد المقدَّر") — لم تُنجز بعد لأن البيانات الحالية على DB تفي بالغرض. ضعها في جدول K.1.6 (أو K.1.7).
 
 ### 11.2 ✅ المهام المُنجزة (48 من 78)
 

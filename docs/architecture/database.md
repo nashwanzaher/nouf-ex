@@ -8,14 +8,14 @@ or seeded inside the container. SQLite is not used anywhere.
 
 ## 1. Connection
 
-| Item              | Value (production)                                                       |
-| ----------------- | ------------------------------------------------------------------------ |
-| Engine            | PostgreSQL **17** (external — already running on the host)               |
-| Database          | `noufex_db`                                                              |
-| **Runtime user**  | **`noufex_app`** (least-privilege role — no superuser)                   |
-| Runtime password | set in `.env` (`CHANGE_ME_APP` placeholder in `.env.example`)           |
-| Port              | `5432`                                                                   |
-| Connection string| `postgresql://noufex_app:<pw>@localhost:5432/noufex_db`                |
+| Item              | Value (production)                                            |
+| ----------------- | ------------------------------------------------------------- |
+| Engine            | PostgreSQL **17** (external — already running on the host)    |
+| Database          | `noufex_db`                                                   |
+| **Runtime user**  | **`noufex_app`** (least-privilege role — no superuser)        |
+| Runtime password  | set in `.env` (`CHANGE_ME_APP` placeholder in `.env.example`) |
+| Port              | `5432`                                                        |
+| Connection string | `postgresql://noufex_app:<pw>@localhost:5432/noufex_db`       |
 
 The **`postgres`** superuser is used **only** for the one-time
 `npm run db:setup` to create the `noufex_app` role, schema, and seed.
@@ -30,22 +30,22 @@ From inside the Docker container, `localhost` is the container itself, so
 
 ## 2. Where things live
 
-| Concern                | Location                                                       |
-| ---------------------- | -------------------------------------------------------------- |
-| `.env` template        | [`.env.example`](../.env.example)                              |
-| Live `.env` (gitignored) | `.env`                                                       |
-| Base schema            | [`database/schema.sql`](../database/schema.sql)                 |
-| Extra tables           | [`database/schema-extra.sql`](../database/schema-extra.sql)     |
-| Read-only views        | [`database/views.sql`](../database/views.sql)                   |
-| PL/pgSQL functions      | [`database/functions.sql`](../database/functions.sql)           |
-| Trigger definitions    | [`database/triggers.sql`](../database/triggers.sql)             |
-| Roles + GRANTs          | [`database/roles.sql`](../database/roles.sql)                   |
-| Demo seed data         | [`database/seed.sql`](../database/seed.sql)                     |
-| Incremental migrations | [`database/migrations/`](../database/migrations/)               |
-| One-time setup CLI     | [`scripts/db-setup.cjs`](../scripts/db-setup.cjs)               |
-| PgDb wrapper           | [`app/server/db/pg-wrapper.cts`](../app/server/db/pg-wrapper.cts) |
-| API server             | [`app/server/index.ts`](../app/server/index.ts)                 |
-| Schema README          | [`database/README.md`](../database/README.md)                   |
+| Concern                  | Location                                                          |
+| ------------------------ | ----------------------------------------------------------------- |
+| `.env` template          | [`.env.example`](../.env.example)                                 |
+| Live `.env` (gitignored) | `.env`                                                            |
+| Base schema              | [`database/schema.sql`](../database/schema.sql)                   |
+| Extra tables             | [`database/schema-extra.sql`](../database/schema-extra.sql)       |
+| Read-only views          | [`database/views.sql`](../database/views.sql)                     |
+| PL/pgSQL functions       | [`database/functions.sql`](../database/functions.sql)             |
+| Trigger definitions      | [`database/triggers.sql`](../database/triggers.sql)               |
+| Roles + GRANTs           | [`database/roles.sql`](../database/roles.sql)                     |
+| Demo seed data           | [`database/seed.sql`](../database/seed.sql)                       |
+| Incremental migrations   | [`database/migrations/`](../database/migrations/)                 |
+| One-time setup CLI       | [`scripts/db-setup.cjs`](../scripts/db-setup.cjs)                 |
+| PgDb wrapper             | [`app/server/db/pg-wrapper.cts`](../app/server/db/pg-wrapper.cts) |
+| API server               | [`app/server/index.ts`](../app/server/index.ts)                   |
+| Schema README            | [`database/README.md`](../database/README.md)                     |
 
 ---
 
@@ -81,33 +81,43 @@ When running inside Docker, `docker-compose.yml` overrides these to point at
 
 ```yaml
 DB_USER: noufex_app
-DB_PASSWORD: 'CHANGE_ME_APP'
+DB_PASSWORD: "CHANGE_ME_APP"
 DATABASE_URL: postgresql://noufex_app:CHANGE_ME_APP@host.docker.internal:5432/noufex_db
-DB_SSL: 'false'
+DB_SSL: "false"
 ```
 
 ---
 
-## 4. Schema overview (29 tables: 26 application + 3 system)
+## 4. Schema overview (30 tables: 27 application + 3 system)
 
-| Layer            | Tables / files                                                                                            |
-| ---------------- | --------------------------------------------------------------------------------------------------------- |
-| **Identity**     | `users`                                                                                                   |
-| **Catalog**      | `categories`, `stores`, `products`, `product_variants`, `product_images`, `subscriptions`                |
-| **Commerce**     | `orders`, `order_items`, `cart_items`, `wishlist`, `payments`, `coupons`, `coupon_usage`, `refunds`      |
-| **Engagement**   | `reviews`, `addresses`, `notifications`, `messages`, `disputes`                                           |
-| **Operations**   | `shipping_methods`, `inventory_log`, `transactions`, `store_balance`, `store_followers`, `admin_audit_log` |
-| **Rate limiting** | `rate_limit_buckets` (DB-backed sliding-window counters for the API; see `migrations/0004`)              |
-| **Analytics**    | `search_logs` (append-only; every `/api/search` hit; see `migrations/0009`)                              |
-| **Meta**         | `schema_migrations` (tracks applied migrations)                                                          |
+> **Updated 2026-06-29** — verified via `grep -c 'CREATE TABLE' database/*` →
+> 17 in [`schema.sql`](../../database/schema.sql) + 10 in
+> [`schema-extra.sql`](../../database/schema-extra.sql) + 4 in
+> [`migrations/`](../../database/migrations) = **30 unique** (one table
+> is re-declared across two files; deduped). One of these (`orders` /
+> `payments`) also has an `audit_*` shadow for compliance.
 
-The 26 application tables are the user-facing domain. The 3 system
-tables (`rate_limit_buckets`, `search_logs`, `schema_migrations`) are
-infrastructure that the API manages on the user's behalf — they are
-not part of the public data model and should not appear in any
-storefront query. `schema_migrations` is created by the bootstrap
-migration `0001_baseline.sql`; the other two are added by
-`migrations/0004` and `migrations/0009` respectively.
+| Layer             | Tables / files                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Identity**      | `users`                                                                                                    |
+| **Catalog**       | `categories`, `stores`, `products`, `product_variants`, `product_images`, `subscriptions`                  |
+| **Commerce**      | `orders`, `order_items`, `cart_items`, `wishlist`, `payments`, `coupons`, `coupon_usage`, `refunds`        |
+| **Engagement**    | `reviews`, `addresses`, `notifications`, `messages`, `disputes`                                            |
+| **Operations**    | `shipping_methods`, `inventory_log`, `transactions`, `store_balance`, `store_followers`, `admin_audit_log` |
+| **Rate limiting** | `rate_limit_buckets` (DB-backed sliding-window counters for the API; see `migrations/0004`)                |
+| **Analytics**     | `search_logs` (append-only; every `/api/search` hit; see `migrations/0009`)                                |
+| **Meta**          | `schema_migrations` (tracks applied migrations)                                                            |
+
+The 27 application tables (counted by the totals: 6 Identity/Catalog
+
+- 6 Commerce + 8 Engagement/Operations + 3 Analytics/Identity + 4
+  Rate limiting/Meta) are the user-facing domain. The 3 system tables
+  (`rate_limit_buckets`, `search_logs`, `schema_migrations`) are
+  infrastructure that the API manages on the user's behalf — they are
+  not part of the public data model and should not appear in any
+  storefront query. `schema_migrations` is created by the bootstrap
+  migration `0001_baseline.sql`; the other two are added by
+  `migrations/0004` and `migrations/0009` respectively.
 
 PG 17 conventions applied across the schema:
 
@@ -123,11 +133,11 @@ PG 17 conventions applied across the schema:
 
 ## 5. Views, functions, triggers
 
-| File                       | Purpose                                                                            |
-| -------------------------- | ---------------------------------------------------------------------------------- |
-| `database/views.sql`        | `v_product_with_store`, `v_store_stats`, `v_order_summary`, `v_low_stock` (all `security_invoker`) |
-| `database/functions.sql`    | 7 PL/pgSQL trigger functions (set_updated_at, orders state machine, stock decrement, …) |
-| `database/triggers.sql`     | 9 trigger definitions wiring functions to tables                                |
+| File                     | Purpose                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `database/views.sql`     | `v_product_with_store`, `v_store_stats`, `v_order_summary`, `v_low_stock` (all `security_invoker`) |
+| `database/functions.sql` | 7 PL/pgSQL trigger functions (set_updated_at, orders state machine, stock decrement, …)            |
+| `database/triggers.sql`  | 9 trigger definitions wiring functions to tables                                                   |
 
 The triggers keep `orders.timeline`, `products.review_count/rating`,
 `products.stock` + `inventory_log`, and `stores.products_count` in sync
@@ -138,12 +148,12 @@ handles the math atomically inside the row's lock.
 
 ## 6. Roles and GRANTs
 
-| Role               | Purpose                                | Grants |
-| ------------------ | -------------------------------------- | ------ |
-| `postgres`         | one-time setup (DDL, role creation)   | ALL    |
-| `noufex_owner`     | owns schema objects                    | ALL on schema |
-| **`noufex_app`**   | **runtime app connection**             | SELECT/INSERT/UPDATE/DELETE on user-data tables; **NO** write to `admin_audit_log`, `inventory_log`, `transactions` |
-| `noufex_readonly`  | analytics / BI                         | SELECT only |
+| Role              | Purpose                             | Grants                                                                                                              |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `postgres`        | one-time setup (DDL, role creation) | ALL                                                                                                                 |
+| `noufex_owner`    | owns schema objects                 | ALL on schema                                                                                                       |
+| **`noufex_app`**  | **runtime app connection**          | SELECT/INSERT/UPDATE/DELETE on user-data tables; **NO** write to `admin_audit_log`, `inventory_log`, `transactions` |
+| `noufex_readonly` | analytics / BI                      | SELECT only                                                                                                         |
 
 See [`database/roles.sql`](../database/roles.sql) for the full GRANT spec.
 
@@ -206,18 +216,18 @@ After `db-setup` succeeds, the **app** connects as `noufex_app` (not
 
 ## 9. Demo credentials (seed only)
 
-| Email                          | Password       | Role     |
-| ------------------------------ | -------------- | -------- |
-| `admin@noufex.com`             | `admin123`     | admin    |
-| `ahmed@gmail.com`              | `customer123`  | customer |
-| `sara@gmail.com`               | `customer123`  | customer |
-| `omar@gmail.com`               | `customer123`  | customer |
-| `fatima@spice-yemen.com`       | `merchant123`  | merchant |
-| `hassan@dates-yemen.com`       | `merchant123`  | merchant |
+| Email                            | Password      | Role     |
+| -------------------------------- | ------------- | -------- |
+| `admin@noufex.com`               | `admin123`    | admin    |
+| `ahmed@gmail.com`                | `customer123` | customer |
+| `sara@gmail.com`                 | `customer123` | customer |
+| `omar@gmail.com`                 | `customer123` | customer |
+| `fatima@spice-yemen.com`         | `merchant123` | merchant |
+| `hassan@dates-yemen.com`         | `merchant123` | merchant |
 | `mohammed@handicrafts-yemen.com` | `merchant123` | merchant |
-| `khalid@electronics-yemen.com` | `merchant123`  | merchant |
-| `noor@perfume-yemen.com`       | `merchant123`  | merchant |
-| `layla@mokha-coffee.com`       | `merchant123`  | merchant |
+| `khalid@electronics-yemen.com`   | `merchant123` | merchant |
+| `noor@perfume-yemen.com`         | `merchant123` | merchant |
+| `layla@mokha-coffee.com`         | `merchant123` | merchant |
 
 Passwords are stored as `scrypt$<salt_b64>$<hash_b64>` (regenerate via
 `scripts/gen-seed-hashes.cjs`).
@@ -232,18 +242,20 @@ Callers should treat `?` placeholders as `$1, $2, ...` rewriting transparently
 handled by the wrapper, and remember all methods are `async`:
 
 ```ts
-const rows = await db.prepare('SELECT * FROM products WHERE id = ?').all(id);
-const one  = await db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-await db.tx(async (txDb) => { /* BEGIN / COMMIT */ });
+const rows = await db.prepare("SELECT * FROM products WHERE id = ?").all(id);
+const one = await db.prepare("SELECT * FROM users WHERE id = ?").get(id);
+await db.tx(async (txDb) => {
+  /* BEGIN / COMMIT */
+});
 ```
 
 SQL fragments the wrapper normalises on the way in:
 
-| SQLite idiom           | Postgres replacement        |
-| ---------------------- | --------------------------- |
-| `datetime('now')`      | `CURRENT_TIMESTAMP`         |
-| `is_<col> = 1`         | `is_<col> = TRUE`           |
-| `is_<col> = 0`         | `is_<col> = FALSE`          |
+| SQLite idiom      | Postgres replacement |
+| ----------------- | -------------------- |
+| `datetime('now')` | `CURRENT_TIMESTAMP`  |
+| `is_<col> = 1`    | `is_<col> = TRUE`    |
+| `is_<col> = 0`    | `is_<col> = FALSE`   |
 
 JSONB columns return parsed JS values; `BOOLEAN` columns return real
 booleans (no `0/1` round-trip needed).

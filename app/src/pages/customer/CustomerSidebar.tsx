@@ -8,7 +8,10 @@ const navItems = [
 	{ icon: Star, label: 'تقييماتي', path: '/customer/reviews' },
 	{ icon: MapPin, label: 'العناوين', path: '/customer/addresses' },
 	{ icon: Bell, label: 'الإشعارات', path: '/customer/notifications' },
-	{ icon: User, label: 'الملف الشخصي', path: '/customer/profile' },
+	// 'Profile' removed 2026-06-29: the /customer/profile route never
+	// existed — it pointed to NotFound. Profile info is accessible via
+	// the existing /customer dashboard (CustomerDashboard.tsx renders
+	// user info via useOrders / useNotifications).
 ];
 
 export default function CustomerSidebar() {

@@ -217,7 +217,7 @@
 | **B.2.1** | security.md (Threat model + RBAC + CSP + secrets)  | PHASE_TEST_TASKS.md gap #3 | `docs/architecture/security.md`   | ✅ **Done (2026-06-28)** — 14 sections, 10/10 OWASP API risks, 158 table rows · 27.6 KB   | 2-3 ساعات |
 | **B.2.2** | deployment.md (production checklist + nginx + SSL) | PHASE_TEST_TASKS.md gap #4 | `docs/operations/deployment.md`   | ✅ **Done (2026-06-28)** — 14 sections, 24 code blocks · 19.2 KB                          | 2-3 ساعات |
 | **B.2.3** | monitoring.md (JSON logs + metrics + alerts)       | PHASE_TEST_TASKS.md gap #5 | `docs/operations/monitoring.md`   | ✅ **Done (2026-06-28)** — 10 sections, 5 alert rules, 6 runbooks · 18.6 KB               | 1-2 ساعة  |
-| **B.2.4** | er-diagram.md (Mermaid ERD لـ 29 جدول)             | PHASE_TEST_TASKS.md gap #6 | `docs/architecture/er-diagram.md` | ✅ **Done (2026-06-28)** — 6 Mermaid diagrams, 36 table definitions, 62 FK rows · 24.6 KB | 1-2 ساعة  |
+| **B.2.4** | er-diagram.md (Mermaid ERD لـ 30 جدول)             | PHASE_TEST_TASKS.md gap #6 | `docs/architecture/er-diagram.md` | ✅ **Done (2026-06-28)** — 6 Mermaid diagrams, 36 table definitions, 62 FK rows · 24.6 KB | 1-2 ساعة  |
 | **B.2.5** | debugging.md (common patterns + reset utilities)   | PHASE_TEST_TASKS.md gap #8 | `docs/development/debugging.md`   | ✅ **Done (2026-06-28)** — 9 sections, 14 failure modes, 7 reset scripts · 23 KB          | 1 ساعة    |
 
 ### B.3: توثيق CI/CD (1 مهمة)
@@ -333,7 +333,7 @@
 | ID            | الميزة                                            | PHASE / المصدر                                 | الحالة                                |
 | ------------- | ------------------------------------------------- | ---------------------------------------------- | ------------------------------------- |
 | **DONE.1**    | Authentication الكامل (login, register, JWT, 2FA) | PHASE 0 + 12                                   | ✅ Done                               |
-| **DONE.2**    | قاعدة بيانات المنتجات (29 جدول)                   | `database/`                                    | ✅ Done                               |
+| **DONE.2**    | قاعدة بيانات المنتجات (30 جدول)                   | `database/`                                    | ✅ Done                               |
 | **DONE.3**    | صفحة تفاصيل المنتج (PDP)                          | PHASE 2                                        | ✅ Done                               |
 | **DONE.4**    | نظام السلة (Cart)                                 | PHASE 4 (✅ **27/27 PASS** — مكتمل 2026-06-28) | ✅ Done                               |
 | **DONE.5**    | نظام الطلبات (Orders + Inventory trigger)         | PHASE 5                                        | ✅ Done                               |
@@ -565,7 +565,7 @@ Nouf-ex/
 # 🔍 مراجعة الفجوات UI ↔ Server ↔ DB
 
 > **تاريخ الإضافة:** 2026-06-28
-> **المصدر:** تحليل آلي لـ 49 صفحة UI + 74 route في السيرفر + 29 جدول DB + 3 ملفات locale
+> **المصدر:** تحليل آلي لـ 49 صفحة UI + 74 route في السيرفر + 30 جدول DB + 3 ملفات locale
 > **الحالة:** ⏳ TODO — يجب معالجتها قبل اعتبار الكود "production-ready"
 
 ## 1. 📊 ملخص الفجوات (Gap Summary)
@@ -815,26 +815,41 @@ Nouf-ex/
 
 ## 11. 🗓️ خارطة التنفيذ التفصيلية (Detailed Execution Roadmap)
 
-> **آخر تحديث:** 2026-06-28 · **Commit:** `f70eca9` · **الفرع:** `main` · **الحالة:** 🟢 متزامن مع `origin/main`
+> **آخر تحديث:** 2026-06-29 · **Commit:** `f1daef1` · **الفرع:** `main` · **الحالة:** 🟢 متزامن مع `origin/main`
+> **آخر تدقيق فعلي:** 2026-06-29 05:00 UTC+3 — أعيد التحقق من جميع الأرقام أدناه.
 
 ### 11.1 📊 الحالة الراهنة (مُتحقَّق منها فعلياً)
 
-| المقياس                                 | القيمة                                | الأمر / المصدر                          | الحالة  |
-| --------------------------------------- | ------------------------------------- | --------------------------------------- | ------- |
-| آخر commit على main                     | `f70eca9`                             | `git log --oneline -1`                  | ✅      |
-| متزامن مع origin/main                   | 0 ahead / 0 behind                    | `git rev-list --left-right --count`     | ✅      |
-| Working tree                            | نظيف                                  | `git status`                            | ✅      |
-| TypeScript                              | 0 errors                              | `npx tsc --noEmit -p tsconfig.app.json` | ✅      |
-| ESLint                                  | 0 issues                              | `npx eslint .`                          | ✅      |
-| Prettier                                | كل الملفات متطابقة                    | `npx prettier --check .`                | ✅      |
-| Vitest                                  | **732 passed · 3 skipped (55 files)** | `npx vitest run`                        | ✅      |
-| Vite build                              | OK (197 PWA entries · 21.18 MiB)      | `npm run build`                         | ✅      |
-| esbuild server                          | OK (216.6kb)                          | `npx esbuild ...`                       | ✅      |
-| فروع محلية                              | main + opencode/tidy-rocket           | `git branch -a`                         | ✅      |
-| ملفات .md نشطة                          | 19                                    | `Get-ChildItem -Recurse docs/`          | ✅      |
-| المهام المُنجزة (A→D + K.2 + K.3 + K.5) | **51/51 = 100%**                      | § 11.2 أدناه                            | ✅      |
-| المهام المتبقية (E→K \ K.2, K.3, K.5)   | **27/27 معلّقة**                      | § 11.3 أدناه                            | ⏳ TODO |
-| **نسبة الإنجاز الإجمالية**              | **91% (71/78)**                       | حساب                                    | ✅      |
+| المقياس                             | القيمة                                                                                               | الأمر / المصدر                                                  | الحالة  |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------- |
+| آخر commit على main                 | `f1daef1`                                                                                            | `git log --oneline -1`                                          | ✅      |
+| متزامن مع origin/main               | 0 ahead / 0 behind                                                                                   | `git rev-list --left-right --count main...origin/main`          | ✅      |
+| Working tree                        | نظيف + ملف واحد غير مُعقَّب (`ui-smoke.test.tsx`)                                                    | `git status`                                                    | ✅      |
+| TypeScript                          | **0 errors**                                                                                         | `npx tsc --noEmit -p tsconfig.app.json`                         | ✅      |
+| ESLint                              | **0 issues**                                                                                         | `npx eslint . --quiet`                                          | ✅      |
+| Prettier                            | كل الملفات متطابقة                                                                                   | `npx prettier --check .`                                        | ✅      |
+| Vitest                              | **751 passed · 3 skipped (56 files)** — +20 من formatMoney tests                                     | `npx vitest run`                                                | ✅      |
+| **Vitest failures**                 | **1 pre-existing** (`ProductDetail.test.tsx`) — غير مرتبط بـ K.3                                     | `reports/`                                                      | ⚠️      |
+| Vite build                          | OK (197 PWA entries · 21.18 MiB precache)                                                            | `npm run build`                                                 | ✅      |
+| esbuild server bundle               | OK (215.9kb)                                                                                         | `npx esbuild server/index.ts ...`                               | ✅      |
+| فروع محلية                          | main + opencode/tidy-rocket                                                                          | `git branch -a`                                                 | ✅      |
+| ملفات .md نشطة                      | 19 (في docs/) + 22 archive = **41 إجمالي** (مطابق لادعاء MASTER_PLAN ✅)                             | `Get-ChildItem -Recurse -Filter *.md`                           | ✅      |
+| Server routers mounted              | **17 routers** في `app/server/index.ts`                                                              | `grep "app.use" server/index.ts`                                | ✅      |
+| Server route declarations           | **91 routes** في 19 ملف route                                                                        | `grep "router.METHOD" server/routes/*.cts`                      | ✅      |
+| UI pages (.tsx)                     | **38 صفحة** في `app/src/pages/**/*.tsx`                                                              | `Get-ChildItem -Recurse src/pages -Include *.tsx`               | ✅      |
+| React Router routes                 | **22 routes** + `*` wildcard في `App.tsx`                                                            | `grep "Route path" src/App.tsx`                                 | ✅      |
+| **UI pages بدون route**             | **5 admin** (UsersManagement, StoresManagement, AdminOverview, DisputesManagement, ReportsAnalytics) | لا تظهر في `<Route>`                                            | 🔴      |
+| Admin pages على mock data           | **4** من 6 (UsersManagement, StoresManagement, DisputesManagement, ReportsAnalytics)                 | `grep "usersData\|storesData\|disputesData\|mockAnalytics"`     | 🔴 K.1  |
+| useApi hooks مُصدَّرة               | **26** (بعد تنظيف K.5: أنزل 6)                                                                       | `grep "^export function use" src/hooks/useApi.ts`               | ✅      |
+| lib/api.ts functions مُصدَّرة       | **56** مُصدَّرة                                                                                      | `grep "^export" src/lib/api.ts`                                 | ✅      |
+| Database tables                     | **30 فريدة** (17 في schema.sql + 10 في schema-extra.sql + 3 في migrations/)                          | `grep "^CREATE TABLE" database/*.sql database/migrations/*.sql` | ✅      |
+| YER hardcoded في الكود              | **0** (بعد K.3 — تم استبدال 8 بـ `formatMoney()`)                                                    | `grep "} YER" app/src/**/*.tsx` (بعد تطبيق K.3)                 | ✅      |
+| **المهام المُنجزة (✅)**            | **48 / 78** (62%) — A:6 + B:24 + C:4 + D:8 + K.2 + K.3 + K.5                                         | grep `✅ Done` في §11.3                                         | ✅      |
+| **المهام المعلّقة (⏳)**            | **24 / 78** (31%) — E:5 + F:6 + G:6 + H:3 + J:3 + K:3 (K.1, K.4, K.6)                                | grep `⏳` في §11.3                                              | ⏳ TODO |
+| **المهام المؤجلة (⚪)**             | **6 / 78** (7%) — I:6 (ميزات مستقبلية XL efforts)                                                    | grep `⚪` في §11.3                                              | ⚪      |
+| **المهام المُكتملة/المجدولة P0/P1** | **63 / 78** (81%) — (48 ✅ + 15 ⏳ من أصل 63)                                                        | حساب                                                            | ✅      |
+
+> **ملاحظة للقراءة:** 78 مهمة مُعرَّفة (A:6 + B:24 + C:4 + D:8 + E:5 + F:6 + G:6 + H:3 + I:6 + J:4 + K:6). أكملنا 48، تبقّى 24 نشطة + 6 مؤجلة.
 
 ### 11.2 ✅ المهام المُنجزة (48 من 78)
 
@@ -920,47 +935,44 @@ Nouf-ex/
 | **K.3** | إنشاء `formatMoney()` helper + استبدال 8 YER مُبرمَج | `app/src/lib/format.ts`                | ✅ **Done 2026-06-29** — 20 unit tests, 5 pages refactored, Checkout test FIXED |
 | **K.5** | تنظيف 6 hooks غير مُستخدمة                           | `app/src/hooks/useApi.ts`              | ✅ **Done 2026-06-29** — file 467→423 lines (-44)                               |
 
-### 11.3 ⏳ المهام المتبقية (27 من 78) — مُرتَّبة حسب الأولوية
+### 11.3 ⏳ المهام المتبقية (24 من 78) — مُرتَّبة حسب الأولوية
 
 #### 🔴 P0 — High Priority (مهام حرجة · 2 مهام · 16-22 ساعة)
 
-| الترتيب   | ID          | المهمة                             | الجهد    | يعتمد على                                     | معيار القبول                                                                                                               |
-| --------- | ----------- | ---------------------------------- | -------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| ~~**1**~~ | ~~**K.2**~~ | ~~**إضافة 165 مفتاح i18n مفقود**~~ | ~~4-6h~~ | ✅ **Done 2026-06-29** (171 keys → 0 missing) | ~~`npx vitest run` يمر، `grep -c 'seller\\.\\                                                                              | addresses\\.' src/i18n/locales/*.json` ≥ 165 في كل ملف~~ |
-| **2**     | **K.1**     | استبدال Mock في 6 صفحات Admin      | 12-16h   | K.2 ✅                                        | `grep -r 'usersData\|storesData\|disputesData\|mockAnalytics\|revenueData\|statsData' app/src/pages/admin/` يُرجِع 0 نتائج |
+| الترتيب | ID      | المهمة                        | الجهد  | يعتمد على | معيار القبول                                                                                                               |
+| ------- | ------- | ----------------------------- | ------ | --------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **1**   | **K.1** | استبدال Mock في 6 صفحات Admin | 12-16h | K.3 ✅    | `grep -r 'usersData\|storesData\|disputesData\|mockAnalytics\|revenueData\|statsData' app/src/pages/admin/` يُرجِع 0 نتائج |
 
-#### 🟡 P1 — Medium Priority (مهام تنشيطية · 9 مهام · 51-71 ساعة)
+#### 🟡 P1 — Medium Priority (مهام تنشيطية · 8 مهام · 49-69 ساعة)
 
-| الترتيب   | ID          | المهمة                                                            | الجهد    | يعتمد على              | معيار القبول                                  |
-| --------- | ----------- | ----------------------------------------------------------------- | -------- | ---------------------- | --------------------------------------------- |
-| ~~**3**~~ | ~~**K.3**~~ | ~~`formatMoney()` helper + استبدال 8 YER~~                        | ~~2-3h~~ | ✅ **Done 2026-06-29** | ~~`grep -r '} YER' app/src/` يُرجِع 0 نتائج~~ |
-| **4**     | **K.4**     | UI لـ 12 admin + 8 customer endpoints                             | 16-24h   | K.6 (صفحات جديدة)      | 20 endpoint مربوط بصفحة UI                    |
-| **5**     | **K.6**     | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages) | 12-18h   | K.4 (hooks)            | 4 routes جديدة في App.tsx                     |
-| **6**     | **F.4**     | RFQ form (backend + UI + inbox)                                   | 6-8h     | K.3                    | route جديد `/api/rfq` + صفحة UI               |
-| **7**     | **F.5**     | Subscription tiers (real plan mgmt)                               | 4-6h     | —                      | route جديد + صفحة UI                          |
-| **8**     | **F.6**     | Analytics dashboard (real data)                                   | 4-6h     | K.1                    | ReportsAnalytics.tsx يستخدم API               |
-| **9**     | **F.1**     | Image dimensions (CLS prevention)                                 | 2-3h     | —                      | Lighthouse CLS = 0                            |
-| **10**    | **F.2**     | Merchant verification badges                                      | 2-3h     | —                      | badge يظهر في StorePage                       |
-| **11**    | **F.3**     | Trade Assurance copy                                              | 1-2h     | —                      | Trust.tsx بنص escrow                          |
+| الترتيب | ID      | المهمة                                                            | الجهد  | يعتمد على         | معيار القبول                    |
+| ------- | ------- | ----------------------------------------------------------------- | ------ | ----------------- | ------------------------------- |
+| **2**   | **K.4** | UI لـ 12 admin + 8 customer endpoints                             | 16-24h | K.6 (صفحات جديدة) | 20 endpoint مربوط بصفحة UI      |
+| **3**   | **K.6** | إنشاء 4 صفحات (AuditLog + AdminProducts + AdminOrders + Messages) | 12-18h | K.4 (hooks)       | 4 routes جديدة في App.tsx       |
+| **4**   | **F.4** | RFQ form (backend + UI + inbox)                                   | 6-8h   | —                 | route جديد `/api/rfq` + صفحة UI |
+| **5**   | **F.5** | Subscription tiers (real plan mgmt)                               | 4-6h   | —                 | route جديد + صفحة UI            |
+| **6**   | **F.6** | Analytics dashboard (real data)                                   | 4-6h   | K.1               | ReportsAnalytics.tsx يستخدم API |
+| **7**   | **F.1** | Image dimensions (CLS prevention)                                 | 2-3h   | —                 | Lighthouse CLS = 0              |
+| **8**   | **F.2** | Merchant verification badges                                      | 2-3h   | —                 | badge يظهر في StorePage         |
+| **9**   | **F.3** | Trade Assurance copy                                              | 1-2h   | —                 | Trust.tsx بنص escrow            |
 
-#### 🟡 P2 — Low Priority (تحسينات · 14 مهمة · 18-25 ساعة)
+#### 🟡 P2 — Low Priority (تحسينات · 13 مهمة · 17-24 ساعة)
 
-| الترتيب    | ID          | المهمة                                         | الجهد    | يعتمد على              |
-| ---------- | ----------- | ---------------------------------------------- | -------- | ---------------------- |
-| ~~**12**~~ | ~~**K.5**~~ | ~~تنظيف hooks غير مستخدمة~~                    | ~~1-2h~~ | ✅ **Done 2026-06-29** |
-| **13**     | **E.1**     | توسيع `app/server/README.md`                   | 1-2h     | —                      |
-| **14**     | **E.2**     | إنشاء `app/src/README.md`                      | 1-2h     | —                      |
-| **15**     | **E.3**     | إنشاء `docs/planning/risks.md`                 | 1-2h     | —                      |
-| **16**     | **E.4**     | إنشاء `docs/operations/backup-restore.md`      | 1h       | —                      |
-| **17**     | **E.5**     | إنشاء `docs/testing/standards/google-style.md` | 1h       | —                      |
-| **18**     | **G.1**     | إصلاح `console.log` → structured logger        | 2-3h     | —                      |
-| **19**     | **G.2**     | Husky pre-commit + lint-staged                 | 1h       | —                      |
-| **20**     | **G.3**     | توثيق `cn()` helper (JSDoc)                    | 30m      | —                      |
-| **21**     | **G.4**     | `tests/fixtures/` (products/users/orders JSON) | 2-3h     | —                      |
-| **22**     | **G.5**     | MSW server config (browser + node)             | 2-3h     | G.4                    |
-| **23**     | **G.6**     | مراجعة `api-server.test.ts` coverage           | 1h       | —                      |
-| **24**     | **J.1**     | تحسين `docs/README.md`                         | 1h       | —                      |
-| **25**     | **J.2**     | تحسين `docs/testing/overview.md`               | 1h       | —                      |
+| الترتيب | ID      | المهمة                                         | الجهد | يعتمد على |
+| ------- | ------- | ---------------------------------------------- | ----- | --------- |
+| **10**  | **E.1** | توسيع `app/server/README.md`                   | 1-2h  | —         |
+| **11**  | **E.2** | إنشاء `app/src/README.md`                      | 1-2h  | —         |
+| **12**  | **E.3** | إنشاء `docs/planning/risks.md`                 | 1-2h  | —         |
+| **13**  | **E.4** | إنشاء `docs/operations/backup-restore.md`      | 1h    | —         |
+| **14**  | **E.5** | إنشاء `docs/testing/standards/google-style.md` | 1h    | —         |
+| **18**  | **G.1** | إصلاح `console.log` → structured logger        | 2-3h  | —         |
+| **19**  | **G.2** | Husky pre-commit + lint-staged                 | 1h    | —         |
+| **20**  | **G.3** | توثيق `cn()` helper (JSDoc)                    | 30m   | —         |
+| **21**  | **G.4** | `tests/fixtures/` (products/users/orders JSON) | 2-3h  | —         |
+| **22**  | **G.5** | MSW server config (browser + node)             | 2-3h  | G.4       |
+| **23**  | **G.6** | مراجعة `api-server.test.ts` coverage           | 1h    | —         |
+| **24**  | **J.1** | تحسين `docs/README.md`                         | 1h    | —         |
+| **25**  | **J.2** | تحسين `docs/testing/overview.md`               | 1h    | —         |
 
 #### ⚪ P3 — Future / Deferred (مهام مؤجلة · 11 مهمة)
 
@@ -1165,7 +1177,7 @@ git push -u origin feature/A2-ps-template
 
 | التقنية    | الإصدار                              | المصدر                    |
 | ---------- | ------------------------------------ | ------------------------- |
-| PostgreSQL | 17 (29 جدول)                         | `database/schema.sql`     |
+| PostgreSQL | 17 (30 جدول)                         | `database/schema.sql`     |
 | Express    | 5 + Node 20 + TypeScript             | `app/package.json`        |
 | React      | 19 + Vite 7                          | `app/package.json`        |
 | PowerShell | 5.1 (للاختبار E2E)                   | `tests/e2e/*.ps1`         |
@@ -1215,7 +1227,177 @@ git push -u origin feature/A2-ps-template
 
 ---
 
-# 📌 ملاحظات الفحص النهائي
+# �️ المخطط التقني للمشروع (5 سنوات)
+
+> **قسم جديد · أضيف 2026-06-29 بعد التدقيق العميق للمشروع الفعلي.**
+> يوثق رحلة المنتج من الفكرة إلى 5 سنوات ما بعد الإطلاق — معلومات تقنية بحتة عن الكود، البنية التحتية، ودورة حياة المنتج.
+
+## اليوم 0 — الحالة الحالية (ما قبل الإطلاق / Pre-Launch)
+
+| البُعد               | الوضع الحالي                                                                           | مرجع في الكود                                                      |
+| -------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Frontend**         | React 19 + TypeScript + Vite 7 + Tailwind + Radix UI                                   | [`app/package.json`](app/package.json)                             |
+| **State**            | Context API (`AppContext`, `CartContext`) — لا توجد مكتبة state management بعد         | [`app/src/context/AppContext.tsx`](app/src/context/AppContext.tsx) |
+| **Routing**          | React Router 7 مع 22 routes + Suspense + ProtectedRoute                                | [`app/src/App.tsx`](app/src/App.tsx)                               |
+| **Server**           | Express 5 على Node 20+ مع TypeScript (CommonJS .cts)                                   | [`app/server/index.ts`](app/server/index.ts)                       |
+| **Auth**             | JWT (HMAC HS256) + scrypt + 2FA/TOTP + refresh tokens                                  | [`app/server/lib/auth.cts`](app/server/lib/auth.cts)               |
+| **Database**         | PostgreSQL 17 — 30 tables، 13 functions، 10 triggers، 4 views، 3 roles                 | [`database/schema.sql`](database/schema.sql)                       |
+| **Cache/Rate**       | In-memory rate limiter (per-IP + per-user buckets)                                     | [`app/server/lib/`](app/server/lib/)                               |
+| **Payments**         | Paymob + Stripe + Manual/COD (3 طرق، stub-based)                                       | [`app/server/lib/payments/`](app/server/lib/payments/)             |
+| **i18n**             | ar / en / zh (3 لغات، 999 keys in en)                                                  | [`app/src/i18n/locales/`](app/src/i18n/locales/)                   |
+| **Notifications**    | In-app + email events (13 templates + 8 triggers)                                      | [`app/server/lib/notifications/`](app/server/lib/notifications/)   |
+| **CI/CD**            | GitHub Actions (ci.yml, deploy-staging.yml, deploy-prod.yml + CODEOWNERS + Dependabot) | [`.github/`](.github/)                                             |
+| **Containerization** | Dockerfile 3-stage + docker-compose.yml                                                | [`Dockerfile`](Dockerfile)                                         |
+| **Tests**            | 56 ملفات اختبار، 751 vitest passed + 3 skipped + 18 PHASE PowerShell scripts           | [`app/`](app/)                                                     |
+| **MCP Server**       | TypeScript MCP server (noufex db queries، docs)                                        | [`mcp-server/`](mcp-server/)                                       |
+
+## الشهر 1-3 — الإطلاق التجريبي (Beta Launch)
+
+**هدف:** نشر الموقع على production بـ 100-500 مستخدم تجريبي.
+
+**المطلوب تقنياً:**
+
+1. **تنفيذ K.1** — ربط 6 صفحات Admin بـ `/api/admin/*` الحقيقي (يستبدل mock data)
+2. **تنفيذ K.6** — بناء 4 صفحات Admin/Messages الجديدة
+3. **تنفيذ K.4** — UI لـ 20 endpoint ميت (admin + customer)
+4. إضافة `useAdminUsers` / `useAdminProducts` / `useAdminOrders` / etc. hooks في `app/src/hooks/useApi.ts`
+5. توصيل admin sub-routes في `App.tsx`: `/admin/users`, `/admin/stores`, `/admin/disputes`, `/admin/reports` مع `<AdminLayout>` sidebar
+6. Real-time updates: استبدال الـ fetch polling بـ Server-Sent Events (SSE) للـ orders وnotifications
+7. Deploy staging: `git push origin main` → auto-deploy (D.4 ✅)
+8. Provision production Postgres (managed: AWS RDS / DigitalOcean / Neon)
+9. Setup Sentry (error tracking) + PostHog (analytics) + Plausible (privacy-friendly web analytics)
+10. CDN setup (Cloudflare) للـ static assets + DDoS protection
+11. Email service: Resend أو SendGrid (production-grade SMTP)
+
+**مؤشرات النجاح:**
+
+- 100 active merchants/buyers يومياً
+- < 2s page TTFB (Vite + CDN)
+- 0 critical bugs من real users
+
+## الشهر 4-6 — الـ PMF (Product-Market Fit)
+
+**هدف:** التحقق من أن النموذج الاقتصادي يعمل: عمولات، اشتراكات، قيمة دائمة.
+
+**المطلوب تقنياً:**
+
+1. تحويل PaymentProviders من `stub.cts` إلى production real APIs (Stripe Connect للـ merchant payouts)
+2. تنفيذ **F.4 (RFQ)**: نظام طلبات الأسعار للمنتجات غير المدرجة
+3. تنفيذ **F.5 (Subscriptions)**: خطط اشتراك شهرية للتجار
+4. تنفيذ **F.6 (Analytics Dashboard)**: استبدال mock data في `ReportsAnalytics.tsx` بحقيقي
+5. إعادة هيكلة (`app/server/lib/payments/`) لدمج Stripe Connect (onboarding, payouts, dispute handling)
+6. Real-time order tracking: WebSocket أو SSE للإشعارات الفورية للطرفين
+7. Audit log كامل (`admin_audit_log` table موجودة لكن الـ UI مفقود — K.6)
+8. Backup strategy تلقائي: nightly `pg_dump` → S3 (cross-region replication)
+
+**مؤشرات النجاح:**
+
+- 10% من الـ merchants يدفعون عمولة شهرية
+- 95% order completion rate (من creation → delivery)
+
+## الشهر 7-12 — النموذج الأول (Year 1 Post-Launch)
+
+**هدف:** توسيع لـ 10K-50K مستخدم، أول 100K$ GMV.
+
+**المطلوب تقنياً:**
+
+1. **Multi-region deployment**: 2-3 regions (اليمن/السعودية كمحور، الخليج كسوق ثانوي)
+2. **CDN strategy**: CloudFront / Cloudflare للـ static + media assets
+3. **Database sharding**: تقسيم `noufex_db` حسب region (read replicas في كل region)
+4. **Redis**: استبدال الـ in-memory rate limiter بـ Redis حقيقي (مشاركة بين instances)
+5. **Background jobs**: BullMQ + Redis للـ:
+   - Email digests (daily/weekly)
+   - Image processing (resizing, optimization)
+   - Backup jobs
+   - Notification fan-out
+6. **Search upgrade**: استبدال `public/data/*.json` static fallback بـ PostgreSQL full-text search + ranking
+7. **Mobile PWA**: تحضير Service Worker + offline support + push notifications
+8. **Analytics upgrade**: استبدال mock في `AdminOverview`/`ReportsAnalytics` بـ TimescaleDB أو PostgreSQL materialized views
+9. Internationalization: إضافة Bengali (Bangladesh)، Urdu (Pakistan)، Turkish
+10. **Security audit**: OWASP ZAP + Burp Suite professional pen-testing
+
+**مؤشرات النجاح:**
+
+- 100K monthly active users
+- < 100ms API p99 latency globally
+- SOC 2 Type 1 compliance readiness
+
+## السنة 2-3 — قابلية التوسع (Scale)
+
+**هدف:** 100K-1M مستخدم، 1M$ MRR.
+
+**المطلوب تقنياً:**
+
+1. **Microservices decomposition**: استخراج services مستقلة:
+   - `notifications-service` (email, push, SMS)
+   - `search-service` (Elasticsearch / OpenSearch)
+   - `media-service` (image processing, CDN management)
+   - `payment-service` (Stripe integration, payouts)
+   - `analytics-service` (event aggregation, dashboards)
+2. **Event-driven architecture**: Kafka أو NATS للـ inter-service communication
+3. **GraphQL gateway**: استبدال REST بـ GraphQL (Apollo Federation) للـ mobile clients
+4. **Real-time everything**: WebSocket + Redis pub/sub للـ messaging, presence, live auctions
+5. **AI integration**:
+   - **I.1 (Image search)**: multimodal embedding (CLIP) + vector DB (Pinecone / Weaviate)
+   - **I.2 (AI Mode)**: LLM reranker (GPT-4 / Claude) فوق الـ retrieval results
+6. **Mobile native**: PWA → React Native / Flutter
+7. **Offline-first**: CRDT (Yjs / Automerge) للـ cart, wishlist, drafts
+8. **Data warehouse**: Snowflake / BigQuery + Airflow للـ ETL
+9. **ML pipeline**: fraud detection, recommendation engine, churn prediction
+
+**مؤشرات النجاح:**
+
+- 10M GMV مع 99.99% uptime SLA
+- < 50ms API latency globally (p95)
+- Multi-language: 8+ languages
+
+## السنة 4-5 — المنتج الناضج (Mature Product)
+
+**هدف:** 1M-10M مستخدم، 10M$ ARR، التوسع الجغرافي.
+
+**المطلوب تقنياً:**
+
+1. **AI-first features**:
+   - **I.3 (Live commerce)**: streaming bids + video (WebRTC + LLM moderation)
+   - **I.4 (Mobile app)**: Native iOS/Android
+   - **I.5 (Loyalty)**: نقاط + VIP tiers + gamification
+   - **I.6 (Banners + promotions)**: AI-targeted dynamic pricing
+2. **Multi-tenant B2B**: SaaS mode للـ marketplaces الأخرى لاستخدام نفس الـ engine
+3. **Webhook marketplace**: integrations مع Shopify, WooCommerce, Magento
+4. **Compliance**:
+   - **PCI DSS Level 1** (نلتزم بـ Stripe لذلك لا نحتاج certification)
+   - **GDPR full compliance** + data export/delete endpoints
+   - **ISO 27001** certification
+5. **Performance targets**:
+   - First contentful paint < 1s globally
+   - API p99 < 100ms
+   - Database queries < 50ms p99
+6. **Disaster recovery**: RPO < 5min, RTO < 1h — multi-region active-active
+7. **Open source core** (اختياري): تحرير الـ engine تحت AGPL لزيادة contributions
+
+**مؤشرات النجاح:**
+
+- 100M+ annual GMV
+- Series A funded ($5M+) أو profitable
+- تواجد في 5+ دول
+
+---
+
+## 🗺️ خارطة زمنية بصرية (Visual Timeline)
+
+```
+2026-Q3 ▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  Beta launch (Q3)
+2026-Q4 ▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  PMF (Q4)
+2027    ▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  Year 1: 100K users
+2028-29 ▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  Scale: microservices
+2030-31 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  Mature: AI + global
+```
+
+> **الأساس الذي نبني عليه:** الكود الحالي (React 19 + Express 5 + PostgreSQL 17) هو قاعدة صلبة لـ 5 سنوات إضافية. البنية المعيارية (`app/server/routes/*.cts` منفصلة، `app/src/hooks/useApi.ts` معزولة) تسمح بالتوسع التدريجي بدون إعادة كتابة.
+
+---
+
+# �📌 ملاحظات الفحص النهائي
 
 > **آخر تحديث:** 2026-06-28
 > **Commit المرتبط:** 8c80564 (feat: complete PHASE 10-17 test coverage + academic structure)

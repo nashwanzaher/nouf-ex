@@ -53,17 +53,30 @@ total in the summary` was failing due to locale-aware `toLocaleString()`
   `useSellerOrder`, `useSellerAnalytics`, `useSellerInventory`,
   `useSellerPayouts`) were audited and KEPT — they're needed by the
   upcoming K.1 (Admin pages → API) task.
+- **2026-06-29** — **Deep audit + cleanup pass.** After completing K.2
+  - K.3 + K.5, a comprehensive ground-truth audit was run. Findings:
+    fixed broken `/customer/profile` link in `CustomerSidebar.tsx` (the
+    route never existed → pointed to NotFound; user profile data is
+    already in `/customer` via `CustomerDashboard`); corrected DB table
+    count from 29 → 30 across [`MASTER_PLAN.md`](docs/MASTER_PLAN.md) (5
+    occurrences) and [`docs/architecture/database.md`](docs/architecture/database.md);
+    rewrote §11.1 numeric claims with verified ground-truth (counted via
+    `grep`, `git ls-tree`, etc.); rebalanced §11.3 remaining-tasks count
+    to 24 (after deleting the 3 struck-through Done rows from K.2/K.3/K.5);
+    added new 🛤️ **5-year technical roadmap** section spanning Pre-Launch
+    → Beta (Q3 2026) → PMF (Q4 2026) → Year 1 (2027) → Scale (2028-29) →
+    Mature (2030-31), each with concrete file/code references. Real gaps
+    filed as K.1 (P0, 4 admin pages still on mock data) and K.6 (5 admin
+    pages with no route).
 
 ### Changed
 
-- **2026-06-29** — `docs/MASTER_PLAN.md` — K.3 marked ✅ Done; totals in §11
-  updated (28 → 27 tasks remaining, ~106 → ~103 hours, 90% → 91%
-  complete). Sprint 1 Day 2 now fully ✅ (K.5 + K.3 both done).
-- **2026-06-29** — `docs/MASTER_PLAN.md` — K.5 marked ✅ Done; totals in §11
-  updated (29 → 28 tasks remaining, ~108 → ~106 hours, 89% → 90%
-  complete). Sprint 1 Day 2 now ✅ for K.5 portion.
-- **2026-06-29** — `docs/MASTER_PLAN.md` — K.2 marked ✅ Done; totals in §11
-  updated (30 → 29 tasks remaining, ~114 → ~108 hours, 87% → 89% complete).
+- **2026-06-29** — `docs/MASTER_PLAN.md` + `docs/architecture/database.md` —
+  Master roadmap corrected: §11.1 KPI table rewritten with **ground-truth
+  verified** numbers (TS 0, ESLint 0, Vitest 751 passed, 30 DB tables,
+  YER hardcoded 0); §11.3 rebalanced to 24 remaining (K.2/K.3/K.5 rows
+  deleted — they were struck-through but still counted in the list);
+  DB table count 29 → 30 throughout.
 - **2026-06-29** — `docs/MASTER_PLAN.md` — Pre-existing flaky tests
   documented: `Checkout.test.tsx > shows the cart total in the summary`
   and `ProductDetail.test.tsx > renders the product name, price and

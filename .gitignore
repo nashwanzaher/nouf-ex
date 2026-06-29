@@ -57,3 +57,7 @@ app/playwright/.cache/
 admin-dashboard.png
 login-page-fixed.png
 .playwright-mcp/
+.t.txt
+.l.txt
+.p.txt
+.d.txt

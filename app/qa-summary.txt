@@ -1,0 +1,39 @@
+QA RUN: 2026-07-02T22:10:38.325Z
+
+======================================================================
+TypeScript (tsc) — exit 2
+
+======================================================================
+
+======================================================================
+ESLint — exit 1
+
+======================================================================
+Problems: 2 problems (1 error, 1 warning)
+STDOUT tail:
+
+C:\Users\zaher\Desktop\nouf-ex\app\src\hooks\useApi.ts
+  146:3  error    Error: Expected the dependency list for useMemo to be an array literal
+
+Expected the dependency list for useMemo to be an array literal.
+
+C:\Users\zaher\Desktop\nouf-ex\app\src\hooks\useApi.ts:146:3
+  144 | 		// already calls this hook with a new array each render.
+  145 | 		// eslint-disable-next-line react-hooks/exhaustive-deps
+> 146 | 		deps,
+      | 		^^^^ Expected the dependency list for useMemo to be an array literal
+  147 | 	);
+  148 |
+  149 | 	// One controller per fetch cycle. Replaced on every refetch and  react-hooks/use-memo
+  185:3  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+✖ 2 problems (1 error, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+
+
+======================================================================
+Vitest — exit 1
+
+======================================================================
+Test Files: Test Files  15 failed

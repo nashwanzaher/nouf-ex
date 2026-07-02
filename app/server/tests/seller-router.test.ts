@@ -23,8 +23,15 @@ import request from 'supertest';
 import { sellerRouter } from '../routes/seller.cts';
 import { signTestToken } from './test-token';
 
+// SECURITY: each token MUST use a distinct sub so the per-process
+// auth cache in middleware.ts (keyed by sub) doesn't get a stale
+// role from a previous test signing in. Previously MERCHANT_TOKEN
+// and CUSTOMER_TOKEN both used sub:2 → the second signer overwrote
+// the cache, so subsequent requests for the merchant token were
+// 403'd by requireRole because the cache claimed the user was a
+// customer.
 const MERCHANT_TOKEN = signTestToken({ sub: 2, role: 'merchant' });
-const CUSTOMER_TOKEN = signTestToken({ sub: 2, role: 'customer' });
+const CUSTOMER_TOKEN = signTestToken({ sub: 3, role: 'customer' });
 const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });
 const STRANGER_TOKEN = signTestToken({ sub: 99, role: 'merchant' });
 

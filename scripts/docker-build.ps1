@@ -10,7 +10,7 @@
 # compose `env_file:` directive, NEVER from build args.
 # =============================================================================
 
-Set-Location $PSScriptRoot
+Set-Location $PSScriptRoot\..
 
 # Allowlist of variables the Dockerfile's ARG block references.
 # Anything not in this list is silently dropped from .env so it never
@@ -23,7 +23,7 @@ $allowed = @(
     'NODE_ENV'
 )
 
-$envFile = Join-Path $PSScriptRoot '.env'
+$envFile = Join-Path $PSScriptRoot '..\.env'
 $buildArgs = @()
 
 if (Test-Path $envFile) {
@@ -46,7 +46,7 @@ Write-Host "[docker-build] all other .env values are forwarded only at runtime v
 
 # Use the array form of & docker so we never go through Invoke-Expression
 # (which was the second CVE pattern of the previous version).
-$logFile = Join-Path $PSScriptRoot 'scripts\_docker_build.out'
+$logFile = Join-Path $PSScriptRoot '_docker_build.out'
 $argList = @('build', '-t', 'noufex:latest')
 if ($buildArgs.Count -gt 0) {
     $argList += $buildArgs
@@ -54,5 +54,5 @@ if ($buildArgs.Count -gt 0) {
 $argList += '.'
 
 & docker @argList 2>&1 | Out-File -Encoding utf8 $logFile
-$LASTEXITCODE > (Join-Path $PSScriptRoot 'scripts\_docker_build_exit.txt')
+$LASTEXITCODE > (Join-Path $PSScriptRoot '_docker_build_exit.txt')
 exit $LASTEXITCODE

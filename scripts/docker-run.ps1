@@ -1,10 +1,10 @@
-Set-Location $PSScriptRoot
+Set-Location $PSScriptRoot\..
 docker rm -f Nouf-ex 2>&1 | Out-Null
 $envFileArgs = @()
 if (Test-Path ".env") { $envFileArgs = @("--env-file", ".env") }
 $cmd = "docker run -d --name Nouf-ex -p 3000:3000 " + ($envFileArgs -join ' ') + " noufex:latest"
-Invoke-Expression $cmd 2>&1 | Out-File -Encoding utf8 "$PSScriptRoot\scripts\_docker_run.out"
-$LASTEXITCODE | Out-File -Encoding ascii "$PSScriptRoot\scripts\_docker_run_exit.txt"
+Invoke-Expression $cmd 2>&1 | Out-File -Encoding utf8 "$PSScriptRoot\_docker_run.out"
+$LASTEXITCODE | Out-File -Encoding ascii "$PSScriptRoot\_docker_run_exit.txt"
 Write-Host "Waiting 25 seconds for startup..."
 Start-Sleep -Seconds 25
 Write-Host "--- container status ---"

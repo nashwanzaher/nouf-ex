@@ -22,13 +22,17 @@
  *     .get('/api/cart/7')
  *     .set('Authorization', `Bearer ${token}`);
  */
-import { signAuthToken, __setCachedTokenVersionForTests, type AuthRole } from '../middleware.js';
+import {
+	signAuthToken,
+	__setCachedAuthForTests,
+	type AuthRole,
+} from '../middleware.js';
 
 export function signTestToken(payload: { sub: number; role: AuthRole; ver?: number }): string {
 	const ver = payload.ver ?? 0;
 	// Seed the per-process cache so `requireAuth`'s DB lookup returns
 	// `ver` instead of `null` (which would 401). The cache lives in
 	// the middleware module so all route handlers see it.
-	__setCachedTokenVersionForTests(payload.sub, ver);
+	__setCachedAuthForTests(payload.sub, ver, payload.role);
 	return signAuthToken({ ver, ...payload });
 }

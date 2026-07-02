@@ -48,7 +48,7 @@
 	"editor.matchBrackets": "always",
 	"editor.autoClosingBrackets": "languageDefined",
 	"editor.autoClosingQuotes": "languageDefined",
-	"editor.autoClosingOvertype": "languageDefined",
+	"editor.autoClosingOvertype": "auto",
 	"editor.autoSurround": "languageDefined",
 	"editor.cursorBlinking": "blink",
 	"editor.cursorSmoothCaretAnimation": "on",
@@ -148,13 +148,13 @@
 		"editor.wordWrap": "on"
 	},
 	"[dockerfile]": {
-		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
+		"editor.defaultFormatter": "vscode.docker"
 	},
 	"[shellscript]": {
-		"editor.defaultFormatter": "foxundermoon.shell-format"
+		"editor.defaultFormatter": "ms-vscode.powershell"
 	},
 	"[sql]": {
-		"editor.defaultFormatter": "ms-mssql.sql-formatter",
+		"editor.defaultFormatter": "ms-mssql.mssql",
 		"editor.formatOnSave": true
 	},
 	"[yaml]": {
@@ -187,7 +187,7 @@
 		"**/*.cjs"
 	],
 	"js/ts.tsserver.experimental.enableProjectDiagnostics": true,
-	"js/ts.workspaceSymbols.scope": "all",
+	"js/ts.workspaceSymbols.scope": "allOpenProjects",
 
 	// ─── Tailwind CSS ───────────────────────────────────────────────
 	"tailwindCSS.experimental.classRegex": [
@@ -255,7 +255,7 @@
 	},
 
 	// ─── Vitest — discovered automatically by `vitest.explorer` ────
-	"testing.automaticallyOpenTestResults": false,
+	"testing.automaticallyOpenTestResults": "neverOpen",
 
 	// ─── Copilot Chat — Productivity features ───────────────────────
 	"github.copilot.chat.executionSubagent.enabled": true,
@@ -403,7 +403,7 @@
 	"terminal.integrated.cursorBlinking": true,
 	"terminal.integrated.fontSize": 14,
 	"terminal.integrated.fontFamily": "Cascadia Code, Consolas, monospace",
-	"terminal.integrated.enableFileLinks": true,
+	"terminal.integrated.enableFileLinks": "on",
 	"terminal.integrated.copyOnSelection": true,
 	"terminal.integrated.rightClickBehavior": "default",
 	"terminal.integrated.confirmOnExit": "never",
@@ -421,7 +421,6 @@
 	// ─── Performance ────────────────────────────────────────────────
 	"extensions.supportUntrustedWorkspaces": false,
 	"extensions.autoUpdate": "onlyEnabledExtensions",
-	"extensions.showRecommendationsOnlyOnDemand": true,
 	"update.mode": "manual",
 	"telemetry.telemetryLevel": "error",
 	"telemetry.feedback.enabled": false,

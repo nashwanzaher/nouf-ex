@@ -188,8 +188,19 @@ paymentsRouter.get('/order/:orderId', requireAuth, async (req: Request, res: Res
 		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
 			return sendError(res, 'Forbidden', 403);
 		}
+		// DB-P2-03 (added 2026-07-02): explicit column list. The previous
+		// `SELECT *` exposed `provider_response` (raw gateway JSON that
+		// can contain debug fields, internal tokens, and PII the SPA
+		// has no business seeing). If the SPA needs the raw payload,
+		// add it back to the columns here behind a feature flag.
 		const payments = await db
-			.prepare('SELECT * FROM payments WHERE order_id = ? ORDER BY created_at DESC')
+			.prepare(
+				`SELECT id, order_id, amount, currency, status, method,
+				        reference, created_at, updated_at
+				 FROM payments
+				 WHERE order_id = ?
+				 ORDER BY created_at DESC`,
+			)
 			.all(orderId);
 		sendSuccess(res, payments);
 	} catch (err) {

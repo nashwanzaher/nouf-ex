@@ -4,6 +4,7 @@ import {
 	useReducer,
 	useEffect,
 	useCallback,
+	useMemo,
 	type ReactNode,
 } from 'react';
 import { clearLocalCart, syncOnLogin } from '@/lib/cart-sync';
@@ -165,7 +166,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 		[],
 	);
 
-	const value = { state, dispatch, setUser, setToken, addToast, removeToast };
+	// PERF-P2-01 (added 2026-07-02): wrap the context value in useMemo
+	// so that consumers don't re-render on every parent render. The
+	// previous version created a new object on every render which
+	// busted the React.memo / shouldComponentUpdate optimizations in
+	// every component that calls useApp() or useAuth().
+	const value = useMemo(
+		() => ({ state, dispatch, setUser, setToken, addToast, removeToast }),
+		[state, setUser, setToken, addToast, removeToast],
+	);
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 

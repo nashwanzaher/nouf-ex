@@ -44,26 +44,45 @@ const sidebarNavItems: SidebarItem[] = [
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 function OrderTimeline({ timeline }: { timeline: string[] }) {
-	const steps = ['ordered', 'processing', 'shipped', 'delivered'];
+	const { t } = useTranslation();
+	const steps = ['ordered', 'processing', 'shipped', 'delivered'] as const;
 	const currentIndex = timeline.length - 1;
 
 	return (
-		<div className="flex items-center gap-1 mt-2">
+		<div
+			className="flex items-center gap-1 mt-2"
+			role="list"
+			aria-label={t('customer.timeline.label', 'Order progress')}
+		>
 			{steps.map((step, i) => {
 				const completed = i <= currentIndex;
-				const icons: Record<string, React.ReactNode> = {
-					ordered: <Package className="w-3 h-3" />,
-					processing: <Clock className="w-3 h-3" />,
-					shipped: <Truck className="w-3 h-3" />,
-					delivered: <CheckCircle className="w-3 h-3" />,
+				const icons: Record<(typeof steps)[number], React.ReactNode> = {
+					ordered: <Package className="w-3 h-3" aria-hidden="true" />,
+					processing: <Clock className="w-3 h-3" aria-hidden="true" />,
+					shipped: <Truck className="w-3 h-3" aria-hidden="true" />,
+					delivered: <CheckCircle className="w-3 h-3" aria-hidden="true" />,
 				};
+				// A11Y-P2-05 (added 2026-07-02): each step has a screen-reader
+				// name so assistive tech hears the step, not just "completed".
+				// Pair the icon (aria-hidden) with a localized aria-label.
+				const stepLabel = t(`customer.timeline.${step}`, step);
 				return (
-					<div key={step} className="flex items-center gap-1">
+					<div
+						key={step}
+						role="listitem"
+						className="flex items-center gap-1"
+						aria-current={i === currentIndex ? 'step' : undefined}
+					>
 						<div
 							className={cn(
 								'w-6 h-6 rounded-full flex items-center justify-center',
 								completed ? styles.timelineStep : styles.timelineStepPending,
 							)}
+							aria-label={`${stepLabel} — ${
+								completed
+									? t('customer.timeline.done', 'done')
+									: t('customer.timeline.pending', 'pending')
+							}`}
 						>
 							{icons[step]}
 						</div>
@@ -75,6 +94,7 @@ function OrderTimeline({ timeline }: { timeline: string[] }) {
 										? styles.timelineConnectorDone
 										: styles.timelineConnector,
 								)}
+								aria-hidden="true"
 							/>
 						)}
 					</div>
@@ -95,12 +115,19 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function StatusBadge({ status, label }: { status: string; label: string }) {
+	const { t } = useTranslation();
 	return (
 		<span
 			className={cn(
 				'px-2 py-0.5 rounded text-[11px] font-semibold',
 				STATUS_COLORS[status] || 'bg-gray-400 text-white',
 			)}
+			// A11Y-P2-06 (added 2026-07-02): the colour is the only signal
+			// for status, which fails for colour-blind users. The visible
+			// label IS the text content (color-blind users still see it),
+			// and the role=status wrapper exposes the meaning to AT.
+			role="status"
+			aria-label={`${t('customer.status.label', 'Status')}: ${label}`}
 		>
 			{label}
 		</span>

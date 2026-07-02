@@ -13,6 +13,13 @@ i18n.use(LanguageDetector)
 		resources,
 		fallbackLng: 'ar',
 		supportedLngs: ['ar', 'en', 'zh'],
+		// SEC-P2-02 (added 2026-07-02): React's render layer already
+		// escapes string children (so `<div>{t('key')}</div>` cannot
+		// inject HTML). Setting escapeValue here to `true` would
+		// double-escape and break any translation that intentionally
+		// contains inline markup (e.g. <strong>, <br/>). The locale
+		// JSON files MUST be treated as trusted code-review artefacts,
+		// not user input. Do not change this without a security review.
 		interpolation: { escapeValue: false },
 		detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
 	});

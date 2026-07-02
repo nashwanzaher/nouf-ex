@@ -28,6 +28,7 @@ import {
 	getNotifications,
 	ApiError,
 	getAdminUsers,
+	getAdminTimeSeries,
 	getAdminStores,
 	getAdminProducts,
 	getAdminOrders,
@@ -587,6 +588,18 @@ export function useAdminAuditLog(
 
 export function useAdminStats() {
 	return useDataHook((signal) => getAdminStats({ signal }));
+}
+
+/** C.7 time-series hook — added 2026-07-02. Powers the
+ *  AdminOverview area chart and ReportsAnalytics' six charts. */
+export function useAdminTimeSeries(
+	params: {
+		metric?: 'revenue' | 'orders' | 'users' | 'disputes' | 'merchants';
+		bucket?: 'day' | 'week' | 'month';
+		days?: number;
+	} = {},
+) {
+	return useDataHook((signal) => getAdminTimeSeries(params, { signal }));
 }
 
 /** /api/ready — public readiness probe. Used by the admin dashboard

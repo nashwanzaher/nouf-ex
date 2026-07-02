@@ -1349,6 +1349,36 @@ export async function getAdminStats(options?: RequestOptions): Promise<AdminStat
 	return apiRequest('/admin/stats', { signal: options?.signal });
 }
 
+/** C.7 time-series response — added 2026-07-02. */
+export interface AdminTimeSeriesPoint {
+	ts: string;
+	label: string;
+	value: number;
+}
+export interface AdminTimeSeriesResponse {
+	metric: 'revenue' | 'orders' | 'users' | 'disputes' | 'merchants';
+	bucket: 'day' | 'week' | 'month';
+	horizonDays: number;
+	points: AdminTimeSeriesPoint[];
+}
+export async function getAdminTimeSeries(
+	params: {
+		metric?: 'revenue' | 'orders' | 'users' | 'disputes' | 'merchants';
+		bucket?: 'day' | 'week' | 'month';
+		days?: number;
+	} = {},
+	options?: RequestOptions,
+): Promise<AdminTimeSeriesResponse> {
+	const q = new URLSearchParams();
+	if (params.metric) q.set('metric', params.metric);
+	if (params.bucket) q.set('bucket', params.bucket);
+	if (params.days !== undefined) q.set('days', String(params.days));
+	const qs = q.toString();
+	return apiRequest(`/admin/stats/timeseries${qs ? `?${qs}` : ''}`, {
+		signal: options?.signal,
+	});
+}
+
 // ─── Mutations ──────────────────────────────────────────────
 
 export async function patchAdminUser(id: number, body: AdminUserUpdateBody): Promise<AdminUser> {

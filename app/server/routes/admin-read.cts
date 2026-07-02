@@ -420,3 +420,107 @@ adminReadRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response)
 		return sendError(res, err);
 	}
 });
+
+/* ------------------------------------------------------------------ */
+/*  C.7 Time-series endpoint (added 2026-07-02)                       */
+/* ------------------------------------------------------------------ */
+// Returns bucketed time-series data for the admin charts. Powers
+// `AdminOverview`'s area chart and `ReportsAnalytics`'s six charts.
+//
+// Query params:
+//   - metric: 'revenue' (default) | 'orders' | 'users' | 'disputes' | 'merchants'
+//   - bucket: 'day' (default, last 30d) | 'week' (last 12w) | 'month' (last 12m)
+//   - days:   override horizon (default = bucket's natural horizon, max 365)
+//
+// Response shape:
+//   { metric, bucket, points: [{ ts: ISO-date, label: string, value: number }] }
+//
+// Implementation:
+//   - date_trunc on PG side + generate_series so empty buckets return 0.
+//   - Revenue = SUM(orders.total) WHERE payment_status='paid'.
+//   - Users / merchants = COUNT WHERE created_at within bucket.
+//   - Orders / disputes = COUNT WHERE created_at within bucket.
+//   - Cap horizon at 365 days for safety (validation above).
+adminReadRouter.get('/stats/timeseries', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({
+				metric: z.enum(['revenue', 'orders', 'users', 'disputes', 'merchants']).default('revenue'),
+				bucket: z.enum(['day', 'week', 'month']).default('day'),
+				days: z.coerce.number().int().min(1).max(365).optional(),
+			}),
+			req.query,
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const { metric, bucket } = v.data;
+		// Map bucket → lookback days. Capped to 365d via Zod above.
+		const horizonDays =
+			v.data.days ??
+			(bucket === 'day' ? 30 : bucket === 'week' ? 84 : 365);
+		const truncUnit = bucket === 'day' ? 'day' : bucket === 'week' ? 'week' : 'month';
+
+		// Per-metric table + filter. We splice these into the template below.
+		// (Using simple string interpolation — the table names are hard-coded
+		// server constants, never user input. Same goes for the column name
+		// created_at which is identical across the tables.)
+		const metricConfig: Record<typeof metric, { table: string; where: string }> = {
+			revenue: { table: 'orders', where: "payment_status = 'paid'" },
+			orders: { table: 'orders', where: '1=1' },
+			users: { table: 'users', where: '1=1' },
+			disputes: { table: 'disputes', where: '1=1' },
+			merchants: { table: 'users', where: "role = 'merchant'" },
+		};
+		const cfg = metricConfig[metric];
+		const valueExpr = metric === 'revenue' ? 'COALESCE(SUM(total), 0)::numeric' : 'COUNT(*)::int';
+
+		// to_char format per bucket for the human-readable label.
+		const labelFormat =
+			bucket === 'day' ? 'MM-DD' : bucket === 'week' ? '"W"IW' : 'YYYY-MM';
+
+		const sql = `
+			WITH series AS (
+				SELECT generate_series(
+					date_trunc($1, NOW() - ($2 || ' days')::interval),
+					date_trunc($1, NOW()),
+					('1 ' || $1)::interval
+				) AS bucket_ts
+			),
+			data AS (
+				SELECT date_trunc($1, created_at) AS bucket_ts,
+				       ${valueExpr} AS v
+				FROM ${cfg.table}
+				WHERE ${cfg.where}
+				  AND created_at >= NOW() - ($2 || ' days')::interval
+				GROUP BY date_trunc($1, created_at)
+			)
+			SELECT to_char(s.bucket_ts, 'YYYY-MM-DD') AS ts,
+			       to_char(s.bucket_ts, $3)            AS label,
+			       COALESCE(d.v, 0)                     AS value
+			FROM series s
+			LEFT JOIN data d USING (bucket_ts)
+			ORDER BY s.bucket_ts ASC
+		`;
+
+		const rows = (await db
+			.prepare(sql)
+			.all(truncUnit, String(horizonDays), labelFormat)) as Array<{
+			ts: string;
+			label: string;
+			value: string | number;
+		}>;
+
+		return sendSuccess(res, {
+			metric,
+			bucket,
+			horizonDays,
+			points: rows.map((r) => ({
+				ts: r.ts,
+				label: r.label,
+				value: Number(r.value),
+			})),
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});

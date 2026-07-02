@@ -162,39 +162,44 @@ export default function App() {
 										Notifications,
 									)}
 								/>
-								<Route path="/admin" element={guard(['admin'], AdminDashboard)} />
-								<Route
-									path="/admin/users"
-									element={guard(['admin'], UsersManagement)}
-								/>
-								<Route
-									path="/admin/overview"
-									element={guard(['admin'], AdminOverview)}
-								/>
-								<Route
-									path="/admin/stores"
-									element={guard(['admin'], StoresManagement)}
-								/>
-								<Route
-									path="/admin/disputes"
-									element={guard(['admin'], DisputesManagement)}
-								/>
-								<Route
-									path="/admin/reports"
-									element={guard(['admin'], ReportsAnalytics)}
-								/>
-								<Route
-									path="/admin/audit-log"
-									element={guard(['admin'], AdminAuditLog)}
-								/>
-								<Route
-									path="/admin/all-products"
-									element={guard(['admin'], AdminProducts)}
-								/>
-								<Route
-									path="/admin/all-orders"
-									element={guard(['admin'], AdminOrders)}
-								/>
+								{/* Admin area — AdminDashboard is now a sidebar shell
+								 *  with <Outlet />; nested routes render inside it.
+								 *  `/admin` (no sub-path) redirects to `/admin/overview`. */}
+								<Route path="/admin" element={guard(['admin'], AdminDashboard)}>
+									<Route index element={<AdminOverview />} />
+									<Route
+										path="overview"
+										element={guard(['admin'], AdminOverview)}
+									/>
+									<Route
+										path="users"
+										element={guard(['admin'], UsersManagement)}
+									/>
+									<Route
+										path="stores"
+										element={guard(['admin'], StoresManagement)}
+									/>
+									<Route
+										path="disputes"
+										element={guard(['admin'], DisputesManagement)}
+									/>
+									<Route
+										path="reports"
+										element={guard(['admin'], ReportsAnalytics)}
+									/>
+									<Route
+										path="audit-log"
+										element={guard(['admin'], AdminAuditLog)}
+									/>
+									<Route
+										path="all-products"
+										element={guard(['admin'], AdminProducts)}
+									/>
+									<Route
+										path="all-orders"
+										element={guard(['admin'], AdminOrders)}
+									/>
+								</Route>
 								<Route
 									path="/messages"
 									element={guard(

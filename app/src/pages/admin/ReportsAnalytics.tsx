@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	BarChart3,
 	Users,
@@ -30,7 +31,7 @@ import {
 	ResponsiveContainer,
 	Legend,
 } from 'recharts';
-import { useAdminStats } from '@/hooks/useApi';
+import { useAdminStats, useAdminTimeSeries } from '@/hooks/useApi';
 import type { AdminStats } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
 
@@ -45,60 +46,22 @@ const AMBER = '#F59E0B';
 const PURPLE = '#8B5CF6';
 
 /* ------------------------------------------------------------------ */
-/*  Mock data generators                                               */
+/*  Time-series chart data (C.7 — added 2026-07-02)                   */
+/*                                                                     */
+/*  Replaces the previous hard-coded fixtures. Each chart category    */
+/*  pulls a single bucket from /api/admin/stats/timeseries keyed by   */
+/*  `period`. We remap `{ ts, label, value }` → `{ name, ... }` so the */
+/*  recharts dataKeys remain readable.                                */
 /* ------------------------------------------------------------------ */
-// NOTE: Time-series chart data (revenueData / usersData / ordersData /
-// merchantsData / disputesData / growthPie) is kept as a temporary
-// fixture. /api/admin/stats only returns aggregate counters and the
-// 7-day delta — it has no historical bucket endpoint. A dedicated
-// /api/admin/analytics/timeseries?bucket=month (C.7) is needed to
-// feed these charts from the DB. The KPI cards below already use
-// real data from useAdminStats.
-const revenueData = [
-	{ name: 'يناير', value: 32000, orders: 2400, commission: 4800 },
-	{ name: 'فبراير', value: 35000, orders: 2800, commission: 5250 },
-	{ name: 'مارس', value: 30000, orders: 2100, commission: 4500 },
-	{ name: 'أبريل', value: 42000, orders: 3500, commission: 6300 },
-	{ name: 'مايو', value: 38000, orders: 3100, commission: 5700 },
-	{ name: 'يونيو', value: 45200, orders: 3800, commission: 6780 },
+const periodOptions = [
+	{ ar: 'أسبوع', days: 7, bucket: 'day' as const },
+	{ ar: 'شهر', days: 30, bucket: 'day' as const },
+	{ ar: 'ربع سنة', days: 90, bucket: 'week' as const },
+	{ ar: 'سنة', days: 365, bucket: 'month' as const },
 ];
 
-const usersData = [
-	{ name: 'يناير', new: 800, active: 4200, churned: 120 },
-	{ name: 'فبراير', new: 950, active: 4800, churned: 90 },
-	{ name: 'مارس', new: 700, active: 5100, churned: 150 },
-	{ name: 'أبريل', new: 1200, active: 5800, churned: 80 },
-	{ name: 'مايو', new: 1050, active: 6400, churned: 110 },
-	{ name: 'يونيو', new: 1400, active: 7200, churned: 95 },
-];
-
-const ordersData = [
-	{ name: 'يناير', completed: 2100, cancelled: 180, returned: 120 },
-	{ name: 'فبراير', completed: 2500, cancelled: 150, returned: 100 },
-	{ name: 'مارس', completed: 1800, cancelled: 200, returned: 80 },
-	{ name: 'أبريل', completed: 3200, cancelled: 130, returned: 90 },
-	{ name: 'مايو', completed: 2900, cancelled: 100, returned: 70 },
-	{ name: 'يونيو', completed: 3500, cancelled: 110, returned: 60 },
-];
-
-const merchantsData = [
-	{ name: 'يناير', new: 15, verified: 120, pending: 8 },
-	{ name: 'فبراير', new: 22, verified: 135, pending: 12 },
-	{ name: 'مارس', new: 18, verified: 142, pending: 10 },
-	{ name: 'أبريل', new: 25, verified: 155, pending: 15 },
-	{ name: 'مايو', new: 20, verified: 168, pending: 9 },
-	{ name: 'يونيو', new: 28, verified: 180, pending: 11 },
-];
-
-const disputesData = [
-	{ name: 'يناير', filed: 12, resolved: 10, avgDays: 3.2 },
-	{ name: 'فبراير', filed: 15, resolved: 13, avgDays: 2.8 },
-	{ name: 'مارس', filed: 10, resolved: 9, avgDays: 3.5 },
-	{ name: 'أبريل', filed: 18, resolved: 15, avgDays: 2.5 },
-	{ name: 'مايو', filed: 14, resolved: 12, avgDays: 3.0 },
-	{ name: 'يونيو', filed: 20, resolved: 16, avgDays: 2.2 },
-];
-
+// Governorate split still needs a dedicated endpoint (TODO C.8).
+// Kept as a fixture for the "growth" pie chart only.
 const growthPie = [
 	{ name: 'صنعاء', value: 45, color: GOLD },
 	{ name: 'عدن', value: 25, color: GREEN },
@@ -145,8 +108,6 @@ const categories: ReportCategory[] = [
 	},
 	{ id: 'growth', label: 'النمو', icon: DollarSign, description: 'النمو والتوسع الجغرافي' },
 ];
-
-const periodOptions = ['أسبوع', 'شهر', 'ربع سنة', 'سنة'];
 
 /* ------------------------------------------------------------------ */
 /*  Summary metrics per category                                       */
@@ -404,43 +365,105 @@ function exportToCSV(filename: string, headers: string[], rows: (string | number
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export default function ReportsAnalytics() {
+	const { i18n } = useTranslation();
+	const locale = i18n.language === 'en' ? 'en-US' : 'ar-EG';
 	const [activeCategory, setActiveCategory] = useState('revenue');
-	const [period, setPeriod] = useState('شهر');
+	const [periodIdx, setPeriodIdx] = useState(1); // index into periodOptions
+	const period = periodOptions[periodIdx];
 
 	// Live KPIs from /api/admin/stats (server/routes/admin-read.cts:329).
 	// The endpoint aggregates counters + 7-day deltas in one CTE-style
-	// query. Time-series bucket data isn't part of the response, so the
-	// charts below keep their 6-month historical fixture (TODO C.7).
+	// query.
 	const { data: stats, loading: statsLoading, error: statsError } = useAdminStats();
 	const metrics = useMemo(
 		() => buildCategoryMetrics(activeCategory, stats),
 		[activeCategory, stats],
 	);
 
+	// C.7 — pull one bucket per category keyed by the active period.
+	// Each hook fires once per (metric, bucket, days) tuple.
+	const { data: revenueSeries } = useAdminTimeSeries({
+		metric: 'revenue',
+		bucket: period.bucket,
+		days: period.days,
+	});
+	const { data: ordersSeries } = useAdminTimeSeries({
+		metric: 'orders',
+		bucket: period.bucket,
+		days: period.days,
+	});
+	const { data: usersSeries } = useAdminTimeSeries({
+		metric: 'users',
+		bucket: period.bucket,
+		days: period.days,
+	});
+	const { data: merchantsSeries } = useAdminTimeSeries({
+		metric: 'merchants',
+		bucket: period.bucket,
+		days: period.days,
+	});
+	const { data: disputesSeries } = useAdminTimeSeries({
+		metric: 'disputes',
+		bucket: period.bucket,
+		days: period.days,
+	});
+
+	/** Map a time-series response into the {name, ...} shape recharts
+	 *  expects. `name` mirrors the old `name` field (the bucket label
+	 *  in the user's locale, e.g. "يناير" or "W12"). */
+	const mapSeries = (
+		s: { points: Array<{ ts: string; label: string; value: number }> } | null | undefined,
+		extra: Record<string, number> = {},
+	) => {
+		if (!s) return [] as Array<Record<string, string | number>>;
+		return s.points.map((p) => ({ name: p.label, ts: p.ts, value: p.value, ...extra }));
+	};
+
+	// Derived chart datasets — each one re-derived when the source series
+	// changes. We intentionally do NOT merge time-series from different
+	// tables (e.g. orders ≠ merchants per day); the API only exposes one
+	// value per bucket per metric, so cross-category joins would require
+	// C.8 (per-governorate breakdown).
+	const revenueData = useMemo(() => mapSeries(revenueSeries), [revenueSeries]);
+	const ordersChartData = useMemo(() => mapSeries(ordersSeries), [ordersSeries]);
+	const usersChartData = useMemo(() => mapSeries(usersSeries), [usersSeries]);
+	const merchantsData = useMemo(() => mapSeries(merchantsSeries), [merchantsSeries]);
+	const disputesData = useMemo(() => mapSeries(disputesSeries), [disputesSeries]);
+
 	const currentCategory = categories.find((c) => c.id === activeCategory)!;
-	const currentDateRange = '١ يناير - ٣٠ يونيو ٢٠٢٤';
+	const currentDateRange = useMemo(() => {
+		// Compute the human range from the period — no more hard-coded dates.
+		const fmt = new Intl.DateTimeFormat(locale, {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		});
+		const end = new Date();
+		const start = new Date(end.getTime() - period.days * 86_400_000);
+		return `${fmt.format(start)} - ${fmt.format(end)}`;
+	}, [period, locale]);
 
 	const handleExportCSV = () => {
 		const dataMap: Record<string, { headers: string[]; rows: (string | number)[][] }> = {
 			revenue: {
-				headers: ['الشهر', 'الإيرادات', 'الطلبات', 'العمولات'],
-				rows: revenueData.map((d) => [d.name, d.value, d.orders, d.commission]),
+				headers: ['الفترة', 'الإيرادات'],
+				rows: revenueData.map((d) => [d.name, d.value]),
 			},
 			users: {
-				headers: ['الشهر', 'جدد', 'نشطون', 'راحلون'],
-				rows: usersData.map((d) => [d.name, d.new, d.active, d.churned]),
+				headers: ['الفترة', 'المستخدمون الجدد'],
+				rows: usersChartData.map((d) => [d.name, d.value]),
 			},
 			merchants: {
-				headers: ['الشهر', 'جدد', 'موثقون', 'قيد المراجعة'],
-				rows: merchantsData.map((d) => [d.name, d.new, d.verified, d.pending]),
+				headers: ['الفترة', 'تجار جدد'],
+				rows: merchantsData.map((d) => [d.name, d.value]),
 			},
 			orders: {
-				headers: ['الشهر', 'مكتملة', 'ملغاة', 'مسترجعة'],
-				rows: ordersData.map((d) => [d.name, d.completed, d.cancelled, d.returned]),
+				headers: ['الفترة', 'الطلبات'],
+				rows: ordersChartData.map((d) => [d.name, d.value]),
 			},
 			disputes: {
-				headers: ['الشهر', 'مقدمة', 'محلولة', 'متوسط الأيام'],
-				rows: disputesData.map((d) => [d.name, d.filed, d.resolved, d.avgDays]),
+				headers: ['الفترة', 'النزاعات'],
+				rows: disputesData.map((d) => [d.name, d.value]),
 			},
 			growth: {
 				headers: ['المحافظة', 'النسبة'],
@@ -491,30 +514,14 @@ export default function ReportsAnalytics() {
 									boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
 								}}
 							/>
-							<Legend
-								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
-								formatter={(v: string) =>
-									({
-										revenue: 'الإيرادات',
-										orders: 'الطلبات',
-										commission: 'العمولات',
-									})[v] ?? v
-								}
-							/>
+							<Legend wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }} />
 							<Area
 								type="monotone"
-								dataKey="revenue"
+								dataKey="value"
+								name="الإيرادات"
 								stroke={GOLD}
 								strokeWidth={2}
 								fill="url(#revGrad)"
-							/>
-							<Area
-								type="monotone"
-								dataKey="commission"
-								stroke={GREEN}
-								strokeWidth={2}
-								fill="transparent"
-								strokeDasharray="4 4"
 							/>
 						</AreaChart>
 					</ResponsiveContainer>
@@ -523,7 +530,7 @@ export default function ReportsAnalytics() {
 				return (
 					<ResponsiveContainer width="100%" height="100%">
 						<LineChart
-							data={usersData}
+							data={usersChartData}
 							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
 						>
 							<CartesianGrid
@@ -551,33 +558,14 @@ export default function ReportsAnalytics() {
 									boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
 								}}
 							/>
-							<Legend
-								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
-								formatter={(v: string) =>
-									({ new: 'جدد', active: 'نشطون', churned: 'راحلون' })[v] ?? v
-								}
-							/>
+							<Legend wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }} />
 							<Line
 								type="monotone"
-								dataKey="new"
+								dataKey="value"
+								name="المستخدمون الجدد"
 								stroke={GOLD}
 								strokeWidth={2}
 								dot={{ r: 4, fill: GOLD }}
-							/>
-							<Line
-								type="monotone"
-								dataKey="active"
-								stroke={BLUE}
-								strokeWidth={2}
-								dot={{ r: 4, fill: BLUE }}
-							/>
-							<Line
-								type="monotone"
-								dataKey="churned"
-								stroke={RED}
-								strokeWidth={2}
-								dot={{ r: 4, fill: RED }}
-								strokeDasharray="4 4"
 							/>
 						</LineChart>
 					</ResponsiveContainer>
@@ -614,17 +602,13 @@ export default function ReportsAnalytics() {
 									boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
 								}}
 							/>
-							<Legend
-								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
-								formatter={(v: string) =>
-									({ new: 'جدد', verified: 'موثقون', pending: 'قيد المراجعة' })[
-										v
-									] ?? v
-								}
+							<Legend wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }} />
+							<Bar
+								dataKey="value"
+								name="تجار جدد"
+								fill={GOLD}
+								radius={[4, 4, 0, 0]}
 							/>
-							<Bar dataKey="new" fill={GOLD} radius={[4, 4, 0, 0]} />
-							<Bar dataKey="verified" fill={GREEN} radius={[4, 4, 0, 0]} />
-							<Bar dataKey="pending" fill={AMBER} radius={[4, 4, 0, 0]} />
 						</BarChart>
 					</ResponsiveContainer>
 				);
@@ -632,7 +616,7 @@ export default function ReportsAnalytics() {
 				return (
 					<ResponsiveContainer width="100%" height="100%">
 						<BarChart
-							data={ordersData}
+							data={ordersChartData}
 							margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
 						>
 							<CartesianGrid
@@ -660,19 +644,13 @@ export default function ReportsAnalytics() {
 									boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
 								}}
 							/>
-							<Legend
-								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
-								formatter={(v: string) =>
-									({
-										completed: 'مكتملة',
-										cancelled: 'ملغاة',
-										returned: 'مسترجعة',
-									})[v] ?? v
-								}
+							<Legend wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }} />
+							<Bar
+								dataKey="value"
+								name="الطلبات"
+								fill={GREEN}
+								radius={[4, 4, 0, 0]}
 							/>
-							<Bar dataKey="completed" fill={GREEN} radius={[4, 4, 0, 0]} />
-							<Bar dataKey="cancelled" fill={RED} radius={[4, 4, 0, 0]} />
-							<Bar dataKey="returned" fill={AMBER} radius={[4, 4, 0, 0]} />
 						</BarChart>
 					</ResponsiveContainer>
 				);
@@ -708,37 +686,14 @@ export default function ReportsAnalytics() {
 									boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
 								}}
 							/>
-							<Legend
-								wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }}
-								formatter={(v: string) =>
-									({
-										filed: 'مقدمة',
-										resolved: 'محلولة',
-										avgDays: 'متوسط الأيام',
-									})[v] ?? v
-								}
-							/>
+							<Legend wrapperStyle={{ fontFamily: 'Cairo', fontSize: 12 }} />
 							<Line
 								type="monotone"
-								dataKey="filed"
+								dataKey="value"
+								name="النزاعات"
 								stroke={RED}
 								strokeWidth={2}
 								dot={{ r: 4, fill: RED }}
-							/>
-							<Line
-								type="monotone"
-								dataKey="resolved"
-								stroke={GREEN}
-								strokeWidth={2}
-								dot={{ r: 4, fill: GREEN }}
-							/>
-							<Line
-								type="monotone"
-								dataKey="avgDays"
-								stroke={BLUE}
-								strokeWidth={2}
-								dot={{ r: 4, fill: BLUE }}
-								strokeDasharray="4 4"
 							/>
 						</LineChart>
 					</ResponsiveContainer>
@@ -904,17 +859,17 @@ export default function ReportsAnalytics() {
 						<div className="flex items-center gap-2">
 							{/* Period selector */}
 							<div className="flex gap-1 bg-[#F8F8F8] rounded-lg p-1">
-								{periodOptions.map((p) => (
+								{periodOptions.map((p, i) => (
 									<button
-										key={p}
-										onClick={() => setPeriod(p)}
+										key={p.ar}
+										onClick={() => setPeriodIdx(i)}
 										className={`px-3 py-1.5 rounded-md text-xs font-cairo font-medium transition-all ${
-											period === p
+											periodIdx === i
 												? 'bg-white text-[#111111] shadow-sm'
 												: 'text-[#6B6B6B] hover:text-[#111111]'
 										}`}
 									>
-										{p}
+										{p.ar}
 									</button>
 								))}
 							</div>

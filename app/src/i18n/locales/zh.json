@@ -645,7 +645,19 @@
 		"totalRevenue": "总收入",
 		"totalOrders": "总订单",
 		"totalUsers": "总用户",
-		"totalStores": "总店铺"
+		"totalStores": "总店铺",
+		"navDashboard": "仪表板",
+		"navOverview": "概览",
+		"navUsers": "用户",
+		"navSellers": "卖家",
+		"navStores": "店铺",
+		"navProducts": "商品",
+		"navOrders": "订单",
+		"navDisputes": "争议",
+		"navAnalytics": "报表",
+		"navReports": "报表",
+		"navAuditLog": "审计日志",
+		"navSettings": "设置"
 	},
 	"footer": {
 		"brand": {

@@ -34,7 +34,7 @@ import {
 	ResponsiveContainer,
 	Legend,
 } from 'recharts';
-import { useAdminStats, useAdminStores, useAdminDisputes, useSystemHealth } from '@/hooks/useApi';
+import { useAdminStats, useAdminStores, useAdminDisputes, useSystemHealth, useAdminTimeSeries } from '@/hooks/useApi';
 import type { AdminStore, AdminDispute } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
 
@@ -93,19 +93,17 @@ const DISPUTE_STATUS_STYLES: Record<AdminDispute['status'], { label: string; col
 };
 
 /* ------------------------------------------------------------------ */
-/*  Mock data (kept for the chart only — the stat cards below are    */
-/*  driven by /api/admin/stats)                                       */
+/*  Time-series chart data (C.7 — added 2026-07-02)                   */
+/*                                                                     */
+/*  Replaces the previous hard-coded chartData fixture. Three fetches  */
+/*  in parallel (revenue/orders/users) keyed by the same period,      */
+/*  merged by `ts` so the area chart can stack all three series.      */
 /* ------------------------------------------------------------------ */
-const chartData = [
-	{ name: 'يناير', revenue: 32000, orders: 2400, users: 800 },
-	{ name: 'فبراير', revenue: 35000, orders: 2800, users: 950 },
-	{ name: 'مارس', revenue: 30000, orders: 2100, users: 700 },
-	{ name: 'أبريل', revenue: 42000, orders: 3500, users: 1200 },
-	{ name: 'مايو', revenue: 38000, orders: 3100, users: 1050 },
-	{ name: 'يونيو', revenue: 45200, orders: 3800, users: 1400 },
+const periodOptions = [
+	{ ar: 'أسبوع', days: 7, bucket: 'day' as const },
+	{ ar: 'شهر', days: 30, bucket: 'day' as const },
+	{ ar: 'سنة', days: 365, bucket: 'month' as const },
 ];
-
-const periodOptions = ['أسبوع', 'شهر', 'سنة'];
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -113,13 +111,55 @@ const periodOptions = ['أسبوع', 'شهر', 'سنة'];
 export default function AdminOverview() {
 	const { i18n } = useTranslation();
 	const locale = i18n.language === 'en' ? 'en' : 'ar';
-	const [period, setPeriod] = useState('شهر');
+	const [periodIdx, setPeriodIdx] = useState(1); // index into periodOptions
+	const period = periodOptions[periodIdx];
 
 	// Real stats from /api/admin/stats (server/routes/admin.cts:377-417).
 	// The endpoint aggregates counts, 7-day deltas, and revenue in a
 	// single round-trip via a CTE; falls back to 0s while loading.
 	const { data: stats, loading: statsLoading } = useAdminStats();
 	const recentGrowth = stats?.recent7d;
+
+	// C.7 — three parallel time-series fetches keyed by the same period.
+	// The `ts` field is the join key; we merge into a single array for
+	// the recharts AreaChart below.
+	const { data: revenueSeries } = useAdminTimeSeries({
+		metric: 'revenue',
+		bucket: period.bucket,
+		days: period.days,
+	});
+	const { data: ordersSeries } = useAdminTimeSeries({
+		metric: 'orders',
+		bucket: period.bucket,
+		days: period.days,
+	});
+	const { data: usersSeries } = useAdminTimeSeries({
+		metric: 'users',
+		bucket: period.bucket,
+		days: period.days,
+	});
+
+	/** Merge three series by `ts` into one row per bucket for recharts. */
+	const chartData = useMemo(() => {
+		const map = new Map<
+			string,
+			{ ts: string; label: string; revenue: number; orders: number; users: number }
+		>();
+		for (const p of revenueSeries?.points ?? []) {
+			map.set(p.ts, { ts: p.ts, label: p.label, revenue: p.value, orders: 0, users: 0 });
+		}
+		for (const p of ordersSeries?.points ?? []) {
+			const existing = map.get(p.ts);
+			if (existing) existing.orders = p.value;
+			else map.set(p.ts, { ts: p.ts, label: p.label, revenue: 0, orders: p.value, users: 0 });
+		}
+		for (const p of usersSeries?.points ?? []) {
+			const existing = map.get(p.ts);
+			if (existing) existing.users = p.value;
+			else map.set(p.ts, { ts: p.ts, label: p.label, revenue: 0, orders: 0, users: p.value });
+		}
+		return Array.from(map.values());
+	}, [revenueSeries, ordersSeries, usersSeries]);
 
 	// Platform health from /api/ready (server/index.ts:108-131).
 	// Public endpoint; "degraded" surfaces as a normal state in the
@@ -271,17 +311,17 @@ export default function AdminOverview() {
 							</p>
 						</div>
 						<div className="flex gap-1 bg-[#F8F8F8] rounded-lg p-1">
-							{periodOptions.map((p) => (
+							{periodOptions.map((p, i) => (
 								<button
-									key={p}
-									onClick={() => setPeriod(p)}
+									key={p.ar}
+									onClick={() => setPeriodIdx(i)}
 									className={`px-3 py-1.5 rounded-md text-xs font-cairo font-medium transition-all ${
-										period === p
+										periodIdx === i
 											? 'bg-white text-[#111111] shadow-sm'
 											: 'text-[#6B6B6B] hover:text-[#111111]'
 									}`}
 								>
-									{p}
+									{p.ar}
 								</button>
 							))}
 						</div>
@@ -310,7 +350,7 @@ export default function AdminOverview() {
 									vertical={false}
 								/>
 								<XAxis
-									dataKey="name"
+									dataKey="label"
 									tick={{ fontSize: 12, fontFamily: 'Cairo', fill: '#6B6B6B' }}
 									axisLine={false}
 									tickLine={false}

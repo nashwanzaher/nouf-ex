@@ -1,7 +1,11 @@
 # Contributing
 
 Thanks for helping build Nouf-ex. This file is a short, opinionated
-overview. The longer source of truth is [`docs/conventions.md`](docs/conventions.md).
+overview. The longer source of truth is
+[`docs/development/conventions.md`](docs/development/conventions.md) and
+the master plan is [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md).
+All contributors are expected to follow our
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Repository layout (TL;DR)
 
@@ -18,8 +22,8 @@ overview. The longer source of truth is [`docs/conventions.md`](docs/conventions
 
 ## Workflow
 
-1. Pick an item off [`docs/roadmap.md`](docs/roadmap.md) (or open an issue
-   if there's nothing that fits).
+1. Pick an item off [`docs/planning/roadmap.md`](docs/planning/roadmap.md)
+   (or open an issue if there's nothing that fits).
 2. Branch from `main`:
    - `feat/<scope>` — new feature
    - `fix/<scope>` — bug fix
@@ -42,7 +46,8 @@ npx tsc --noEmit -p tsconfig.app.json
 
 ## Code style
 
-See [`docs/conventions.md`](docs/conventions.md). The short version:
+See [`docs/development/conventions.md`](docs/development/conventions.md).
+The short version:
 
 - TypeScript strict, 2-space indent, LF.
 - No `// eslint-disable` comments. Fix the warning.
@@ -70,17 +75,26 @@ full workflow.
 5. **Permissions** → edit `database/roles.sql`.
 6. Keep DDL idempotent everywhere (`IF NOT EXISTS`, `OR REPLACE`).
 7. Re-run `npm run db:setup` locally to verify.
-8. Update [`docs/database.md`](docs/database.md) and the test in
-   `app/server/tests/schema.test.ts` if you added/removed tables.
+8. Update [`docs/architecture/database.md`](docs/architecture/database.md)
+   and the test in `app/server/tests/schema.test.ts` if you
+   added/removed tables.
 9. Mention the schema change in the PR description.
 
 ## Adding an API endpoint
 
-1. Add the handler to `app/server/index.ts`.
-2. Validate input with `zod`.
-3. Add a typed wrapper to `app/src/lib/api.ts` (frontend client).
-4. Document it in [`docs/api.md`](docs/api.md).
-5. Add a smoke test in `app/server/tests/api-server.test.ts`.
+1. Add the handler to `app/server/index.ts` (or to a new file under
+   `app/server/routes/<name>.cts` and register it in `app/server/index.ts`).
+2. Validate input with `zod` (use `.strict()` so unknown fields are
+   rejected).
+3. Add a typed wrapper to `app/src/lib/api.ts` (frontend client) and a
+   matching hook in `app/src/hooks/useApi.ts`.
+4. Document it in [`docs/architecture/api.md`](docs/architecture/api.md).
+5. Add a smoke test in `app/server/tests/api-server.test.ts` and a Vitest
+   integration test co-located under `app/src/lib/__tests__/` if relevant.
+6. If the endpoint is `/api/admin/*`, add it to the cross-reference in
+   `app/src/pages/admin/UsersManagement.tsx` (or whichever admin page is
+   affected) — see the ADMIN_GAP_REMEDIATION section in
+   [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) §11.
 
 ## Adding a UI page
 
@@ -89,22 +103,45 @@ full workflow.
 2. Co-locate the page under `app/src/pages/<area>/`. Split large pages
    into sections (see how `app/src/pages/Home/` is organised).
 3. Add an i18n key under `src/i18n/locales/ar.json` first, then `en.json` and
-   `zh.json`.
-4. Snapshot tests live in `app/src/<area>/__tests__/` (see
-   [`docs/testing.md`](docs/testing.md)).
+   `zh.json`. Every `t('foo.bar')` call **must** include a literal English
+   fallback so missing translations still render — see
+   [`docs/development/conventions.md`](docs/development/conventions.md) §i18n.
+4. Snapshot / component tests live in `app/src/<area>/__tests__/` (see
+   [`docs/testing/conventions.md`](docs/testing/conventions.md)).
+5. If you introduce a new cross-page piece of state, prefer the existing
+   contexts (`AppContext`, `CartContext`) — see
+   [`app/src/README.md`](app/src/README.md) for the data-flow rules.
 
 ## Reviewing a PR
 
 Checklist:
 
-- [ ] Linked to a roadmap item or an issue.
-- [ ] Tests cover the new behaviour.
-- [ ] Docs updated where the contract changed.
-- [ ] No secrets committed.
-- [ ] `npm run lint` and `npm test` pass.
+- [ ] Linked to a MASTER_PLAN ID (e.g. `K.1`) or a GitHub issue.
+- [ ] Tests cover the new behaviour (Vitest plus a PHASE script where
+      relevant — see [`docs/testing/README.md`](docs/testing/README.md)).
+- [ ] Docs updated where the contract changed (`docs/architecture/api.md`,
+      `app/server/README.md`, `app/src/README.md` as appropriate).
+- [ ] No secrets committed (`git diff --staged | grep -iE "password|secret|token" | grep -vE "CHANGE_ME|REDIRECTED|<32" || true`).
+- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` all
+      pass from `app/`.
 - [ ] No new `// eslint-disable` or `// @ts-ignore`.
+- [ ] CHANGELOG.md updated (one bullet per PR, under `[Unreleased]`).
+- [ ] Conventional Commits format (`feat:`, `fix:`, `chore:`, `docs:`,
+      `test:`, `refactor:`).
+
+## Reporting vulnerabilities
+
+If you discover a security issue (XSS, SQLi, auth bypass, secret leak, …)
+follow [`SECURITY.md`](SECURITY.md) — **do not** file a public issue.
 
 ## Communication
 
-Issues and PRs are the primary venue. Be specific in titles; lead with the
-"why" in the body.
+- **Bugs & feature requests** → GitHub Issues with the appropriate
+  template (`.github/ISSUE_TEMPLATE/`).
+- **Security** → private, via [`SECURITY.md`](SECURITY.md).
+- **Code of Conduct** violations → private, via the channels in
+  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+
+Be specific in titles; lead with the **why** in the body. Cite the
+MASTER_PLAN ID (e.g. `K.1`, `F.4`) when relevant so reviewers can grep
+for context.

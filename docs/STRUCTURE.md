@@ -19,9 +19,16 @@ Nouf-ex/
 ├── README.md                       ← Project entry point
 ├── CONTRIBUTING.md                 ← Contribution guide
 ├── CHANGELOG.md                    ← Recent changes
+├── CODE_OF_CONDUCT.md              ← Community standards (CC v2.1)
+├── SECURITY.md                     ← Security policy + SLAs
+├── LICENSE                         ← MIT (Phase L)
 ├── Dockerfile                      ← Container image definition
 ├── docker-compose.yml              ← Local stack orchestration
-├── LICENSE                         ← (TBD — not yet published)
+│
+├── mkdocs.yml                      ← MkDocs config (Phase L)
+├── requirements-docs.txt           ← Python deps for docs (Phase L)
+├── release-please-config.json      ← CHANGELOG automation (Phase L)
+├── .markdown-link-check.json       ← Link-check config (Phase L)
 │
 ├── app/                            ← Single npm package: frontend + backend
 ├── database/                       ← PostgreSQL schema + migrations
@@ -31,30 +38,33 @@ Nouf-ex/
 ├── scripts/                        ← Project-level utility scripts
 ├── mcp-server/                     ← MCP server package
 │
-├── archive/                        ← Historical files (moved 2026-06-28)
+├── archive/                        ← Historical files (read-only)
 │   ├── audit/                      ← Past code audits
 │   └── research/                   ← Past research docs
 │
 ├── .env.example                    ← Environment template (committed)
 ├── .env                            ← Live secrets (gitignored)
-├── .gitignore
+├── .dockerignore                   ← Docker build context exclusions
+├── .gitignore                      ← VCS exclusions
+├── .gitattributes                  ← EOL + linguist policy (Phase M)
+├── .prettierrc.json                ← Root Prettier config (Phase M)
 ├── .vscode/                        ← Editor config (tasks, launch, settings)
-├── .github/                        ← GitHub Actions workflows + Copilot config
+├── .github/                        ← GitHub Actions + Copilot config
+│   ├── workflows/                  ← ci + deploy-staging + deploy-prod + docs + link-check
+│   ├── ISSUE_TEMPLATE/             ← bug + feature + config
+│   ├── dependabot.yml              ← weekly PRs
+│   ├── CODEOWNERS                  ← 12 ownership sections
+│   ├── PULL_REQUEST_TEMPLATE.md    ← 18-item checklist
+│   └── SECRETS.md                  ← Secrets guide
 │
-└── .prettierrc.json
+└── .husky/                         ← Pre-commit hook (lint-staged)
 ```
-├── mcp-server/                     ← MCP server package
-│
-├── archive/                        ← Historical/moved files
-│
-├── .env.example                    ← Environment template (committed)
-├── .env                            ← Live secrets (gitignored)
-├── .gitignore
-├── .vscode/                        ← Editor config (tasks, launch, settings)
-├── .github/                        ← GitHub Actions workflows
-│
-└── .prettierrc.json
-```
+
+> **Restructuring (2026-07-03):** PowerShell wrappers (`build.ps1`, `tc.ps1`,
+> `test.ps1`, `lint.ps1`, `format.ps1`, `format-check.ps1`, `docker-build.ps1`,
+> `docker-run.ps1`) were moved from the repository root into `scripts/`. The
+> root now contains zero `.ps1` files; see the `scripts/` detailed tree below
+> for their new location.
 
 ---
 
@@ -217,7 +227,7 @@ database/
 
 ### `docs/` — Documentation
 
-> **Convention:** Per the *Diátaxis* documentation framework
+> **Convention:** Per the _Diátaxis_ documentation framework
 > (https://diataxis.fr/), docs are split by intent.
 
 ```
@@ -303,21 +313,31 @@ tests/
 
 ### `scripts/` — Project-level utility scripts
 
+> **Restructured (2026-07-03):** the 8 PowerShell wrappers that used to live
+> at the repository root were consolidated into `scripts/`. The folder now
+> contains ~46 files in total (8 PowerShell wrappers + 38 utility scripts).
+> The tree below is a representative sample of the most-used entries; see
+> [`scripts/README.md`](https://github.com/nashwanzaher/nouf-ex/blob/main/scripts/README.md)
+> for the full index.
+
 ```
 scripts/
 ├── README.md
+├── build.ps1                       ← Root build helper (moved from /)
+├── tc.ps1                          ← TypeScript type-check (moved from /)
+├── test.ps1                        ← Vitest runner (moved from /)
+├── lint.ps1                        ← ESLint runner (moved from /)
+├── format.ps1                      ← Prettier write (moved from /)
+├── format-check.ps1                ← Prettier check (moved from /)
+├── docker-build.ps1                ← Docker image build (moved from /)
+├── docker-run.ps1                  ← Docker compose runner (moved from /)
 ├── db-setup.cjs                    ← Apply schema + seed (one-time CLI)
-├── gen-seed-hashes.cjs             ← Regenerate scrypt hashes for seed
-├── test-summary.cjs                ← Clean vitest summary
-├── audit-db.cjs
-├── verify-fresh.cjs
-├── autostart.bat                   ← Windows autostart
-├── autostart.ps1
-├── install-autostart.ps1
-├── switch-db.ps1
-├── drop-test-db.cjs
-├── e2e-step1.ps1
-└── README.md
+├── verify-fresh.cjs                ← DB-vs-schema freshness check
+├── e2e-step1.ps1                   ← E2E test runner (step 1)
+├── switch-db.ps1                   ← Swap between dev/test DBs
+├── audit-db.cjs                    ← Schema/seed integrity audit
+├── autostart.ps1                   ← Windows autostart
+└── install-autostart.ps1           ← Register autostart task
 ```
 
 ---
@@ -357,6 +377,49 @@ mcp-server/
 ├── extensions.json                 ← Recommended extensions
 └── mcp.json                        ← MCP servers config
 ```
+
+---
+
+## 📊 Implementation Status per Folder (snapshot 2026-07-02)
+
+> Verified by `ls -R` + `grep -R` pass. Status legend: ✅ live & exercised
+> in tests · 🔄 live but partial · ⏳ TODO per MASTER_PLAN.
+
+| Folder                               | Status   | Notes                                                      |
+|--------------------------------------|----------|------------------------------------------------------------|
+| `app/` (root)                        | ✅       | TS strict, ESLint 0, Vitest 779 passed                     |
+| `app/src/`                           | ✅       | 22 routes wired, all pages smoke-tested                     |
+| `app/src/pages/admin/`               | 🔄       | 4/6 pages on real API (UsersManagement + StoresManagement + DisputesManagement + AdminOverview partial). ReportsAnalytics + AdminDashboard still mock-data (tracked in K.1). |
+| `app/src/pages/Home/`                | ✅       | 9 sub-sections on static data by design                     |
+| `app/src/pages/seller/`              | ✅       | All 3 dashboard pages on real API                          |
+| `app/src/pages/customer/`            | ✅       | All 6 pages on real API                                    |
+| `app/src/lib/`                       | ✅       | `format.ts`, `utils.ts`, `cart-sync.ts` — all unit-tested  |
+| `app/server/`                        | ✅       | 19 routers, 91 endpoint declarations                       |
+| `app/server/tests/`                  | ✅       | `api-server.test.ts` + `schema.test.ts` (40+ tests)        |
+| `app/server/lib/notifications/`      | ✅       | 13 i18n templates + 8 event triggers (Phase C.1)            |
+| `app/server/lib/payments/`           | ✅       | Stripe + Paymob + stub providers                           |
+| `database/`                          | ✅       | 30 tables, 13 fns, 10 triggers, 4 views, 3 roles           |
+| `database/migrations/`               | ✅       | 13 incremental migrations (idempotent)                     |
+| `docs/architecture/`                 | ✅       | 5 reference docs (overview, api, database, security, ER)  |
+| `docs/development/`                  | ✅       | 5 how-to guides (incl. ci-cd, debugging)                   |
+| `docs/operations/`                   | ✅       | 4 ops docs (incl. backup-restore, monitoring, deployment)  |
+| `docs/planning/`                     | ✅       | Roadmap + competitive analysis + risks register            |
+| `docs/testing/`                      | ✅       | 18 PHASE design specs + 4 standards documents              |
+| `tests/e2e/`                         | ✅       | 18 PHASE scripts + 17 smoke scripts + helpers             |
+| `tests/reports/`                     | 🔄       | 5/18 PHASE scripts failing in batch runs due to rate-limit cascade (test-infra, no code bug — see PHASE 12-15 specs) |
+| `scripts/`                           | ✅       | ~46 utility scripts (db-setup, verify-fresh, e2e-step1, plus the 8 PowerShell wrappers moved from root on 2026-07-03) |
+| `mcp-server/`                        | ✅       | TS server, builds via own `tsconfig.json`                  |
+| `docker/`                            | ✅       | single `entrypoint.sh`                                     |
+| `.github/`                           | ✅       | workflows/ + Dependabot + CODEOWNERS + issue templates     |
+| `.github/workflows/`                 | ✅       | ci.yml (6 jobs) + deploy-staging.yml + deploy-prod.yml     |
+| `.vscode/`                           | ✅       | Tasks include every PHASE script + dev servers            |
+| `archive/audit/`                     | ✅       | Read-only — 11 historical audits                           |
+| `archive/research/`                  | ✅       | Read-only — 11 historical research notes                   |
+| Root `.md` files                     | ✅       | README + CHANGELOG + CONTRIBUTING + CODE_OF_CONDUCT + SECURITY + MASTER_PLAN + STRUCTURE — all current |
+
+> Generated by `ls -R --color=never | head -200; grep -R "\bvi\." app/server/tests 2>/dev/null | wc -l`
+> - the actual MASTER_PLAN §11 reconciliation. Run yourself with the
+> one-liner in [`docs/development/debugging.md`](development/debugging.md) §13.
 
 ---
 

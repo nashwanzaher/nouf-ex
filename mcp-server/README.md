@@ -54,17 +54,17 @@ The workspace already ships with `.vscode/mcp.json`:
 
 ```jsonc
 {
-	"servers": {
-		"noufex": {
-			"type": "stdio",
-			"command": "node",
-			"args": [
-				"${workspaceFolder}/mcp-server/dist/index.js",
-				"--root",
-				"${workspaceFolder}",
-			],
-		},
-	},
+ "servers": {
+  "noufex": {
+   "type": "stdio",
+   "command": "node",
+   "args": [
+    "${workspaceFolder}/mcp-server/dist/index.js",
+    "--root",
+    "${workspaceFolder}",
+   ],
+  },
+ },
 }
 ```
 

@@ -94,11 +94,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
 		() => state.items.reduce((s, i) => s + i.price * i.quantity, 0),
 		[state.items],
 	);
-	return (
-		<CartContext.Provider value={{ state, dispatch, cartCount, cartTotal }}>
-			{children}
-		</CartContext.Provider>
+	// PERF-H1 (2026-07-02): wrap the context value in useMemo so that
+	// consumers (Navbar badge, BottomNav, Cart page, MiniCart, etc.)
+	// don't re-render on every parent render. The previous inline
+	// object literal created a new reference per render which busted
+	// `useContext` reference equality and forced every consumer to
+	// reconcile even when the cart itself hadn't changed. `dispatch`
+	// is already stable (React guarantee for useReducer).
+	const value = useMemo(
+		() => ({ state, dispatch, cartCount, cartTotal }),
+		[state, cartCount, cartTotal],
 	);
+	return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {

@@ -131,32 +131,73 @@ export default function HeroSection() {
 	}, []);
 
 	useEffect(() => {
-		const handleMouseMove = (e: MouseEvent) => {
+		// PERF-H2 (2026-07-02): the previous version fired a full
+		// GSAP animation for every child on every mousemove (60-120
+		// Hz × 8 elements = ~960 GSAP property writes/sec). The
+		// work below:
+		//   1. Throttles via requestAnimationFrame (1 update per
+		//      paint, not 1 per mousemove event).
+		//   2. Skips when the cursor moved < 4 px (most events
+		//      on a stationary hand).
+		//   3. Respects prefers-reduced-motion (no parallax at
+		//      all for users who opt out).
+		//   4. Cleans up the rAF handle on unmount to avoid
+		//      setting state on an unmounted component.
+		const reduceMotion =
+			typeof window !== 'undefined' &&
+			window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+		if (reduceMotion) return;
+
+		let rafHandle = 0;
+		let lastClientX = 0;
+		let lastClientY = 0;
+		const THRESHOLD_PX = 4;
+
+		const applyParallax = (e: MouseEvent) => {
 			mouseRef.current = { x: e.clientX, y: e.clientY };
-			if (productsRef.current) {
-				const children = productsRef.current.children;
-				floatingProducts.forEach((product, i) => {
-					if (children[i]) {
-						const rect = sectionRef.current?.getBoundingClientRect();
-						if (rect) {
-							const centerX = rect.width / 2;
-							const centerY = rect.height / 2;
-							const offsetX = (e.clientX - centerX) * product.speed;
-							const offsetY = (e.clientY - centerY) * product.speed;
-							gsap.to(children[i], {
-								x: -offsetX,
-								y: -offsetY,
-								duration: 0.8,
-								ease: 'power2.out',
-							});
-						}
-					}
+			if (!productsRef.current) return;
+			const children = productsRef.current.children;
+			const rect = sectionRef.current?.getBoundingClientRect();
+			if (!rect) return;
+			const centerX = rect.width / 2;
+			const centerY = rect.height / 2;
+			const offsetX = (e.clientX - centerX);
+			const offsetY = (e.clientY - centerY);
+			for (let i = 0; i < floatingProducts.length; i++) {
+				const child = children[i] as HTMLElement | undefined;
+				if (!child) continue;
+				const product = floatingProducts[i];
+				if (!product) continue;
+				gsap.to(child, {
+					x: -offsetX * product.speed,
+					y: -offsetY * product.speed,
+					duration: 0.8,
+					ease: 'power2.out',
 				});
 			}
 		};
 
+		const handleMouseMove = (e: MouseEvent) => {
+			if (
+				Math.abs(e.clientX - lastClientX) < THRESHOLD_PX &&
+				Math.abs(e.clientY - lastClientY) < THRESHOLD_PX
+			) {
+				return;
+			}
+			lastClientX = e.clientX;
+			lastClientY = e.clientY;
+			if (rafHandle) return;
+			rafHandle = requestAnimationFrame(() => {
+				rafHandle = 0;
+				applyParallax(e);
+			});
+		};
+
 		window.addEventListener('mousemove', handleMouseMove, { passive: true });
-		return () => window.removeEventListener('mousemove', handleMouseMove);
+		return () => {
+			window.removeEventListener('mousemove', handleMouseMove);
+			if (rafHandle) cancelAnimationFrame(rafHandle);
+		};
 	}, []);
 
 	return (

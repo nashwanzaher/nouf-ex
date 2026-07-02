@@ -70,17 +70,22 @@ AUTH_SECRET=hhCu-sRDKPmBhgE2NxJrSk24t2zM07HdY3itkhgxOBw
 ### 2.2 Database credentials
 
 ```env
+
 # The host's Postgres
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=noufex_db
 
 # `db:setup` uses these to connect as the superuser (ONE TIME)
+
 DB_USER=postgres
 DB_PASSWORD=<your postgres superuser password>
 
 # The container connects as the least-privilege `noufex_app` role
+
 # (created by db:setup). The compose file passes these to the container.
+
 DATABASE_URL=postgresql://noufex_app:CHANGE_ME_APP@host.docker.internal:5432/noufex_db
 ```
 
@@ -216,24 +221,34 @@ TypeError: Cannot read properties of undefined (reading 'exports')
 Three curl checks should all return 200 (use `curl.exe` on Windows):
 
 ```sh
+
 # 1. Liveness — process is alive
+
 curl http://localhost:3000/api/health
+
 # {"status":"ok","uptime_s":20,"ts":"2026-06-24T05:33:05.948Z"}
 
 # 2. Readiness — DB reachable
+
 curl http://localhost:3000/api/ready
+
 # {"status":"ready","uptime_s":20,"checks":{"db":{"ok":true,"ms":76}}}
 
 # 3. Public stats — homepage counters
+
 curl http://localhost:3000/api/stats/home
+
 # {"success":true,"data":{"counts":{"products":"24","stores":"7",...}}}
+
 ```
 
 Then check the container is healthy:
 
 ```sh
 docker ps --filter "name=Nouf-ex" --format "{{.Names}} | {{.Status}}"
+
 # Nouf-ex | Up 20 seconds (healthy)
+
 ```
 
 `docker compose logs -f Nouf-ex` shows the structured JSON access log

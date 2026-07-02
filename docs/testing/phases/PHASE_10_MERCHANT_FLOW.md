@@ -1,4 +1,5 @@
 # PHASE 10 — Merchant / Seller Flow
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -140,7 +141,7 @@ This is documented in `roadmap.md` and `MASTER_PLAN.md` Phase C.
 4. Section 4 — Workaround documentation                → 0 requests (informational)
 ─────────────────────────────────────────────────────
 Total:                                              → 8 HTTP requests
-                                                    + 12 SKIP (documented gaps)
+                                                    - 12 SKIP (documented gaps)
                                                     = 20 total assertions
 ```
 

@@ -436,6 +436,14 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 CREATE INDEX IF NOT EXISTS idx_subscriptions_store  ON subscriptions(store_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status) WHERE status IN ('active','past_due');
+-- SECURITY (DB-CRITICAL-4, audit 2026-06-30): a merchant must have
+-- AT MOST ONE active or past-due subscription. Without this constraint
+-- the application can double-charge by inserting two `active` rows for
+-- the same store. `partial UNIQUE` lets us keep historical
+-- `cancelled` / `expired` rows for audit while preventing overlap in
+-- the active set.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_one_active
+    ON subscriptions(store_id) WHERE status IN ('active', 'past_due');
 
 -- =====================================================================
 -- RATE_LIMIT_BUCKETS

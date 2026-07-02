@@ -1,0 +1,259 @@
+# =====================================================================
+# MkDocs configuration for the Nouf-ex documentation site.
+# ---------------------------------------------------------------------
+# Standards referenced:
+#   - Diátaxis        → https://diataxis.fr/
+#   - MkDocs Material → https://squidfunk.github.io/mkdocs-material/
+#   - IEEE 29119-3    → test documentation structure (sub-section 8.4)
+# ---------------------------------------------------------------------
+# This config is the SINGLE entry point for the docs CI pipeline
+# (`.github/workflows/docs.yml`). It deploys to GitHub Pages on every
+# push to `main` that touches `docs/**/*.md` or `mkdocs.yml`.
+# =====================================================================
+
+site_name: Nouf-ex
+site_description: >-
+  B2B/B2C e-commerce platform for Yemen & Middle East. React + Vite
+  frontend, Express + PostgreSQL backend, IEEE-829/ISO-29119/ISTQB tested.
+site_author: Nouf-ex maintainers
+site_url: https://nashwanzaher.github.io/nouf-ex/
+repo_url: https://github.com/nashwanzaher/nouf-ex
+repo_name: nashwanzaher/nouf-ex
+edit_uri: edit/main/docs/
+
+# ---------------------------------------------------------------------
+# Use Material for MkDocs — the de-facto MkDocs theme. Material theme
+# has rich Diátaxis-friendly features: tabs, admonitions, code-copy,
+# search, version selector, light/dark toggle.
+# ---------------------------------------------------------------------
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs           # tabs across the top
+    - navigation.tabs.sticky    # tabs stay visible on scroll
+    - navigation.sections       # expand nested sections
+    - navigation.expand         # expand all by default
+    - navigation.indexes        # allow section index pages
+    - navigation.top            # back-to-top button
+    - navigation.footer         # prev/next at page bottom
+    - navigation.tracking       # URL follows scroll
+    - toc.follow                # TOC follows scroll
+    - search.suggest            # query suggestions
+    - search.highlight          # highlight matches
+    - search.share              # share search via URL
+    - content.code.copy         # one-click copy on code blocks
+    - content.code.annotate     # annotate code
+    - content.tabs.link         # sync tabs across pages
+    - content.tooltips          # hover tooltips for abbreviations
+    - content.action.edit       # edit-this-page pencil
+  palette:
+    # Light scheme: primary teal/blue (Yemen flag accent)
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark scheme: slate base + amber accent
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+# ---------------------------------------------------------------------
+# Plugins
+# ---------------------------------------------------------------------
+plugins:
+  # search (built-in) — enhanced by mkdocs-material
+  - search:
+      lang: [en, ar, zh]
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  # minify HTML — speeds up GitHub Pages
+  - minify:
+      minify_html: true
+  # git-revision-date-localised — "last updated" per page
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: date
+      fallback_to_build_date: true
+
+# ---------------------------------------------------------------------
+# Markdown extensions. We align with the Microsoft Docs style:
+#   - admonitions for callouts (note/tip/warning/danger/info)
+#   - attr_list / md_in_html for class hooks
+#   - toc with permalinks
+#   - tabbed content blocks
+#   - def_list for ISTQB-style term/definition blocks
+#   - footnotes for academic citations
+# ---------------------------------------------------------------------
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 4
+  - pymdownx.details           # collapsible blocks
+  - pymdownx.superfences       # fence-aware code blocks (nested fences)
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets          # built-in snippet loader
+  - pymdownx.tabbed:           # synced tab groups
+      alternate_style: true
+  - pymdownx.tasklist:         # GFM task lists
+      custom_checkbox: true
+  - pymdownx.keys              # kbd-style keys
+  - pymdownx.mark              # highlight mark ==text==
+  - pymdownx.tilde             # ~~strike~~
+  - pymdownx.caret             # ^^insert^^
+  - pymdownx.smartsymbols      # ©, ™, →, etc.
+  - pymdownx.emoji:            # :smile: emoji shortcodes
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+# ---------------------------------------------------------------------
+# Extra CSS — small project-specific touches (kept minimal)
+# ---------------------------------------------------------------------
+extra_css:
+  - assets/css/extra.css
+
+# ---------------------------------------------------------------------
+# Extra — analytics placeholder; populate when site goes live
+# ---------------------------------------------------------------------
+extra:
+  generator: false                       # hide "Made with MkDocs"
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/nashwanzaher/nouf-ex
+      name: Nouf-ex on GitHub
+  # version_provider: mike  # enable when we publish versioned docs
+
+# =====================================================================
+# NAVIGATION — Diátaxis-aligned
+# ---------------------------------------------------------------------
+#   Tutorials  → "Get started"              (n/a — see notes below)
+#   How-to     → /development/ + /operations/
+#   Reference  → /architecture/ + /testing/  (the API/db/test specs)
+#   Explanation→ /architecture/ + /planning/
+# ---------------------------------------------------------------------
+# Note: we don't have tutorial-style step-by-step content yet (no
+# "first 10 minutes with the app" walkthrough). When we add one, it
+# should live under a top-level "Tutorials" tab.
+# =====================================================================
+nav:
+  - Home: README.md
+  - Code of Conduct: ../CODE_OF_CONDUCT.md
+  - Security: ../SECURITY.md
+
+  - Tutorials:
+    - "First 10 minutes": development/getting-started.md
+    - "Tutorial: run an order end-to-end":
+      "https://github.com/nashwanzaher/nouf-ex/blob/main/docs/tutorials/run-an-order.md"
+
+  - How-to guides:
+    - Contributor workflow:
+      - ../CONTRIBUTING.md
+      - development/workflow.md
+      - development/conventions.md
+    - CI / CD:
+      - development/ci-cd.md
+    - Debugging & recovery:
+      - development/debugging.md
+    - Operations:
+      - operations/docker.md
+      - operations/deployment.md
+      - operations/monitoring.md
+      - operations/backup-restore.md
+
+  - Reference:
+    - Architecture:
+      - architecture/overview.md
+      - architecture/api.md
+      - architecture/database.md
+      - architecture/er-diagram.md
+      - architecture/security.md
+    - Testing:
+      - testing/README.md
+      - testing/overview.md
+      - testing/conventions.md
+      - testing/standards/IEEE-829.md
+      - testing/standards/ISO-29119.md
+      - testing/standards/ISTQB-CTFL.md
+      - testing/standards/google-style.md
+      - testing/PHASE_TEST_TASKS.md
+    - Test design specs:
+      - "phase00 · health & auth": testing/phases/PHASE_00_HEALTH_AUTH.md
+      - "phase01 · profile & addresses": testing/phases/PHASE_01_PROFILE_ADDRESSES.md
+      - "phase01-R · profile retest": testing/phases/PHASE_01_PROFILE_ADDRESSES_RETEST.md
+      - "phase02 · public catalog": testing/phases/PHASE_02_PUBLIC_CATALOG.md
+      - "phase03 · search & filters": testing/phases/PHASE_03_SEARCH_FILTERS.md
+      - "phase04 · cart": testing/phases/PHASE_04_CART.md
+      - "phase05 · orders & inventory": testing/phases/PHASE_05_ORDERS_INVENTORY.md
+      - "phase06 · coupons & discounts": testing/phases/PHASE_06_COUPONS_DISCOUNTS.md
+      - "phase07 · payments & refunds": testing/phases/PHASE_07_PAYMENTS_REFUNDS.md
+      - "phase08 · reviews & ratings": testing/phases/PHASE_08_REVIEWS_RATINGS.md
+      - "phase09 · wishlist & followers": testing/phases/PHASE_09_WISHLIST_FOLLOWERS.md
+      - "phase10 · merchant flow": testing/phases/PHASE_10_MERCHANT_FLOW.md
+      - "phase11 · admin & RBAC": testing/phases/PHASE_11_ADMIN_RBAC.md
+      - "phase12 · 2FA & backup codes": testing/phases/PHASE_12_2FA_BACKUP.md
+      - "phase13 · notifications & messages": testing/phases/PHASE_13_NOTIFICATIONS_MESSAGES.md
+      - "phase14 · shipping methods": testing/phases/PHASE_14_SHIPPING_METHODS.md
+      - "phase15 · audit logs": testing/phases/PHASE_15_AUDIT_LOGS.md
+      - "phase16 · frontend SPA": testing/phases/PHASE_16_FRONTEND_SPA.md
+      - "phase17 · full regression": testing/phases/PHASE_17_FULL_REGRESSION.md
+    - Test templates:
+      - testing/templates/PS_TESTHELPERS_REFERENCE.md
+    - Project map:
+      - STRUCTURE.md
+      - MASTER_PLAN.md
+
+  - Planning:
+    - Roadmap: planning/roadmap.md
+    - Competitive analysis: planning/competitive-analysis.md
+    - Risk register: planning/risks.md
+
+  - About:
+    - Changelog: ../CHANGELOG.md
+    - License: ../LICENSE
+    - Repository: https://github.com/nashwanzaher/nouf-ex
+
+# ---------------------------------------------------------------------
+# EXCLUDES — never build these (rendered output is identical to source)
+# ---------------------------------------------------------------------
+exclude_docs: |
+  archive/
+  archive/audit/
+  archive/research/
+
+# ---------------------------------------------------------------------
+# Strict mode: emit a warning on any internal broken link or missing
+# file referenced from the navigation. This catches the same drift
+# `markdown-link-check` catches in CI.
+# ---------------------------------------------------------------------
+strict: true
+validation:
+  links:
+    not_found: warn
+    absolute_links: ignore
+    unrecognized_links: ignore
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: ignore
+  markup:
+    failed_bodies: error

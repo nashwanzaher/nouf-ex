@@ -82,7 +82,7 @@
   - `audit/<date>` — periodic cleanup passes (matches
     `archive/audit/code-audit-YYYY-MM-DD.md`).
 - **Commit messages:** imperative mood, ≤ 72 chars on the subject line.
-  Body explains *why*. Reference roadmap IDs when applicable:
+  Body explains _why_. Reference roadmap IDs when applicable:
   `P0-1: cart→order pipeline E2E`
 - **PRs** are squash-merged. One concern per PR.
 

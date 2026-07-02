@@ -1,37 +1,129 @@
 {
 	"recommendations": [
+		// ─── Core Linting & Formatting ──────────────────────────────────
 		"dbaeumer.vscode-eslint",
 		"esbenp.prettier-vscode",
+
+		// ─── UI & Styling ───────────────────────────────────────────────
 		"bradlc.vscode-tailwindcss",
-		"ms-azuretools.vscode-docker",
+		"editorconfig.editorconfig",
+
+		// ─── TypeScript & JavaScript ────────────────────────────────────
 		"ms-vscode.vscode-typescript-next",
 		"ms-vscode.js-debug",
-		"vitest.explorer",
-		"ms-python.python",
+		"firsttris.vscode-jest-runner",
+		"yoavbls.pretty-ts-errors",
+
+		// ─── React & Frontend ───────────────────────────────────────────
+		"dsznajder.es7-react-js-snippets",
+
+		// ─── Docker & Containers ────────────────────────────────────────
+		"ms-azuretools.vscode-docker",
+
+		// ─── Database ──────────────────────────────────────────────────
 		"mtxr.sqltools",
+		"ckolkman.vscode-postgres",
+
+		// ─── DevOps & Config ────────────────────────────────────────────
 		"redhat.vscode-yaml",
-		"editorconfig.editorconfig",
-		"streetsidesoftware.code-spell-checker"
+
+		// ─── Quality & Documentation ───────────────────────────────────
+		"streetsidesoftware.code-spell-checker",
+		"usernamehw.errorlens",
+
+		// ─── Git & Version Control ──────────────────────────────────────
+		"eamodio.gitlens",
+		"github.vscode-pull-request-github",
+
+		// ─── Productivity ───────────────────────────────────────────────
+		"wmaurer.change-case",
+		"visualstudioexptteam.vscodeintellicode",
+		"humao.rest-client",
+		"antfu.file-nesting",
+		"christian-kohler.path-intellisense",
+		"formulahendry.auto-rename-tag",
+
+		// ─── Testing ───────────────────────────────────────────────────
+		"vitest.explorer",
+		"ms-playwright.playwright",
+
+		// ─── Python (for docs & scripts) ───────────────────────────────
+		"ms-python.python",
+
+		// ─── Utilities ────────────────────────────────────────────────
+		"mechatroner.rainbow-csv",
+		"appulate.filewatcher"
 	],
+
 	"unwantedRecommendations": [
-		"ritwickdey.liveserver",
-		"alvinashcraft.windev-helper",
-		"brandonw3612.declarative-composition-language-support",
-		"brijesharung.winapp-mcp",
+		// ─── AI Coding Assistants (competing with Copilot) ─────────────
 		"continue.continue",
-		"danielgarysoftware.csxaml-vscode-extension",
-		"figma.figma-vscode-extension",
+		"saoudrizwan.claude-dev",
+		"sst-dev.opencode",
+		"rooveterinaryinc.roo-cline",
 		"moonshot-ai.kimi-code",
+
+		// ─── MiniMax Related (conflicts with existing setup) ──────────
+		"denizhandaklr.kimi-lm-provider",
+		"denizhandaklr.minimax-vscode",
+		"klarkxy.minimax-vscode-copilot",
+		"jochenyang.minimax-status-vscode",
+		"maxv.minimax-use",
+		"laksithakumara.kimi-ai-for-copilot",
+
+		// ─── Duplicate Database Tools ─────────────────────────────────
+		"cweijan.vscode-postgresql-client2",
+		"cweijan.dbclient-jdbc",
+
+		// ─── Duplicate Docker Tools ────────────────────────────────────
+		"ms-azuretools.vscode-containers",
+
+		// ─── Duplicate Remote Development ───────────────────────────────
+		"github.remotehub",
+		"ms-vscode.remote-repositories",
+		"ms-vscode.remote-server",
+
+		// ─── SQL Server Tools (not used in this project) ──────────────
+		"ms-mssql.mssql",
+		"ms-mssql.sql-bindings-vscode",
+		"ms-mssql.sql-database-projects-vscode",
+
+		// ─── AWS & Cloud (not used in this project) ───────────────────
+		"amazonwebservices.aws-toolkit-vscode",
+		"localstack.localstack",
+		"ms-azuretools.vscode-containers",
+
+		// ─── Browser DevTools (not needed) ───────────────────────────
+		"firefox-devtools.vscode-firefox-debug",
+		"ms-edgedevtools.vscode-edge-devtools",
+
+		// ─── Infrastructure as Code (not used) ────────────────────────
+		"hashicorp.terraform",
+
+		// ─── .NET (not used in this project) ─────────────────────────
 		"ms-dotnettools.csdevkit",
 		"ms-dotnettools.csharp",
 		"ms-dotnettools.dotnet-maui",
 		"ms-dotnettools.vscode-dotnet-runtime",
-		"rooveterinaryinc.roo-cline",
-		"saoudrizwan.claude-dev",
-		"sst-dev.opencode",
-		"syncfusioninc.maui-ui-kit-vscode-extensions",
-		"hashicorp.terraform",
+
+		// ─── Unused Documentation Tools ────────────────────────────────
+		"mintlify.document",
+
+		// ─── Other Unused ─────────────────────────────────────────────
+		"ritwickdey.liveserver",
+		"ms-vscode.vscode-chat-customizations-evaluations",
+		"ms-toolsai.datawrangler",
+		"fabiospampinato.vscode-git-history",
+		"kamalhasan.advanced-arabic-lorem",
+		"typescriptteam.native-preview",
+
+		// ─── Platform-specific (not relevant) ─────────────────────────
 		"ms-kubernetes-tools.vscode-kubernetes-tools",
-		"ckolkman.vscode-postgres"
+		"syncfusioninc.maui-ui-kit-vscode-extensions",
+		"figma.figma-vscode-extension",
+		"brijesharung.winapp-mcp",
+		"brandonw3612.declarative-composition-language-support",
+		"danielgarysoftware.csxaml-vscode-extension",
+		"alvinashcraft.windev-helper"
 	]
 }

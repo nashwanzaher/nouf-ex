@@ -1,6 +1,6 @@
 # Cross-check PS_TESTHELPERS_REFERENCE.md against PS_TestHelpers.ps1
-$refPath = 'd:\source\Nouf-ex\docs\testing\templates\PS_TESTHELPERS_REFERENCE.md'
-$srcPath = 'd:\source\Nouf-ex\tests\e2e\helpers\PS_TestHelpers.ps1'
+$refPath = "$PSScriptRoot\..\docs\testing\templates\PS_TESTHELPERS_REFERENCE.md"
+$srcPath = "$PSScriptRoot\..\tests\e2e\helpers\PS_TestHelpers.ps1"
 
 Write-Host '=== Cross-check: PS_TESTHELPERS_REFERENCE.md ↔ PS_TestHelpers.ps1 ===' -ForegroundColor Cyan
 Write-Host ''

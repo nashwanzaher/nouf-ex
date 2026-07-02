@@ -108,4 +108,4 @@ CTFL defines 5 main activities; we apply them per-PHASE:
 - ISTQB CTFL Syllabus v4.0 (2023 release)
 - ISTQB Glossary v4.0
 - "Foundations of Software Testing" — ISTQB-aligned textbooks
-- Black, R. — *Managing the Testing Process* (3rd ed.)
+- Black, R. — _Managing the Testing Process_ (3rd ed.)

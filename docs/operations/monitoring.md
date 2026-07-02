@@ -107,7 +107,9 @@ Loki / Elasticsearch / Vector / Fluentbit) tails the container and
 forwards to a central store.
 
 ```yaml
+
 # docker-compose.yml (future)
+
 services:
   vector:
     image: timberio/vector:latest-alpine
@@ -163,7 +165,9 @@ endpoint = "http://loki.internal:3100"
 ### 3.3 Endpoints to monitor
 
 ```yaml
+
 # Synthetic monitoring (every 60s)
+
 - name: API health
   url: https://noufex.example.com/api/health
   expect_status: 200
@@ -196,17 +200,24 @@ We do not yet expose a `/metrics` endpoint. When we do (roadmap), it
 will return text/plain in the standard format:
 
 ```text
+
 # HELP noufex_http_requests_total Total HTTP requests
+
 # TYPE noufex_http_requests_total counter
+
 noufex_http_requests_total{method="GET",path="/api/products",status="200"} 12345
 
 # HELP noufex_http_request_duration_seconds Request latency
+
 # TYPE noufex_http_request_duration_seconds histogram
+
 noufex_http_request_duration_seconds_bucket{method="GET",path="/api/products",le="0.005"} 8000
 ...
 
 # HELP noufex_rate_limit_buckets_size Current rate-limit bucket count
+
 # TYPE noufex_rate_limit_buckets_size gauge
+
 noufex_rate_limit_buckets_size 42
 ```
 
@@ -240,9 +251,13 @@ When a user reports a problem, ask for the `x-request-id` from their
 browser dev tools. Then:
 
 ```sh
+
 # Search logs for that request_id
+
 docker logs Nouf-ex 2>&1 | grep "a1b2c3d4-...-..."
+
 # Or in your log shipper:
+
 loki-cli query '{job="noufex"} |= "a1b2c3d4-..."'
 ```
 
@@ -334,20 +349,26 @@ To prevent alert fatigue:
 **Diagnosis:**
 
 ```sh
+
 # 1. Check container status
+
 docker ps | grep Nouf-ex
 
 # 2. Check logs (last 200 lines)
+
 docker logs --tail 200 Nouf-ex | jq
 
 # 3. Check DB connection
+
 docker exec Nouf-ex node -e "console.log(process.env.DATABASE_URL ? 'set' : 'MISSING')"
 
 # 4. Check rate-limit bucket overflow
+
 psql -h $DB_HOST -U noufex_owner -d noufex_db \
   -c "SELECT count(*) FROM rate_limit_buckets;"
 
 # 5. Test from inside the container
+
 docker exec Nouf-ex curl -sf http://localhost:3000/api/health
 ```
 
@@ -368,10 +389,13 @@ status >= 500 appearing > 1% of total.
 **Diagnosis:**
 
 ```sh
+
 # 1. Aggregate error types in last 5 minutes
+
 docker logs --since 5m Nouf-ex | jq -r 'select(.level == "error" or .level == "warn") | .msg' | sort | uniq -c | sort -rn
 
 # 2. Specific 5xx endpoints
+
 docker logs --since 5m Nouf-ex | jq 'select(.status >= 500) | .path' | sort | uniq -c | sort -rn
 ```
 
@@ -390,10 +414,13 @@ docker logs --since 5m Nouf-ex | jq 'select(.status >= 500) | .path' | sort | un
 **Diagnosis:**
 
 ```sh
+
 # 1. Slow endpoints
+
 docker logs --since 10m Nouf-ex | jq 'select(.duration_ms > 1000) | {path, duration_ms}' | head -50
 
 # 2. DB slow queries
+
 psql -h $DB_HOST -U noufex_owner -d noufex_db \
   -c "SELECT pid, query, state, NOW() - query_start AS duration FROM pg_stat_activity WHERE state != 'idle' ORDER BY duration DESC LIMIT 10;"
 ```
@@ -468,13 +495,17 @@ du -sh /var/lib/postgresql/  /var/lib/docker/  /var/log/
 **Fix:**
 
 ```sh
+
 # Rotate old logs
+
 journalctl --vacuum-size=100M
 
 # Clean unused Docker artifacts
+
 docker system prune -a --volumes
 
 # Archive old admin_audit_log rows (future: automated)
+
 psql -c "DELETE FROM admin_audit_log WHERE created_at < NOW() - INTERVAL '1 year'"
 ```
 
@@ -541,10 +572,13 @@ When any of the following are observed, scale out:
 ### 8.3 Scaling out (single host)
 
 ```sh
+
 # Start a second replica on a different port
+
 docker compose -f docker-compose.green.yml up -d
 
 # Update nginx upstream
+
 upstream noufex_api {
     server 127.0.0.1:3000;
     server 127.0.0.1:3001;

@@ -161,8 +161,15 @@ export default defineConfig({
 					react: ['react', 'react-dom', 'react-router'],
 					// Recharts (charting) is ~250 kB on its own
 					recharts: ['recharts'],
-					// Animation libraries are big and rarely used together
-					animation: ['framer-motion', 'gsap', '@gsap/react'],
+					// PERF-H4 (2026-07-02): animation libraries were
+					// bundled together. gsap is used by 9 Home/*
+					// subcomponents; framer-motion is used by Toast,
+					// DashboardShell, SellerOrders, SellerProducts.
+					// They never load together. Splitting them drops
+					// ~50 kB gz off the Home bundle and ~40 kB gz off
+					// the seller bundle.
+					framer: ['framer-motion'],
+					gsap: ['gsap', '@gsap/react'],
 					// All 28 @radix-ui/* packages → one chunk
 					'radix-ui': [
 						'@radix-ui/react-accordion',
@@ -192,11 +199,13 @@ export default defineConfig({
 						'@radix-ui/react-toggle-group',
 						'@radix-ui/react-tooltip',
 					],
-					// Lucide icon set is imported via the barrel, which
-					// pulls every icon. Splitting it out helps the browser
-					// cache the icon set across pages that only use a
-					// handful of glyphs.
-					lucide: ['lucide-react'],
+					// PERF-H6 (2026-07-02): REMOVED `lucide: ['lucide-react']`.
+					// Listing the module as a manual-chunk entry
+					// FORCES Rollup to put the entire barrel — every
+					// icon, ~300 kB — into one chunk. With no entry,
+					// Rollup tree-shakes the actual imports, leaving
+					// only the icons each page uses. This typically
+					// saves 100-200 kB gz on the Home bundle.
 					// Date / time helpers
 					dates: ['date-fns', 'react-day-picker'],
 				},

@@ -43,7 +43,7 @@ Daily commands. All of them assume your shell is in `app/` unless noted.
   - `tsconfig.server.json` — backend (`app/server/**`, including `pg-wrapper.cts`)
 - Run: `npx tsc -b` (checks everything) or
   `npx tsc --noEmit -p tsconfig.app.json` (frontend only).
-- All aliases are routed through `@/*` → `app/src/*`.
+- All aliases are routed through `@/_` → `app/src/_`.
 
 ## Test
 
@@ -87,7 +87,9 @@ full audit, see [`audit/extensions.md`](audit/extensions.md).
 ## Adding a new dependency
 
 ```sh
+
 # From app/
+
 npm install <pkg>
 npm install -D <pkg>
 ```

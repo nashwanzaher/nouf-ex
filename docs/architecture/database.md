@@ -66,7 +66,9 @@ DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).
 The runtime `.env`:
 
 ```env
+
 # .env (committed version lives in .env.example)
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=noufex_db
@@ -184,14 +186,18 @@ in a `DO $$ … $$` block before applying.
 ## 8. First-time setup
 
 ```sh
+
 # 1. Connect as the postgres superuser (one-time on the host)
+
 psql -h localhost -U postgres -c "CREATE DATABASE noufex_db;"
 
 # 2. Run db-setup (as postgres — creates roles + schema + seed)
+
 cd app
 npm run db:setup
 
 # 3. (Optional) Switch the runtime to the noufex_app role
+
 psql -h localhost -U postgres -d noufex_db -c "ALTER ROLE noufex_app WITH PASSWORD 'your-real-password';"
 ```
 
@@ -245,7 +251,7 @@ handled by the wrapper, and remember all methods are `async`:
 const rows = await db.prepare("SELECT * FROM products WHERE id = ?").all(id);
 const one = await db.prepare("SELECT * FROM users WHERE id = ?").get(id);
 await db.tx(async (txDb) => {
-  /* BEGIN / COMMIT */
+  /_ BEGIN / COMMIT _/
 });
 ```
 

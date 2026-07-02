@@ -31,11 +31,15 @@
 **Fix:**
 
 ```sh
+
 # Generate a strong secret
+
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+
 # → kZ8dQfR3vN1xY7pE2jW5mT4sL0aH6bC9dF8gJ3kM5nQ
 
 # Append to .env
+
 echo "AUTH_SECRET=kZ8dQfR3vN1xY7pE2jW5mT4sL0aH6bC9dF8gJ3kM5nQ" >> .env
 ```
 
@@ -50,8 +54,11 @@ See `app/server/middleware.ts:296-309`.
 **Fix:**
 
 ```sh
+
 # Use DB_HOST + DB_PORT + DB_NAME + DB_USER + DB_PASSWORD
+
 # (or set DATABASE_URL directly)
+
 cat .env | grep -E "^(DATABASE_URL|DB_)"
 ```
 
@@ -69,7 +76,9 @@ See `app/server/middleware.ts:644-654`.
 cd app
 cp ../logs/reset-ahmed.cjs ./    # only on first use; logs/ is gitignored
 node reset-ahmed.cjs
+
 # → "Reset: 1 row(s) updated: [ { id: 2, email: 'ahmed@gmail.com' } ]"
+
 ```
 
 The script generates a fresh scrypt hash for `customer123` and updates
@@ -120,9 +129,13 @@ node tests/e2e/reset-rate-limit.cjs
 **Fix:**
 
 ```sh
+
 # Verify postgres password
+
 psql -h $DB_HOST -U postgres -c '\q'
+
 # If this fails, fix DB_PASSWORD in .env
+
 ```
 
 ### 1.8 `db:setup` fails with "relation already exists"
@@ -134,7 +147,9 @@ psql -h $DB_HOST -U postgres -c '\q'
 **Fix:**
 
 ```sh
+
 # Drop and recreate the DB
+
 dropdb -h $DB_HOST -U postgres noufex_db
 createdb -h $DB_HOST -U postgres noufex_db
 npm run db:setup
@@ -182,16 +197,21 @@ secure than 403 (which would confirm the row exists).
 **Fix:**
 
 ```powershell
+
 # PowerShell — find the process
+
 Get-NetTCPConnection -LocalPort 3000 | Select-Object OwningProcess
 Get-Process -Id <pid> | Select-Object ProcessName, Id
 
 # Kill the process (Windows)
+
 Stop-Process -Id <pid> -Force
 ```
 
 ```sh
+
 # Linux/Mac
+
 lsof -i :3000
 kill -9 <pid>
 ```
@@ -205,7 +225,9 @@ kill -9 <pid>
 **Fix:** add the origin to `.env`:
 
 ```sh
+
 # .env
+
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,https://your-staging.example.com
 ```
 
@@ -221,7 +243,7 @@ that's exposed by the security headers middleware.
 **Fix:** add the nonce to the script tag:
 
 ```tsx
-<script nonce={cspNonce}>{/* your code */}</script>
+<script nonce={cspNonce}>{/_ your code _/}</script>
 ```
 
 Where `cspNonce` is read from the `csp-nonce` cookie (non-HttpOnly) or
@@ -281,15 +303,21 @@ console.log(payload);
 ### 3.2 Trace a login failure
 
 ```sh
+
 # 1. Get a request_id from a failed login (visible in browser dev tools)
+
 # E.g. request_id = a1b2c3d4-1234-5678-9012-abcdef123456
 
 # 2. Search logs
+
 docker logs Nouf-ex 2>&1 | grep "a1b2c3d4-1234-5678-9012-abcdef123456"
+
 # (or in your log shipper)
+
 loki-cli query '{job="noufex"} |= "a1b2c3d4-1234-5678-9012-abcdef123456"'
 
 # 3. Look for `http_error` with status 401 + code AUTH_INVALID
+
 ```
 
 ### 3.3 Common auth bugs
@@ -305,7 +333,9 @@ loki-cli query '{job="noufex"} |= "a1b2c3d4-1234-5678-9012-abcdef123456"'
 ### 3.4 Test the password hashing directly
 
 ```sh
+
 # In Node REPL
+
 node -e "
 const { scrypt, randomBytes } = require('crypto');
 const { promisify } = require('util');
@@ -441,7 +471,9 @@ and the issue is somewhere else.
 ### 5.1 Increase log verbosity
 
 ```sh
+
 # Set LOG_LEVEL=debug in .env
+
 LOG_LEVEL=debug
 ```
 
@@ -460,22 +492,31 @@ The `x-request-id` header correlates all logs for one request. To
 trace:
 
 ```sh
+
 # 1. Make a request
+
 curl -v -H "X-Request-Id: my-trace-id" http://localhost:3000/api/products
+
 # (server uses this if length ≤ 64, else generates a UUID)
 
 # 2. Search logs
+
 docker logs Nouf-ex 2>&1 | grep "my-trace-id"
+
 # You'll see every event that touched this request.
+
 ```
 
 ### 5.3 Test a route manually with curl
 
 ```sh
+
 # Public
+
 curl -s http://localhost:3000/api/products?limit=2 | jq
 
 # Authenticated
+
 TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"ahmed@gmail.com","password":"customer123"}' | jq -r '.data.token')
@@ -514,12 +555,15 @@ npx vitest run --reporter=verbose server/tests/cart-router.test.ts
 ### 5.6 Test against a fresh database
 
 ```sh
+
 # Drop and recreate
+
 dropdb -h $DB_HOST -U postgres noufex_db
 createdb -h $DB_HOST -U postgres noufex_db
 npm run db:setup
 
 # Re-run a single test
+
 cd app && npx vitest run server/tests/cart-router.test.ts
 ```
 
@@ -528,11 +572,14 @@ cd app && npx vitest run server/tests/cart-router.test.ts
 After editing a route file, restart the API:
 
 ```sh
+
 # Local dev
+
 Ctrl+C
 npm run api
 
 # Docker
+
 docker compose restart noufex
 ```
 
@@ -588,14 +635,18 @@ If neither is present, the server didn't set them — check
 ### 6.4 Test the SPA standalone
 
 ```sh
+
 # Build the SPA
+
 cd app
 npm run build
 
 # Serve the dist with a static server
+
 npx serve dist -l 5173
 
 # Open http://localhost:5173 — it should load without API calls
+
 ```
 
 If the SPA loads but the API is unreachable, check the
@@ -636,7 +687,9 @@ When reporting a bug, capture:
 Example bug report:
 
 ```
+
 ## Login fails with 401
+
 - URL: POST https://noufex.example.com/api/auth/login
 - x-request-id: a1b2c3d4-1234-5678-9012-abcdef123456
 - Server log:

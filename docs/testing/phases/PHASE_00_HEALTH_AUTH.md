@@ -1,4 +1,5 @@
 # PHASE 00 — Health + Readiness + DB Connectivity + Auth
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -68,7 +69,7 @@
 | `app/server/routes/catalog.cts` | 328-385 | `GET /api/categories` |
 | `app/server/lib/shared.cts` | 55-87 | `hashPassword`, `verifyPassword` (scrypt) |
 | `app/server/lib/shared.cts` | 92-103 | `authLimiter` → `consume_rate_limit()` SQL fn |
-| `app/server/lib/shared.cts` | 113 | `authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth')` (20 req / 15 min) |
+| `app/server/lib/shared.cts` | 113 | `authLimiter = rateLimit(15 _ 60 _ 1000, 20, 'auth')` (20 req / 15 min) |
 | `app/server/lib/shared.cts` | 232-242 | `emailSchema`, `passwordSchema`, `registerSchema`, `loginSchema` |
 | `app/server/middleware.ts` | (various) | `requestId`, `securityHeaders`, `optionalAuth`, `verifyAuthToken` |
 

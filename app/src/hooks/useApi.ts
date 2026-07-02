@@ -10,76 +10,61 @@
  * (redirect to /auth/login, show a login prompt, etc.).
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-	getProducts,
-	getProduct,
-	getStores,
-	getStore,
-	getCategories,
-	getReviews,
-	getHomeStats,
-	getOrders,
-	createOrder,
-	getWishlist,
-	getAddresses,
-	getShippingMethods,
-	validateCoupon,
-	getNotifications,
-	ApiError,
-	getAdminUsers,
-	getAdminTimeSeries,
-	getAdminStores,
-	getAdminProducts,
-	getAdminOrders,
-	getAdminDisputes,
-	getAdminAuditLog,
-	getAdminStats,
-	getSystemHealth,
-} from '../lib/api';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
-	Product,
-	ProductWithDetails,
-	Store,
-	StoreWithProducts,
-	Category,
-	CategoryWithProducts,
-	Review,
-	Order,
-	OrderWithItems,
-	CartItem,
-	WishlistItem,
-	Notification,
-	User,
-	HomeStats,
-	Address,
-	ShippingMethod,
-	CouponValidation,
-	CreateOrderBody,
-	ProductFilters,
-	ReviewFilters,
+    Address,
+    CartItem,
+    Category,
+    CategoryWithProducts,
+    CouponValidation,
+    CreateOrderBody,
+    HomeStats,
+    Notification,
+    Order,
+    OrderWithItems,
+    Product,
+    ProductFilters,
+    ProductWithDetails,
+    Review,
+    ReviewFilters,
+    ShippingMethod,
+    Store,
+    StoreWithProducts,
+    User,
+    WishlistItem,
+} from '../lib/api';
+import {
+    ApiError,
+    createOrder,
+    getAddresses,
+    getAdminAuditLog,
+    getAdminDisputes,
+    getAdminOrders,
+    getAdminProducts,
+    getAdminStats,
+    getAdminStores,
+    getAdminTimeSeries,
+    getAdminUsers,
+    getCategories,
+    getHomeStats,
+    getNotifications,
+    getOrders,
+    getProduct,
+    getProducts,
+    getReviews,
+    getShippingMethods,
+    getStore,
+    getStores,
+    getSystemHealth,
+    getWishlist,
+    validateCoupon,
 } from '../lib/api';
 
 export type {
-	Product,
-	ProductWithDetails,
-	Store,
-	StoreWithProducts,
-	Category,
-	CategoryWithProducts,
-	Review,
-	Order,
-	OrderWithItems,
-	CartItem,
-	WishlistItem,
-	Notification,
-	User,
-	HomeStats,
-	Address,
-	ShippingMethod,
-	CouponValidation,
-	ProductFilters,
-	ReviewFilters,
+    Address, CartItem, Category,
+    CategoryWithProducts, CouponValidation, HomeStats, Notification, Order,
+    OrderWithItems, Product, ProductFilters, ProductWithDetails, Review, ReviewFilters, ShippingMethod, Store,
+    StoreWithProducts, User, WishlistItem
 };
 
 // ─── Generic Hook Result Type ───────────────────────────────
@@ -101,7 +86,24 @@ export interface HookResult<T> {
 // signal to the fetcher so it can call `fetch(url, { signal })`.
 // `AbortError` results are silently swallowed — they are an
 // expected part of the cleanup lifecycle, not a real failure.
-function useDataHook<T>(fetcher: (signal: AbortSignal | undefined) => Promise<T>): HookResult<T> {
+//
+// PERF-C1 (2026-07-02): the previous implementation memoised
+// `triggerFetch` with `useCallback(..., [])` and re-ran the
+// effect ONLY on `[triggerFetch]`. Because `triggerFetch` is
+// stable, the effect ran exactly once per component lifetime
+// — which meant changing the caller's filters (e.g.
+// `useProducts({ category: 'foo' })` → `useProducts({ category: 'bar' })`)
+// did NOT trigger a refetch. The new fetcher closure was
+// captured into fetcherRef.current but never invoked. This
+// is fixed by adding an explicit `deps` parameter: callers
+// pass an array of values that, when identity-changed, force
+// a refetch. We shallow-compare each entry with JSON.stringify
+// to handle the common case of filters passed as fresh object
+// literals every render.
+function useDataHook<T>(
+	fetcher: (signal: AbortSignal | undefined) => Promise<T>,
+	deps: ReadonlyArray<unknown> = [],
+): HookResult<T> {
 	// Start as `undefined` (not `null`) so that callers using the
 	// destructuring default pattern — `const { data: x = [] } = hook()`
 	// — get the fallback on the first render too. With `null` the
@@ -116,6 +118,33 @@ function useDataHook<T>(fetcher: (signal: AbortSignal | undefined) => Promise<T>
 	useEffect(() => {
 		fetcherRef.current = fetcher;
 	}, [fetcher]);
+
+	// Serialise the deps into a stable string key. We re-run the
+	// effect whenever this key changes. JSON.stringify is cheap
+	// for the small filter objects used by useProducts / useStores
+	// (typically < 200 bytes) and the comparison is O(n) over the
+	// deps array. If a caller passes a non-serialisable value
+	// (function, symbol, etc.) the JSON output is `undefined` and
+	// the hook falls back to a refetch on every render — degraded
+	// but never broken.
+	const depsKey = useMemo(
+		() =>
+			deps
+				.map((d) => {
+					try {
+						return JSON.stringify(d);
+					} catch {
+						return String(d);
+					}
+				})
+				.join('|'),
+		// We intentionally depend on the array's length + identity
+		// (via the entries themselves) so any change to a dep
+		// triggers re-memo. We pass deps as a flat list; React
+		// already calls this hook with a new array each render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		deps,
+	);
 
 	// One controller per fetch cycle. Replaced on every refetch and
 	// aborted on unmount.
@@ -149,7 +178,12 @@ function useDataHook<T>(fetcher: (signal: AbortSignal | undefined) => Promise<T>
 		return () => {
 			controllerRef.current?.abort();
 		};
-	}, [triggerFetch]);
+		// depsKey is derived from deps above; depending on it (not
+		// deps) keeps the effect stable across renders where the
+		// caller passes a fresh array literal but the contents are
+		// identical.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [depsKey, triggerFetch]);
 
 	return { data, loading, error, refetch: triggerFetch };
 }
@@ -398,34 +432,34 @@ export function useNotifications(): HookResult<Notification[]> {
 
 // ─── Seller (C.4) ──────────────────────────────────────────
 
-import {
-	getSellerStoreMe,
-	updateSellerStore,
-	getSellerProducts,
-	getSellerProduct,
-	createSellerProduct,
-	updateSellerProduct,
-	deleteSellerProduct,
-	addSellerProductImage,
-	getSellerOrders,
-	getSellerOrder,
-	updateSellerOrderStatus,
-	getSellerAnalytics,
-	getSellerInventory,
-	getSellerPayouts,
-	getSellerDashboard,
-} from '../lib/api';
 import type {
-	SellerStore,
-	SellerOrder,
-	SellerOrderWithItems,
-	SellerAnalytics,
-	SellerInventoryItem,
-	SellerBalance,
-	SellerPayout,
-	SellerDashboard,
-	SellerProductCreate,
-	SellerStoreUpdate,
+    SellerAnalytics,
+    SellerBalance,
+    SellerDashboard,
+    SellerInventoryItem,
+    SellerOrder,
+    SellerOrderWithItems,
+    SellerPayout,
+    SellerProductCreate,
+    SellerStore,
+    SellerStoreUpdate,
+} from '../lib/api';
+import {
+    addSellerProductImage,
+    createSellerProduct,
+    deleteSellerProduct,
+    getSellerAnalytics,
+    getSellerDashboard,
+    getSellerInventory,
+    getSellerOrder,
+    getSellerOrders,
+    getSellerPayouts,
+    getSellerProduct,
+    getSellerProducts,
+    getSellerStoreMe,
+    updateSellerOrderStatus,
+    updateSellerProduct,
+    updateSellerStore,
 } from '../lib/api';
 
 export function useSellerStore(): HookResult<SellerStore | null> {

@@ -1,6 +1,7 @@
 {
 	"version": "0.2.0",
 	"configurations": [
+		// ─── Frontend ────────────────────────────────────────────────────
 		{
 			"name": "🟢 Run Vite Dev Server",
 			"type": "node",
@@ -9,8 +10,11 @@
 			"runtimeArgs": ["run", "--prefix", "app", "dev"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
-			"skipFiles": ["<node_internals>/**"]
+			"skipFiles": ["<node_internals>/**"],
+			"preLaunchTask": "📦 Install Dependencies (app/)"
 		},
+
+		// ─── API Server ─────────────────────────────────────────────────
 		{
 			"name": "🚀 Run API Server (tsx)",
 			"type": "node",
@@ -18,34 +22,126 @@
 			"runtimeExecutable": "npm",
 			"runtimeArgs": ["run", "--prefix", "app", "api"],
 			"env": {
-				"NODE_ENV": "development"
+				"NODE_ENV": "development",
+				"NODE_OPTIONS": "--inspect=9229"
 			},
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
-			"skipFiles": ["<node_internals>/**"]
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
 		},
+		{
+			"name": "🚀 Run API Server (production)",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "--prefix", "app", "api:prod"],
+			"env": {
+				"NODE_ENV": "production",
+				"NODE_OPTIONS": "--inspect=9229"
+			},
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		},
+
+		// ─── Attach Debuggers ────────────────────────────────────────────
 		{
 			"name": "🔌 Attach to API (3000)",
 			"type": "node",
 			"request": "attach",
 			"port": 9229,
 			"restart": true,
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+			"localRoot": "${workspaceFolder}/app",
+			"remoteRoot": "/app"
+		},
+		{
+			"name": "🔌 Attach to Vite (5173)",
+			"type": "node",
+			"request": "attach",
+			"port": 5173,
+			"restart": true,
 			"skipFiles": ["<node_internals>/**"]
 		},
+
+		// ─── Testing ────────────────────────────────────────────────────
 		{
 			"name": "🧪 Run Vitest (current file)",
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["run", "--prefix", "app", "test", "--", "${file}"],
+			"runtimeArgs": ["run", "--prefix", "app", "test", "--", "${relativeFile}"],
 			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen"
+			"internalConsoleOptions": "neverOpen",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		},
+		{
+			"name": "🧪 Vitest UI",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "npm",
+			"runtimeArgs": ["run", "--prefix", "app", "test:ui"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"serverReadyAction": {
+				"action": "openExternally",
+				"pattern": "UI available at (.+)",
+				"uriTemplate": "{scheme}://{authority}{path}"
+			}
+		},
+
+		// ─── Docker ─────────────────────────────────────────────────────
+		{
+			"name": "🐳 Debug Docker API",
+			"type": "docker",
+			"request": "launch",
+			"service": "nouf-ex",
+			"platform": "node",
+			"preLaunchTask": "docker-compose: Build",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		},
+		{
+			"name": "🐳 Docker: NPM Install",
+			"type": "docker",
+			"request": "launch",
+			"dockerContainerType": "node",
+			"command": "npm install --no-audit --no-fund",
+			"workingDir": "/app",
+			"platform": "node"
+		},
+
+		// ─── Database ───────────────────────────────────────────────────
+		{
+			"name": "🗃️  SQLTools: Connect to noufex_db",
+			"type": "SQLTools",
+			"request": "connect",
+			"connection": {
+				"driver": "PostgreSQL",
+				"name": "noufex_db",
+				"server": "localhost",
+				"port": 5432,
+				"database": "noufex_db",
+				"username": "postgres",
+				"password": "${env:PGPASSWORD}"
+			}
 		}
 	],
+
 	"compounds": [
 		{
 			"name": "▶️ Full Stack (API + Vite)",
-			"configurations": ["🟢 Run Vite Dev Server", "🚀 Run API Server (tsx)"]
+			"configurations": ["🟢 Run Vite Dev Server", "🚀 Run API Server (tsx)"],
+			"stopAll": true
+		},
+		{
+			"name": "🐳 Full Stack (Docker)",
+			"configurations": ["🐳 Debug Docker API"],
+			"stopAll": true
+		},
+		{
+			"name": "🧪 Test & Debug",
+			"configurations": ["🧪 Run Vitest (current file)", "🔌 Attach to API (3000)"],
+			"stopAll": true
 		}
 	]
 }

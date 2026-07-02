@@ -1,6 +1,6 @@
 # IEEE 829-2008 — Standard for Software and System Test Documentation
 
-> **Source:** [IEEE Std 829™-2008](https://standards.ieee.org/ieee/829/4987/) — *Standard for Software and System Test Documentation*
+> **Source:** [IEEE Std 829™-2008](https://standards.ieee.org/ieee/829/4987/) — _Standard for Software and System Test Documentation_
 > **Adopted by:** Nouf-ex testing program (referenced in [`docs/testing/README.md`](../README.md))
 > **Last reviewed:** 2026-06-27
 
@@ -28,34 +28,42 @@ artifact inside this repository.
 ## 🔍 How Nouf-ex Uses Each Document Type
 
 ### 1. Master Test Plan (MTP)
+
 [`PHASE_TEST_TASKS.md`](../PHASE_TEST_TASKS.md) covers all 18 PHASES
 with their objectives, files, endpoints, affected tables, test data,
 positive/negative cases, execution order, and current status.
 
 ### 2. Level Test Plan
+
 [`conventions.md`](../conventions.md) defines the test taxonomy
 (unit / integration / E2E), naming rules, and placement policy.
 
 ### 3. Level Test Design
+
 Each per-PHASE document in [`phases/`](../phases/) records the design
 rationale: which endpoints, which tables, why this subset.
 
 ### 4. Level Test Case
+
 A single assertion inside a phase script (e.g. `Assert-Status 'GET /api/products' $r 200`).
 
 ### 5. Level Test Procedure
+
 The PowerShell statements that orchestrate a test case (Arrange → Act → Assert).
 
 ### 6. Level Test Log
+
 [`tests/reports/phase*.log`](../../../tests/reports/) — auto-generated
 via `Tee-Object` at execution time. Example: `phase02_public_catalog.log`.
 
 ### 7. Level Anomaly Report
+
 Defects are tracked as **GitHub Issues** with the `bug` label.
 The contributing guide ([`CONTRIBUTING.md`](../../../CONTRIBUTING.md))
 defines the required fields.
 
 ### 8. Level Test Summary
+
 The `Print-Summary` function at the end of each phase script prints
 PASS / FAIL / Total counts plus a list of failures with expected vs.
 actual status codes.
@@ -106,7 +114,7 @@ required by IEEE 829:
 
 ## 🔗 References
 
-- IEEE Std 829-2008 — *Standard for Software and System Test Documentation*
-- IEEE Std 1012-2016 — *Standard for System, Software, and Hardware Verification and Validation*
-- ISO/IEC/IEEE 29119 — *Software Testing* (companion standard)
-- Beizer, B. — *Software Testing Techniques* (2nd ed.)
+- IEEE Std 829-2008 — _Standard for Software and System Test Documentation_
+- IEEE Std 1012-2016 — _Standard for System, Software, and Hardware Verification and Validation_
+- ISO/IEC/IEEE 29119 — _Software Testing_ (companion standard)
+- Beizer, B. — _Software Testing Techniques_ (2nd ed.)

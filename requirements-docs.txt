@@ -1,0 +1,20 @@
+# Pinned versions for the docs build (rendered locally + on CI).
+# We pin exact versions for reproducibility — bumps go through PRs
+# that include a re-render check before merging.
+
+mkdocs==1.6.1                       # core static-site generator
+mkdocs-material==9.5.49             # theme (Diátaxis-friendly, Material 3)
+mkdocs-minify-plugin==0.8.0         # HTML/CSS/JS minification
+mkdocs-git-revision-date-localized-plugin==1.3.0  # "last updated" per page
+mkdocs-include-markdown-plugin==6.2.1   # cross-file include snippets
+mkdocs-redirects==1.2.1             # friendly URL redirects
+# Useful for the build (used by mkdocs-include-markdown-plugin).
+markdown>=3.6
+pyyaml>=6.0.1
+
+# Optional helpers (commented out — add when needed):
+# mike==2.1.3                       # versioned docs (mike deploy)
+# mkdocstrings==0.25.1               # API reference from docstrings
+# mkdocstrings-python==0.25.1
+# mkdocstrings-crystal==0.3.1
+# pymdown-extensions==10.10         # required transitively; pinned for safety

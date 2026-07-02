@@ -18,9 +18,9 @@
  * signing a real Bearer token with `signTestToken` (see
  * ./test-token.ts).
  */
-import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { adminReadRouter } from '../routes/admin-read.cts';
 import { signTestToken } from './test-token';
 

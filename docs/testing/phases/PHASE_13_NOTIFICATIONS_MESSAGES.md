@@ -1,4 +1,5 @@
 # PHASE 13 — Notifications + Messages + Disputes
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -159,7 +160,7 @@
 6. Section 5 — Disputes (2 cases)           → 1 request (or skip)
 ─────────────────────────────────────────────────────
 Total:                                      → 20+ HTTP requests
-                                            + ~6 inline data-shape checks
+                                            - ~6 inline data-shape checks
                                             = 21 PASS/FAIL assertions
 ```
 

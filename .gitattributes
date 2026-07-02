@@ -1,0 +1,84 @@
+# ============================================================================
+# Git attributes for the Nouf-ex repository.
+# ---------------------------------------------------------------------
+# Ensures consistent line endings across operating systems and tells
+# tooling how to diff specific file types. Aligned with Microsoft Docs
+# guidance on cross-platform development.
+# ============================================================================
+
+# Auto-detect text files; normalize line endings to LF on commit.
+*           text=auto eol=lf
+
+# Shell scripts must always use LF — CR+LF breaks bash on Linux/Mac.
+*.sh        text eol=lf
+
+# PowerShell scripts: keep CRLF on Windows (per PS 5.1 convention),
+# normalize on checkout. CI on Linux runs `git config core.autocrlf`
+# to handle conversion. See operations/docker.md and CONTRIBUTING.md.
+*.ps1       text eol=crlf
+*.psm1      text eol=crlf
+*.psd1      text eol=crlf
+
+# Batch files (Windows): keep CRLF.
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Docs: always LF, even on Windows. MkDocs + Material for MkDocs
+# assume Unix line endings.
+*.md        text eol=lf
+*.mdx       text eol=lf
+
+# Source code: LF only.
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.cts       text eol=lf
+*.mts       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.cjs       text eol=lf
+*.mjs       text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.json      text eol=lf
+*.jsonc     text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.sql       text eol=lf
+*.toml      text eol=lf
+
+# Image / binary files — do not touch.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.svg       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+
+# Archive formats.
+*.zip       binary
+*.tar       binary
+*.gz        binary
+*.tgz       binary
+*.7z        binary
+*.rar       binary
+
+# Database dumps and exports.
+*.dump      binary
+*.pgdump    binary
+
+# Office documents.
+*.pdf       binary
+*.docx      binary
+*.xlsx      binary
+
+# Linguist overrides — keep these languages out of the GitHub
+# language statistics so the repo's "primary language" stays accurate.
+docs/*      linguist-documentation
+archive/*   linguist-documentation
+*.md        linguist-documentation
+*.ps1       linguist-vendored

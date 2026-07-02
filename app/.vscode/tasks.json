@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "🚀 Start API Server (Express + Postgres)",
+			"type": "shell",
+			"command": "C:\\Users\\zaher\\AppData\\Local\\Programs\\nodejs\\node_modules\\.bin\\tsx.cmd server/index.ts",
+			"args": [],
+			"isBackground": true,
+			"group": ""
+		},
+		{
+			"label": "🎨 Start Vite Dev Server (5173)",
+			"type": "shell",
+			"command": "powershell -Command \"cd c:\\Users\\zaher\\Desktop\\nouf-ex\\app; $env:Path = 'C:\\Users\\zaher\\AppData\\Local\\Programs\\nodejs;' + $env:Path; .\\node_modules\\.bin\\vite.cmd --port 5173 --host\"",
+			"args": [],
+			"isBackground": true,
+			"group": ""
+		}
+	]
+}

@@ -1,31 +1,30 @@
-import { useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router';
-import { useTranslation } from 'react-i18next';
-import {
-	ShoppingBag,
-	Heart,
-	MessageSquare,
-	MapPin,
-	Settings,
-	Search,
-	Bell,
-	LogOut,
-	Menu,
-	X,
-	ChevronLeft,
-	ChevronRight,
-	Package,
-	Clock,
-	CheckCircle,
-	Truck,
-	Star,
-	Globe,
-	Loader2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useNotifications, useOrders, useWishlistItems } from '@/hooks/useApi';
 import { formatMoneyCompact } from '@/lib/format';
-import { useOrders } from '@/hooks/useApi';
-import { useWishlistItems, useNotifications } from '@/hooks/useApi';
+import { cn } from '@/lib/utils';
+import {
+    Bell,
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Globe,
+    Heart,
+    Loader2,
+    LogOut,
+    MapPin,
+    Menu,
+    MessageSquare,
+    Package,
+    Search,
+    Settings,
+    ShoppingBag,
+    Star,
+    Truck,
+    X,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation } from 'react-router';
 import styles from './CustomerDashboard.module.css';
 
 /* ------------------------------------------------------------------ */

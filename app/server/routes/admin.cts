@@ -367,6 +367,58 @@ adminRouter.get('/audit-log', ...adminAuth, async (req: Request, res: Response) 
 	}
 });
 
+/** POST /api/admin/maintenance/cleanup-audit-logs
+ *  Calls the `cleanup_audit_logs()` PL/pgSQL function to delete
+ *  admin audit rows older than the configured retention window
+ *  (default 2 years) and search log rows older than 90 days.
+ *  Returns the number of rows deleted per table so an operator
+ *  can spot unusually large purges.
+ *
+ *  SECURITY: this endpoint is admin-only. The retention function
+ *  is `SECURITY DEFINER` and runs as `noufex_owner` so it can
+ *  delete from `admin_audit_log` (which noufex_app cannot write
+ *  to, but is allowed to DELETE via the function).
+ */
+adminRouter.post(
+	'/maintenance/cleanup-audit-logs',
+	...adminAuth,
+	async (req: Request, res: Response) => {
+		try {
+			const v = validate(
+				z
+					.object({
+						admin_retention_days: z.coerce.number().int().min(30).max(3650).optional(),
+						search_retention_days: z.coerce.number().int().min(7).max(365).optional(),
+					})
+					.strict(),
+				req.body,
+			);
+			if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
+			const adminDays = v.data.admin_retention_days ?? 730; // 2y
+			const searchDays = v.data.search_retention_days ?? 90;
+			const row = (await db
+				.prepare(`SELECT * FROM cleanup_audit_logs($1::interval, $2::interval)`)
+				.get(`${adminDays} days`, `${searchDays} days`)) as
+				| { deleted_admin: string | number; deleted_search: string | number }
+				| undefined;
+			await writeAuditLog(req, 'maintenance.audit_cleanup', 'system', 0, null, {
+				admin_retention_days: adminDays,
+				search_retention_days: searchDays,
+				deleted_admin: row?.deleted_admin ?? 0,
+				deleted_search: row?.deleted_search ?? 0,
+			});
+			return sendSuccess(res, {
+				deleted_admin: Number(row?.deleted_admin ?? 0),
+				deleted_search: Number(row?.deleted_search ?? 0),
+				admin_retention_days: adminDays,
+				search_retention_days: searchDays,
+			});
+		} catch (err) {
+			return sendError(res, err);
+		}
+	},
+);
+
 /** GET /api/admin/stats
  *  Returns a compact dashboard summary for the admin home page.
  *  Single CTE-based round-trip: 1 query, 14 metrics. Was previously

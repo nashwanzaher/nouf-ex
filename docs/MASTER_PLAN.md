@@ -1700,7 +1700,7 @@ site/
 | ملفات تم تجاهلها (موجودة في `app/`) | 2 (`app/.prettierrc.json`, `app/.prettierignore`) — تكامل لا تكرار |
 | معايير مُحقَّقة | Microsoft Docs "Set up your repo" + Keep-a-Changelog + Google Style Guide |
 
-### 14.6 الجرد النهائي للجذر (2026-07-02 بعد التنفيذ)
+### 14.6 الجرد النهائي للجذر (2026-07-02 بعد التنفيذ، 2026-07-03 بعد إعادة الهيكلة)
 
 ```text
 Nouf-ex/
@@ -1715,34 +1715,26 @@ Nouf-ex/
 ├── .vscode/                   (editor config)
 ├── app/                       (frontend + backend)
 ├── archive/                   (read-only)
-├── build.ps1                  0.2 KB
 ├── CHANGELOG.md               22 KB
 ├── CODE_OF_CONDUCT.md         5.3 KB
 ├── CONTRIBUTING.md            6.8 KB
 ├── database/                  (SQL schema + seed)
 ├── docker/                    (entrypoint)
-├── docker-build.ps1           2.3 KB
 ├── docker-compose.yml         3.3 KB
-├── docker-run.ps1             0.7 KB
 ├── Dockerfile                 4.8 KB
 ├── docs/                      (active documentation)
-├── format-check.ps1           0.4 KB
-├── format.ps1                 0.3 KB
 ├── LICENSE                    2.3 KB  (Phase L)
-├── lint.ps1                   0.2 KB
 ├── mcp-server/                (MCP server)
 ├── mkdocs.yml                 10.4 KB  (Phase L)
 ├── README.md                  9.4 KB
 ├── release-please-config.json 1.0 KB  (Phase L)
 ├── requirements-docs.txt      1.0 KB  (Phase L)
-├── scripts/                   (utility scripts)
+├── scripts/                   (utility scripts + 8 PowerShell wrappers)
 ├── SECURITY.md                5.7 KB
-├── tc.ps1                     0.1 KB
-├── test.ps1                   0.2 KB
 └── tests/                     (E2E + reports + fixtures)
 ```
 
-**مجموع ملفات الجذر (عدا المجلدات):** 25 ملف (كان 23 قبل Phase L + 2 قبل هذه الجولة) — كلها مُحدَّثة، مُتسقة مع المعايير الأكاديمية.
+**مجموع ملفات الجذر (عدا المجلدات):** ~17 ملف (كان 25 قبل 2026-07-03) — نُقل 8 ملفات `.ps1` (`build`, `tc`, `test`, `lint`, `format`, `format-check`, `docker-build`, `docker-run`) إلى `scripts/` ضمن حملة إعادة الهيكلة.
 
 1. **تشغيل release-please** فعلياً (تثبيت GitHub App أو self-host CLI) لاستبدال كتلة `[Unreleased]` اليدوية.
 2. **تفعيل docs badge CI status** — ربط `.github/workflows/docs.yml` بـ `actions/statusbadge` لإظهار حالة "Docs" في README.

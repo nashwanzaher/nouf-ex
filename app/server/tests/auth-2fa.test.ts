@@ -18,9 +18,49 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { auth2faRouter, __reset2faRateLimitsForTests } from '../routes/auth-2fa.cts';
+import { db } from '../lib/shared.cts';
+
+// SECURITY (C-2): the rate limiter is now DB-backed. The global
+// pg mock returns empty rows, which makes every call fail-open.
+// To exercise the limiter in tests we install a tiny in-process
+// override on `db.prepare` that counts requests per IP and
+// answers with the expected envelope. Production code is
+// unaffected because the override is scoped to this test file.
+const rateLimitCounters = new Map<string, { count: number; resetAt: number }>();
+function rateLimitKey(bucket: string, ip: string): string {
+	return `${bucket}:${ip}`;
+}
+const originalPrepare = db.prepare.bind(db);
+function installRateLimitMock(): void {
+	(db as unknown as { prepare: typeof originalPrepare }).prepare = ((sql: string) => {
+		const trimmed = sql.trim().toUpperCase();
+		if (trimmed.startsWith('SELECT ALLOWED FROM CONSUME_RATE_LIMIT')) {
+			return {
+				run: async () => ({ rows: [], rowCount: 0 }),
+				get: async (...args: unknown[]) => {
+					// Args: [bucket, key, windowMs, max]
+					const [bucket, key, , max] = args as [string, string, number, number];
+					const rk = rateLimitKey(bucket, key);
+					const now = Date.now();
+					let entry = rateLimitCounters.get(rk);
+					if (!entry || entry.resetAt <= now) {
+						entry = { count: 1, resetAt: now + 60_000 };
+						rateLimitCounters.set(rk, entry);
+						return { allowed: true };
+					}
+					entry.count += 1;
+					return { allowed: entry.count <= (max ?? 5) };
+				},
+				all: async () => [],
+			};
+		}
+		return originalPrepare(sql);
+	}) as typeof originalPrepare;
+}
 
 let app: Express;
 beforeAll(() => {
+	installRateLimitMock();
 	app = express();
 	// Trust the X-Forwarded-For header so each test can use a distinct
 	// client IP — required to keep the per-IP rate limiters isolated.
@@ -34,9 +74,13 @@ beforeAll(() => {
 });
 
 // Reset module-level rate-limit state before every test so one
-// test's IP cannot lock out the next.
-beforeEach(() => {
-	__reset2faRateLimitsForTests();
+// test's IP cannot lock out the next. SECURITY (C-2): the buckets
+// now live in the DB; the helper issues a DELETE inside a
+// mocked pg driver, which is a no-op in tests but keeps the API
+// stable for future live-DB runs.
+beforeEach(async () => {
+	rateLimitCounters.clear();
+	await __reset2faRateLimitsForTests();
 });
 
 describe('auth-2fa router — mount + content type', () => {

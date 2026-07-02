@@ -70,9 +70,13 @@ describe('authRouter — POST /api/auth/register', () => {
 		// The mocked pg returns `lastInsertRowid: null`, which the
 		// handler treats as INSERT_FAILED → 500. The point of this
 		// test is that validation passes.
+		//
+		// SECURITY (C-4): the password must clear the new strength
+		// checks (10+ chars, 3-of-4 classes, no repeats/sequences).
+		// `ValidP@ssw0rd` qualifies.
 		const res = await request(app)
 			.post('/api/auth/register')
-			.send({ email: 'n@example.com', password: 'abcdefgh', name: 'Nouf Ali' });
+			.send({ email: 'n@example.com', password: 'ValidP@ssw0rd', name: 'Nouf Ali' });
 		expect(res.status).not.toBe(400);
 	});
 });

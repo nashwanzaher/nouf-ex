@@ -1,13 +1,13 @@
-import {
-	createContext,
-	useContext,
-	useReducer,
-	useEffect,
-	useCallback,
-	useMemo,
-	type ReactNode,
-} from 'react';
 import { clearLocalCart, syncOnLogin } from '@/lib/cart-sync';
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useReducer,
+    type ReactNode,
+} from 'react';
 
 type Lang = 'ar' | 'en' | 'zh';
 type Role = 'guest' | 'customer' | 'merchant' | 'admin';
@@ -255,4 +255,4 @@ export function useAuth() {
 	return { user: state.user, token: state.token, isAuthenticated, login, logout, addToast };
 }
 
-export type { User, Role, Lang, Toast };
+export type { Lang, Role, Toast, User };

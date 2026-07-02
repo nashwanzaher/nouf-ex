@@ -18,6 +18,23 @@ coverage/
 .env.local
 app/server/index.js
 
+# MkDocs build output (created by `mkdocs build` or `mkdocs gh-deploy`).
+# Lives next to mkdocs.yml in the repo root.
+site/
+
+# Python virtualenv for the docs build (created by `python -m venv .venv`).
+.venv/
+venv/
+env/
+
+# mypy / ruff caches.
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# mkdocs strict-mode verbose logs.
+.mkdocs_*
+
 # MCP server (TypeScript → JS)
 mcp-server/dist/
 mcp-server/node_modules/
@@ -61,3 +78,25 @@ login-page-fixed.png
 .l.txt
 .p.txt
 .d.txt
+
+# 2026-07-03 restructure cleanup
+# Root-level tool output logs (mistakenly created at root by stray redirect)
+/github-markdown.txt
+/markdownlint-results.txt
+/vitest-out.txt
+/tc-out.txt
+/build-out.txt
+/eslint-out.txt
+
+# Orphan CJS bundle from legacy scripts/build-api.bat (no longer produced)
+/app/server/index.cjs
+
+# Temporary commit helpers created during restructure audits
+/commit-*.cjs
+/git-status.cjs
+
+# Editor / OS backup files (missing pre-existing patterns)
+/Thumbs.db
+*.bak
+*.swp
+*.swo

@@ -1,3 +1,3 @@
-Set-Location "D:\source\Nouf-ex\app"
+Set-Location $PSScriptRoot\app
 npm run typecheck
-$LASTEXITCODE > "D:\source\Nouf-ex\scripts\_tc_exit.txt"
+$LASTEXITCODE > "$PSScriptRoot\scripts\_tc_exit.txt"

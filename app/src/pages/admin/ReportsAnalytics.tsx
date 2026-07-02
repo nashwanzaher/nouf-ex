@@ -1,39 +1,39 @@
-import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-	BarChart3,
-	Users,
-	Store,
-	ShoppingBag,
-	AlertTriangle,
-	DollarSign,
-	TrendingUp,
-	TrendingDown,
-	Download,
-	Loader2,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-	LineChart,
-	Line,
-	BarChart,
-	Bar,
-	AreaChart,
-	Area,
-	PieChart,
-	Pie,
-	Cell,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	Legend,
-} from 'recharts';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useAdminStats, useAdminTimeSeries } from '@/hooks/useApi';
 import type { AdminStats } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
+import {
+  AlertTriangle,
+  BarChart3,
+  DollarSign,
+  Download,
+  Loader2,
+  ShoppingBag,
+  Store,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 /* ------------------------------------------------------------------ */
 /*  Chart colors                                                       */

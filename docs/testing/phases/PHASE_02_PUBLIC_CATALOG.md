@@ -1,4 +1,5 @@
 # PHASE 02 — Public Catalog
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -188,7 +189,7 @@ All read-only public endpoints in `app/server/routes/catalog.cts`:
 5. Section 5 — Categories                   → 3 requests
 ─────────────────────────────────────────────
 Total:                                     → 32 HTTP requests
-                                               + 13 inline data-shape checks
+                                               - 13 inline data-shape checks
                                                = 42 PASS/FAIL assertions
 ```
 

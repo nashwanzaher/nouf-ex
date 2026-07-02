@@ -110,7 +110,7 @@ Three mechanisms:
    `crypto.timingSafeEqual` to prevent timing attacks.
 
 3. **2FA (optional)** — TOTP (HMAC-SHA1, RFC 6238, 30s window, ±1 step)
-   + 10 scrypt-hashed backup codes (single-use). Setup via
+   - 10 scrypt-hashed backup codes (single-use). Setup via
    `POST /api/auth/2fa/setup`. Verified in PHASE 12.
 
 ### 3.2 Authorization
@@ -288,7 +288,7 @@ Content-Security-Policy:
 
 - `'nonce-<random>'` is **per-request** — React/Vite inlines nonced
   `<script>` tags. The nonce is also exposed via a non-HttpOnly cookie
-  + meta tag so the SPA can attach it to dynamic `<script>` and `<style>`
+  - meta tag so the SPA can attach it to dynamic `<script>` and `<style>`
   elements it creates at runtime.
 - `'strict-dynamic'` allows any script the initial nonced bundle pulls in
   (matches Vite's import-graph output).

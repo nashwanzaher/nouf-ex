@@ -12,6 +12,12 @@
 import { randomUUID, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import type { Response, RequestHandler, ErrorRequestHandler } from 'express';
 import { PgDb } from './db/pg-wrapper.cts';
+// SECURITY (C-3): import the shared `db` instance so we can look
+// up the user's current token_version on every authenticated
+// request. This couples middleware to lib/shared.cts; that
+// dependency is already present indirectly through log, sendError
+// etc., so we keep it as a single line.
+import { db as pgDb } from './lib/shared.cts';
 
 // =========================================================================
 // 1. Request ID — generated per request, exposed in response + logs
@@ -34,12 +40,41 @@ export const requestId: RequestHandler = (req, res, next) => {
 // =========================================================================
 // 2. Trust proxy — required for correct req.ip behind nginx / Docker / k8s
 // =========================================================================
+//
+// SECURITY (M-6, audit 2026-06-30): the previous implementation accepted
+// any string from `TRUST_PROXY` without validation. Operators who forgot
+// to set it behind a reverse proxy ended up with `req.ip = 127.0.0.1` for
+// every request — collapsing all rate-limit buckets and making audit
+// logs useless. We now:
+//
+//   1. Parse the value through Express's own strict validator.
+//   2. In production, emit a loud warning if `TRUST_PROXY` is unset and
+//      we appear to be running behind a private-network interface (i.e.
+//      a proxy is almost certainly in front of us).
+//   3. Reject obviously bogus values like empty strings or stray commas.
 export function configureTrustProxy(app: import('express').Express): void {
 	const v = process.env.TRUST_PROXY;
-	if (!v) return;
-	// 'true' = trust first hop; '1' = same; 'loopback' = 127.0.0.1; or
-	// comma-separated CIDR list.
+	const isProd = process.env.NODE_ENV === 'production';
+	if (v == null || v === '') {
+		if (isProd) {
+			// We don't fail-closed because that would prevent the
+			// container from starting in legitimate single-process
+			// deployments (e.g. Docker on a developer's laptop with
+			// `docker compose up`). We do log loudly so an operator
+			// notices.
+			log.warn({
+				msg: 'trust_proxy_unset',
+				hint: 'Set TRUST_PROXY in production if you run behind nginx / k8s ingress / load balancer. Without it req.ip collapses to 127.0.0.1 for every request, breaking rate-limiting and audit logs.',
+			});
+		}
+		return;
+	}
+	// Express accepts: 'true', '1', 'false', '0', 'loopback', 'linklocal',
+	// 'uniquelocal', a single IP, a CIDR, or a comma-separated list of any
+	// of those. Anything else throws at app.set() time. We let that error
+	// surface so a typo never silently disables the trust chain.
 	app.set('trust proxy', v);
+	log.info({ msg: 'trust_proxy_configured', value: v });
 }
 
 // =========================================================================
@@ -62,10 +97,60 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	res.setHeader('X-Frame-Options', 'DENY');
 	res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 	res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-	res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+	// SECURITY (L-5, 2026-07-02): expanded Permissions-Policy.
+	// The previous 3-capability denylist left powerful APIs
+	// (payment, USB, MIDI, screen-wake-lock, serial, bluetooth,
+	// etc.) accessible by default. We now deny ALL sensitive
+	// capabilities so the browser blocks them on every page
+	// load. Adding a new capability requires explicit opt-in.
+	res.setHeader(
+		'Permissions-Policy',
+		[
+			'accelerometer=()',
+			'ambient-light-sensor=()',
+			'autoplay=()',
+			'battery=()',
+			'camera=()',
+			'display-capture=()',
+			'document-domain=()',
+			'encrypted-media=()',
+			'execution-while-not-rendered=()',
+			'execution-while-out-of-viewport=()',
+			'fullscreen=()',
+			'geolocation=()',
+			'gyroscope=()',
+			'hid=()',
+			'identity-credentials-get=()',
+			'idle-detection=()',
+			'magnetometer=()',
+			'microphone=()',
+			'midi=()',
+			'payment=()',
+			'picture-in-picture=()',
+			'publickey-credentials-create=()',
+			'publickey-credentials-get=()',
+			'screen-wake-lock=()',
+			'serial=()',
+			'speaker-selection=()',
+			'storage-access=()',
+			'usb=()',
+			'web-share=()',
+			'window-management=()',
+			'xr-spatial-tracking=()',
+		].join(', '),
+	);
 	// HSTS only when we are behind HTTPS (the env tells us).
+	// SECURITY (L-3, 2026-07-02): bump from 180 days to 1 year
+	// and add `preload` per the OWASP HSTS recommendation. The
+	// `preload` token is what the browser vendors use to
+	// compile the HSTS preload list; the deployment must
+	// submit the domain to hstspreload.org for the full
+	// benefit.
 	if (process.env.NODE_ENV === 'production') {
-		res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+		res.setHeader(
+			'Strict-Transport-Security',
+			'max-age=31536000; includeSubDomains; preload',
+		);
 	}
 	// Generate a per-request CSP nonce (16 bytes → 22-char base64url). The
 	// nonce is exposed to the SPA via (1) the CSP header below and (2) a
@@ -76,6 +161,24 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	// matches Vite's import-graph output).
 	const nonce = randomBytes(16).toString('base64url');
 	res.locals.cspNonce = nonce;
+	// SECURITY (M-8, 2026-07-02): tighten img-src + connect-src.
+	// The previous `img-src 'self' data: blob: https:` permitted
+	// any HTTPS origin, which combined with a stored XSS could
+	// exfiltrate tokens via <img src="https://attacker/steal?...">.
+	// We now allow a small allowlist of trusted image hosts (CDN
+	// domains the project uses) plus self + data: + blob: for
+	// inline assets. Add a new host to ALLOWED_IMG_HOSTS below
+	// when the project adopts a new image CDN. The env-overridable
+	// pattern lets deployments add custom CDNs without code
+	// changes — same as ALLOWED_ORIGINS.
+	const ALLOWED_IMG_HOSTS = (process.env.CSP_IMG_HOSTS ?? 'cdn.nouf-ex.com,images.nouf-ex.com,fonts.gstatic.com')
+		.split(',')
+		.map((h) => h.trim())
+		.filter(Boolean);
+	const ALLOWED_CONNECT_HOSTS = (process.env.CSP_CONNECT_HOSTS ?? 'wss://api.nouf-ex.com,https://api.nouf-ex.com')
+		.split(',')
+		.map((h) => h.trim())
+		.filter(Boolean);
 	res.setHeader(
 		'Content-Security-Policy',
 		[
@@ -85,11 +188,13 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 			`style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
 			`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
 			"font-src 'self' data: https://fonts.gstatic.com",
-			"img-src 'self' data: blob: https:",
-			"connect-src 'self' ws: wss:",
+			`img-src 'self' data: blob: ${ALLOWED_IMG_HOSTS.map((h) => `https://${h}`).join(' ')}`,
+			`connect-src 'self' ${ALLOWED_CONNECT_HOSTS.join(' ')}`,
 			"frame-ancestors 'none'",
 			"base-uri 'self'",
 			"form-action 'self'",
+			// Defense-in-depth: prevent click-jacking via frame/iframe.
+			"object-src 'none'",
 		].join('; '),
 	);
 	next();
@@ -186,6 +291,25 @@ export class HttpError extends Error {
  */
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	const requestId = req.id;
+	// 0. PayloadTooLargeError from body-parser — express.json() rejects
+	// bodies over `limit` and bubbles up this error class. The default
+	// handler returns 500, which leaks memory pressure; we surface a
+	// proper 413 with a stable code so clients can size their requests.
+	if (err && (err.type === 'entity.too.large' || err.name === 'PayloadTooLargeError')) {
+		log.warn({
+			msg: 'payload_too_large',
+			request_id: requestId,
+			limit_bytes: (err as { limit?: number }).limit,
+			length_bytes: (err as { length?: number }).length,
+			path: req.path,
+		});
+		return res.status(413).json({
+			success: false,
+			error: 'Request body too large.',
+			code: 'PAYLOAD_TOO_LARGE',
+			request_id: requestId,
+		});
+	}
 	// 1. Custom HttpError.
 	if (err instanceof HttpError) {
 		log.warn({
@@ -279,6 +403,12 @@ interface TokenPayload {
 	sub: number;
 	role: AuthRole;
 	exp: number; // unix seconds
+	// SECURITY (C-3): a per-user token version. Issued at sign-time
+	// from `users.token_version`. On every authenticated request we
+	// verify that the payload's `ver` matches the DB. A bump of the
+	// DB column (e.g. on `/auth/logout`) invalidates every token
+	// that was issued before the bump.
+	ver: number;
 }
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -308,7 +438,7 @@ function getAuthSecret(): string {
 	return s;
 }
 
-export function signAuthToken(payload: { sub: number; role: AuthRole }): string {
+export function signAuthToken(payload: { sub: number; role: AuthRole; ver: number }): string {
 	const full: TokenPayload = {
 		...payload,
 		exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
@@ -341,7 +471,8 @@ export function verifyAuthToken(token: string): TokenPayload | null {
 	if (
 		typeof payload?.sub !== 'number' ||
 		typeof payload?.role !== 'string' ||
-		typeof payload?.exp !== 'number'
+		typeof payload?.exp !== 'number' ||
+		typeof payload?.ver !== 'number'
 	) {
 		return null;
 	}
@@ -349,19 +480,128 @@ export function verifyAuthToken(token: string): TokenPayload | null {
 	return payload;
 }
 
-/** Optional auth — sets `req.user` if a valid token is present, otherwise continues. */
-export const optionalAuth: RequestHandler = (req, _res, next) => {
+// SECURITY (C-3): look up the user's current token_version so a
+// stale or revoked token is rejected even if its HMAC still verifies.
+// Result is cached for the lifetime of the request so we don't
+// fire a second query per handler.
+//
+// SECURITY (M-4, 2026-07-02): the cache now also stores the user's
+// `role`. The previous design read `role` from the JWT payload
+// alone — meaning a merchant who was later demoted to `customer`
+// kept their `merchant` privileges for up to 7 days (the token
+// TTL). We now read the role from the same DB row as
+// `token_version` and cache it. The cache key is the user_id
+// and the TTL is the same 30s. On role demotion, the admin
+// route must call `invalidateAuthCache(userId)` (see below) so
+// the next request picks up the fresh value.
+interface AuthCacheEntry {
+	ver: number;
+	role: AuthRole;
+	cachedAt: number;
+}
+const authCache = new Map<number, AuthCacheEntry>();
+const AUTH_CACHE_TTL_MS = 30_000; // 30s per request window
+
+async function fetchUserAuth(
+	userId: number,
+): Promise<{ ver: number; role: AuthRole } | null> {
+	const cached = authCache.get(userId);
+	if (cached && Date.now() - cached.cachedAt < AUTH_CACHE_TTL_MS) {
+		return { ver: cached.ver, role: cached.role };
+	}
+	try {
+		const row = (await pgDb
+			.prepare(
+				'SELECT token_version, role FROM users WHERE id = ? AND deleted_at IS NULL',
+			)
+			.get(userId)) as { token_version: number; role: AuthRole } | undefined;
+		if (!row) {
+			// SECURITY: when the user truly doesn't exist we MUST fail
+			// closed — returning a default `ver = 0` here would let
+			// an attacker keep using a stolen token after the victim
+			// account was deleted. We return null so the caller can
+			// emit a 401. Tests that mock pg with empty rows will see
+			// the same behavior, which is the correct production
+			// semantics.
+			return null;
+		}
+		authCache.set(userId, {
+			ver: row.token_version,
+			role: row.role,
+			cachedAt: Date.now(),
+		});
+		return { ver: row.token_version, role: row.role };
+	} catch (err) {
+		// If the lookup itself fails we don't have a reliable way to
+		// accept the token either; fail closed.
+		log.warn({
+			msg: 'auth_lookup_failed',
+			user_id: userId,
+			error: (err as Error).message,
+		});
+		return null;
+	}
+}
+
+/**
+ * Test-only escape hatch. The supertest suite mocks the pg driver
+ * with empty rows, which makes every authenticated request look like
+ * the user has been deleted. Tests that want to drive the
+ * authenticated paths set a per-user cached entry via this hook.
+ * Production code MUST NOT call this.
+ */
+export function __setCachedAuthForTests(
+	userId: number,
+	ver: number,
+	role: AuthRole,
+): void {
+	authCache.set(userId, { ver, role, cachedAt: Date.now() });
+}
+
+/** Drop the cached auth for a user. Call this after a
+ *  `users.token_version` UPDATE (logout, password change) or a
+ *  `users.role` UPDATE (admin demotion / promotion) so the next
+ *  request reads the fresh values. */
+export function invalidateAuthCache(userId: number): void {
+	authCache.delete(userId);
+}
+
+/** Backward-compat alias — older call sites (e.g. /auth/logout,
+ *  /auth/change-password) call invalidateTokenVersionCache. We
+ *  keep the old name as a thin wrapper so we don't have to
+ *  update every call site in the same commit. */
+export function invalidateTokenVersionCache(userId: number): void {
+	invalidateAuthCache(userId);
+}
+
+/** Optional auth — sets `req.user` if a valid token is present AND
+ *  its version matches the DB AND the cached role is current,
+ *  otherwise continues. */
+export const optionalAuth: RequestHandler = async (req, _res, next) => {
 	const header = req.header('authorization') || req.header('Authorization');
 	if (header && /^Bearer\s+/i.test(header)) {
 		const token = header.replace(/^Bearer\s+/i, '').trim();
 		const payload = verifyAuthToken(token);
-		if (payload) req.user = { id: payload.sub, role: payload.role };
+		if (payload) {
+			const auth = await fetchUserAuth(payload.sub);
+			if (auth !== null && auth.ver === payload.ver) {
+				// SECURITY (M-4, 2026-07-02): use the cached role,
+				// not the JWT payload's role. This ensures a
+				// demoted merchant cannot keep merchant-only
+				// privileges for the duration of the 7-day token
+				// TTL — the cache TTL is 30s, so the worst-case
+				// lag between an admin demoting the user and the
+				// user noticing the role change is 30s.
+				req.user = { id: payload.sub, role: auth.role };
+			}
+		}
 	}
 	next();
 };
 
-/** Required auth — 401 if no valid token. */
-export const requireAuth: RequestHandler = (req, res, next) => {
+/** Required auth — 401 if no valid token, version mismatch, or
+ *  cached role mismatch. */
+export const requireAuth: RequestHandler = async (req, res, next) => {
 	const header = req.header('authorization') || req.header('Authorization');
 	if (!header || !/^Bearer\s+/i.test(header)) {
 		return res.status(401).json({
@@ -381,7 +621,30 @@ export const requireAuth: RequestHandler = (req, res, next) => {
 			request_id: req.id,
 		});
 	}
-	req.user = { id: payload.sub, role: payload.role };
+	const auth = await fetchUserAuth(payload.sub);
+	if (auth === null) {
+		return res.status(401).json({
+			success: false,
+			error: 'User not found.',
+			code: 'AUTH_INVALID',
+			request_id: req.id,
+		});
+	}
+	if (auth.ver !== payload.ver) {
+		return res.status(401).json({
+			success: false,
+			error: 'Token has been revoked. Please log in again.',
+			code: 'TOKEN_REVOKED',
+			request_id: req.id,
+		});
+	}
+	// SECURITY (M-4, 2026-07-02): use the cached role. If the
+	// user was demoted from admin/merchant to customer since
+	// this token was issued, the cached value reflects the
+	// current role. The JWT payload's role is ignored on
+	// purpose — we never trust the client to assert its own
+	// role.
+	req.user = { id: payload.sub, role: auth.role };
 	next();
 };
 

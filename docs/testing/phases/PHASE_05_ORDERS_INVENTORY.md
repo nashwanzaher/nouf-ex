@@ -1,4 +1,5 @@
 # PHASE 05 — Orders + Order Items + Inventory
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -185,7 +186,7 @@
 8. Section 7 — Admin visibility                → 3 requests + 2 inline data checks
 ─────────────────────────────────────────────────────
 Total:                                          → 23 HTTP requests
-                                                + 13 inline data-shape checks
+                                                - 13 inline data-shape checks
                                                 = 28 PASS/FAIL assertions
 ```
 

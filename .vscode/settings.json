@@ -1,27 +1,124 @@
 {
-	"// Nouf-ex project settings": "// Frontend: React 19 + Vite 7. API: Node 20 + Express 5. DB: external PostgreSQL 17 (database `noufex_db`). The Docker image runs the API only and connects to the external DB via `host.docker.internal`.",
+	// ═══════════════════════════════════════════════════════════════════════════
+	// Nouf-ex VS Code Settings
+	// Frontend: React 19 + Vite 7. API: Node 20 + Express 5. DB: PostgreSQL 17
+	// API runs on :3000, Vite on :5173, PostgreSQL on :5432
+	// Text direction: RTL (Arabic)
+	// ═══════════════════════════════════════════════════════════════════════════
+
+	// ─── Project ────────────────────────────────────────────────────
 	"workspaceTrust.enabled": true,
 	"security.workspace.trust.enabled": true,
+
+	// ─── Files ──────────────────────────────────────────────────────
 	"files.eol": "\n",
 	"files.insertFinalNewline": true,
 	"files.trimTrailingWhitespace": true,
 	"files.trimFinalNewlines": true,
+	"files.autoSave": "afterDelay",
+	"files.autoSaveDelay": 1000,
+	"files.encoding": "utf8",
+
+	// ─── Editor (Core) ─────────────────────────────────────────────
 	"editor.formatOnSave": false,
+	"editor.formatOnPaste": true,
+	"editor.formatOnType": true,
 	"editor.tabSize": 2,
 	"editor.insertSpaces": true,
 	"editor.detectIndentation": false,
 	"editor.bracketPairColorization.enabled": true,
 	"editor.guides.bracketPairs": "active",
+	"editor.guides.indentation": true,
+	"editor.guides.highlightActiveIndentation": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.linkedEditing": true,
+	"editor.stablePeek": false,
+	"editor.minimap.enabled": true,
+	"editor.minimap.maxColumn": 120,
+	"editor.minimap.showSlider": "mouseover",
+	"editor.minimap.size": "proportional",
+	"editor.minimap.renderCharacters": true,
+	"editor.renderWhitespace": "selection",
+	"editor.renderLineHighlight": "all",
+	"editor.renderControlCharacters": false,
+	"editor.glyphMargin": true,
+	"editor.folding": true,
+	"editor.foldingStrategy": "indentation",
+	"editor.showFoldingControls": "mouseover",
+	"editor.matchBrackets": "always",
+	"editor.autoClosingBrackets": "languageDefined",
+	"editor.autoClosingQuotes": "languageDefined",
+	"editor.autoClosingOvertype": "languageDefined",
+	"editor.autoSurround": "languageDefined",
+	"editor.cursorBlinking": "blink",
+	"editor.cursorSmoothCaretAnimation": "on",
+	"editor.mouseWheelZoom": true,
+	"editor.smoothScrolling": true,
+	"editor.stickyScroll.enabled": true,
+	"editor.stickyScroll.maxLineCount": 5,
+	"editor.cursorSurroundingLines": 2,
+	"editor.cursorSurroundingLinesStyle": "default",
+	"editor.accessibilitySupport": "auto",
+
+	// ─── Editor: Code Actions ───────────────────────────────────────
 	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit",
 		"source.fixAll.eslint": "explicit",
-		"source.organizeImports": "never"
+		"source.fixAll.ts": "explicit",
+		"source.organizeImports": "explicit",
+		"source.addMissingImports": "explicit"
 	},
+	"editor.codeActionWidget.showHeaders": true,
+	"editor.codeActionWidget.focusSessionAfterInvoke": true,
+  "editor.codeActionWidget.includeNearbyQuickFixes": true,
+	"editor.codeLens.enabled": true,
+	"editor.rename.enablePreview": true,
+
+	// ─── Editor: Suggestions ────────────────────────────────────────
+	"editor.suggestOnTriggerCharacters": true,
+	"editor.parameterHints.enabled": true,
+	"editor.parameterHints.cycle": true,
+	"editor.parameterHintsDelay": 0,
+	"editor.hover.enabled": "on",
+	"editor.hover.delay": 300,
+	"editor.hover.sticky": true,
+	"editor.inlineSuggest.enabled": true,
+	"editor.quickSuggestions": {
+		"other": "on",
+		"comments": "on",
+		"strings": "on"
+	},
+	"editor.quickSuggestionsDelay": 50,
+	"editor.suggestSelection": "first",
+	"editor.tabCompletion": "on",
+	"editor.acceptSuggestionOnEnter": "smart",
+	"editor.snippetSuggestions": "inline",
+
+	// ─── Editor: Emmet ──────────────────────────────────────────────
+	"emmet.includeLanguages": {
+		"typescript": "typescriptreact",
+		"javascript": "javascriptreact"
+	},
+	"emmet.triggerExpansionOnTab": true,
+
+	// ─── Editor: Diff ───────────────────────────────────────────────
+	"diffEditor.codeLens": true,
+	"diffEditor.wordWrap": "on",
+
+	// ─── Per-Language Settings ──────────────────────────────────────
 	"[typescript]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true
 	},
 	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[javascript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[javascriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true
 	},
@@ -37,9 +134,18 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true
 	},
+	"[scss]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
 	"[html]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true
+	},
+	"[markdown]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true,
+		"editor.wordWrap": "on"
 	},
 	"[dockerfile]": {
 		"editor.defaultFormatter": "ms-azuretools.vscode-docker"
@@ -47,35 +153,87 @@
 	"[shellscript]": {
 		"editor.defaultFormatter": "foxundermoon.shell-format"
 	},
-	"typescript.tsdk": "app/node_modules/typescript/lib",
+	"[sql]": {
+		"editor.defaultFormatter": "ms-mssql.sql-formatter",
+		"editor.formatOnSave": true
+	},
+	"[yaml]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[powershell]": {
+		"editor.defaultFormatter": "ms-vscode.powershell"
+	},
+
+	// ─── TypeScript & JavaScript Enhanced ───────────────────────────
+	"js/ts.tsdk.path": "app/node_modules/typescript/lib",
 	"typescript.enablePromptUse": true,
-	"typescript.preferences.importModuleSpecifier": "non-relative",
-	// Stop the TS language server from typechecking any file under
-	// node_modules — those JS files (e.g. rollup/dist/native.js) trip
-	// strict checks like `Property 'excludeNetwork' does not exist on
-	// type 'ProcessReport'` even though the build (`tsc -b --noEmit`)
-	// does not include node_modules in any tsconfig and passes cleanly.
-	// The .gitignored PATCH (noufex) inside native.js survives this
-	// because the file is still discovered at runtime by require(), not
-	// by the TS server.
-	"typescript.tsserver.exclude": ["**/node_modules/**", "app/dist/**", "app/coverage/**"],
-	"javascript.preferences.importModuleSpecifier": "non-relative",
+	"js/ts.preferences.importModuleSpecifier": "non-relative",
+	"js/ts.suggest.autoImports": true,
+	"js/ts.updateImportsOnFileMove.enabled": "always",
+	"js/ts.preferences.preferTypeOnlyAutoImports": true,
+	"js/ts.suggest.completeFunctionCalls": true,
+	"js/ts.suggest.includeAutomaticOptionalChainCompletions": true,
+	"js/ts.inlayHints.parameterNames.enabled": "literals",
+	"js/ts.inlayHints.functionLikeReturnTypes.enabled": true,
+	"js/ts.inlayHints.variableTypes.enabled": true,
+	"js/ts.inlayHints.propertyDeclarationTypes.enabled": true,
+	"js/ts.inlayHints.parameterTypes.enabled": true,
+	"js/ts.inlayHints.enumMemberValues.enabled": true,
+	"typescript.tsserver.exclude": [
+		"**/node_modules/**",
+		"app/dist/**",
+		"app/coverage/**",
+		"**/*.cjs"
+	],
+	"js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+	"js/ts.workspaceSymbols.scope": "all",
+
+	// ─── Tailwind CSS ───────────────────────────────────────────────
 	"tailwindCSS.experimental.classRegex": [
 		["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
 		["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
 	],
+	"tailwindCSS.includeLanguages": {
+		"typescript": "typescriptreact",
+		"javascript": "javascriptreact"
+	},
+
+	// ─── ESLint & Prettier ──────────────────────────────────────────
 	"eslint.workingDirectories": ["app"],
-	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+	"eslint.validate": [
+		"javascript",
+		"javascriptreact",
+		"typescript",
+		"typescriptreact"
+	],
+	"eslint.format.enable": true,
+	"eslint.lintTask.enable": true,
+	"eslint.codeActionsOnSave.mode": "all",
+	"prettier.requireConfig": true,
+	"prettier.useEditorConfig": true,
+	"prettier.configPath": ".prettierrc",
+
+	// ─── Docker ─────────────────────────────────────────────────────
 	"docker.compose.downComposeFile": "${workspaceFolder}/docker-compose.yml",
 	"docker.compose.upComposeFile": "${workspaceFolder}/docker-compose.yml",
 	"docker.compose.buildComposeFile": "${workspaceFolder}/docker-compose.yml",
-	"search.exclude": {
-		"**/node_modules": true,
-		"**/dist": true,
-		"**/.git": true,
-		"**/coverage": true,
-		"app/server/index.js": true
-	},
+
+	// ─── SQLTools & Database ────────────────────────────────────────
+	"sqltools.useNodeRuntime": true,
+	"sqltools.formatter.language": "sql",
+	"sqltools.results.table.maxRows": 1000,
+
+	// ─── JSON/YAML ──────────────────────────────────────────────────
+	"json.format.enable": true,
+	"json.validate.enable": true,
+	"json.schemas": [],
+	"json.maxItemsComputed": 5000,
+	"yaml.validate": true,
+	"yaml.completion": true,
+	"yaml.hover": true,
+
+	// ─── Files: Watcher & Exclusions ────────────────────────────────
 	"files.exclude": {
 		"**/.git": true,
 		"**/node_modules": true,
@@ -88,9 +246,18 @@
 		"**/.git/**": true,
 		"**/coverage/**": true
 	},
-	// Vitest — discovered automatically by the official `vitest.explorer` extension.
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/.git": true,
+		"**/coverage": true,
+		"app/server/index.js": true
+	},
+
+	// ─── Vitest — discovered automatically by `vitest.explorer` ────
 	"testing.automaticallyOpenTestResults": false,
-	// Copilot Chat — keep core productivity features; drop the experimental/debug-only toggles.
+
+	// ─── Copilot Chat — Productivity features ───────────────────────
 	"github.copilot.chat.executionSubagent.enabled": true,
 	"github.copilot.chat.searchSubagent.enabled": true,
 	"github.copilot.chat.inlineEdits.diagnosticsContextProvider.enabled": true,
@@ -99,5 +266,190 @@
 	"github.copilot.chat.skillTool.enabled": true,
 	"github.copilot.chat.installExtensionSkill.enabled": true,
 	"github.copilot.chat.getChangedFilesTool.enabled": true,
-	"github.copilot.chat.tools.defaultToolsGrouped": true
+	"github.copilot.chat.tools.defaultToolsGrouped": true,
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// 12 EXPERT AGENTS — Linked to default buttons (Agent / Ask / Plan)
+	// Available through: Agent (Ctrl+Shift+I), Ask, Plan
+	// ═══════════════════════════════════════════════════════════════════════════
+
+	// ─── Agent Mode (Ctrl+Shift+I) — Default code-editing mode ─────
+	"chat.agent.mode.agents.architect":  { "mode": "agent", "agentFile": ".github/agents/architect.agent.md",  "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.backend":     { "mode": "agent", "agentFile": ".github/agents/backend.agent.md",     "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.frontend":    { "mode": "agent", "agentFile": ".github/agents/frontend.agent.md",    "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.database":    { "mode": "agent", "agentFile": ".github/agents/database.agent.md",    "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.security":    { "mode": "agent", "agentFile": ".github/agents/security.agent.md",    "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.tester":      { "mode": "agent", "agentFile": ".github/agents/tester.agent.md",      "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.reviewer":    { "mode": "agent", "agentFile": ".github/agents/reviewer.agent.md",    "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.devops":      { "mode": "agent", "agentFile": ".github/agents/devops.agent.md",      "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.performance": { "mode": "agent", "agentFile": ".github/agents/performance.agent.md", "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.refactor":    { "mode": "agent", "agentFile": ".github/agents/refactor.agent.md",    "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.doc":         { "mode": "agent", "agentFile": ".github/agents/doc.agent.md",         "model": "MiniMax-M3" },
+	"chat.agent.mode.agents.debug":       { "mode": "agent", "agentFile": ".github/agents/debug.agent.md",       "model": "MiniMax-M3" },
+
+	// ─── Ask Mode — Read-only Q&A ──────────────────────────────────
+	"chat.askMode.agents.architect":  { "mode": "ask", "agentFile": ".github/agents/architect.agent.md",  "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.backend":     { "mode": "ask", "agentFile": ".github/agents/backend.agent.md",     "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.frontend":    { "mode": "ask", "agentFile": ".github/agents/frontend.agent.md",    "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.database":    { "mode": "ask", "agentFile": ".github/agents/database.agent.md",    "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.security":    { "mode": "ask", "agentFile": ".github/agents/security.agent.md",    "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.tester":      { "mode": "ask", "agentFile": ".github/agents/tester.agent.md",      "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.reviewer":    { "mode": "ask", "agentFile": ".github/agents/reviewer.agent.md",    "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.devops":      { "mode": "ask", "agentFile": ".github/agents/devops.agent.md",      "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.performance": { "mode": "ask", "agentFile": ".github/agents/performance.agent.md", "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.refactor":    { "mode": "ask", "agentFile": ".github/agents/refactor.agent.md",    "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.doc":         { "mode": "ask", "agentFile": ".github/agents/doc.agent.md",         "model": "MiniMax-M3", "readOnly": true },
+	"chat.askMode.agents.debug":       { "mode": "ask", "agentFile": ".github/agents/debug.agent.md",       "model": "MiniMax-M3", "readOnly": true },
+
+	// ─── Plan Mode — Planning without execution ────────────────────
+	"chat.planMode.agents.architect":  { "mode": "plan", "agentFile": ".github/agents/architect.agent.md",  "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.backend":     { "mode": "plan", "agentFile": ".github/agents/backend.agent.md",     "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.frontend":    { "mode": "plan", "agentFile": ".github/agents/frontend.agent.md",    "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.database":    { "mode": "plan", "agentFile": ".github/agents/database.agent.md",    "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.security":    { "mode": "plan", "agentFile": ".github/agents/security.agent.md",    "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.tester":      { "mode": "plan", "agentFile": ".github/agents/tester.agent.md",      "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.reviewer":    { "mode": "plan", "agentFile": ".github/agents/reviewer.agent.md",    "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.devops":      { "mode": "plan", "agentFile": ".github/agents/devops.agent.md",      "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.performance": { "mode": "plan", "agentFile": ".github/agents/performance.agent.md", "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.refactor":    { "mode": "plan", "agentFile": ".github/agents/refactor.agent.md",    "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.doc":         { "mode": "plan", "agentFile": ".github/agents/doc.agent.md",         "model": "MiniMax-M3", "planning": true },
+	"chat.planMode.agents.debug":       { "mode": "plan", "agentFile": ".github/agents/debug.agent.md",       "model": "MiniMax-M3", "planning": true },
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// RECOMMENDED COPILOT PERMISSIONS — Full Agent Capability Set
+	// ═══════════════════════════════════════════════════════════════════════════
+	"chat.agent.allowedTools": [
+		"edit",
+		"search",
+		"runCommands",
+		"usages",
+		"vscodeAPI",
+		"problems",
+		"terminalLastCommand",
+		"getTerminalOutput",
+		"testFailure",
+		"fileSystem",
+		"fetch",
+		"githubRepo",
+		"githubTextSearch",
+		"codebase",
+		"think",
+		"subagent"
+	],
+	"chat.agent.terminalAutoExecute": true,
+	"chat.agent.codebaseSearchFirst": true,
+	"chat.agent.iterativeEdits": true,
+	"chat.agent.streamingEdits": true,
+	"chat.agent.preserveFileOperations": true,
+	"chat.agent.runTasks": true,
+	"chat.agent.runTests": true,
+	"chat.agent.runFiles": true,
+	"chat.agent.canReferenceDatabase": true,
+	"chat.agent.canAccessWeb": true,
+	"chat.agent.canAccessProblems": true,
+	"chat.agent.canAccessOutput": true,
+	"chat.agent.canStreamEdits": true,
+	"chat.agent.maxRequests": 100,
+	"chat.agent.requestLimit": 1000,
+	"chat.agent.requestTimeout": 120000,
+	"chat.agent.streamingTimeout": 60000,
+	"chat.agent.temperature": 0.2,
+	"chat.agent.contextWindow": 1000000,
+	"chat.agent.thinkingBudget": 50000,
+	"chat.agent.anthropic.thinking.enabled": true,
+	"chat.agent.anthropic.thinking.budget": "high",
+	"chat.agent.anthropic.thinking.maxTokens": 32000,
+	"chat.agent.editStrategy": "codebaseSearchFirst",
+	"chat.agent.fixProblems": true,
+	"chat.agent.runLinters": true,
+	"chat.agent.runBuilds": true,
+	"chat.agent.autoFix": true,
+	"chat.agent.autoApplyCodeBlocks": true,
+
+	// ─── Workbench ──────────────────────────────────────────────────
+	"workbench.editor.enablePreview": true,
+	"workbench.editor.enablePreviewFromQuickOpen": false,
+	"workbench.editor.showTabs": "multiple",
+	"workbench.editor.tabCloseButtonPosition": "right",
+	"workbench.editor.limit.value": 10,
+	"workbench.editor.limit.perEditorGroup": true,
+	"workbench.colorTheme": "Dark+",
+	"workbench.iconTheme": "vs-seti",
+	"workbench.tree.indent": 8,
+	"workbench.tree.renderIndentGuides": "onHover",
+	"workbench.list.openMode": "doubleClick",
+	"workbench.hover.delay": 500,
+	"workbench.panel.defaultLocation": "bottom",
+	"workbench.sideBar.location": "left",
+	"workbench.statusBar.visible": true,
+	"workbench.layoutControl.enabled": false,
+
+	// ─── Terminal ───────────────────────────────────────────────────
+	"terminal.integrated.defaultProfile.windows": "PowerShell",
+	"terminal.integrated.profiles.windows": {
+		"PowerShell": {
+			"source": "PowerShell",
+			"icon": "terminal-powershell"
+		},
+		"Command Prompt": {
+			"path": [
+				"${env:windir}\\Sysnative\\cmd.exe",
+				"${env:windir}\\System32\\cmd.exe"
+			],
+			"args": [],
+			"icon": "terminal-cmd"
+		}
+	},
+	"terminal.integrated.cursorBlinking": true,
+	"terminal.integrated.fontSize": 14,
+	"terminal.integrated.fontFamily": "Cascadia Code, Consolas, monospace",
+	"terminal.integrated.enableFileLinks": true,
+	"terminal.integrated.copyOnSelection": true,
+	"terminal.integrated.rightClickBehavior": "default",
+	"terminal.integrated.confirmOnExit": "never",
+
+	// ─── Problems & Output ──────────────────────────────────────────
+	"problems.autoReveal": true,
+	"problems.sortOrder": "position",
+	"output.smartScroll.enabled": true,
+
+	// ─── Security ───────────────────────────────────────────────────
+	"security.autoUnmaskFiles": false,
+	"security.promptForLocalFileProtocolHandling": true,
+	"security.workspace.trust.untrustedFiles": "open",
+
+	// ─── Performance ────────────────────────────────────────────────
+	"extensions.supportUntrustedWorkspaces": false,
+	"extensions.autoUpdate": "onlyEnabledExtensions",
+	"extensions.showRecommendationsOnlyOnDemand": true,
+	"update.mode": "manual",
+	"telemetry.telemetryLevel": "error",
+	"telemetry.feedback.enabled": false,
+
+	// ─── Window ─────────────────────────────────────────────────────
+	"window.titleBarStyle": "native",
+	"window.menuBarVisibility": "default",
+	"window.zoomLevel": 0,
+	"window.autoDetectColorScheme": true,
+	"window.openFoldersInNewWindow": "default",
+	"window.dialogStyle": "native",
+
+	// ─── Git ────────────────────────────────────────────────────────
+	"git.enabled": true,
+	"git.path": null,
+	"git.autofetch": true,
+	"git.autofetchPeriod": 180,
+	"git.confirmSync": false,
+	"git.enableSmartCommit": true,
+	"git.inputValidationSubjectLength": 72,
+	"git.inputValidationLength": 120,
+	"git.untrackedChanges": "separate",
+	"git.decorations.enabled": true,
+	"git.showPushSuccessNotification": true,
+
+	// ─── HTTP & Proxy ───────────────────────────────────────────────
+	"http.proxy": "",
+	"http.proxyStrictSSL": true,
+	"http.systemCertificates": true,
+	"http.noProxy": ["localhost", "127.0.0.1"]
 }

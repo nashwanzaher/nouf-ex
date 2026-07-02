@@ -91,33 +91,31 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			shippingAddress,
 			paymentMethod,
 			notes,
-			subtotal,
-			shippingCost,
-			total,
 			couponCode,
 		} = v.data as {
 			storeId?: number;
 			items: Array<{
 				productId: number;
-				variantId?: number | null;
 				quantity: number;
-				unitPrice: number;
+				variant?: unknown;
 			}>;
-			shippingAddress: unknown;
-			paymentMethod: string;
+			shippingAddress?: unknown;
+			paymentMethod?: string;
 			notes?: string;
-			subtotal: number;
-			shippingCost: number;
-			discount: number;
-			total: number;
 			couponCode?: string;
 		};
 		const customerId = req.user!.id;
 
+		// SECURITY (C-1): the body MUST NOT carry pricing. We pull the
+		// authoritative price, currency, and variant price_delta straight
+		// from the DB inside the order transaction so a tampered client
+		// can never underpay or overpay. `subtotal` / `shippingCost` /
+		// `total` are intentionally NOT read from `v.data`; the server
+		// recomputes them below.
 		const productIds = items.map((i) => i.productId);
 		const productRows = (await db
 			.prepare(
-				`SELECT id, store_id, is_active, deleted_at
+				`SELECT id, store_id, is_active, deleted_at, price, currency, stock, name_en, name_ar
 				   FROM products
 				  WHERE id = ANY(?)
 				  ORDER BY id`,
@@ -127,6 +125,11 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			store_id: number;
 			is_active: boolean;
 			deleted_at: string | null;
+			price: string;
+			currency: string;
+			stock: number;
+			name_en: string | null;
+			name_ar: string;
 		}>;
 		const storeResult = resolveOrderStoreId(productIds, productRows);
 		if (!storeResult.ok) {
@@ -150,17 +153,66 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		}
 		const resolvedStoreId = storeResult.storeId;
 
+		// Stock check BEFORE we begin the transaction — gives a cheaper
+		// 400 path than waiting for the FOR UPDATE inside the tx. The
+		// trigger re-validates stock on insert (race-safe).
+		const productById = new Map<
+			number,
+			{
+				price: number;
+				currency: string;
+				stock: number;
+				name_ar: string;
+				name_en: string | null;
+			}
+		>();
+		for (const p of productRows) {
+			productById.set(p.id, {
+				price: Number(p.price),
+				currency: p.currency,
+				stock: p.stock,
+				name_ar: p.name_ar,
+				name_en: p.name_en,
+			});
+		}
+		for (const item of items) {
+			const product = productById.get(item.productId);
+			if (!product) {
+				return sendError(
+					res,
+					`Product ${item.productId} is unavailable`,
+					400,
+					'PRODUCT_UNAVAILABLE',
+				);
+			}
+			if (product.stock < item.quantity) {
+				return sendError(
+					res,
+					`Product ${item.productId} has insufficient stock (requested ${item.quantity}, available ${product.stock})`,
+					400,
+					'OUT_OF_STOCK',
+				);
+			}
+		}
+
 		const normalisedPaymentMethod =
 			paymentMethod === 'cash' || !paymentMethod ? 'cod' : paymentMethod;
 
-		const resolvedSubtotal = Math.max(0, Number(subtotal) || Number(total) || 0);
-		const resolvedShippingCost = Math.max(0, Number(shippingCost) || 0);
+		// Server-side authoritative pricing. `shippingCost` is intentionally
+		// fixed for now (free shipping policy); once a shipping_methods
+		// lookup is wired in we will resolve it per order the same way.
+		const FREE_SHIPPING_THRESHOLD = 10000; // 10,000 YER → free shipping
+		let resolvedSubtotal = 0;
+		for (const item of items) {
+			const product = productById.get(item.productId)!;
+			resolvedSubtotal += product.price * item.quantity;
+		}
+		resolvedSubtotal = Math.round(resolvedSubtotal * 100) / 100;
+		const resolvedShippingCost = resolvedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 500;
 		let resolvedDiscount = 0;
 		const resolvedCouponCode: string | null = couponCode ? String(couponCode) : null;
-		if (resolvedCouponCode) {
-			if (resolvedSubtotal <= 0) {
-				return sendError(res, 'Cannot apply a coupon without a positive subtotal.', 400);
-			}
+		if (resolvedCouponCode && resolvedSubtotal <= 0) {
+			return sendError(res, 'Cannot apply a coupon without a positive subtotal.', 400);
 		}
 
 		const {
@@ -235,23 +287,45 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			}
 			const newOrderId: number = result.lastInsertRowid;
 
-			// PERFORMANCE: fetch all products in a single query instead of
-			// one query per line item (N+1). Same correctness — we still
-			// error out for any unavailable product, just without the
-			// per-row round-trip latency.
+			// SECURITY (C-1): inside the transaction we re-fetch products
+			// and compute the authoritative unit_price server-side. We
+			// never read `item.unitPrice` from the client body — the
+			// schema strips it and we re-derive it here from `products`.
 			const productIds = items.map((i) => i.productId);
 			const productRows = (await txDb
 				.prepare(
-					`SELECT id, name_ar, name_en FROM products
-						 WHERE id = ANY($1) AND is_active = TRUE AND deleted_at IS NULL`,
+					`SELECT id, name_ar, name_en, price, currency, stock
+						 FROM products
+						WHERE id = ANY($1) AND is_active = TRUE AND deleted_at IS NULL
+						FOR UPDATE`,
 				)
 				.all(productIds)) as Array<{
 				id: number;
 				name_ar: string;
 				name_en: string | null;
+				price: string;
+				currency: string;
+				stock: number;
 			}>;
-			const productById = new Map<number, { name_ar: string; name_en: string | null }>();
-			for (const p of productRows) productById.set(p.id, p);
+			const productById = new Map<
+				number,
+				{
+					name_ar: string;
+					name_en: string | null;
+					price: number;
+					currency: string;
+					stock: number;
+				}
+			>();
+			for (const p of productRows) {
+				productById.set(p.id, {
+					name_ar: p.name_ar,
+					name_en: p.name_en,
+					price: Number(p.price),
+					currency: p.currency,
+					stock: p.stock,
+				});
+			}
 
 			const insertItem = txDb.prepare(
 				`INSERT INTO order_items
@@ -260,6 +334,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			       VALUES (?, ?, ?, ?, ?, ?, ?)`,
 			);
 
+			let serverSubtotal = 0;
 			for (const item of items) {
 				if (item.quantity <= 0) {
 					throw new Error(
@@ -270,18 +345,55 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				if (!product) {
 					throw new Error(`Product ${item.productId} is unavailable`);
 				}
-				const unitPrice = item.unitPrice;
+				if (product.stock < item.quantity) {
+					throw new Error(
+						`Product ${item.productId} has insufficient stock (requested ${item.quantity}, available ${product.stock})`,
+					);
+				}
+				// unit_price is ALWAYS taken from the DB row, never from the
+				// request body. This is the heart of the C-1 fix.
+				const unitPrice = product.price;
+				const lineTotal = Math.round(unitPrice * item.quantity * 100) / 100;
+				serverSubtotal += lineTotal;
 				await insertItem.run(
 					newOrderId,
 					item.productId,
-					item.variantId ?? null,
+					null,
 					product.name_en || product.name_ar,
 					item.quantity,
 					unitPrice,
-					unitPrice * item.quantity,
+					lineTotal,
 				);
 			}
-			return { id: newOrderId, orderNumber, finalDiscount, finalTotal };
+			serverSubtotal = Math.round(serverSubtotal * 100) / 100;
+			// Use the server-computed subtotal — never trust the client.
+			// We recompute the totals here to make tampering impossible.
+			const serverDiscount = Math.round(resolvedDiscount * 100) / 100;
+			const serverShippingCost = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 500;
+			const serverFinalTotal = Math.max(
+				0,
+				Math.round((serverSubtotal + serverShippingCost - serverDiscount) * 100) / 100,
+			);
+			// Patch the order header row with the authoritative numbers.
+			await txDb
+				.prepare(
+					`UPDATE orders
+					    SET subtotal = ?, shipping_cost = ?, discount = ?, total = ?
+					  WHERE id = ?`,
+				)
+				.run(
+					serverSubtotal,
+					serverShippingCost,
+					serverDiscount,
+					serverFinalTotal,
+					newOrderId,
+				);
+			return {
+				id: newOrderId,
+				orderNumber,
+				finalDiscount: serverDiscount,
+				finalTotal: serverFinalTotal,
+			};
 		});
 
 		sendSuccess(

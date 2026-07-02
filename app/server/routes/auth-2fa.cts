@@ -58,45 +58,49 @@ const verifySchema = z.object({
 
 // ── Rate limiter (N2) ────────────────────────────────────────────────
 //
-// Per-process sliding-window counter. Each 2FA endpoint has its own
-// bucket so a stuck /setup loop cannot lock the user out of /verify,
-// and the limits can be tuned to the threat model of each route.
+// SECURITY (C-2, audit 2026-06-30): the previous implementation
+// kept a per-process `Map<bucket, Map<ip, count>>`. With a single
+// Node process that worked; under multi-replica deployment each
+// replica had its own Map, so a determined attacker could rotate
+// through replicas and effectively triple their budget. We now
+// call the DB-backed `consume_rate_limit()` function defined in
+// migration 0018 so the budget is shared across replicas.
 //
-// Buckets
+// Per-request budget:
 //   2fa_verify        5 / min / IP   TOTP brute-force on login
 //   2fa_setup        10 / hour / IP  one-time enrollment, cap mis-use
 //   2fa_enable       10 / min / IP   TOTP code check on enrollment
 //   2fa_disable       5 / min / IP   password check (matches /auth/login)
 //   2fa_backup_codes  5 / min / IP   rotation cap, abuse prevention
-//
-// A multi-instance deployment should move these to the DB-backed
-// consume_rate_limit() function (database/migrations/0004) so the
-// budget is shared across replicas — left as a follow-up because
-// the current single-process deploy is fine for the threat model
-// (2FA is per-user; the limit only needs to bound per-IP attempts).
-interface RateLimitEntry {
-	count: number;
-	resetAt: number;
-}
-const rateLimiters = new Map<string, Map<string, RateLimitEntry>>();
 
-/** Increment-and-check. Returns false when the caller has exhausted
- *  the budget in the current window. */
-function checkRate(bucket: string, ip: string, windowMs: number, max: number): boolean {
-	let map = rateLimiters.get(bucket);
-	if (!map) {
-		map = new Map();
-		rateLimiters.set(bucket, map);
-	}
-	const now = Date.now();
-	const e = map.get(ip);
-	if (!e || e.resetAt <= now) {
-		map.set(ip, { count: 1, resetAt: now + windowMs });
+/** Increment-and-check via the DB-backed `consume_rate_limit()`
+ *  function. Returns true if the request is within budget, false
+ *  if it is rate-limited. On DB error we FAIL OPEN — a transient
+ *  outage should not lock users out of their own accounts; the
+ *  tradeoff is a brief window of higher attack surface during
+ *  outages, which is preferable to a self-DoS. The error is
+ *  logged so an operator notices. */
+async function checkRate(
+	bucket: string,
+	ip: string,
+	windowMs: number,
+	max: number,
+): Promise<boolean> {
+	try {
+		const row = (await db
+			.prepare('SELECT allowed FROM consume_rate_limit($1, $2, $3, $4)')
+			.get(bucket, ip, windowMs, max)) as { allowed: boolean } | undefined;
+		if (!row) return true;
+		return row.allowed === true;
+	} catch (err) {
+		log.warn({
+			msg: 'rate_limit_db_error',
+			bucket,
+			ip,
+			error: (err as Error).message,
+		});
 		return true;
 	}
-	if (e.count >= max) return false;
-	e.count += 1;
-	return true;
 }
 
 /** Resolve the client IP for rate-limiting. Mirrors the precedence
@@ -139,7 +143,8 @@ const RATE_LIMITS = {
 } as const;
 
 /** Build an Express middleware that enforces a per-IP rate limit
- *  using the shared `checkRate` counter. The middleware runs
+ *  via the DB-backed `consume_rate_limit()`. Async because the
+ *  lookup goes over the wire to Postgres. The middleware runs
  *  BEFORE requireAuth on each protected route so an attacker
  *  without a valid token still burns the bucket — the goal of
  *  the limiter is to bound *attempts*, not successful calls. */
@@ -149,8 +154,8 @@ function rateLimitMiddleware(
 	max: number,
 	message: string,
 ): RequestHandler {
-	return (req, res, next) => {
-		if (!checkRate(bucket, clientIp(req), windowMs, max)) {
+	return async (req, res, next) => {
+		if (!(await checkRate(bucket, clientIp(req), windowMs, max))) {
 			return sendError(res, message, 429, 'RATE_LIMITED');
 		}
 		next();
@@ -188,29 +193,20 @@ const limitBackupCodes = rateLimitMiddleware(
 	RATE_LIMITS.backupCodes.message,
 );
 
-// Background sweeper — drops entries whose window has expired so the
-// maps don't grow without bound when many distinct IPs make one-off
-// requests. 60s cadence is safe: the smallest window we use is 1
-// minute, so we never evict an entry that's still in its current
-// window. unref() keeps the timer from keeping the event loop alive
-// in test runners.
-const _sweepTimer = setInterval(() => {
-	const now = Date.now();
-	for (const [bucket, map] of rateLimiters) {
-		for (const [ip, e] of map) {
-			if (e.resetAt <= now) map.delete(ip);
-		}
-		if (map.size === 0) rateLimiters.delete(bucket);
-	}
-}, 60_000);
-if (typeof _sweepTimer.unref === 'function') _sweepTimer.unref();
+// Sweeper for the DB-backed limiter lives in `cleanup_rate_limit_buckets()`
+// (migration 0018) and is invoked from the maintenance endpoint
+// `POST /api/admin/maintenance/cleanup-audit-logs` and from the
+// function-call form. There is no per-process Map to sweep any more.
 
-/** Test-only: clear every per-bucket counter. Exposed so the test
- *  suite can isolate rate-limit assertions without leaking state
- *  between cases. Not part of the public API. */
-export function __reset2faRateLimitsForTests(): void {
-	for (const map of rateLimiters.values()) map.clear();
-	rateLimiters.clear();
+/** Test-only: clear the DB-backed rate-limit buckets used by the
+ *  2FA endpoints. Calls `cleanup_rate_limit_buckets()` to wipe
+ *  every row in the 2FA_* bucket prefix. Not part of the public API. */
+export async function __reset2faRateLimitsForTests(): Promise<void> {
+	try {
+		await db.prepare("DELETE FROM rate_limit_buckets WHERE bucket LIKE '2fa_%'").run();
+	} catch {
+		/* ignore — best effort */
+	}
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -400,7 +396,17 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 			.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
 			.run(user.id)
 			.catch(() => undefined);
-		const token = signAuthToken({ sub: user.id, role: user.role });
+		// SECURITY (C-3): stamp the current token_version so the
+		// freshly-issued bearer survives subsequent revocations
+		// only when the caller is actually still authenticated.
+		const versionRow = (await db
+			.prepare('SELECT token_version FROM users WHERE id = ?')
+			.get(user.id)) as { token_version: number } | undefined;
+		const token = signAuthToken({
+			sub: user.id,
+			role: user.role,
+			ver: versionRow?.token_version ?? 0,
+		});
 		sendSuccess(
 			res,
 			{ token, user: publicUser(user), method: totpOk ? 'totp' : 'backup_code' },

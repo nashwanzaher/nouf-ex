@@ -214,7 +214,9 @@ When a future stage needs a production secret (e.g., `deploy-staging.yml`):
    §13.3).
 
 ```yaml
+
 # Example: future deploy-staging.yml
+
 env:
   DEPLOY_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
   PROD_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
@@ -241,7 +243,9 @@ env:
 To prevent accidental secret leaks:
 
 ```sh
+
 # Install git-secrets
+
 brew install git-secrets
 git secrets --install
 git secrets --register-aws
@@ -290,7 +294,9 @@ status checks → Search for status check):
 ### 5.1 Configuration via `gh` CLI
 
 ```sh
+
 # Set branch protection on main
+
 gh api repos/:owner/:repo/branches/main/protection \
   --method PUT \
   --field required_status_checks[strict]=true \
@@ -312,7 +318,9 @@ Today: **CI only** — no automatic deploys. Deploys are manual via
 ### 6.1 Future: auto-deploy to staging on main
 
 ```yaml
+
 # .github/workflows/deploy-staging.yml
+
 name: Deploy to Staging
 
 on:
@@ -359,7 +367,9 @@ jobs:
 ### 6.2 Future: manual approval for production
 
 ```yaml
+
 # .github/workflows/deploy-prod.yml
+
 on:
   workflow_dispatch:
     inputs:
@@ -386,7 +396,9 @@ GitHub Environments → `production` → **Required reviewers: 2**.
 ### 6.3 Future: rollback
 
 ```yaml
+
 # .github/workflows/rollback.yml
+
 on:
   workflow_dispatch:
     inputs:
@@ -410,7 +422,9 @@ Test the pipeline locally before pushing:
 ### 7.1 The single command
 
 ```sh
+
 # Run all stages sequentially
+
 ./scripts/run-ci-locally.sh
 ```
 
@@ -418,7 +432,9 @@ Test the pipeline locally before pushing:
 
 ```bash
 #!/bin/bash
+
 # scripts/run-ci-locally.sh
+
 set -e
 echo "=== 1/6: Lint ==="
 cd app && npx eslint . --max-warnings=0
@@ -453,22 +469,28 @@ echo "✅ All stages passed locally"
 ### 7.3 Manual equivalent (no script)
 
 ```sh
+
 # 1. Lint
+
 cd app && npx eslint . --max-warnings=0
 
 # 2. Typecheck
+
 cd app && npx tsc --noEmit -p tsconfig.app.json
 cd ../mcp-server && npm run typecheck
 
 # 3. Tests
+
 cd ../app && npm test
 
 # 4. DB integration (Docker)
+
 docker compose up -d postgres
 sleep 5
 cd app && npm run db:setup
 
 # 5. Server boot smoke
+
 (cd app && npx tsx server/index.ts > /tmp/noufex-api.log 2>&1) &
 API_PID=$!
 trap "kill $API_PID 2>/dev/null || true" EXIT
@@ -476,6 +498,7 @@ sleep 5
 curl -sf http://127.0.0.1:3000/api/health
 
 # 6. Build
+
 cd app && npm run build
 ```
 

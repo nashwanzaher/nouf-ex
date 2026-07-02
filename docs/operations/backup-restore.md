@@ -11,19 +11,23 @@
 ## TL;DR
 
 ```sh
+
 # BACKUP (nightly, run by cron / systemd timer / GitHub Action)
+
 pg_dump --format=custom --no-owner --dbname="$DATABASE_URL" \
   > "/backups/noufex_$(date -u +%Y%m%dT%H%M%SZ).dump"
 
 # RESTORE (one-off, on a fresh DB after an incident)
+
 dropdb noufex_db && createdb noufex_db
 pg_restore --no-owner --dbname=noufex_db "/backups/noufex_<TIMESTAMP>.dump"
 
 # APPLY SCHEMA + SEED (only on first-time setup, NOT a restore path)
+
 cd app && npm run db:setup
 ```
 
-> **Restore is destructive.** Always run on a *new* DB; never on the
+> **Restore is destructive.** Always run on a _new_ DB; never on the
 > live DB. Once you confirm the restore is good, cut traffic over.
 
 ---
@@ -50,6 +54,7 @@ BACKUP_FILE="/backups/noufex_${TIMESTAMP}.dump"
 BACKUP_LATEST="/backups/noufex_latest.dump"
 
 # 1. Dump the live DB in `custom` format (compressed, parallel-restore-safe)
+
 pg_dump \
   --format=custom \
   --no-owner \
@@ -60,31 +65,38 @@ pg_dump \
   --file="$BACKUP_FILE"
 
 # 2. Verify the dump is sane (pg_restore can read it)
+
 pg_restore --list "$BACKUP_FILE" > /dev/null || {
   echo "Backup file $BACKUP_FILE is corrupt!" >&2
   exit 1
 }
 
 # 3. Refresh the `latest` symlink for tools that read the most recent file
+
 ln -sf "$BACKUP_FILE" "$BACKUP_LATEST"
 
 # 4. Keep last 14 nights, prune the rest
+
 find /backups -name 'noufex_*.dump' -mtime +14 -not -name 'noufex_latest.dump' -delete
 ```
 
 ### Cron entry (Linux)
 
 ```cron
+
 # /etc/cron.d/noufex-backup — root required for `pg_dump`+`psql`
-15 2 * * * noufex-backup /usr/local/bin/noufex-backup.sh >> /var/log/noufex/backup.log 2>&1
+
+15 2 _ _ * noufex-backup /usr/local/bin/noufex-backup.sh >> /var/log/noufex/backup.log 2>&1
 ```
 
 ### GitHub Action (alternative)
 
 ```yaml
+
 # .github/workflows/backup.yml — runs every night + on demand
+
 on:
-  schedule: [{ cron: '15 2 * * *' }]
+  schedule: [{ cron: '15 2 _ _ *' }]
   workflow_dispatch:
 jobs:
   backup:
@@ -105,19 +117,26 @@ jobs:
 Use this when the cluster is lost but the dump files survive:
 
 ```sh
+
 # 0. STOP the app so it stops writing to the dead DB
+
 docker compose stop app        # or: kubectl scale deploy/app --replicas=0
 
 # 1. Provision a fresh PostgreSQL (same major version: 17.x)
+
 #    - follow the .env / DATABASE_URL convention
+
 #    - make sure the role from DATABASE_URL exists with the right grants
+
 psql -d postgres -c "CREATE ROLE noufex_app LOGIN PASSWORD '…';"
 psql -d postgres -c "CREATE DATABASE noufex_db OWNER noufex_app;"
 
 # 2. Apply roles + grants
+
 psql "$DATABASE_URL" -f database/roles.sql
 
 # 3. Restore the dump
+
 pg_restore \
   --no-owner \
   --role=noufex_app \
@@ -126,11 +145,15 @@ pg_restore \
   /backups/noufex_latest.dump
 
 # 4. Re-apply any post-restore migrations (the dump captures the
+
 #    "applied" set; if you need to roll forward through later
+
 #    migrations, run database/migrations/ from 0002 onwards.
+
 psql "$DATABASE_URL" -f database/migrations/NNNN_*.sql   # loop over
 
 # 5. Restart the app
+
 docker compose start app
 ```
 
@@ -141,16 +164,20 @@ docker compose start app
 want to roll forward from exists.
 
 ```sh
+
 # 1. Stop the app
+
 docker compose stop app
 
 # 2. Boot PostgreSQL in recovery mode
+
 echo "restore_command = 'cp /wal-archive/%f %p'" >> /etc/postgresql/17/main/postgresql.conf
 echo "recovery_target_time = '2026-06-29 13:30:00 UTC'" >> /etc/postgresql/17/main/postgresql.conf
 touch /var/lib/postgresql/17/main/recovery.signal
 systemctl restart postgresql
 
 # 3. Once recovery completes (watch the log), bring the app back
+
 docker compose start app
 ```
 
@@ -160,7 +187,9 @@ For surgical recovery (e.g. accidentally-dropped table) use
 `pg_restore --table=<name>`:
 
 ```sh
+
 # Restore ONLY the orders table from a nightly dump
+
 pg_restore --table=orders --dbname="$DATABASE_URL" /backups/noufex_latest.dump
 ```
 
@@ -171,15 +200,19 @@ pg_restore --table=orders --dbname="$DATABASE_URL" /backups/noufex_latest.dump
 test-restore is the only real verification.
 
 ```sh
+
 # 1. Spin up a throwaway DB on the SAME major version
+
 psql -d postgres -c "CREATE DATABASE noufex_db_verify OWNER noufex_app;"
 
 # 2. Restore into it
+
 pg_restore --no-owner --role=noufex_app \
   --dbname=postgresql://noufex_app@localhost/noufex_db_verify \
   /backups/noufex_latest.dump
 
 # 3. Run smoke queries — table row counts match the live DB
+
 psql noufex_db_verify <<SQL
 SELECT 'users' tbl, COUNT(*) FROM users
 UNION ALL SELECT 'stores', COUNT(*) FROM stores
@@ -188,6 +221,7 @@ UNION ALL SELECT 'orders', COUNT(*) FROM orders;
 SQL
 
 # 4. Tear down
+
 psql -d postgres -c "DROP DATABASE noufex_db_verify;"
 ```
 

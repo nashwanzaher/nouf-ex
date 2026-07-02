@@ -14,11 +14,15 @@ comment-block headers in the source file.
 ## 📦 Loading the helpers
 
 ```powershell
+
 # From tests/e2e/phaseNN_*.ps1 (canonical location):
+
 . "$PSScriptRoot\helpers\PS_TestHelpers.ps1"
 
 # The template (PS_TEST_TEMPLATE.ps1) auto-discovers 3 layouts — see it
+
 # for the resilient dot-source pattern.
+
 ```
 
 After dot-sourcing:
@@ -99,7 +103,7 @@ if ($r.ok -and $r.json.data.token) {
 
 ## 2. `Show-ApiResult`
 
-Compact one-line result printer — useful when you want to *see* a
+Compact one-line result printer — useful when you want to _see_ a
 response without asserting on it.
 
 ### Signature
@@ -126,7 +130,9 @@ The body is truncated to 120 characters.
 ```powershell
 $r = Invoke-ApiRequest GET '/api/products?limit=5' @{} $null
 Show-ApiResult 'list first 5 products' $r
+
 # → list first 5 products                            status=200  {"success":true,"data":{"products":[...
+
 ```
 
 ---
@@ -150,8 +156,8 @@ function Assert-Status {
 
 ### Output
 
-- **Pass** → `  [PASS] <label>                                        status=<code>` (green)
-- **Fail** → `  [FAIL] <label>                                        expected=<exp> actual=<code>`
+- **Pass** → `[PASS] <label>                                        status=<code>` (green)
+- **Fail** → `[FAIL] <label>                                        expected=<exp> actual=<code>`
             plus a full `Show-ApiResult` line so the failure body is visible.
 
 ### Example
@@ -214,12 +220,15 @@ function Assert-JsonField {
 $r = Invoke-ApiRequest POST '/api/cart' $hdrCust @{ productId = 1; quantity = 2 }
 
 # Field is present and non-null:
+
 Assert-JsonField 'POST returns data.id' $r 'data.id' -NotNull
 
 # Field equals an expected value:
+
 Assert-JsonField 'POST returns quantity=2' $r 'data.quantity' 2
 
 # Drill into nested objects:
+
 $r2 = Invoke-ApiRequest GET '/api/products/1' @{} $null
 Assert-JsonField 'product name_en set' $r2 'data.name_en' -NotNull
 Assert-JsonField 'product store id=2' $r2 'data.store_id' 2
@@ -247,7 +256,9 @@ first call hits the API.
 
 ```powershell
 function Get-TestTokens
+
 # (no parameters)
+
 ```
 
 ### Returns
@@ -300,6 +311,7 @@ function Get-AuthHeader {
 
 ```powershell
 $hdr = Get-AuthHeader $tokens.customer
+
 # → @{ Authorization = 'Bearer eyJ...' }
 
 Invoke-ApiRequest GET '/api/cart/7' $hdr $null
@@ -352,7 +364,9 @@ section's pass/fail total isn't mixed with the previous section.
 
 ```powershell
 function Reset-Counters
+
 # (no parameters)
+
 ```
 
 ### Example
@@ -363,6 +377,7 @@ $r = Invoke-ApiRequest GET '/api/health' @{} $null
 Assert-Status 'GET /api/health' $r 200
 
 Print-Summary 'PHASE 4a: Health check'
+
 # Total is the count for THIS section only, not the whole script.
 
 Reset-Counters

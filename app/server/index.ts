@@ -90,8 +90,60 @@ app.use(
 		credentials: true,
 	}),
 );
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// SECURITY (M-1): the previous 10 MB JSON limit was a DoS vector — a
+// single attacker could pin ~10 MB of heap per concurrent request.
+// 1 MB is more than enough for any of our documented payloads (the
+// largest legal body is a 100-item cart with full shipping address,
+// well under 50 KB). File uploads go through a separate, multipart
+// endpoint that we haven't introduced yet; when we do, it will use
+// its own busboy config with a per-route limit.
+//
+// SECURITY (C-1, 2026-07-02): capture the raw body bytes into
+// `req.rawBody` so payment webhooks can verify HMAC signatures
+// over the EXACT bytes Stripe/Paymob signed. Without this, every
+// real webhook was being rejected because `rawBody` was the
+// empty string (default), causing `verifyWebhook()` to compute
+// HMAC over '' and timingSafeEqual to fail. JSON.parse followed
+// by JSON.stringify does NOT round-trip byte-identically (key
+// order, whitespace, Unicode escapes differ), so we MUST
+// capture the buffer before parsing. This is the canonical
+// Express pattern — the `verify` callback is the only hook
+// Express gives us access to the raw Buffer.
+app.use(
+	express.json({
+		limit: '1mb',
+		verify: (req, _res, buf) => {
+			(req as Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+		},
+	}),
+);
+// urlencoded needs the same raw capture. Express's urlencoded
+// does NOT support a `verify` callback, so we register a tiny
+// pre-parser that buffers the body for application/x-www-form-
+// urlencoded requests (Paymob's webhook format) before delegating
+// to the standard urlencoded parser. JSON requests skip this
+// entirely and use the json() parser above (which also captures
+// the raw body via `verify`).
+app.use((req, _res, next) => {
+	const contentType = String(req.headers['content-type'] ?? '');
+	if (!contentType.startsWith('application/x-www-form-urlencoded')) {
+		return next();
+	}
+	let buf = '';
+	req.setEncoding('utf8');
+	req.on('data', (chunk) => (buf += chunk));
+	req.on('end', () => {
+		(req as Request & { rawBody?: string }).rawBody = buf;
+		try {
+			req.body = Object.fromEntries(new URLSearchParams(buf));
+		} catch {
+			req.body = {};
+		}
+		next();
+	});
+	req.on('error', next);
+});
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(optionalAuth);
 app.use(requestLogger);
 

@@ -150,11 +150,15 @@ Run through every item before pushing to production.
 ### 3.4 Generate the secret
 
 ```sh
+
 # 32 random bytes → 43-char base64url
+
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 
 # Example output:
+
 # kZ8dQfR3vN1xY7pE2jW5mT4sL0aH6bC9dF8gJ3kM5nQ
+
 ```
 
 ---
@@ -169,7 +173,9 @@ defense headers, and forwards to the API.
 ```nginx
 upstream noufex_api {
     server 127.0.0.1:3000;
+
     # Add more `server` lines for multiple replicas.
+
     keepalive 32;
 }
 
@@ -184,6 +190,7 @@ server {
     server_name noufex.example.com;
 
     # SSL — managed by Let's Encrypt (see §5).
+
     ssl_certificate     /etc/letsencrypt/live/noufex.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/noufex.example.com/privkey.pem;
     ssl_protocols       TLSv1.2 TLSv1.3;
@@ -191,21 +198,26 @@ server {
     ssl_prefer_server_ciphers on;
 
     # Security headers — most are set by the API (Helmet-equivalent in
+
     # middleware.ts); we add the ones nginx handles better.
+
     add_header X-Frame-Options "DENY" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     # gzip — JSON responses compress ~10x.
+
     gzip on;
     gzip_types application/json application/javascript text/css;
     gzip_min_length 1024;
 
     # Rate limit (extra layer beyond the API's auth rate limit).
+
     limit_req_zone $binary_remote_addr zone=noufex:10m rate=10r/s;
     limit_req zone=noufex burst=20 nodelay;
 
     # Proxy to API.
+
     location / {
         proxy_pass http://noufex_api;
         proxy_http_version 1.1;
@@ -213,20 +225,26 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
         # Allow large request bodies (image upload, future).
+
         client_max_body_size 25m;
+
         # SSE-friendly timeouts.
+
         proxy_read_timeout 60s;
         proxy_send_timeout 60s;
     }
 
     # Health endpoints — used by load balancer; bypass rate limit.
+
     location ~ ^/api/(health|ready)$ {
         proxy_pass http://noufex_api;
         access_log off;
     }
 
     # Static SPA assets — long-lived cache.
+
     location /assets/ {
         proxy_pass http://noufex_api;
         proxy_cache_valid 200 365d;
@@ -281,7 +299,9 @@ when `NODE_ENV=production` (see `middleware.ts:67-69`).
 
 ```sh
 curl -I https://noufex.example.com/api/health | grep -i strict-transport
+
 # Strict-Transport-Security: max-age=15552000; includeSubDomains
+
 ```
 
 ---
@@ -291,12 +311,15 @@ curl -I https://noufex.example.com/api/health | grep -i strict-transport
 ### 6.1 Build
 
 ```sh
+
 # Build the SPA on the host (Vite build needs a working node_modules)
+
 cd /opt/noufex
 npm ci --prefix app
 npm run build --prefix app
 
 # Build the API image (Docker uses the freshly-built dist/)
+
 docker compose build --no-cache
 ```
 
@@ -309,21 +332,33 @@ docker compose up -d
 ### 6.3 Verify
 
 ```sh
+
 # Container is up
+
 docker compose ps
+
 # NAME                STATUS              PORTS
+
 # Nouf-ex             Up (healthy)        0.0.0.0:3000->3000/tcp
 
 # Logs (single-line JSON, log-shipper friendly)
+
 docker logs --tail 50 Nouf-ex
 
 # Health check from outside the container
+
 curl -s http://localhost:3000/api/health | jq
+
 # {
+
 #   "status": "ok",
+
 #   "uptime_s": 1234,
+
 #   "ts": "2026-06-28T12:34:56.000Z"
+
 # }
+
 ```
 
 ### 6.4 Stop
@@ -379,12 +414,15 @@ definer-trigger-managed).
 ### 7.3 Backups
 
 ```sh
+
 # Daily logical backup (cron job)
+
 pg_dump --no-owner --no-privileges \
   -h $DB_HOST -U noufex_owner -d noufex_db \
   -Fc -f /var/backups/noufex/noufex_$(date +%F).dump
 
 # Restore (DANGER: overwrites current DB)
+
 pg_restore -h $DB_HOST -U noufex_owner -d noufex_db \
   --clean --if-exists /var/backups/noufex/noufex_2026-06-28.dump
 ```
@@ -403,20 +441,26 @@ restart + DB connection + health check).
 Two replicas behind a load balancer:
 
 ```sh
+
 # 1. Start green (new version) on a different port
+
 docker compose -f docker-compose.green.yml up -d
+
 # env: API_PORT=3001, container_name=Nouf-ex-green
 
 # 2. Wait for green to be healthy
+
 curl -sf http://localhost:3001/api/health
 
 # 3. Switch nginx upstream
+
 sed -i 's/127.0.0.1:3000/127.0.0.1:3001/' /etc/nginx/sites-available/noufex.conf
 sudo nginx -s reload
 
 # 4. Wait 5 min (let cache settle)
 
 # 5. Stop blue (old version)
+
 docker compose -f docker-compose.yml down
 ```
 
@@ -479,23 +523,29 @@ readinessProbe:
 After every deploy, run a 5-minute smoke test:
 
 ```sh
+
 # 1. Health endpoints
+
 curl -sf https://noufex.example.com/api/health | jq
 curl -sf https://noufex.example.com/api/ready | jq
 
 # 2. Public endpoints
+
 curl -sf https://noufex.example.com/api/products?limit=1 | jq '.data.total'
 curl -sf https://noufex.example.com/api/categories | jq '.data | length'
 
 # 3. Login as a seeded user
+
 TOKEN=$(curl -s -X POST https://noufex.example.com/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"ahmed@gmail.com","password":"customer123"}' | jq -r '.data.token')
 
 # 4. Authenticated endpoint
+
 curl -sf https://noufex.example.com/api/auth/me -H "Authorization: Bearer $TOKEN" | jq
 
 # 5. SPA — verify the SPA loads
+
 curl -sf https://noufex.example.com/ | grep -q '<html' && echo "SPA OK"
 ```
 
@@ -504,7 +554,9 @@ Or run the PHASE 0 spec (fastest of the regression suite):
 ```sh
 cd /opt/noufex
 powershell -ExecutionPolicy Bypass -File tests/e2e/phase00_health_auth.ps1
+
 # Expected: 22 PASS / 0 FAIL
+
 ```
 
 ---
@@ -532,10 +584,13 @@ If the deploy fails post-deploy verification:
 ### 12.1 Quick rollback (Docker)
 
 ```sh
+
 # 1. Stop the new version
+
 docker compose down
 
 # 2. Restore the previous image
+
 git checkout HEAD~1  # or `git checkout v0.1.0` for a tag
 npm ci --prefix app
 npm run build --prefix app
@@ -543,6 +598,7 @@ docker compose build --no-cache
 docker compose up -d
 
 # 3. Verify
+
 curl -sf https://noufex.example.com/api/health
 ```
 
@@ -552,15 +608,20 @@ Database changes are **forward-only** (no down-migrations). If a
 migration caused an outage:
 
 ```sh
+
 # 1. Find the migration record
+
 psql -h $DB_HOST -U noufex_owner -d noufex_db \
   -c "SELECT version, applied_at FROM schema_migrations ORDER BY applied_at DESC LIMIT 5;"
 
 # 2. Inspect the schema for the breaking change
+
 # (You should be doing this BEFORE running the migration in prod.)
 
 # 3. If needed, write a forward-only FIX migration
+
 # (database/migrations/NNNN_fix_<issue>.sql) and run npm run db:setup
+
 ```
 
 ### 12.3 Post-rollback

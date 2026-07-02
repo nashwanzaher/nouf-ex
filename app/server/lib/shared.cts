@@ -157,7 +157,95 @@ export function buildUpdateSet(fields: Record<string, unknown>): {
  * SECURITY DEFINER PL/pgSQL function (write_audit_log) that is owned
  * by noufex_owner. The application role (noufex_app) only has
  * EXECUTE on the function — never INSERT on the table — so it can
- * log legitimate admin actions but cannot forge entries directly. */
+ * log legitimate admin actions but cannot forge entries directly.
+ *
+ * SECURITY (M-9, audit 2026-06-30): the previous implementation
+ * swallowed audit failures with a single log.warn(). In production
+ * that means a transient DB hiccup during a sensitive admin
+ * mutation would leave NO trace — exactly the scenario forensics
+ * needs the audit log for. We now retry up to 3 times with
+ * exponential backoff, and if every attempt fails we persist the
+ * entry into an in-process dead-letter file at
+ * `logs/audit-dlq-YYYY-MM-DD.jsonl` so an operator can replay it.
+ * The mutation still proceeds — we never block the user-facing
+ * action on audit — but the loss is now visible and recoverable
+ * instead of silent.
+ */
+const AUDIT_DLQ_MAX_ATTEMPTS = 3;
+const AUDIT_RETRY_BASE_MS = 100; // 100ms, 200ms, 400ms
+function sleep(ms: number): Promise<void> {
+	return new Promise((r) => setTimeout(r, ms));
+}
+function todayIsoDate(): string {
+	return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * SECURITY (M-7, 2026-07-02): redact sensitive fields from any
+ * object before it is persisted. Used by the audit log on both
+ * the DB INSERT and the DLQ file. Keys are matched case-insensitive
+ * and the redaction is recursive (nested objects are walked).
+ * Arrays of objects are also walked. The redactor is deliberately
+ * a no-op for `null` / `undefined` / primitives so it can be
+ * composed inside any JSON-serialisation pipeline without
+ * breaking the shape of the surrounding object.
+ */
+const REDACT_KEYS = new Set([
+	'password',
+	'password_hash',
+	'passwd',
+	'pwd',
+	'token',
+	'auth_token',
+	'access_token',
+	'refresh_token',
+	'api_key',
+	'apikey',
+	'secret',
+	'client_secret',
+	'private_key',
+	'cvv',
+	'cvc',
+	'ssn',
+	'authorization',
+]);
+const REDACT_PLACEHOLDER = '[REDACTED]';
+function redactSensitive<T>(input: T): T {
+	if (input === null || input === undefined) return input;
+	if (Array.isArray(input)) {
+		// Recurse into array elements. We must cast here because TS
+		// cannot prove the result of a generic map is still T.
+		return input.map((item) => redactSensitive(item)) as unknown as T;
+	}
+	if (typeof input !== 'object') return input;
+	const out: Record<string, unknown> = {};
+	for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+		if (REDACT_KEYS.has(k.toLowerCase())) {
+			out[k] = REDACT_PLACEHOLDER;
+		} else {
+			out[k] = redactSensitive(v);
+		}
+	}
+	return out as unknown as T;
+}
+
+async function appendAuditDlq(entry: Record<string, unknown>): Promise<void> {
+	try {
+		const fs = await import('fs');
+		const path = await import('path');
+		const logsDir = path.resolve(process.cwd(), 'logs');
+		if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+		const file = path.join(logsDir, `audit-dlq-${todayIsoDate()}.jsonl`);
+		fs.appendFileSync(file, JSON.stringify(entry) + '\n', { encoding: 'utf8' });
+		log.error({ msg: 'audit_log_dead_lettered', file });
+	} catch (err) {
+		log.error({
+			msg: 'audit_log_dlq_write_failed',
+			error: (err as Error).message,
+		});
+	}
+}
+
 export async function writeAuditLog(
 	req: Request,
 	action: string,
@@ -166,22 +254,65 @@ export async function writeAuditLog(
 	oldValues: Record<string, unknown> | null,
 	newValues: Record<string, unknown> | null,
 ): Promise<void> {
-	try {
-		await db
-			.prepare(`SELECT write_audit_log($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`)
-			.run(
-				req.user!.id,
-				action,
-				entityType,
-				String(entityId),
-				oldValues ? JSON.stringify(oldValues) : null,
-				newValues ? JSON.stringify(newValues) : null,
-				req.ip,
-				req.header('user-agent') ?? null,
-			);
-	} catch (err) {
-		log.warn({ msg: 'audit_log_failed', entity: entityType, error: (err as Error).message });
+	// SECURITY (M-7, 2026-07-02): redact sensitive keys BEFORE the
+	// DB INSERT and BEFORE the DLQ file write. Callers that pass a
+	// user-update object with password_hash, token, etc. would
+	// otherwise leak those values to either the audit log table
+	// (readable by the `noufex_app` role) or the DLQ file on disk.
+	const safeOld = oldValues ? redactSensitive(oldValues) : null;
+	const safeNew = newValues ? redactSensitive(newValues) : null;
+	const params = [
+		req.user!.id,
+		action,
+		entityType,
+		String(entityId),
+		safeOld ? JSON.stringify(safeOld) : null,
+		safeNew ? JSON.stringify(safeNew) : null,
+		req.ip,
+		req.header('user-agent') ?? null,
+	];
+	let lastError: unknown = null;
+	for (let attempt = 1; attempt <= AUDIT_DLQ_MAX_ATTEMPTS; attempt++) {
+		try {
+			await db
+				.prepare(`SELECT write_audit_log($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`)
+				.run(...params);
+			if (attempt > 1) {
+				log.info({
+					msg: 'audit_log_recovered',
+					attempt,
+					entity: entityType,
+				});
+			}
+			return;
+		} catch (err) {
+			lastError = err;
+			log.warn({
+				msg: 'audit_log_failed',
+				attempt,
+				entity: entityType,
+				error: (err as Error).message,
+			});
+			if (attempt < AUDIT_DLQ_MAX_ATTEMPTS) {
+				await sleep(AUDIT_RETRY_BASE_MS * 2 ** (attempt - 1));
+			}
+		}
 	}
+	// All retries exhausted — dead-letter the entry. The redacted
+	// `old_values` / `new_values` go into the file so we still
+	// preserve the shape of the audit trail (minus secrets).
+	await appendAuditDlq({
+		ts: new Date().toISOString(),
+		user_id: params[0],
+		action: params[1],
+		entity_type: params[2],
+		entity_id: params[3],
+		old_values: params[4],
+		new_values: params[5],
+		ip: params[6],
+		user_agent: params[7],
+		error: lastError instanceof Error ? lastError.message : String(lastError),
+	});
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -230,36 +361,237 @@ export const getProductWithParsedFields = (product: Record<string, unknown> | un
 
 // ── Auth ───────────────────────────────────────────────────
 export const emailSchema = z.string().email().max(255);
-export const passwordSchema = z.string().min(8).max(128);
-export const registerSchema = z.object({
-	email: emailSchema,
-	password: passwordSchema,
-	name: z.string().trim().min(2).max(100),
-});
+
+/**
+ * SECURITY (C-4, audit 2026-06-30): the previous `passwordSchema`
+ * accepted any 8-character string including `aaaaaaaa` or `12345678`.
+ * We now enforce:
+ *   - length 10..128 (NIST 800-63B minimum)
+ *   - at least 3 of {lower, upper, digit, symbol}
+ *   - rejected common / breached passwords (Top-100 shortlist)
+ *   - rejected email-shaped passwords and exact-email matches
+ *
+ * The implementation deliberately avoids a heavy dependency
+ * (`@zxcvbn-ts/core` ~5 MB WASM) for a server-side hot path. The
+ * bundled heuristic below catches the bulk of weak passwords the
+ * previous schema missed. We can swap in zxcvbn-ts later if we
+ * decide the accuracy gain justifies the dependency.
+ */
+const COMMON_PASSWORDS = new Set([
+	'password',
+	'password1',
+	'password123',
+	'password1234',
+	'password!',
+	'qwerty',
+	'qwerty123',
+	'qwertyuiop',
+	'iloveyou',
+	'admin',
+	'admin123',
+	'admin1234',
+	'admin@123',
+	'12345678',
+	'123456789',
+	'1234567890',
+	'12345678910',
+	'11111111',
+	'00000000',
+	'abc12345',
+	'abc123456',
+	'abcdefgh',
+	'abcd1234',
+	'welcome',
+	'welcome1',
+	'welcome123',
+	'monkey123',
+	'letmein',
+	'sunshine',
+	'princess',
+	'football',
+	'baseball',
+	'dragon',
+	'master',
+	'michael',
+	'jordan',
+	'tigger',
+	'shadow',
+	'trustno1',
+	'hunter2',
+	'hunter123',
+	'passw0rd',
+	'p@ssword',
+	'p@ssword1',
+	'p@ssw0rd',
+	'nopassword',
+	'starwars',
+	'login',
+	'changeme',
+	'secret',
+	'secret123',
+	'mypass',
+	'mypassword',
+	'mysecret',
+]);
+
+function hasLower(s: string): boolean {
+	return /[a-z]/.test(s);
+}
+function hasUpper(s: string): boolean {
+	return /[A-Z]/.test(s);
+}
+function hasDigit(s: string): boolean {
+	return /\d/.test(s);
+}
+function hasSymbol(s: string): boolean {
+	return /[^A-Za-z0-9]/.test(s);
+}
+function classCount(s: string): number {
+	return (
+		(hasLower(s) ? 1 : 0) +
+		(hasUpper(s) ? 1 : 0) +
+		(hasDigit(s) ? 1 : 0) +
+		(hasSymbol(s) ? 1 : 0)
+	);
+}
+function hasRepeatedRuns(s: string): boolean {
+	// 4+ identical chars in a row, e.g. "aaaa", "1111".
+	return /(.)\1{3,}/.test(s);
+}
+function hasSequentialRuns(s: string): boolean {
+	// 4+ ascending or descending consecutive chars/digits.
+	const lower = s.toLowerCase();
+	for (let i = 0; i <= lower.length - 4; i++) {
+		const a = lower.charCodeAt(i);
+		const b = lower.charCodeAt(i + 1);
+		const c = lower.charCodeAt(i + 2);
+		const d = lower.charCodeAt(i + 3);
+		if (b === a + 1 && c === b + 1 && d === c + 1) return true; // ascending
+		if (b === a - 1 && c === b - 1 && d === c - 1) return true; // descending
+	}
+	return false;
+}
+
+/**
+ * Returns null if `password` is acceptable, or a human-readable
+ * reason string otherwise. Used by Zod's `.refine()` so the failure
+ * message surfaces to the client through the standard 400 envelope.
+ */
+export function evaluatePasswordStrength(password: string, email?: string): string | null {
+	if (password.length < 10) {
+		return 'Password must be at least 10 characters long.';
+	}
+	if (password.length > 128) {
+		return 'Password must be at most 128 characters long.';
+	}
+	if (classCount(password) < 3) {
+		return 'Password must include at least 3 of: lowercase, uppercase, digit, symbol.';
+	}
+	if (hasRepeatedRuns(password)) {
+		return 'Password contains a repeated character run (e.g. "aaaa").';
+	}
+	if (hasSequentialRuns(password)) {
+		return 'Password contains a sequential run (e.g. "1234" or "abcd").';
+	}
+	const normalised = password.toLowerCase();
+	if (COMMON_PASSWORDS.has(normalised)) {
+		return 'Password is too common. Please choose a different one.';
+	}
+	// Reject if the password EQUALS the local-part of the email (case-
+	// insensitive). We deliberately do NOT reject any substring
+	// overlap — short local-parts like "strong" or "test" appear in
+	// millions of legitimate passphrases, and a strict substring
+	// check would produce too many false positives. Equality is
+	// the right granularity: `email = a@b`, `password = a` is
+	// universally a bad idea.
+	if (email) {
+		const at = email.indexOf('@');
+		const localPart = at > 0 ? email.slice(0, at).toLowerCase() : '';
+		if (localPart.length >= 4 && normalised === localPart) {
+			return 'Password must not equal your email address.';
+		}
+	}
+	return null;
+}
+
+export const passwordSchema = z
+	.string()
+	.min(10, 'Password must be at least 10 characters long.')
+	.max(128, 'Password must be at most 128 characters long.')
+	.refine(
+		(p) => classCount(p) >= 3,
+		'Password must include at least 3 of: lowercase, uppercase, digit, symbol.',
+	)
+	.refine((p) => !hasRepeatedRuns(p), 'Password contains a repeated character run.')
+	.refine(
+		(p) => !hasSequentialRuns(p),
+		'Password contains a sequential run (e.g. "1234" or "abcd").',
+	)
+	.refine(
+		(p) => !COMMON_PASSWORDS.has(p.toLowerCase()),
+		'Password is too common. Please choose a different one.',
+	);
+
+export const registerSchema = z
+	.object({
+		email: emailSchema,
+		password: passwordSchema,
+		name: z.string().trim().min(2).max(100),
+	})
+	.refine((data) => evaluatePasswordStrength(data.password, data.email) === null, {
+		message: 'Password does not meet strength requirements.',
+		path: ['password'],
+	});
 export const loginSchema = z.object({
 	email: emailSchema,
 	password: z.string().min(1).max(128),
 });
 
 // ── Orders / order items ───────────────────────────────────
-export const orderItemSchema = z.object({
-	productId: z.number().int().positive(),
-	quantity: z.number().int().positive(),
-	unitPrice: z.number().nonnegative(),
-	totalPrice: z.number().nonnegative().optional(),
-	variant: z.unknown().optional(),
-});
-export const orderSchema = z.object({
-	storeId: z.number().int().positive().optional(),
-	items: z.array(orderItemSchema).min(1).max(100),
-	shippingAddress: z.record(z.string(), z.unknown()).optional(),
-	paymentMethod: z.string().max(50).optional(),
-	notes: z.string().max(1000).optional(),
-	subtotal: z.number().nonnegative().optional(),
-	shippingCost: z.number().nonnegative().optional(),
-	discount: z.number().nonnegative().optional(),
-	total: z.number().nonnegative(),
-});
+/**
+ * Order item payload from the client.
+ *
+ * SECURITY (C-1 / P0): pricing fields are intentionally absent. The
+ * server resolves the authoritative `unit_price` for each line from
+ * the `products` table inside the same transaction that writes the
+ * order, so a tampered client body cannot inflate or deflate the
+ * charged amount. The legacy `unitPrice` / `totalPrice` keys are
+ * rejected explicitly via the strict schema below.
+ */
+export const orderItemSchema = z
+	.object({
+		productId: z.number().int().positive(),
+		quantity: z.number().int().positive().max(1000),
+		variant: z.unknown().optional(),
+	})
+	.strict();
+/**
+ * Order payload from the client.
+ *
+ * SECURITY (C-1): monetary totals (`subtotal`, `shippingCost`,
+ * `discount`, `total`) are NEVER read from the request body — the
+ * server recomputes them from the items' resolved prices plus the
+ * active coupon. We keep `total` optional in the schema purely so
+ * clients that still send it don't get a 400; the value is ignored.
+ * `.strict()` rejects unknown keys at the top level so we can detect
+ * clients that smuggle `subtotal`/`unitPrice` via aliases.
+ */
+export const orderSchema = z
+	.object({
+		storeId: z.number().int().positive().optional(),
+		items: z.array(orderItemSchema).min(1).max(100),
+		shippingAddress: z.record(z.string(), z.unknown()).optional(),
+		paymentMethod: z.string().max(50).optional(),
+		notes: z.string().max(1000).optional(),
+		couponCode: z.string().max(50).optional(),
+		// Accepted but ignored — kept for backwards compatibility.
+		// Server recomputes these from products.price.
+		subtotal: z.number().nonnegative().optional(),
+		shippingCost: z.number().nonnegative().optional(),
+		discount: z.number().nonnegative().optional(),
+		total: z.number().nonnegative().optional(),
+	})
+	.strict();
 
 /** Lightweight product row shape used by resolveOrderStoreId. The
  *  caller passes whatever columns the `SELECT ... FROM products`

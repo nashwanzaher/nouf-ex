@@ -345,6 +345,7 @@ Nouf-ex هو مشروع **سليم تقنيًا وجاهز للنشر في بي�
 ## 4. نقاط القوة في Nouf-ex (ما يجب الحفاظ عليه)
 
 ### 4.1 نقاط القوة المعمارية
+
 1. **جودة الـ Schema عالية جدًا**: 25+ CHECK constraint، 60+ index، triggers متقنة، citext، pgcrypto، soft-delete pattern. أفضل من Saleor/Medusa في هذا الجانب.
 2. **Type-safety في طبقة API**: Zod schemas لكل write endpoint → رفض المدخلات السيّئة قبل لمس DB.
 3. **PostgreSQL-native features**: مستخدمة بشكل صحيح (JSONB، generated columns، TIMESTAMPTZ، IDENTITY).
@@ -354,6 +355,7 @@ Nouf-ex هو مشروع **سليم تقنيًا وجاهز للنشر في بي�
 7. **Least-privilege roles**: `noufex_app` منفصل عن `postgres` — أمان production-grade.
 
 ### 4.2 نقاط القوة في الكود
+
 1. **0 errors / 0 warnings** في TypeScript و ESLint — بعد الـ audit pass.
 2. **لا `// eslint-disable`** إلا في shadcn convention.
 3. **لا migrations عشوائية** — pipeline واحد `db:setup`.
@@ -361,6 +363,7 @@ Nouf-ex هو مشروع **سليم تقنيًا وجاهز للنشر في بي�
 5. **Testing setup مع mocking** للـ pg → unit tests سريعة بدون live DB.
 
 ### 4.3 نقاط القوة السوقية
+
 1. **استهداف سوق غير مخدوم** (Yemen + MENA).
 2. **فهم عميق بـ COD** — 76% من معاملات المنطقة.
 3. **i18n العربي** بأصالة (RTL + Cairo/Amiri fonts).

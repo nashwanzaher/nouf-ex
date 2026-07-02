@@ -1,4 +1,5 @@
 # PHASE 06 — Coupons + Discounts
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -174,7 +175,7 @@
 8. Section 7 — Redeem: schema negatives               → 2 requests
 ─────────────────────────────────────────────────────
 Total:                                              → 18 HTTP requests
-                                                    + 1 inline data check (coupon_usage id)
+                                                    - 1 inline data check (coupon_usage id)
                                                     = 19 PASS/FAIL assertions
 ```
 

@@ -7,7 +7,7 @@
 $ErrorActionPreference = 'Stop'
 
 $Startup = [Environment]::GetFolderPath('Startup')
-$ProjectRoot = 'd:\source\Nouf-ex'
+$ProjectRoot = $PSScriptRoot\..
 $BatFile = Join-Path $ProjectRoot 'scripts\autostart.bat'
 $Shortcut = Join-Path $Startup 'Nouf-ex Auto-Start.lnk'
 

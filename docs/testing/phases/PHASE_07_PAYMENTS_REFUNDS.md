@@ -1,4 +1,5 @@
 # PHASE 07 — Payments + Refunds
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -195,7 +196,7 @@ All endpoints in `app/server/routes/payments.cts` and `refunds.cts`:
 7. Section 6 — Refund resolve                           → 3 requests + 1 inline
 ─────────────────────────────────────────────────────
 Total:                                                  → 35 HTTP requests
-                                                        + 8 inline data-shape checks
+                                                        - 8 inline data-shape checks
                                                         = 34 PASS/FAIL assertions
 ```
 

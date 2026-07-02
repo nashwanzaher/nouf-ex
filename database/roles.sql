@@ -35,26 +35,85 @@ GRANT USAGE      ON SCHEMA public     TO noufex_app, noufex_readonly, noufex_own
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO noufex_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO noufex_app;
+-- SECURITY (DB-CRITICAL-2): also propagate default sequence
+-- privileges for tables created by the migration owner role.
+-- Without this, future tables created by `noufex_owner` (the role
+-- that runs `npm run db:setup`) wouldn't have their IDENTITY
+-- sequences accessible to the app.
+ALTER DEFAULT PRIVILEGES FOR ROLE noufex_owner IN SCHEMA public
+    GRANT USAGE, SELECT ON SEQUENCES TO noufex_app;
 
 -- ---------------------------------------------------------------------
 -- 4. noufex_app — runtime CRUD on user data
 -- ---------------------------------------------------------------------
-GRANT SELECT, INSERT, UPDATE, DELETE
-    ON ALL TABLES IN SCHEMA public
-    TO noufex_app;
+-- SECURITY (DB-CRITICAL-1): instead of `GRANT … ON ALL TABLES` followed
+-- by a hand-maintained `REVOKE` list, we grant explicitly ONLY the
+-- tables the application needs. New tables added later (e.g. a future
+-- `auth_tokens` or `payment_methods_secret`) are NOT granted by
+-- default — a developer must add them here on purpose. The previous
+-- GRANT ALL + REVOKE pattern was error-prone: a single forgotten
+-- REVOKE would have silently widened privileges.
+--
+-- Tables the app is allowed to read+write:
+DO $$
+DECLARE
+    t text;
+    rw_tables text[] := ARRAY[
+        'users',                  -- profile CRUD
+        'addresses',              -- shipping/billing addresses
+        'stores',                 -- merchant store CRUD
+        'categories',             -- read-mostly
+        'products',
+        'product_variants',
+        'product_images',
+        'cart_items',             -- server-side cart
+        'orders',
+        'order_items',
+        'reviews',
+        'wishlist',
+        'notifications',
+        'messages',
+        'disputes',
+        'subscriptions',
+        'rate_limit_buckets',
+        'coupons',
+        'coupon_usage',
+        'payments',
+        'refunds',
+        'store_balance',
+        'store_followers',
+        'shipping_methods',
+        'used_jtis'               -- auth replay-protection
+    ];
+    ro_tables text[] := ARRAY[
+        -- Read-only: writes happen only via SECURITY DEFINER triggers
+        -- or superuser-managed jobs.
+        'admin_audit_log',
+        'inventory_log',
+        'transactions',
+        'search_logs'
+    ];
+BEGIN
+    FOREACH t IN ARRAY rw_tables LOOP
+        EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.%I TO noufex_app', t);
+    END LOOP;
+    FOREACH t IN ARRAY ro_tables LOOP
+        EXECUTE format('GRANT SELECT ON TABLE public.%I TO noufex_app', t);
+    END LOOP;
+END
+$$;
 
--- But the app must NOT directly touch audit trail or wallet ledger:
-REVOKE INSERT, UPDATE, DELETE ON admin_audit_log FROM noufex_app;
-REVOKE INSERT, UPDATE, DELETE ON inventory_log     FROM noufex_app;
-REVOKE INSERT, UPDATE, DELETE ON transactions      FROM noufex_app;
--- (Only PG triggers / superuser write to these tables.)
-
-GRANT SELECT ON admin_audit_log, inventory_log, transactions TO noufex_app;
-
--- Default privileges for future tables created by the owner role.
+-- Default privileges for FUTURE tables created by either superuser
+-- (postgres) or the migration owner role (noufex_owner). New tables
+-- get the read-only tier by default; a developer promoting a new
+-- table to read-write must also run an explicit GRANT.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO noufex_app;
+    GRANT SELECT ON TABLES TO noufex_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE noufex_owner IN SCHEMA public
+    GRANT SELECT ON TABLES TO noufex_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT USAGE, SELECT ON SEQUENCES TO noufex_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE noufex_owner IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO noufex_app;
 
 -- ---------------------------------------------------------------------
@@ -62,6 +121,8 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
 -- ---------------------------------------------------------------------
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO noufex_readonly;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+    GRANT SELECT ON TABLES TO noufex_readonly;
+ALTER DEFAULT PRIVILEGES FOR ROLE noufex_owner IN SCHEMA public
     GRANT SELECT ON TABLES TO noufex_readonly;
 
 -- ---------------------------------------------------------------------

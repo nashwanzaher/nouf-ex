@@ -27,7 +27,9 @@ the **host** Postgres (the API container does not auto-apply SQL files any
 more):
 
 ```sh
+
 # From the project root, against your local noufex_db
+
 cd app
 npm run db:setup
 ```
@@ -41,19 +43,25 @@ All DDL uses `IF NOT EXISTS`, so the script is safe to re-run.
 ## Quick reference
 
 ```sh
+
 # One-time DB setup (host-side, requires DATABASE_URL or .env)
+
 cd app && npm run db:setup
 
 # Build & start the API container
+
 docker compose up -d --build
 
 # Tail logs
+
 docker logs -f Nouf-ex
 
 # Open a shell inside the API container
+
 docker exec -it Nouf-ex sh
 
 # Stop
+
 docker compose down
 ```
 

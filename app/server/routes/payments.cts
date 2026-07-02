@@ -1,17 +1,29 @@
 import { Router, type Request, type Response } from 'express';
-import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	authLimiter,
-	paymentCreateSchema,
-} from '../lib/shared.cts';
-import { selectProvider, listProviders, hasProvider } from '../lib/payments/registry.cts';
+import { hasProvider, listProviders, selectProvider } from '../lib/payments/registry.cts';
 import type { PaymentMethod } from '../lib/payments/types.cts';
+import {
+    authLimiter,
+    db,
+    paymentCreateSchema,
+    rateLimit,
+    requireAuth,
+    sendError,
+    sendSuccess,
+    validate,
+} from '../lib/shared.cts';
 
 export const paymentsRouter = Router();
+
+// SECURITY (M-3, 2026-07-02): the webhook endpoint was the only
+// state-changing route without any rate limit. Each call invokes
+// HMAC computation + DB UPDATE. An attacker firing millions of
+// requests could saturate CPU even though every request 400s out.
+// We allow 120 req/min/IP (2 Hz sustained, with burst headroom for
+// legitimate provider retries). The limiter is in-memory and
+// resets on process restart — that's fine because the goal is
+// rate limiting, not counting, and the bucket is keyed on IP
+// which is also re-acquired on restart.
+const webhookLimiter = rateLimit(60_000, 120, 'webhook');
 
 // GET /api/payments/methods — surfaces which providers are live so the
 // client UI can grey out methods that aren't actually wired up.
@@ -26,7 +38,7 @@ paymentsRouter.get('/methods', (_req: Request, res: Response) => {
 // POST /api/payments/webhook/:method — entrypoint for provider callbacks.
 // We accept both Stripe-style (sig in body) and Paymob-style (sig in
 // query) webhooks; the chosen provider's verifyWebhook() decides.
-paymentsRouter.post('/webhook/:method', async (req: Request, res: Response) => {
+paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res: Response) => {
 	try {
 		const method = req.params.method as PaymentMethod;
 		const provider = selectProvider(method);

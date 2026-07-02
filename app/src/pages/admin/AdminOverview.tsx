@@ -1,42 +1,42 @@
-import { useState, useMemo } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useAdminDisputes, useAdminStats, useAdminStores, useAdminTimeSeries, useSystemHealth } from '@/hooks/useApi';
+import type { AdminDispute, AdminStore } from '@/lib/api';
+import { formatMoney } from '@/lib/format';
+import {
+    Activity,
+    AlertTriangle,
+    BarChart3,
+    Check,
+    ChevronLeft,
+    Clock,
+    DollarSign,
+    FileText,
+    Globe,
+    RefreshCw,
+    Server,
+    ShoppingBag,
+    Store,
+    TrendingDown,
+    TrendingUp,
+    Users,
+    X,
+    Zap,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-	Users,
-	Store,
-	ShoppingBag,
-	DollarSign,
-	TrendingUp,
-	TrendingDown,
-	Clock,
-	AlertTriangle,
-	ChevronLeft,
-	Activity,
-	Zap,
-	Globe,
-	Server,
-	Check,
-	X,
-	BarChart3,
-	FileText,
-	RefreshCw,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-	AreaChart,
-	Area,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	ResponsiveContainer,
-	Legend,
+    Area,
+    AreaChart,
+    CartesianGrid,
+    Legend,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from 'recharts';
-import { useAdminStats, useAdminStores, useAdminDisputes, useSystemHealth, useAdminTimeSeries } from '@/hooks/useApi';
-import type { AdminStore, AdminDispute } from '@/lib/api';
-import { formatMoney } from '@/lib/format';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */

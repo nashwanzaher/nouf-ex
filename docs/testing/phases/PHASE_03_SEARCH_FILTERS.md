@@ -1,4 +1,5 @@
 # PHASE 03 — Search + Filters + Pagination
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -168,7 +169,7 @@ query-parameter surface:
 5. Section 5 — Pagination edge cases           → 5 requests
 ─────────────────────────────────────────────────
 Total:                                         → 19 HTTP requests
-                                                + ~6 inline data-shape checks
+                                                - ~6 inline data-shape checks
                                                 = 24 PASS/FAIL assertions
 ```
 

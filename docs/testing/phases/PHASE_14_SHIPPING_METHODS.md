@@ -1,4 +1,5 @@
 # PHASE 14 — Shipping Methods
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -136,7 +137,7 @@
 5. Section 5 — Ordering (1)                     → 1 request + inline check
 ─────────────────────────────────────────────────────
 Total:                                          → 12 HTTP requests
-                                                + 7 inline data-shape checks
+                                                - 7 inline data-shape checks
                                                 = 19 PASS/FAIL assertions
 ```
 

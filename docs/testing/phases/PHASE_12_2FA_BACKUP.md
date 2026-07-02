@@ -1,4 +1,5 @@
 # PHASE 12 — 2FA + Backup Codes + Partial Tokens
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -208,7 +209,7 @@
 11. Section 10 — Disable + verify (4)                      → 4 requests
 ─────────────────────────────────────────────────────
 Total:                                                     → 21 HTTP requests
-                                                           + 8 inline data-shape checks
+                                                           - 8 inline data-shape checks
                                                            = 23 PASS/FAIL assertions
 ```
 

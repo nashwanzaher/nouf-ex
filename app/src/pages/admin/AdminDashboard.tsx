@@ -14,28 +14,28 @@
  * The default `/admin` URL now redirects to `/admin/overview` via the
  * index route declared in App.tsx.
  */
-import { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router';
-import { useTranslation } from 'react-i18next';
-import {
-	LayoutDashboard,
-	Users,
-	Store,
-	Package,
-	ShoppingBag,
-	AlertTriangle,
-	BarChart3,
-	FileText,
-	Settings,
-	Menu,
-	X,
-	ChevronLeft,
-	ChevronRight,
-	Shield,
-	LogOut,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AppContext';
+import { cn } from '@/lib/utils';
+import {
+    AlertTriangle,
+    BarChart3,
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Package,
+    Settings,
+    Shield,
+    ShoppingBag,
+    Store,
+    Users,
+    X,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, Outlet, useLocation } from 'react-router';
 
 /* ------------------------------------------------------------------ */
 /*  Navigation                                                         */

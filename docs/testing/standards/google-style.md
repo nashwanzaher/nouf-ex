@@ -161,7 +161,7 @@ your test is wrong, not the linter.
 // ❌ Don't rely on test order
 let sharedUser;
 it('test A', () => { sharedUser = createUser(); });
-it('test B', () => { /* uses sharedUser */ });
+it('test B', () => { /_ uses sharedUser _/ });
 
 // ❌ Don't snapshot large JSON blobs — it'll churn forever
 expect(response).toMatchSnapshot();

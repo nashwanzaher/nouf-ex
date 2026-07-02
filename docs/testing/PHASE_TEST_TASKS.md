@@ -1,7 +1,7 @@
 # خطة مهام اختبار PHASES — Nouf-ex
 
 > **المعايير المطبّقة:** [IEEE 829-2008](https://standards.ieee.org/ieee/829/4987/) · [ISO/IEC/IEEE 29119](https://www.iso.org/standard/81291.html) · [ISTQB CTFL](https://www.istqb.org/)
-> **القاعدة الصارمة:** كل endpoint، جدول، وحقل في هذه الوثيقة مأخوذ حرفياً من الكود (app/server/routes/*.cts, app/server/lib/shared.cts) وملفات SQL (database/*.sql, database/migrations/*.sql). أي عنصر غير موجود فعلياً مُسجَّل بـ **غير موجود**.
+> **القاعدة الصارمة:** كل endpoint، جدول، وحقل في هذه الوثيقة مأخوذ حرفياً من الكود (app/server/routes/_.cts, app/server/lib/shared.cts) وملفات SQL (database/_.sql, database/migrations/*.sql). أي عنصر غير موجود فعلياً مُسجَّل بـ **غير موجود**.
 
 > **حالة التنفيذ الإجمالية:**
 >
@@ -46,6 +46,7 @@
 | 17 | Full Regression / Mutations | ✅ Done | [`tests/e2e/phase17_full_regression.ps1`](../../tests/e2e/phase17_full_regression.ps1) | [`tests/reports/phase17_full_regression.log`](../../tests/reports/phase17_full_regression.log) + [`phase17_regression_summary.txt`](../../tests/reports/phase17_regression_summary.txt) | all |
 
 ### ملاحظة عن نتيجة الـ Regression
+
 - الـ orchestrator يعرض false negatives في بعض الـ PHASES بسبب:
   1. تراكم الـ state في الـ DB (orders, reviews, addresses) بين الـ PHASES
   2. rate limits للـ 2FA قد تتراكم حتى مع reset
@@ -992,6 +993,7 @@ admin@noufex.com         / admin123     → admin
 4. محاولة admin endpoints → 403
 
 ### ملاحظة حرجة
+
 >
 > تدفق التاجر الحالي **غير مكتمل** في الـ API. التاجر لا يمكنه إنشاء/تعديل متجره أو منتجاته بدون admin. هذه فجوة معروفة في الـ roadmap (مرتبطة بـ P1-7, P1-8, P2-7).
 
@@ -1236,6 +1238,7 @@ admin@noufex.com         / admin123     → admin
 - PUT /api/notifications/:id/read (id غير موجود) → **404**
 
 ### عناصر غير موجودة فعلياً
+
 >
 > **غير موجود:** POST /api/notifications (لا endpoint لإنشاء إشعار)
 > **غير موجود:** DELETE /api/notifications/:id
@@ -1351,6 +1354,7 @@ admin@noufex.com         / admin123     → admin
 - GET /api/admin/audit-log بدون token → **401**
 
 ### عناصر غير موجودة فعلياً
+
 >
 > **غير موجود:** GET /api/admin/rate-limits (لا endpoint لعرض buckets)
 > **غير موجود:** DELETE /api/admin/audit-log (لا تنظيف يدوي)
@@ -1435,6 +1439,7 @@ admin@noufex.com         / admin123     → admin
 - Direct load of /admin كـ customer → redirect
 
 ### ملاحظة
+
 >
 > هذا الـ PHASE يتطلب PowerShell مع WebDriver أو متصفح headless. الـ smoke scripts الموجودة (مثل `smoke-spa.ps1`) تستخدم `Invoke-WebRequest`.
 
@@ -1596,6 +1601,7 @@ admin@noufex.com         / admin123     → admin
 ### 🔴 فجوات حرجة (P0) — مذكورة لكن فارغة
 
 #### 1. `docs/testing/phases/` — فارغ تماماً
+
 - **الوعد في [`docs/testing/README.md`](README.md):** "Per-PHASE design specs" + في [`docs/testing/PHASE_TEST_TASKS.md`](PHASE_TEST_TASKS.md) يذكر "[`docs/testing/phases/`](phases/)" كأحد المجلدات.
 - **الواقع:** 0 ملف في المجلد.
 - **المطلوب:** 18 ملف `PHASE_NN_<topic>.md` (واحد لكل PHASE) يحتوي:
@@ -1612,6 +1618,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~30K (18 ملف × ~1.7K لكل ملف)
 
 #### 2. `docs/testing/templates/` — فارغ تماماً
+
 - **الوعد في [`docs/testing/conventions.md`](conventions.md):** "Reusable test templates" + يذكر "[`templates/`](templates/)" كمجلد.
 - **الوعد في [`docs/testing/README.md`](README.md):** يصف مكان "templates/".
 - **الواقع:** 0 ملف.
@@ -1628,6 +1635,7 @@ admin@noufex.com         / admin123     → admin
 ### 🟡 فجوات متوسطة (P1) — مذكورة لكن ناقصة
 
 #### 3. `docs/architecture/security.md` — غير موجود
+
 - **المذكور في:** [`STRUCTURE.md`](../STRUCTURE.md) يصف CSP, JWT, RBAC, rate limiting لكن بدون ملف مُفصّل.
 - **الواقع:** 0 ملف.
 - **المطلوب:**
@@ -1643,6 +1651,7 @@ admin@noufex.com         / admin123     → admin
 - **الأولوية:** 🔴 P0 (مهم لـ production)
 
 #### 4. `docs/operations/deployment.md` — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** "ops/ ⟶ How-to / Deployment".
 - **الوعد في [`docs/testing/conventions.md`](conventions.md):** "E2E: runs against a temporary container in CI's `server-boot` job" لكن بدون تفاصيل.
 - **الوعد في [`docs/README.md`](../README.md):** "Docker" → يوجه إلى `operations/docker.md` فقط.
@@ -1658,6 +1667,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~8K
 
 #### 5. `docs/operations/monitoring.md` — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "ops/" intent.
 - **الوعد في [`docs/architecture/overview.md`](../architecture/overview.md):** "Operational Excellence" لكن بدون تفاصيل.
 - **الواقع:** 0 ملف.
@@ -1671,6 +1681,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~5K
 
 #### 6. `docs/architecture/er-diagram.md` — ERD مفقود
+
 - **الوعد في [`docs/architecture/database.md`](../architecture/database.md):** "29 tables" لكن بدون ERD.
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "architecture/" intent.
 - **الوعد في [`docs/testing/standards/IEEE-829.md`](standards/IEEE-829.md):** "Entity-relationship diagrams" كأحد artifacts.
@@ -1683,6 +1694,7 @@ admin@noufex.com         / admin123     → admin
 - **ملاحظة:** يمكن استخدام Mermaid ليدمج في Markdown.
 
 #### 7. `docs/development/ci-cd.md` — غير موجود
+
 - **الوعد في [`docs/testing/conventions.md`](conventions.md):** "Lint: `pwsh -c ...` smoke import" و "E2E: runs against a temporary container in CI's `server-boot` job".
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "development/".
 - **الوعد في [`CHANGELOG.md`](../../../CHANGELOG.md):** "CI server-boot job" ذُكر.
@@ -1696,6 +1708,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~6K
 
 #### 8. `docs/development/debugging.md` — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "development/".
 - **الوعد في [`docs/README.md`](../README.md):** ضمن "How-to" intent.
 - **الواقع:** 0 ملف.
@@ -1709,6 +1722,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~4K
 
 #### 9. `docs/planning/risks.md` (ADR) — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "planning/" intent (strategy).
 - **الوعد في [`docs/planning/roadmap.md`](../planning/roadmap.md):** يذكر "open issues" لكن بدون formal risk register.
 - **الوعد في [`docs/planning/competitive-analysis.md`](../planning/competitive-analysis.md):** يناقش competitive gaps.
@@ -1721,6 +1735,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~5K
 
 #### 10. `docs/operations/backup-restore.md` — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "ops/" intent.
 - **الوعد في [`docs/architecture/database.md`](../architecture/database.md):** "DB backups" لم تُذكر.
 - **الواقع:** 0 ملف.
@@ -1737,6 +1752,7 @@ admin@noufex.com         / admin123     → admin
 ### 🟢 فجوات تحسينية (P2) — تحسينات
 
 #### 11. `app/server/README.md` — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `app/server/` كـ Express backend.
 - **الوعد في [`docs/development/conventions.md`](../development/conventions.md):** يذكر server كـ "Express 5 + TypeScript".
 - **الوعد في [`docs/architecture/overview.md`](../architecture/overview.md):** "Backend (Express 5 + Node 20)".
@@ -1749,6 +1765,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~3K
 
 #### 12. `app/src/README.md` — غير موجود
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `app/src/` كـ React frontend.
 - **الوعد في [`docs/development/conventions.md`](../development/conventions.md):** يذكر i18n، contexts.
 - **الوعد في [`docs/architecture/overview.md`](../architecture/overview.md):** "React 19 + Vite 7".
@@ -1762,6 +1779,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~3K
 
 #### 13. `tests/e2e/COOKBOOK.md` — غير موجود
+
 - **الوعد في [`docs/testing/conventions.md`](conventions.md):** "Authoring checklist" موجود لكن بدون examples.
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `tests/e2e/` بشكل عام.
 - **الواقع:** 0 ملف cookbook. فقط README عام.
@@ -1774,6 +1792,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~5K
 
 #### 14. `tests/e2e/smoke/README.md` — غير موجود
+
 - **الوعد في [`docs/testing/README.md`](README.md):** "tests/e2e/ ⟶ PowerShell E2E" لكن دون تمييز عن smoke.
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصف `smoke/` كمجلد فرعي.
 - **الواقع:** 17 ملف smoke لكن لا يوجد README يشرح:
@@ -1784,6 +1803,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~2K
 
 #### 15. `docs/testing/standards/google-style.md` — غير موجود
+
 - **الوعد في [`docs/testing/README.md`](README.md):** يذكر "Google Style Guide" كـ معيار مطبّق.
 - **الوعد في [`docs/testing/PHASE_TEST_TASKS.md`](PHASE_TEST_TASKS.md):** يذكر "Google Style" في معايير مطبّقة.
 - **الواقع:** 3 ملفات standards فقط (IEEE 829, ISO 29119, ISTQB CTFL). Google Style مفقود.
@@ -1795,6 +1815,7 @@ admin@noufex.com         / admin123     → admin
 ### 🔵 فجوات تحسينية إضافية (P3)
 
 #### 16. `docs/README.md` — تحسينات
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** يصفه كـ "Index (with Diátaxis map)".
 - **الواقع:** 4.4K — index جيد لكن **يفتقد**:
   - قسم "آخر تحديث" / changelog
@@ -1803,6 +1824,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~1K تحسين
 
 #### 17. `docs/testing/overview.md` — تحسينات
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** ضمن "testing/" intent.
 - **الوعد في [`docs/testing/README.md`](README.md):** يصف محتوى المجلد.
 - **الواقع:** 4.3K — مفيد لكن **يفتقد**:
@@ -1811,6 +1833,7 @@ admin@noufex.com         / admin123     → admin
 - **الحجم المقدر:** ~1K
 
 #### 18. `docs/STRUCTURE.md` — تحسينات
+
 - **الوعد في [`STRUCTURE.md`](../STRUCTURE.md):** "Repository map (canonical)".
 - **الوعد في [`CHANGELOG.md`](../../../CHANGELOG.md):** مرجع للـ structure.
 - **الواقع:** 15.8K — جيد لكن **يفتقد**:
@@ -1862,22 +1885,25 @@ admin@noufex.com         / admin123     → admin
 ## 🎯 توصيات بترتيب الأولوية
 
 ### 🟢 يمكن تنفيذه اليوم (~1 ساعة)
+
 1. ملء `docs/testing/phases/PHASE_00_HEALTH_AUTH.md` كـ **نموذج** (template) → تطبيقه على 4-5 PHASES أخرى
 2. إنشاء `docs/testing/templates/PS_TEST_TEMPLATE.ps1` كقالب جاهز
 
 ### 🟡 يمكن تنفيذه هذا الأسبوع
-3. كتابة `docs/architecture/security.md` (مهم لـ production)
-4. كتابة `docs/operations/deployment.md` (مهم لعمليات الـ deployment)
-5. كتابة `docs/architecture/er-diagram.md` (Mermaid diagram)
-6. كتابة `docs/development/ci-cd.md` (GitHub Actions)
+
+1. كتابة `docs/architecture/security.md` (مهم لـ production)
+2. كتابة `docs/operations/deployment.md` (مهم لعمليات الـ deployment)
+3. كتابة `docs/architecture/er-diagram.md` (Mermaid diagram)
+4. كتابة `docs/development/ci-cd.md` (GitHub Actions)
 
 ### 🔵 يمكن تنفيذه لاحقاً
-7. كتابة `docs/planning/risks.md` (ADR)
-8. كتابة `docs/operations/backup-restore.md`
-9. كتابة `app/server/README.md` + `app/src/README.md`
-10. كتابة `tests/e2e/COOKBOOK.md` + `tests/e2e/smoke/README.md`
-11. كتابة `docs/testing/standards/google-style.md`
-12. تحسينات صغيرة في `docs/README.md`، `docs/testing/overview.md`، `docs/STRUCTURE.md`
+
+1. كتابة `docs/planning/risks.md` (ADR)
+2. كتابة `docs/operations/backup-restore.md`
+3. كتابة `app/server/README.md` + `app/src/README.md`
+4. كتابة `tests/e2e/COOKBOOK.md` + `tests/e2e/smoke/README.md`
+5. كتابة `docs/testing/standards/google-style.md`
+6. تحسينات صغيرة في `docs/README.md`، `docs/testing/overview.md`، `docs/STRUCTURE.md`
 
 ---
 

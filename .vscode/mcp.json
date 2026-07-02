@@ -1,9 +1,26 @@
 {
-	"servers": {
-		"noufex": {
-			"type": "stdio",
-			"command": "node",
-			"args": ["${workspaceFolder}/mcp-server/dist/index.js", "--root", "${workspaceFolder}"]
-		}
-	}
+  "servers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    }
+  }
 }

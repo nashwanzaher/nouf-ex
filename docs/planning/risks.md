@@ -20,8 +20,8 @@ swap that's not yet engineered.
 
 **Mitigation**: rate limits live in `rate_limits` (Postgres) with a
 60 s cleanup job (`setInterval` in [`index.ts`](../../app/server/index.ts)),
-so multi-process won't double-charge limits *once every process sees
-the same DB*. The Redis swap is tracked as **Phase I.7**; until then
+so multi-process won't double-charge limits _once every process sees
+the same DB_. The Redis swap is tracked as **Phase I.7**; until then
 stay at one replica.
 
 ## 2. 🔴 ~ PostgreSQL is the only durable store

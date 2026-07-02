@@ -1,4 +1,5 @@
 # PHASE 09 — Wishlist + Store Followers
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -165,7 +166,7 @@
 7. Section 6 — Follower check                    → 6 requests + inline
 ─────────────────────────────────────────────────────
 Total:                                          → 27 HTTP requests
-                                                + ~3 inline data-shape checks
+                                                - ~3 inline data-shape checks
                                                 = 24 PASS/FAIL assertions
 ```
 

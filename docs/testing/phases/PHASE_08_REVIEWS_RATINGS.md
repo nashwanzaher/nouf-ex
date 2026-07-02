@@ -1,4 +1,5 @@
 # PHASE 08 — Reviews + Ratings
+
 # Phase Design Specification (ISO/IEC/IEEE 29119-3)
 
 > **Standard:** [ISO/IEC/IEEE 29119-3](https://www.iso.org/standard/81291.html) — Test Documentation
@@ -168,7 +169,7 @@
 7. Section 6 — List after insert                             → 1 request + inline check
 ─────────────────────────────────────────────────────
 Total:                                                     → 20 HTTP requests
-                                                           + 5 inline data-shape checks
+                                                           - 5 inline data-shape checks
                                                            = 21 PASS/FAIL assertions
 ```
 

@@ -6,9 +6,9 @@
 # every time the user logs in.
 #
 # Usage (elevated PowerShell):
-#   powershell -ExecutionPolicy Bypass -File d:\source\Nouf-ex\scripts\autostart.ps1 -Register
-#   powershell -ExecutionPolicy Bypass -File d:\source\Nouf-ex\scripts\autostart.ps1 -Unregister
-#   powershell -ExecutionPolicy Bypass -File d:\source\Nouf-ex\scripts\autostart.ps1 -RunNow
+#   powershell -ExecutionPolicy Bypass -File $PSScriptRoot\..\scripts\autostart.ps1 -Register
+#   powershell -ExecutionPolicy Bypass -File $PSScriptRoot\..\scripts\autostart.ps1 -Unregister
+#   powershell -ExecutionPolicy Bypass -File $PSScriptRoot\..\scripts\autostart.ps1 -RunNow
 # ============================================================================
 param(
     [switch]$Register,
@@ -18,7 +18,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $TaskName = 'Nouf-ex Auto-Start'
-$ProjectRoot = 'd:\source\Nouf-ex'
+$ProjectRoot = $PSScriptRoot\..
 $LogFile = Join-Path $ProjectRoot 'logs\autostart.log'
 
 # --- helpers --------------------------------------------------------------

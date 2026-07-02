@@ -8,6 +8,7 @@ import {
 	authLimiter,
 	hashPassword,
 	verifyPassword,
+	writeAuditLog,
 	registerSchema,
 	loginSchema,
 	profileUpdateSchema,
@@ -17,6 +18,25 @@ import {
 } from '../lib/shared.cts';
 import { signAuthToken } from '../middleware.js';
 import { signPartialToken } from '../lib/partial-token.cts';
+
+// SECURITY (M-2, 2026-07-02): a throwaway scrypt hash used on the
+// "user not found" login path so attackers cannot distinguish
+// missing vs wrong-password accounts by response time. The hash
+// encodes an unguessable, never-used password. The point is the
+// scrypt CPU cost — every login attempt takes ~100 ms regardless
+// of whether the email exists in the DB.
+//
+// Generated once at module load with hashPassword(''). NEVER
+// compared against a real password (the salt + iteration count
+// make a literal match astronomically unlikely). Only used so
+// the wall-clock time of the not-found path matches the
+// wrong-password path.
+let DUMMY_SCRYPT_HASH = '';
+(async () => {
+	DUMMY_SCRYPT_HASH = await hashPassword(
+		`__login_timing_dummy_${Math.random().toString(36)}_${Date.now()}__`,
+	);
+})();
 
 export const authRouter = Router();
 
@@ -51,7 +71,13 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 		}
 
 		const safeUser = { id: userId, email, full_name: name, role };
-		const token = signAuthToken({ sub: userId, role });
+		// SECURITY (C-3): read the freshly-inserted user's token_version
+		// (defaulted to 0 by migration 0017) and stamp it into the
+		// token payload so future revocations propagate.
+		const userRow = (await db
+			.prepare('SELECT token_version FROM users WHERE id = ?')
+			.get(userId)) as { token_version: number } | undefined;
+		const token = signAuthToken({ sub: userId, role, ver: userRow?.token_version ?? 0 });
 
 		// Fire bilingual welcome notification (best-effort, non-blocking).
 		// (C.1 in MASTER_PLAN.md — real welcome notification on signup)
@@ -79,13 +105,31 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 
 	const user = (await db
 		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at FROM users WHERE email = ?',
+			// SECURITY (C-3): select `token_version` so the freshly
+			// signed token matches the user's current revocation
+			// counter. A logout elsewhere will bump this number and
+			// invalidate the token on its next use.
+			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at, token_version FROM users WHERE email = ?',
 		)
 		.get(email)) as
-		| (Record<string, unknown> & { id: number; password_hash: string; role: AuthRole })
+		| (Record<string, unknown> & {
+				id: number;
+				password_hash: string;
+				role: AuthRole;
+				token_version: number;
+		  })
 		| undefined;
 
 	if (!user) {
+		// SECURITY (M-2, 2026-07-02): constant-time login. Without
+		// this dummy hash, an attacker measuring response time can
+		// distinguish a missing account (~10 ms) from a wrong
+		// password on a real account (~110 ms scrypt cost). We pay
+		// the scrypt cost on the "user not found" path too so both
+		// paths take the same wall-clock time. The hash is a fixed
+		// throwaway string — the comparison always fails, we just
+		// want the time to be uniform.
+		await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
 		return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
 	}
 
@@ -113,8 +157,48 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 			'Password OK. 2FA required — call /api/auth/2fa/verify with the code.',
 		);
 	}
-	const token = signAuthToken({ sub: user.id, role: user.role });
+	const token = signAuthToken({ sub: user.id, role: user.role, ver: user.token_version });
 	sendSuccess(res, { user: userWithoutPassword, token }, 200, 'Login successful');
+});
+
+/**
+ * SECURITY (C-3): POST /api/auth/logout
+ *
+ * Bumps `users.token_version` for the calling user so any other
+ * outstanding bearer tokens for that user stop working on their
+ * next request. We do not maintain a per-token blacklist because
+ * a version bump is atomic, cheaper than a row insert, and works
+ * even when the user does not have their original token at hand
+ * (e.g. logout-everywhere from the admin panel).
+ *
+ * Idempotent: a second logout from the same user is a no-op except
+ * for another version bump, which is harmless.
+ */
+authRouter.post('/logout', requireAuth, async (req: Request, res: Response) => {
+	const userId = req.user!.id;
+	try {
+		await db
+			.prepare(
+				'UPDATE users SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+			)
+			.run(userId);
+		// Drop the per-process cache so the next request from this
+		// process (rare, but possible if a request and a logout
+		// race) gets the fresh value.
+		try {
+			const { invalidateTokenVersionCache } = await import('../middleware.js');
+			invalidateTokenVersionCache(userId);
+		} catch {
+			/* ignore — cache invalidation is best-effort */
+		}
+		return sendSuccess(
+			res,
+			{ revoked: true, message: 'All sessions for this user have been revoked.' },
+			200,
+		);
+	} catch (err) {
+		return sendError(res, err);
+	}
 });
 
 authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
@@ -228,7 +312,40 @@ authRouter.post('/change-password', requireAuth, async (req: Request, res: Respo
 			)
 			.run(newHash, userId);
 
-		sendSuccess(res, { updated: true }, 200, 'Password changed');
+		// SECURITY (H-1, 2026-07-02): bump token_version so EVERY
+		// outstanding bearer token for this user is invalidated in
+		// the same UPDATE. Without this, a stolen token keeps
+		// working after the victim rotates the password — they
+		// would have to explicitly log out from every device. This
+		// mirrors the behavior of /auth/logout (which already bumps
+		// token_version) and matches the documented security claim
+		// in middleware.ts: "A bump of the DB column invalidates
+		// every token that was issued before the bump." We also
+		// invalidate the in-process cache so subsequent /requireAuth
+		// calls don't see the stale version.
+		await db
+			.prepare(
+				'UPDATE users SET token_version = token_version + 1 WHERE id = ?',
+			)
+			.run(userId);
+		try {
+			const { invalidateTokenVersionCache } = await import('../middleware.js');
+			invalidateTokenVersionCache(userId);
+		} catch {
+			/* the import may fail in some test setups; the DB
+			 * UPDATE alone is sufficient — the cache will be
+			 * re-populated with the fresh value on the next
+			 * requireAuth call. */
+		}
+
+		// SECURITY (M-7): the audit log captures the user_id, the
+		// action, and the IP. We deliberately do NOT include the
+		// new password hash (or any password material) in oldValues
+		// / newValues — that field would otherwise show up in the
+		// DLQ file if the audit INSERT ever fails.
+		await writeAuditLog(req, 'change_password', 'user', userId, null, null);
+
+		sendSuccess(res, { updated: true, sessions_invalidated: true }, 200, 'Password changed');
 	} catch (err) {
 		return sendError(res, err);
 	}

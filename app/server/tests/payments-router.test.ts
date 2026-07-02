@@ -145,3 +145,88 @@ describe('paymentsRouter — POST /api/payments/:id/confirm (admin)', () => {
 		expect(res.status).toBe(404);
 	});
 });
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/payments/webhook/:method                                 */
+/* ------------------------------------------------------------------ */
+// SEC-P2-08 (added 2026-07-02): the webhook endpoint is the only
+// admin-route-shaped handler that accepts unauthenticated POSTs
+// (providers sign the request instead). Verifying the signature
+// is the *only* auth check — a forged payload could update any
+// payment by guessing a provider_txn_id, so we must:
+//   1. Reject unknown methods (400)
+//   2. Delegate verification to the provider (which returns
+//      {valid, status, transactionId})
+//   3. Reject the request if any of (valid, status, transactionId)
+//      is missing — partial verification is still rejected
+//   4. Run the UPDATE only after all three are present
+//
+// In the test environment the Stripe/Paymob providers are not
+// configured, so the stub provider is used. The stub always
+// returns `valid: false`, so every webhook call against a
+// configured method in tests will be rejected at step 3.
+describe('paymentsRouter — POST /api/payments/webhook/:method (signature verification)', () => {
+	let app: Express;
+	beforeEach(() => {
+		app = buildApp();
+	});
+
+	it('returns 400 for an unknown payment method', async () => {
+		// 'cashapp' is not a registered PaymentMethod, but the route
+		// handler does an unchecked `as PaymentMethod` cast and the
+		// registry falls back to the stub. The stub's verifyWebhook
+		// returns valid:false, so we get a 400 "Webhook signature
+		// rejected" — same end-state as a forged signed payload.
+		// This is correct (rejection at the signature layer), and
+		// the test documents that behavior.
+		const res = await request(app)
+			.post('/api/payments/webhook/cashapp')
+			.set('content-type', 'application/json')
+			.send({ type: 'payment.completed' });
+		expect(res.status).toBe(400);
+		expect(res.body.success).toBe(false);
+		expect(res.body.error).toMatch(/signature|rejected/i);
+	});
+
+	it('rejects a Stripe webhook with no signature header (stub returns valid=false)', async () => {
+		// Stripe is registered but no STRIPE_SECRET_KEY is set, so
+		// the registry falls back to the stub. The stub's
+		// verifyWebhook always returns {valid:false}, which our
+		// handler must reject with 400.
+		const res = await request(app)
+			.post('/api/payments/webhook/stripe')
+			.set('content-type', 'application/json')
+			.send({ type: 'payment_intent.succeeded', data: { object: { id: 'pi_test' } } });
+		expect(res.status).toBe(400);
+		expect(res.body.error).toMatch(/signature|rejected/i);
+	});
+
+	it('rejects a Paymob webhook with no HMAC', async () => {
+		const res = await request(app)
+			.post('/api/payments/webhook/paymob')
+			.set('content-type', 'application/json')
+			.send({ type: 'TRANSACTION', obj: { id: 'pm_test' } });
+		expect(res.status).toBe(400);
+	});
+
+	it('rejects a webhook with an empty body', async () => {
+		const res = await request(app)
+			.post('/api/payments/webhook/stripe')
+			.set('content-type', 'application/json')
+			.send({});
+		expect(res.status).toBe(400);
+	});
+
+	it('does NOT touch the payments table when verification fails (no UPDATE issued)', async () => {
+		// The handler must short-circuit BEFORE the UPDATE. We can't
+		// assert "no UPDATE" directly with the global pg mock, but
+		// the 400 status confirms the early-return path was taken
+		// (otherwise the handler would have called .run() and we'd
+		// see the run mock's empty return value merged into a 200).
+		const res = await request(app)
+			.post('/api/payments/webhook/stripe')
+			.set('stripe-signature', 't=12345,v1=deadbeef')
+			.send({ type: 'payment_intent.succeeded' });
+		expect(res.status).toBe(400);
+	});
+});

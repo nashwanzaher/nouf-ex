@@ -46,6 +46,8 @@ describe('adminReadRouter — auth gate', () => {
 		'/api/admin/disputes',
 		'/api/admin/audit-log',
 		'/api/admin/stats',
+		'/api/admin/stats/timeseries',
+		'/api/admin/stats/by-governorate',
 	];
 	for (const p of paths) {
 		it(`GET ${p} → 401 without token`, async () => {
@@ -209,5 +211,139 @@ describe('adminReadRouter — GET /api/admin/audit-log', () => {
 	it('accepts a numeric `user_id` filter', async () => {
 		const res = await request(app).get('/api/admin/audit-log?user_id=7').set(adminBearer);
 		expect(res.status).toBe(200);
+	});
+});
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/admin/stats/timeseries — C.7 endpoint (added 2026-07-02) */
+/* ------------------------------------------------------------------ */
+describe('adminReadRouter — GET /api/admin/stats/timeseries', () => {
+	let app: Express;
+	beforeEach(() => {
+		app = buildApp();
+	});
+
+	it('returns 200 with default metric=bucket=day', async () => {
+		const res = await request(app).get('/api/admin/stats/timeseries').set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.success).toBe(true);
+		expect(res.body.data).toHaveProperty('metric');
+		expect(res.body.data).toHaveProperty('bucket');
+		expect(res.body.data).toHaveProperty('horizonDays');
+		expect(Array.isArray(res.body.data.points)).toBe(true);
+	});
+
+	it('accepts ?metric=orders', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/timeseries?metric=orders')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.data.metric).toBe('orders');
+	});
+
+	it('accepts ?bucket=month', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/timeseries?metric=revenue&bucket=month&days=180')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.data.bucket).toBe('month');
+	});
+
+	it('rejects an unknown metric', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/timeseries?metric=impressions')
+			.set(adminBearer);
+		expect(res.status).toBe(400);
+	});
+
+	it('rejects days=400 (over 365 cap)', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/timeseries?days=400')
+			.set(adminBearer);
+		expect(res.status).toBe(400);
+	});
+});
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/admin/stats/by-governorate — K.8 endpoint (added 2026-07-02) */
+/* ------------------------------------------------------------------ */
+describe('adminReadRouter — GET /api/admin/stats/by-governorate', () => {
+	let app: Express;
+	beforeEach(() => {
+		app = buildApp();
+	});
+
+	it('returns 200 with the default scope=stores top=5 envelope', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.success).toBe(true);
+		expect(res.body.data).toHaveProperty('scope', 'stores');
+		expect(res.body.data).toHaveProperty('top', 5);
+		expect(res.body.data).toHaveProperty('total');
+		expect(Array.isArray(res.body.data.governorates)).toBe(true);
+	});
+
+	it('accepts ?scope=addresses', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?scope=addresses')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.data.scope).toBe('addresses');
+	});
+
+	it('accepts ?scope=merchants', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?scope=merchants')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.data.scope).toBe('merchants');
+	});
+
+	it('accepts ?top=3 (rolls the rest into Other)', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?top=3')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		expect(res.body.data.top).toBe(3);
+		// With the mocked pg returning no rows, governorates is
+		// empty and total is 0 — the top rollup is a no-op.
+		expect(res.body.data.total).toBe(0);
+	});
+
+	it('rejects an unknown scope', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?scope=galaxies')
+			.set(adminBearer);
+		expect(res.status).toBe(400);
+	});
+
+	it('rejects top=0 (must be >= 1)', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?top=0')
+			.set(adminBearer);
+		expect(res.status).toBe(400);
+	});
+
+	it('rejects top=25 (over 20 cap)', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?top=25')
+			.set(adminBearer);
+		expect(res.status).toBe(400);
+	});
+
+	it('percent values sum to <= 100 (rounding tolerance)', async () => {
+		const res = await request(app)
+			.get('/api/admin/stats/by-governorate?top=5')
+			.set(adminBearer);
+		expect(res.status).toBe(200);
+		const sum = res.body.data.governorates.reduce(
+			(acc: number, g: { percent: number }) => acc + g.percent,
+			0,
+		);
+		// Sum may be slightly less than 100 due to rounding to 0.1%
+		expect(sum).toBeLessThanOrEqual(100.5);
+		expect(sum).toBeGreaterThanOrEqual(0);
 	});
 });

@@ -1,14 +1,14 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	requireRole,
-	getProductWithParsedFields,
-	paginationSchema,
+    db,
+    getProductWithParsedFields,
+    paginationSchema,
+    requireAuth,
+    requireRole,
+    sendError,
+    sendSuccess,
+    validate,
 } from '../lib/shared.cts';
 
 export const adminReadRouter = Router();
@@ -519,6 +519,128 @@ adminReadRouter.get('/stats/timeseries', ...adminAuth, async (req: Request, res:
 				label: r.label,
 				value: Number(r.value),
 			})),
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/* ------------------------------------------------------------------ */
+/*  K.8 Per-governorate endpoint (added 2026-07-02)                   */
+/* ------------------------------------------------------------------ */
+// Returns the per-governorate distribution of stores so the
+// ReportsAnalytics "growth" pie can render real data instead of
+// a 5-row fixture.
+//
+// Query params:
+//   - scope: 'stores' (default) | 'addresses' | 'merchants'
+//     - 'stores'     → COUNT(*) GROUP BY stores.governorate
+//     - 'addresses'  → COUNT(*) GROUP BY addresses.governorate
+//                      (nullable → "Unknown" bucket)
+//     - 'merchants'  → COUNT of users with role='merchant',
+//                      joined to their latest store's governorate
+//                      (falls back to 'Unknown' if no store)
+//   - top: int 1-20, default 5 — limit to top N governorates
+//           (rest are aggregated as "أخرى" / "Other")
+//
+// Response shape:
+//   { scope, total, governorates: [{ name, count, percent }] }
+adminReadRouter.get('/stats/by-governorate', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({
+				scope: z.enum(['stores', 'addresses', 'merchants']).default('stores'),
+				top: z.coerce.number().int().min(1).max(20).default(5),
+			}),
+			req.query,
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const { scope, top } = v.data;
+
+		// Per-scope source. Column name is the same (`governorate`),
+		// but the table + filter changes. Other bucket is NULL
+		// (stores go through a "Other" fallback for top-N mode).
+		const sourceSql: Record<typeof scope, { sql: string; where: string }> = {
+			stores: {
+				sql: `SELECT COALESCE(NULLIF(governorate, ''), 'Unknown') AS name,
+				             COUNT(*)::int AS count
+				      FROM stores
+				      WHERE is_active = TRUE
+				      GROUP BY COALESCE(NULLIF(governorate, ''), 'Unknown')`,
+				where: '',
+			},
+			addresses: {
+				sql: `SELECT COALESCE(NULLIF(governorate, ''), 'Unknown') AS name,
+				             COUNT(*)::int AS count
+				      FROM addresses
+				      GROUP BY COALESCE(NULLIF(governorate, ''), 'Unknown')`,
+				where: '',
+			},
+			merchants: {
+				// Per-merchant governorate: prefer the merchant's own store
+				// (most users in the test seed only have one store each),
+				// fall back to "Unknown" if they have no store.
+				sql: `SELECT COALESCE(s.governorate, 'Unknown') AS name,
+				             COUNT(*)::int AS count
+				      FROM users u
+				      LEFT JOIN LATERAL (
+				          SELECT governorate
+				          FROM stores
+				          WHERE owner_id = u.id
+				          ORDER BY created_at ASC
+				          LIMIT 1
+				      ) s ON TRUE
+				      WHERE u.role = 'merchant'
+				      GROUP BY COALESCE(s.governorate, 'Unknown')`,
+				where: '',
+			},
+		};
+		const src = sourceSql[scope];
+
+		// Two-step aggregation: count per governorate, then top-N
+		// bucketed with an "Other" rollup. Done in a single CTE so
+		// the entire query is one round-trip (vs the 2 round-trips
+		// the old implementation used).
+		const sql = `
+			WITH counts AS (${src.sql}),
+			ranked AS (
+				SELECT name, count,
+				       ROW_NUMBER() OVER (ORDER BY count DESC, name ASC) AS rn
+				FROM counts
+			),
+			top_n AS (
+				SELECT name, count FROM ranked WHERE rn <= $1
+			),
+			other AS (
+				SELECT COALESCE(SUM(count), 0)::int AS count
+				FROM ranked WHERE rn > $1
+			)
+			SELECT name, count, FALSE AS is_other FROM top_n
+			UNION ALL
+			SELECT 'Other', count, TRUE AS is_other FROM other
+		`;
+
+		const rows = (await db.prepare(sql).all(top)) as Array<{
+			name: string;
+			count: number;
+			is_other: boolean;
+		}>;
+
+		const total = rows.reduce((sum, r) => sum + r.count, 0);
+		const governorates = rows
+			.filter((r) => r.count > 0)
+			.map((r) => ({
+				name: r.name,
+				count: r.count,
+				percent: total > 0 ? Math.round((r.count / total) * 1000) / 10 : 0,
+			}));
+
+		return sendSuccess(res, {
+			scope,
+			top,
+			total,
+			governorates,
 		});
 	} catch (err) {
 		return sendError(res, err);

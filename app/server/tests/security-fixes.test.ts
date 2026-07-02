@@ -60,11 +60,17 @@ describe('admin.cts /stats uses one CTE-based query (was 14 round-trips)', () =>
 		// metrics as scalar subqueries in a single statement. The old
 		// version had 14 separate SELECT COUNT(*) calls.
 		// We assert on the source so the test is mock-free and stable
-		// across Node versions. Note: /stats is the LAST route in
-		// admin-read.cts, so we capture from the route declaration to
-		// end-of-file.
+		// across Node versions.
+		//
+		// Capture ONLY the /stats handler body — stop at the next
+		// `adminReadRouter.get(` so subsequent routes (/stats/timeseries,
+		// /stats/by-governorate) don't bleed into the assertion. (The
+		// previous `[\s\S]*$` capture-to-EOF was correct when /stats
+		// was the last route but broke when later routes were added.)
 		const _routerSrc = src; // captured for diagnostics
-		const statsBlock = src.match(/adminReadRouter\.get\(['"]\/stats['"][\s\S]*$/);
+		const statsBlock = src.match(
+			/adminReadRouter\.get\(['"]\/stats['"][\s\S]*?(?=adminReadRouter\.get\(['"]\/|$)/,
+		);
 		expect(
 			statsBlock,
 			'adminReadRouter /stats block should exist in admin-read.cts',

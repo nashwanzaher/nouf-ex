@@ -17,9 +17,9 @@
  * path; the live end-to-end run in phase10_merchant_flow.ps1 covers
  * the happy paths.
  */
-import { describe, it, expect } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 import { sellerRouter } from '../routes/seller.cts';
 import { signTestToken } from './test-token';
 

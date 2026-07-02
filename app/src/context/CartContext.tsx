@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useMemo, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 
 interface CartItem {
 	productId: string;

@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
-import { Link } from 'react-router';
-import { useTranslation } from 'react-i18next';
-import { Search, Store, ShoppingCart, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import gsap from 'gsap';
+import { ChevronDown, Search, ShoppingCart, Store } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 
 const floatingProducts = [
 	{

@@ -17,8 +17,10 @@
 -- `ORDER BY sold_count DESC` which is currently used by the
 -- "popular" sort option on /api/products.
 -- =====================================================================
-CREATE INDEX IF NOT EXISTS idx_products_popular
-    ON products (sold_count DESC, created_at DESC)
+CREATE INDEX
+IF NOT EXISTS idx_products_popular
+    ON products
+(sold_count DESC, created_at DESC)
     WHERE is_active = TRUE AND deleted_at IS NULL;
 
 -- ANALYZE so the planner picks the new index immediately. The

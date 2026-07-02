@@ -1,23 +1,23 @@
 import { Router, type Request, type Response } from 'express';
+import { signPartialToken } from '../lib/partial-token.cts';
 import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	authLimiter,
-	hashPassword,
-	verifyPassword,
-	writeAuditLog,
-	registerSchema,
-	loginSchema,
-	profileUpdateSchema,
-	passwordChangeSchema,
-	HttpError,
-	type AuthRole,
+    authLimiter,
+    db,
+    hashPassword,
+    HttpError,
+    loginSchema,
+    passwordChangeSchema,
+    profileUpdateSchema,
+    registerSchema,
+    requireAuth,
+    sendError,
+    sendSuccess,
+    validate,
+    verifyPassword,
+    writeAuditLog,
+    type AuthRole,
 } from '../lib/shared.cts';
 import { signAuthToken } from '../middleware.js';
-import { signPartialToken } from '../lib/partial-token.cts';
 
 // SECURITY (M-2, 2026-07-02): a throwaway scrypt hash used on the
 // "user not found" login path so attackers cannot distinguish

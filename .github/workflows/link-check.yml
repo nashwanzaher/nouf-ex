@@ -54,8 +54,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          # No cache-dependency-path: this workflow only runs
+          # `npm install --no-save` for a single CLI tool, so the
+          # `node_modules` cache doesn't help and pointing at the
+          # repo-root `package-lock.json` would fail (the project
+          # lives under `app/` after the 2026-07-03 restructuring).
+          # `actions/setup-node` will simply skip caching when no
+          # lockfile is configured.
           cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Install markdown-link-check
         # We install it from npm-cache so we don't hit the registry

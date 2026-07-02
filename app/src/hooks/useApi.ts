@@ -39,6 +39,7 @@ import {
     getAddresses,
     getAdminAuditLog,
     getAdminDisputes,
+    getAdminGovernorate,
     getAdminOrders,
     getAdminProducts,
     getAdminStats,
@@ -634,6 +635,20 @@ export function useAdminTimeSeries(
 	} = {},
 ) {
 	return useDataHook((signal) => getAdminTimeSeries(params, { signal }));
+}
+
+/** K.8 per-governorate hook — added 2026-07-02. Powers the
+ *  ReportsAnalytics "growth" pie chart (replaces the previous
+ *  hard-coded 5-row fixture with live /api/admin/stats/by-governorate
+ *  data). `scope` picks the source table: stores / addresses /
+ *  merchants; `top` limits rows + collapses the rest into "Other". */
+export function useAdminGovernorate(
+	params: {
+		scope?: 'stores' | 'addresses' | 'merchants';
+		top?: number;
+	} = {},
+) {
+	return useDataHook((signal) => getAdminGovernorate(params, { signal }));
 }
 
 /** /api/ready — public readiness probe. Used by the admin dashboard

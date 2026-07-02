@@ -3,49 +3,49 @@
  * Express + node-postgres (pg) via the PgDb wrapper
  */
 
-import express, { Request, Response, NextFunction, RequestHandler } from 'express';
 import cors from 'cors';
+import express, { NextFunction, Request, RequestHandler, Response } from 'express';
 import fs from 'fs';
-import { PgDb } from './db/pg-wrapper.cts';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { PgDb } from './db/pg-wrapper.cts';
 // Side-effect import: must run BEFORE shared.cts is loaded,
 // because shared.cts reads process.env.DATABASE_URL at module
 // evaluation time and throws if it is missing. A bare
 // `dotenv.config()` call would run too late (after the imports).
 import 'dotenv/config';
 import {
-	requestId,
-	securityHeaders,
-	requestLogger,
-	errorHandler,
-	notFoundHandler,
-	optionalAuth,
-	loadEnv,
-	resolveDatabaseUrl,
-	configureTrustProxy,
-	healthRateLimit,
-	log,
+    configureTrustProxy,
+    errorHandler,
+    healthRateLimit,
+    loadEnv,
+    log,
+    notFoundHandler,
+    optionalAuth,
+    requestId,
+    requestLogger,
+    resolveDatabaseUrl,
+    securityHeaders,
 } from './middleware';
-import { adminRouter } from './routes/admin.cts';
+import { addressesRouter } from './routes/addresses.cts';
 import { adminReadRouter } from './routes/admin-read.cts';
-import { catalogRouter } from './routes/catalog.cts';
+import { adminRouter } from './routes/admin.cts';
 import { auth2faRouter } from './routes/auth-2fa.cts';
 import { authRouter } from './routes/auth.cts';
-import { ordersRouter } from './routes/orders.cts';
 import { cartRouter } from './routes/cart.cts';
-import { wishlistRouter } from './routes/wishlist.cts';
-import { notificationsRouter } from './routes/notifications.cts';
-import { paymentsRouter } from './routes/payments.cts';
+import { catalogRouter } from './routes/catalog.cts';
 import { couponsRouter } from './routes/coupons.cts';
+import { messagesRouter } from './routes/messages.cts';
+import { notificationsRouter } from './routes/notifications.cts';
+import { ordersRouter } from './routes/orders.cts';
+import { paymentsRouter } from './routes/payments.cts';
 import { refundsRouter } from './routes/refunds.cts';
 import { reviewsRouter } from './routes/reviews.cts';
-import { statsRouter } from './routes/stats.cts';
-import { shippingRouter } from './routes/shipping.cts';
-import { storeFollowersRouter } from './routes/store-followers.cts';
-import { addressesRouter } from './routes/addresses.cts';
-import { messagesRouter } from './routes/messages.cts';
 import { sellerRouter } from './routes/seller.cts';
+import { shippingRouter } from './routes/shipping.cts';
+import { statsRouter } from './routes/stats.cts';
+import { storeFollowersRouter } from './routes/store-followers.cts';
+import { wishlistRouter } from './routes/wishlist.cts';
 
 // Note: `import 'dotenv/config'` above already loaded .env.
 // Keep this comment as a marker so future readers know not to

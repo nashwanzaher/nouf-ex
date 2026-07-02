@@ -17,19 +17,19 @@
  * this file as CommonJS-by-default and skips the .ts→.cts extension
  * map that bit us earlier with `pg-wrapper.cts`.
  */
-import { Request, Response, NextFunction } from 'express';
+import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'crypto';
+import { NextFunction, Request, Response } from 'express';
+import { promisify } from 'util';
 import { z } from 'zod';
 import { PgDb } from '../db/pg-wrapper.cts';
-import { scrypt as scryptCb, randomBytes, timingSafeEqual } from 'crypto';
-import { promisify } from 'util';
 import {
-	requireAuth,
-	requireRole,
-	sendSuccess,
-	sendError,
-	HttpError,
-	log,
-	type AuthRole,
+    HttpError,
+    log,
+    requireAuth,
+    requireRole,
+    sendError,
+    sendSuccess,
+    type AuthRole,
 } from '../middleware.js';
 
 // Re-export the pg-wrapper connection so route files have a single
@@ -48,7 +48,7 @@ if (!_databaseUrl) {
 export const db = new PgDb(_databaseUrl);
 // `import { requireAuth, sendError, ... } from '../lib/shared.js'`
 // so a future refactor of the middleware module doesn't break them.
-export { requireAuth, requireRole, sendSuccess, sendError, HttpError, log };
+export { HttpError, log, requireAuth, requireRole, sendError, sendSuccess };
 export type { AuthRole };
 
 // ═══════════════════════════════════════════════════════════

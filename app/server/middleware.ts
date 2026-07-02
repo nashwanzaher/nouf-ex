@@ -9,8 +9,8 @@
  * without code changes).
  */
 
-import { randomUUID, createHmac, randomBytes, timingSafeEqual } from 'crypto';
-import type { Response, RequestHandler, ErrorRequestHandler } from 'express';
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
+import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import { PgDb } from './db/pg-wrapper.cts';
 // SECURITY (C-3): import the shared `db` instance so we can look
 // up the user's current token_version on every authenticated

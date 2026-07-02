@@ -23,9 +23,9 @@
  *     .set('Authorization', `Bearer ${token}`);
  */
 import {
-	signAuthToken,
-	__setCachedAuthForTests,
-	type AuthRole,
+    __setCachedAuthForTests,
+    signAuthToken,
+    type AuthRole,
 } from '../middleware.js';
 
 export function signTestToken(payload: { sub: number; role: AuthRole; ver?: number }): string {

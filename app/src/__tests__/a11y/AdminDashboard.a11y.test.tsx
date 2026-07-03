@@ -15,23 +15,23 @@
  * `app/tests/setup.ts`.
  */
 
-import {
-	afterEach,
-	beforeAll,
-	afterAll,
-	describe,
-	expect,
-	it,
-	vi,
-} from 'vitest';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { axe } from 'vitest-axe';
 import type { RunOptions } from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import {
-	installFetchSpy,
-	uninstallFetchSpy,
+    afterAll,
+    afterEach,
+    beforeAll,
+    describe,
+    expect,
+    it,
+    vi,
+} from 'vitest';
+import { axe } from 'vitest-axe';
+import {
+    installFetchSpy,
+    uninstallFetchSpy,
 } from '../../../tests/mocks/fetch-spy';
 
 const axeOptions: RunOptions = {

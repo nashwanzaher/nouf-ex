@@ -10,7 +10,7 @@
  */
 
 import { config as loadDotenv } from 'dotenv';
-import { vi, expect } from 'vitest';
+import { expect, vi } from 'vitest';
 // P2-09: register the `toHaveNoViolations()` matcher on vitest's `expect`.
 //
 // We import the type augmentation from vitest-axe/extend-expect so

@@ -50,22 +50,21 @@
  * are independent of color contrast.
  */
 
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	describe,
-	expect,
-	it,
-	vi,
-} from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
-import { axe } from 'vitest-axe';
-import type { RunOptions } from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import {
-	installFetchSpy,
-	uninstallFetchSpy,
+    afterAll,
+    afterEach,
+    beforeAll,
+    describe,
+    expect,
+    it,
+    vi,
+} from 'vitest';
+import { axe } from 'vitest-axe';
+import {
+    installFetchSpy,
+    uninstallFetchSpy,
 } from '../../../tests/mocks/fetch-spy';
 
 // Shared axe options — see the file header for the rationale.
@@ -143,8 +142,8 @@ beforeAll(() => installFetchSpy());
 afterAll(() => uninstallFetchSpy());
 
 // Pages under test.
-import CustomerDashboard from '../customer/CustomerDashboard';
 import AdminDashboard from '../admin/AdminDashboard';
+import CustomerDashboard from '../customer/CustomerDashboard';
 
 describe('Accessibility (vitest-axe)', () => {
 	afterEach(() => cleanup());

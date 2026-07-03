@@ -1,5 +1,21 @@
 # Nouf-ex Copilot Instructions
 
+> ## 🚨 MANDATORY COMPLIANCE — READ FIRST 🚨
+>
+> **Before performing ANY action in this repository, the agent MUST consult and adhere to:**
+>
+> 📜 **[`docs/architecture/SKILLS_MINDMAP.md`](../docs/architecture/SKILLS_MINDMAP.md) — *Nouf-ex End-to-End Developer Skills Mind Map* (v1.0.0)**
+>
+> This mind map is the **canonical, mandatory reference** for all work on Nouf-ex. It defines:
+> - The 9 required skill domains (Frontend, Backend, Database, Security, Quality, DevOps, Documentation, AI Agents, Project Mgmt)
+> - The academic standards enforced (ISO/IEC/IEEE 12207, ISO/IEC 25010, IEEE 829, ISO/IEC/IEEE 29119, OWASP API Top 10 2023, WCAG 2.1 Level AA, Diátaxis, Keep a Changelog, Conventional Commits, SemVer)
+> - The skill-level matrix (Junior / Mid / Senior) with promotion criteria
+> - The cross-cutting concerns that span domains
+> - The self-audit checklist that must pass before any PR
+> - The compliance verification process
+>
+> **NON-COMPLIANCE IS A BUILD-BLOCKING VIOLATION.** Any commit that violates the mind map's standards MUST be reverted or remediated before merge.
+
 ## AI Provider Configuration
 
 This project uses **MiniMax API** as the primary AI provider for GitHub Copilot.
@@ -1746,6 +1762,117 @@ Vite (Prod)     3000  (served by API)
 |--------|--------------|---------|
 | `filesystem` | read, write, delete, rename, move, create | File operations |
 | `git` | status, diff, log, commit, push, pull, branch, merge, rebase | Git operations |
+
+---
+
+## 📜 MANDATORY MIND MAP COMPLIANCE (v1.0.0)
+
+> **Authority:** This section is incorporated by reference from
+> [`docs/architecture/SKILLS_MINDMAP.md`](../docs/architecture/SKILLS_MINDMAP.md) (Nouf-ex End-to-End Developer Skills Mind Map, v1.0.0).
+> The mind map is the **canonical, mandatory reference** for all skills, standards, and compliance rules governing this repository.
+> **Adopted global standards:** ISO/IEC/IEEE 12207:2017, ISO/IEC 25010:2011, IEEE 829-2008, ISO/IEC/IEEE 29119, OWASP API Security Top 10 (2023), WCAG 2.1 Level AA, Diátaxis, Keep a Changelog 1.1.0, Conventional Commits 1.0.0, Semantic Versioning 2.0.0.
+
+### Mind Map Enforcement Rules (NON-NEGOTIABLE)
+
+The agent MUST follow these rules for EVERY action on this repository:
+
+1. **9 Skill Domains** — every change must map to one of:
+   1. Frontend Engineering
+   2. Backend Engineering
+   3. Database Engineering
+   4. Security Engineering
+   5. Quality Engineering (Testing)
+   6. DevOps & Site Reliability
+   7. Documentation & Knowledge
+   8. AI-Agent Operations
+   9. Project & Release Engineering
+   - Cross-cutting concerns go in §10 of the mind map.
+
+2. **Skill Level Discipline** — every PR must declare the target skill level (Junior / Mid / Senior) and demonstrate compliance with the corresponding CMMI-style process areas.
+
+3. **Code Review Checklist** — every PR must pass:
+   - [ ] `npm run typecheck` — 0 errors
+   - [ ] `npm run lint` — 0 errors
+   - [ ] `npm test` — all 814+ tests pass
+   - [ ] `npm run test:a11y` — all 16+ a11y tests pass
+   - [ ] `npm run build` — 0 errors
+   - [ ] Conventional Commits format
+   - [ ] Diátaxis-compliant docs (if docs added)
+
+4. **Security Hardening** — no commit may introduce:
+   - Hardcoded secrets (search for: `NpEx_`, `C2i7v`, `AUTH_SECRET=`)
+   - `SELECT *` in production handlers
+   - `as any` casts without justification
+   - SQL string concatenation (use `pgify()`)
+   - Unencrypted password storage (always use scrypt)
+   - Hardcoded timing values (always use `timingSafeEqual`)
+
+5. **Accessibility Compliance** — every new interactive component must have an a11y test in `app/src/__tests__/a11y/` that verifies:
+   - Zero `axe()` violations
+   - Keyboard navigable
+   - Screen-reader friendly (proper ARIA roles, labels)
+
+6. **Documentation Discipline** — every change to behavior must update:
+   - `CHANGELOG.md` (Keep a Changelog format)
+   - `docs/STRUCTURE.md` if structure changed
+   - `docs/MASTER_PLAN.md` if roadmap changed
+   - Relevant `docs/architecture/*.md` if architecture changed
+   - `docs/planning/adr/NNNN-*.md` for significant decisions
+
+7. **Test Coverage Expansion** — new code must include tests. Target: lines ≥ 80%, functions ≥ 90%. Use the mind map's test pyramid (unit / integration / E2E / a11y).
+
+8. **Cross-Domain Awareness** — agents must recognize when a change spans multiple domains (e.g., a new endpoint requires frontend + backend + database + tests + docs) and follow the multi-agent patterns in the mind map's §8.
+
+### Violation Consequence
+
+Any commit that violates the mind map's standards MUST be reverted or remediated before merge. The mind map is **build-blocking** — it supersedes ad-hoc agent decisions.
+
+### Mind Map Self-Reference
+
+For the complete mind map (9 domains × 9 sub-domains × 4 levels = ~150 skill entries), refer to:
+- **File:** `docs/architecture/SKILLS_MINDMAP.md`
+- **Version:** 1.0.0 (2026-07-03)
+- **Owner:** @architect (with @reviewer quarterly audit)
+- **Update procedure:** PR with rationale → @architect + Senior review → CHANGELOG entry → propagate to this file
+
+### Compliance Verification Hooks (CI-enforced)
+
+The following checks are enforced automatically by GitHub Actions:
+- ✅ TypeScript typecheck (`tsc -b --noEmit`) — caught at PR time
+- ✅ ESLint (`eslint .`) — caught at PR time
+- ✅ Vitest tests (`npm test`) — caught at PR time
+- ✅ vitest-axe a11y tests (`npm run test:a11y`) — caught at PR time (required check)
+- ✅ Vite build (`vite build`) — caught at PR time
+- ✅ esbuild server bundle (`esbuild ...`) — caught at PR time
+- ✅ Markdown lint — caught at PR time
+
+### Mind Map Update Triggers
+
+The mind map MUST be updated when:
+- A new framework is adopted (e.g., switching from Express to Fastify)
+- A new skill domain is needed (e.g., adding ML/AI engineering)
+- A new compliance standard is required (e.g., HIPAA, PCI-DSS)
+- An academic standard version is updated (e.g., ISO/IEC 25010:2024)
+- A Junior developer is promoted to Mid and the matrix needs updating
+- A cross-cutting concern is identified that doesn't fit §10
+
+### Acceptance Criteria for This Section
+
+This section is complete when:
+- [ ] The mind map file exists at `docs/architecture/SKILLS_MINDMAP.md`
+- [ ] The mind map covers all 9 skill domains
+- [ ] The mind map cites at least 10 academic standards
+- [ ] The mind map is referenced from this file (copilot-instructions.md)
+- [ ] The 12 custom agents in `.github/agents/` reference the mind map
+- [ ] The 20+ skills in `.github/skills/` reference the mind map
+- [ ] The CI workflow `.github/workflows/ci.yml` has the mind map as a required check reference
+
+> **By order of the project maintainers, this mind map is MANDATORY for ALL AI agents operating on Nouf-ex. Non-compliance = build-blocking violation.**
+
+---
+
+**End of Copilot Instructions — Nouf-ex v2026-07-03**
+
 | `sequential-thinking` | analyze, plan, reflect, debug | Complex reasoning |
 | `memory` | store, retrieve, search, delete | Persistent context |
 | `fetch` | GET, POST, PUT, DELETE, PATCH | HTTP requests |

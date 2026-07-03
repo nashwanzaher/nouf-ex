@@ -5,6 +5,7 @@
 # rules can require them by name. Names use a single colon as a
 # separator so they read naturally in PR status checks:
 #
+#   ci / mindmap
 #   ci / lint
 #   ci / typecheck
 #   ci / mcp-server
@@ -68,11 +69,46 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
+  # 0. Mind map compliance (pre-flight, no Node.js needed)
+  #    Verifies that the mandatory docs/architecture/SKILLS_MINDMAP.md
+  #    exists and references at least 10 of the 12 academic standards
+  #    cited in the file. Fails the build otherwise. Runs before lint
+  #    so every downstream job inherits the gate via the dependency
+  #    chain (a11y/test/build all depend on lint).
+  # ─────────────────────────────────────────────────────────────────
+  mindmap:
+    name: Mind map compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify mind map file exists
+        run: |
+          if [ ! -f docs/architecture/SKILLS_MINDMAP.md ]; then
+            echo "::error::docs/architecture/SKILLS_MINDMAP.md is missing — the mandatory skills mind map must exist"
+            exit 1
+          fi
+      - name: Verify mind map references ≥10 academic standards
+        run: |
+          file=docs/architecture/SKILLS_MINDMAP.md
+          count=0
+          for pattern in "ISO/IEC" "IEEE" "OWASP" "WCAG" "SWEBOK" "CMMI" "SEMAT" "Diátaxis" "Keep a Changelog" "Conventional Commits" "SemVer" "Semantic Versioning"; do
+            if grep -qi -- "$pattern" "$file"; then
+              count=$((count + 1))
+            fi
+          done
+          echo "Mind map references $count of 12 academic standards"
+          if [ "$count" -lt 10 ]; then
+            echo "::error::Mind map references only $count standards; must reference at least 10 of 12"
+            exit 1
+          fi
+
+  # ─────────────────────────────────────────────────────────────────
   # 1. Lint (cheap, parallel, blocks merges on warnings)
   # ─────────────────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    needs: [mindmap]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

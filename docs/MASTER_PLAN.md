@@ -1736,6 +1736,18 @@ Nouf-ex/
 
 **مجموع ملفات الجذر (عدا المجلدات):** ~17 ملف (كان 25 قبل 2026-07-03) — نُقل 8 ملفات `.ps1` (`build`, `tc`, `test`, `lint`, `format`, `format-check`, `docker-build`, `docker-run`) إلى `scripts/` ضمن حملة إعادة الهيكلة.
 
+### 14.7 إضافة 2026-07-03 — خريطة مهارات المطورين الإلزامية (Skills Mind Map v1.0.0)
+
+> **النطاق:** ملف جديد إلزامي `docs/architecture/SKILLS_MINDMAP.md` يُحدّد خريطة المهارات الشاملة لجميع الوكلاء (agents) والمهارات (skills) في `.github/`.
+> **الحالة:** ✅ **مُضاف** — يُعتبر المرجع الإلزامي الوحيد (canonical reference) لجميع الـ 12 agents والـ 24 skills.
+> **المعايير المرجعية (12):** ISO/IEC/IEEE 12207:2017, ISO/IEC 25010:2011, IEEE 829-2008, ISO/IEC/IEEE 29119, OWASP API Security Top 10 (2023), WCAG 2.1 Level AA, SEMAT, CMMI v2.0, SWEBOK v4, Keep a Changelog 1.1.0, Conventional Commits 1.0.0, Semantic Versioning 2.0.0, Diátaxis Framework.
+
+| الملف | الوصف | الحالة | المرجع |
+|-------|-------|--------|--------|
+| **docs/architecture/SKILLS_MINDMAP.md** | v1.0.0 — 9-domain mandatory end-to-end developer skills mind map (12 academic standards) | NEW in commit 55e9c6f | ✅ reference point for 12 agents + 24 skills |
+
+> 📌 **خريطة المهارات (Skills Mind Map) هي الآن المرجع الإلزامي الوحيد (canonical reference)** لجميع المهارات والمعايير وقواعد الامتثال في المشروع. يجب أن يستند كل قرار معماري، وكل مراجعة كود، وكل CI check على هذا المستند. تم توثيق الامتثال الكامل في `.github/copilot-instructions.md` → §"MANDATORY MIND MAP COMPLIANCE (v1.0.0)"، مع بوابة CI في `.github/workflows/ci.yml` → `mindmap` job تتحقق من وجود الملف ومراجعته لـ ≥10 من المعايير الـ 12.
+
 1. **تشغيل release-please** فعلياً (تثبيت GitHub App أو self-host CLI) لاستبدال كتلة `[Unreleased]` اليدوية.
 2. **تفعيل docs badge CI status** — ربط `.github/workflows/docs.yml` بـ `actions/statusbadge` لإظهار حالة "Docs" في README.
 3. **`mike` للنسخ المُصنَّفة** (versioned docs) — يتبع SemVer tags.

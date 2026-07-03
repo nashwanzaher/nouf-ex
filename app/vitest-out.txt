@@ -1,0 +1,9 @@
+﻿
+ RUN  v4.1.9 C:/Users/zaher/Desktop/nouf-ex/app
+
+
+ Test Files  61 passed (61)
+      Tests  822 passed | 3 skipped (825)
+   Start at  05:53:00
+   Duration  14.06s (transform 17.06s, setup 23.77s, import 67.80s, tests 30.96s, environment 42.86s)
+

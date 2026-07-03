@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **2026-07-03** — **`docs/architecture/SKILLS_MINDMAP.md` (v1.0.0)** — canonical, mandatory end-to-end developer skills mind map covering 9 skill domains (Frontend, Backend, Database, Security, Quality, DevOps, Documentation, AI Agents, Project) and citing 12 academic standards (ISO/IEC/IEEE 12207, ISO/IEC 25010, IEEE 829, ISO/IEC/IEEE 29119, OWASP API Top 10 2023, WCAG 2.1 AA, Diátaxis, Keep a Changelog, Conventional Commits, SemVer, SWEBOK v4, CMMI v2.0). Every agent and skill in `.github/` is required to follow this reference. (#PR-maps)
+  - 🧭 Introduced in commit `55e9c6f` (mind map creation), with reference propagation to 12 agents + 24 skills in commit `8baa420`.
+  - 🪝 CI gate: new `mindmap` pre-flight job in `.github/workflows/ci.yml` verifies the file exists and references ≥10 of the 12 academic standards.
+  - 📖 Documented as the canonical source in [`docs/MASTER_PLAN.md`](docs/MASTER_PLAN.md) §14.7 and enforced in [`.github/copilot-instructions.md`](.github/copilot-instructions.md) → §"MANDATORY MIND MAP COMPLIANCE (v1.0.0)".
+
 - **2026-07-03** — **P2-09 — A11y CI gate via `vitest-axe` + axe-core.** Automated
   WCAG 2.1 AA regression coverage for the project's accessibility-critical
   components. CI now fails on any axe-core rule violation.

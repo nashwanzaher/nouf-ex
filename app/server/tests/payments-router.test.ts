@@ -13,9 +13,11 @@
  */
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { paymentsRouter } from '../routes/payments.cts';
 import { signTestToken } from './test-token';
+import { db } from '../lib/shared.cts';
+import { stubProvider } from '../lib/payments/stub.cts';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
 const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });
@@ -228,5 +230,139 @@ describe('paymentsRouter — POST /api/payments/webhook/:method (signature verif
 			.set('stripe-signature', 't=12345,v1=deadbeef')
 			.send({ type: 'payment_intent.succeeded' });
 		expect(res.status).toBe(400);
+	});
+});
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/payments/webhook/:method — idempotency                   */
+/* ------------------------------------------------------------------ */
+// Providers retry on transient failure. If the same webhook fires
+// twice (legit retry OR a duplicate delivery from the provider), the
+// handler must NOT run the UPDATE twice. The current implementation
+// issues an unconditional UPDATE on every call — see payments.cts:
+//   await db.prepare(`UPDATE payments SET status = ?, updated_at = NOW()
+//                     WHERE provider_txn_id = ?`).run(...);
+// There is no dedupe, no idempotency-key check, and no
+// pg_try_advisory_xact_lock to serialize concurrent retries.
+//
+// What a properly idempotent system would do:
+//   1. Wrap the UPDATE in a CTE that checks the current status and
+//      skips the write if it has already advanced past the new one.
+//   2. Or use a dedicated `webhook_events` table with a UNIQUE
+//      constraint on (provider, provider_txn_id) — the INSERT would
+//      fail on a duplicate and the UPDATE would never run.
+//
+// This test documents the CURRENT behaviour: the same body posted
+// twice produces two UPDATEs. If the production fix is added, the
+// assertion will need to change to `expect(updateCount).toBe(1)`.
+describe('paymentsRouter — POST /api/payments/webhook/:method (idempotency)', () => {
+	let app: Express;
+	beforeEach(() => {
+		app = buildApp();
+	});
+
+	it('documents the current behavior: two identical webhooks produce two UPDATEs (no idempotency layer)', async () => {
+		// Force the stub provider to accept the webhook by spying on
+		// its verifyWebhook() — by default it returns {valid:false}
+		// because there is no real signing key in test, but we want
+		// to exercise the POST-verification UPDATE path. We DO NOT
+		// touch the registry or the route file — just the stub's
+		// method.
+		const verifySpy = vi
+			.spyOn(stubProvider, 'verifyWebhook')
+			.mockResolvedValue({
+				valid: true,
+				transactionId: 'tx_idempotency_probe',
+				status: 'completed',
+				raw: { stub: true, test: 'idempotency' },
+			});
+
+		// Count every UPDATE issued against the payments table.
+		let paymentUpdateCount = 0;
+		const originalPrepare = db.prepare.bind(db);
+		(db as unknown as { prepare: typeof originalPrepare }).prepare = ((
+			sql: string,
+		) => {
+			const upper = sql.trim().toUpperCase();
+			if (upper.startsWith('UPDATE PAYMENTS')) {
+				return {
+					run: async () => {
+						paymentUpdateCount += 1;
+						return { rowCount: 1, lastInsertRowid: null };
+					},
+					get: async () => undefined,
+					all: async () => [],
+				};
+			}
+			return originalPrepare(sql);
+		}) as typeof originalPrepare;
+
+		try {
+			const body = {
+				type: 'payment_intent.succeeded',
+				data: { object: { id: 'tx_idempotency_probe' } },
+			};
+			const res1 = await request(app)
+				.post('/api/payments/webhook/stripe')
+				.set('content-type', 'application/json')
+				.send(body);
+			const res2 = await request(app)
+				.post('/api/payments/webhook/stripe')
+				.set('content-type', 'application/json')
+				.send(body);
+
+			// Both calls reach the UPDATE because the handler does
+			// NOT dedupe. Count is 2, not 1. (A future fix that
+			// adds idempotency would reduce this to 1.)
+			expect([res1.status, res2.status]).toEqual([200, 200]);
+			expect(paymentUpdateCount).toBe(2);
+		} finally {
+			verifySpy.mockRestore();
+			(db as unknown as { prepare: typeof originalPrepare }).prepare =
+				originalPrepare;
+		}
+	});
+});
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/payments/webhook/:method — rate limit (SEC-P2-08)       */
+/* ------------------------------------------------------------------ */
+// The webhook endpoint is rate-limited at 120 requests / minute / IP
+// (see `webhookLimiter = rateLimit(60_000, 120, 'webhook')` in
+// payments.cts). 100 rapid requests stay below the cap, so we expect
+// the natural per-request response (400 "Webhook signature rejected"
+// from the stub) for every call and ZERO 429s.
+//
+// This test pins the OBSERVED behavior at this volume. To actually
+// hit the rate limit a future test would need to send 121+ requests
+// within the 60-second window; doing that in CI is slow and noisy,
+// so we only assert the contract that "100 < 120 ⇒ no 429".
+describe('paymentsRouter — POST /api/payments/webhook/:method (rate limit at 100 rapid requests)', () => {
+	let app: Express;
+	beforeEach(() => {
+		app = buildApp();
+	});
+
+	it('100 rapid requests stay below the 120/min limit — 0 429s observed, all 400 (signature rejected)', async () => {
+		const body = { type: 'payment_intent.succeeded' };
+		const results: number[] = [];
+		// Sequential (not Promise.all) so each request completes
+		// before the next one starts. This is closer to a real
+		// retry storm than 100 parallel sockets.
+		for (let i = 0; i < 100; i++) {
+			const res = await request(app)
+				.post('/api/payments/webhook/stripe')
+				.set('content-type', 'application/json')
+				.send(body);
+			results.push(res.status);
+		}
+		const status429 = results.filter((s) => s === 429).length;
+		const status400 = results.filter((s) => s === 400).length;
+		// Every request was rejected by the signature check (the
+		// stub returns valid:false). None were throttled because
+		// 100 < 120 — the rate limit only kicks in on the 121st
+		// request inside the 60-second window.
+		expect(status429).toBe(0);
+		expect(status400).toBe(100);
 	});
 });

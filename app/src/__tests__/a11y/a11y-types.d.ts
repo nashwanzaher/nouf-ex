@@ -26,12 +26,19 @@
 import type AxeCore from 'axe-core';
 
 declare module 'vitest' {
-	interface AxeMatchers<R = unknown> {
-		toHaveNoViolations(): R;
+	interface AxeMatchers {
+		toHaveNoViolations(): void;
 	}
 
 	interface Assertion<T = any> extends AxeMatchers {}
 	interface AsymmetricMatchersContaining extends AxeMatchers {}
+}
+
+declare module 'vitest-axe/matchers' {
+	// Re-export toHaveNoViolations as a value (function) so callers can
+	// `import { toHaveNoViolations } from 'vitest-axe/matchers'` and
+	// pass it to `expect.extend()` at runtime.
+	export function toHaveNoViolations(this: unknown, ...args: unknown[]): unknown;
 }
 
 // Also re-export the AxeCore.AxeResults shape so consumers can annotate.

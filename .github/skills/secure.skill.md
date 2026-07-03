@@ -28,6 +28,17 @@ verification:
   - Compliance verified
 ---
 
+## Mandatory Reference
+
+> 🚨 **NON-NEGOTIABLE** — every action this agent/skill takes must align with the
+> 9-domain End-to-End Developer Skills Mind Map:
+> [docs/architecture/SKILLS_MINDMAP.md](../../../docs/architecture/SKILLS_MINDMAP.md) (v1.0.0)
+>
+> Adopted standards: ISO/IEC/IEEE 12207, ISO/IEC 25010, IEEE 829, ISO/IEC/IEEE 29119,
+> OWASP API Top 10 (2023), WCAG 2.1 AA, Diátaxis, Keep a Changelog, Conventional
+> Commits, SemVer. Violation = build-blocking.
+
+
 # Secure Skill
 
 ## Purpose

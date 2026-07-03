@@ -26,6 +26,7 @@ they are stable identifiers that the GitHub UI displays as
 | 2 | `ci / Typecheck` | Catches type errors across the API and mcp-server. |
 | 3 | `ci / Test` | All 700+ unit tests pass (no DB required; pg is mocked). |
 | 4 | `ci / Build` | Vite SPA + esbuild API + mcp-server bundle produce artefacts. |
+| 5 | `ci / a11y` | `vitest-axe` accessibility checks pass (P2-09 — axe-core violations fail the build). |
 
 ### 1.2 Required for direct-to-main pushes only
 
@@ -57,6 +58,7 @@ gh api repos/:owner/:repo/branches/main/protection \
   --field required_status_checks[contexts][]=ci / Typecheck \
   --field required_status_checks[contexts][]=ci / Test \
   --field required_status_checks[contexts][]=ci / Build \
+  --field required_status_checks[contexts][]=ci / a11y \
   --field required_status_checks[contexts][]=ci / DB Integration \
   --field required_status_checks[contexts][]=ci / Server Boot Smoke \
   --field required_pull_request_reviews[required_approving_review_count]=1 \
@@ -85,6 +87,7 @@ gh api repos/:owner/:repo/branches/main/protection \
        - `ci / Typecheck`
        - `ci / Test`
        - `ci / Build`
+       - `ci / a11y`
        - `ci / DB Integration`
        - `ci / Server Boot Smoke`
    - [x] Do not allow forcing the specific class of pushes

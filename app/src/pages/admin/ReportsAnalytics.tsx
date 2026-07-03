@@ -410,12 +410,17 @@ export default function ReportsAnalytics() {
 
 	/** Map a time-series response into the {name, ...} shape recharts
 	 *  expects. `name` mirrors the old `name` field (the bucket label
-	 *  in the user's locale, e.g. "يناير" or "W12"). */
+	 *  in the user's locale, e.g. "يناير" or "W12").
+	 *
+	 *  Defensive: the live API always returns `{ points: [] }`, but the
+	 *  mocked hook in tests can return `{ points: undefined }` (e.g.
+	 *  when the underlying pg mock returns an undefined row). The
+	 *  `!s?.points` guard handles both cases. */
 	const mapSeries = (
-		s: { points: Array<{ ts: string; label: string; value: number }> } | null | undefined,
+		s: { points?: Array<{ ts: string; label: string; value: number }> } | null | undefined,
 		extra: Record<string, number> = {},
-	) => {
-		if (!s) return [] as Array<Record<string, string | number>>;
+	): Array<Record<string, string | number>> => {
+		if (!s || !s.points) return [];
 		return s.points.map((p) => ({ name: p.label, ts: p.ts, value: p.value, ...extra }));
 	};
 
@@ -795,7 +800,18 @@ export default function ReportsAnalytics() {
 			{/* ── Metrics (live /api/admin/stats) ── */}
 			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 				{metrics.map((m, i) => (
-					<Card key={i} className="border-0 shadow-sm">
+					// A11Y-P2-05 follow-up (added 2026-07-03): the visible
+					// <p> label isn't a heading, so axe can't derive an
+					// accessible name from the card structure. We set
+					// aria-label explicitly to satisfy the
+					// "Cards must have an accessible name" rule and
+					// expose the metric to screen readers in a
+					// predictable, localization-friendly way.
+					<Card
+						key={i}
+						className="border-0 shadow-sm"
+						aria-label={m.label}
+					>
 						<CardContent className="p-4">
 							<p className="text-xs text-[#6B6B6B] font-cairo mb-1">{m.label}</p>
 							<div className="flex items-center justify-between">

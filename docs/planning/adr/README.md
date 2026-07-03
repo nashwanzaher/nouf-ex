@@ -12,6 +12,7 @@
 | ID                                       | Title                                                              | Status   | Date       |
 |------------------------------------------|--------------------------------------------------------------------|----------|------------|
 | [ADR-0001](0001-mkdocs-and-release-please.md) | Adopt MkDocs (Material) + release-please for docs automation | ✅ Accepted | 2026-07-02 |
+| [ADR-0002](0002-vitest-axe-a11y.md)           | Adopt `vitest-axe` for automated WCAG 2.1 AA testing          | ✅ Accepted | 2026-07-03 |
 
 ## Conventions
 

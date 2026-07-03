@@ -10,7 +10,18 @@
  */
 
 import { config as loadDotenv } from 'dotenv';
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
+// P2-09: register the `toHaveNoViolations()` matcher on vitest's `expect`.
+//
+// We import the type augmentation from vitest-axe/extend-expect so
+// the matcher is visible to TypeScript, but vitest-axe@0.1.0 ships
+// an empty extend-expect.js (a packaging bug), so the runtime
+// registration must be done by us here. We re-import the matcher
+// function from the package's dist and register it with expect().
+import 'vitest-axe/extend-expect';
+import { toHaveNoViolations } from 'vitest-axe/matchers';
+
+expect.extend({ toHaveNoViolations });
 
 console.log('[setup.ts] running, cwd=', process.cwd());
 

@@ -125,7 +125,7 @@ app/
 │   │   ├── cart-sync.ts
 │   │   ├── jsonData.ts
 │   │   └── utils.ts                ← cn() helper + class utilities
-│   └── pages/
+│   ├── pages/
 │       ├── Home/
 │       ├── Home.tsx
 │       ├── SearchResults.tsx
@@ -139,7 +139,8 @@ app/
 │       ├── customer/               ← Customer dashboard pages
 │       ├── seller/                 ← Merchant dashboard pages
 │       ├── admin/                  ← Admin dashboard pages
-│       └── __tests__/              ← Component unit tests
+│       └── __tests__/              ← Component unit tests + a11y suite (vitest-axe, 2026-07-03)
+│   └── __tests__/                  ← Cross-cutting a11y tests (vitest-axe, P2-09) — target for `npm run test:a11y`
 │
 ├── server/                         ← Express 5 backend
 │   ├── index.ts                    ← Entry point (esbuild bundle target)
@@ -411,7 +412,7 @@ mcp-server/
 | `mcp-server/`                        | ✅       | TS server, builds via own `tsconfig.json`                  |
 | `docker/`                            | ✅       | single `entrypoint.sh`                                     |
 | `.github/`                           | ✅       | workflows/ + Dependabot + CODEOWNERS + issue templates     |
-| `.github/workflows/`                 | ✅       | ci.yml (6 jobs) + deploy-staging.yml + deploy-prod.yml     |
+| `.github/workflows/`                 | ✅       | ci.yml (6 jobs — includes **Run accessibility (a11y) tests** step since 2026-07-03, P2-09) + deploy-staging.yml + deploy-prod.yml |
 | `.vscode/`                           | ✅       | Tasks include every PHASE script + dev servers            |
 | `archive/audit/`                     | ✅       | Read-only — 11 historical audits                           |
 | `archive/research/`                  | ✅       | Read-only — 11 historical research notes                   |
@@ -461,6 +462,7 @@ a `<NN>-<slug>.md` filename.
 | "Where is the React root?" | `app/src/main.tsx` |
 | "Where do E2E tests live?" | `tests/e2e/` |
 | "Where are unit tests?" | `app/tests/`, `app/src/**/__tests__/` |
+| "Where are the a11y tests?" | `app/src/pages/__tests__/a11y.test.tsx` (`vitest-axe`, run with `npm run test:a11y`) |
 | "Where do reports go?" | `tests/reports/` |
 | "Where is the master test plan?" | `docs/testing/PHASE_TEST_TASKS.md` |
 | "Where is the DB schema?" | `database/*.sql` + `database/migrations/` |

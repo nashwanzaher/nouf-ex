@@ -2,7 +2,7 @@
 
 > **Format:** [Keep a Changelog v1.1.0](https://keepachangelog.com/en/1.1.0/) ·
 > **Versioning:** [Semantic Versioning 2.0.0](https://semver.org/) ·
-> **Last updated:** 2026-07-02
+> **Last updated:** 2026-07-03
 
 All notable changes to **Nouf-ex** are documented in this file.
 
@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+
+- **2026-07-03** — **P2-09 — A11y CI gate via `vitest-axe` + axe-core.** Automated
+  WCAG 2.1 AA regression coverage for the project's accessibility-critical
+  components. CI now fails on any axe-core rule violation.
+
+  - 🧪 **3 new a11y tests** in [`app/src/pages/__tests__/a11y.test.tsx`](app/src/pages/__tests__/a11y.test.tsx):
+    - `OrderTimeline` (customer) — `role="list"` + `aria-current="step"`
+    - `StatusBadge` — `role="status"` and contrast/ARIA checks
+    - `AdminDashboard` sidebar — `aria-current="page"` on the active link
+  - 📦 New dev-dep: `vitest-axe@^0.1.0` (pinned in
+    [`app/package.json`](app/package.json) → `devDependencies`).
+  - 🧰 New npm script: `npm run test:a11y` (wrapper around
+    `vitest run a11y.test.tsx`).
+  - 🪝 Global matcher registered in
+    [`app/tests/setup.ts`](app/tests/setup.ts) via
+    `import 'vitest-axe/extend-expect'` so `toHaveNoViolations()`
+    is available in every test file.
+  - 📖 Decision documented in
+    [ADR-0002](docs/planning/adr/0002-vitest-axe-a11y.md) (Accepted
+    2026-07-03). Closes MASTER_PLAN P2-09 (vitest-axe a11y CI gate).
 
 - **2026-07-02** — **Agent System Expansion — Complete Toolkit.** Comprehensive
   agent system overhaul adding expert capabilities across the project:
@@ -689,6 +709,16 @@ planning,testing}/`. All `phase*.ps1` and test logs moved into `tests/`.
   [`docs/testing/standards/`](docs/testing/standards/).
 - **2026-06-27** — Created reusable PowerShell test helpers
   ([`tests/e2e/helpers/PS_TestHelpers.ps1`](tests/e2e/helpers/PS_TestHelpers.ps1)).
+
+### Changed
+
+- **2026-07-03** — [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+  added a new step **`Run accessibility (a11y) tests`** immediately after
+  the **`Run vitest`** step. The step invokes the new
+  `npm run test:a11y` script (added to
+  [`app/package.json`](app/package.json) for this release). CI build now
+  fails on any `axe-core` WCAG 2.1 AA violation across the three
+  components covered by `app/src/pages/__tests__/a11y.test.tsx`.
 
 ### Removed
 

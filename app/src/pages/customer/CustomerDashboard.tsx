@@ -71,17 +71,30 @@ function OrderTimeline({ timeline }: { timeline: string[] }) {
 						role="listitem"
 						className="flex items-center gap-1"
 						aria-current={i === currentIndex ? 'step' : undefined}
+						// A11Y-P2-05 follow-up (added 2026-07-03): the
+						// step-level aria-label moved here from the inner
+						// circle (which can't legally carry aria-label
+						// without a valid role). The listitem now exposes
+						// the full status to assistive tech.
+						aria-label={`${stepLabel} — ${
+							completed
+								? t('customer.timeline.done', 'done')
+								: t('customer.timeline.pending', 'pending')
+						}`}
 					>
 						<div
 							className={cn(
 								'w-6 h-6 rounded-full flex items-center justify-center',
 								completed ? styles.timelineStep : styles.timelineStepPending,
 							)}
-							aria-label={`${stepLabel} — ${
-								completed
-									? t('customer.timeline.done', 'done')
-									: t('customer.timeline.pending', 'pending')
-							}`}
+							// A11Y-P2-05 follow-up (added 2026-07-03): the inner
+							// step circle is a decorative indicator; the
+							// accessible name lives on the parent
+							// <div role="listitem"> (aria-label below). Drop
+							// the aria-label here to avoid the
+							// `aria-prohibited-attr` axe violation (a
+							// bare <div> cannot carry aria-label).
+							aria-hidden="true"
 						>
 							{icons[step]}
 						</div>
@@ -404,6 +417,10 @@ export default function CustomerDashboard() {
 						</button>
 						<button
 							onClick={() => setCollapsed(!collapsed)}
+							// A11Y-P2-05 follow-up (added 2026-07-03): icon-only
+							// toggle button needs an explicit accessible
+							// name for axe (button-name rule).
+							aria-label={collapsed ? t('common.expand', 'Expand sidebar') : t('common.collapse', 'Collapse sidebar')}
 							className="hidden lg:flex w-9 h-9 items-center justify-center rounded hover:bg-gray-100 transition-colors"
 						>
 							{collapsed ? (
@@ -431,7 +448,13 @@ export default function CustomerDashboard() {
 								className={`bg-transparent border-none outline-none text-sm w-full ml-2 ${styles.searchInput}`}
 							/>
 						</div>
-						<button className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors">
+						<button
+							// A11Y-P2-05 follow-up (added 2026-07-03): icon-only
+							// notification bell needs an explicit accessible
+							// name for axe (button-name rule).
+							aria-label={t('customer.notifications', 'Notifications')}
+							className="relative w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+						>
 							<Bell className={`w-5 h-5 ${styles.iconTextMuted}`} strokeWidth={1.5} />
 							{notifications.filter((n: { is_read: number }) => !n.is_read).length >
 								0 && (

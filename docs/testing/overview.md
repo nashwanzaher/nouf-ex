@@ -38,6 +38,7 @@ and only climbs up when there is integration value to capture.
 | **SQL schema** | `app/server/tests/schema.test.ts`              | Parses `database/*.sql`     | Vitest 4 (no DB)            |
 | **Frontend**   | `app/src/**/__tests__/**/*.test.{ts,tsx}`      | happy-dom env               | Vitest 4 + RTL + MSW        |
 | **UI smoke**   | `app/src/pages/__tests__/ui-smoke.test.tsx`    | happy-dom env               | Vitest 4 + RTL              |
+| **A11y (WCAG)**| `app/src/pages/__tests__/a11y.test.tsx`        | happy-dom env               | Vitest 4 + RTL + `vitest-axe` (axe-core) |
 
 | What we explicitly **don't** test | Why                                              |
 |------------------------------------|--------------------------------------------------|
@@ -45,6 +46,7 @@ and only climbs up when there is integration value to capture.
 | Visual layout / CSS                | No visual regression tool wired up (track F.1).  |
 | Cross-browser (Safari, Firefox)    | happy-dom is good-enough for our logic assertions. |
 | Performance / load                 | Out of scope pre-launch (master plan §5-years).  |
+| Color-contrast ratios              | happy-dom can't compute runtime contrast; tracked separately (see [`standards/a11y.md`](standards/a11y.md)). |
 
 The unit/integration tests **do not** need a live database. `pg` is mocked
 globally in [`app/tests/setup.ts`](../app/tests/setup.ts), so the entire
@@ -71,7 +73,36 @@ npm run test:coverage
 # Filter to a single file or pattern
 
 npx vitest run server/tests/api-server.test.ts
+
+# Accessibility tests only (axe-core + role-based assertions)
+
+npm run test:a11y
 ```
+
+## Accessibility (a11y) testing
+
+We test for [WCAG 2.1 AA](https://www.w3.org/WAI/WCAG21/quickref/) conformance
+on every component that ships to users. The two suites we currently cover are:
+
+- **CustomerDashboard** — verifies `OrderTimeline` exposes `role="list"` with
+  four `listitem`s and `aria-current="step"` on the active step, plus
+  `StatusBadge` carries a localized `role="status"` with an `aria-label`
+  starting with the translated `Status:` prefix.
+- **AdminDashboard** — verifies the active sidebar link carries
+  `aria-current="page"` (catches regressions in the admin nav).
+
+Both suites are powered by [`vitest-axe`](https://github.com/chaance/vitest-axe)
+(the vitest-native wrapper around axe-core) plus targeted
+[Testing Library](https://testing-library.com/) role queries. axe-core catches
+~30 rule families automatically (color contrast on color-only status, label
+mismatches, landmark structure, missing form-field names, etc.); the role-based
+assertions catch semantic regressions that axe-core does not.
+
+Run them locally with `npm run test:a11y`. In CI, the a11y step is the second
+run inside the `test` job of `.github/workflows/ci.yml` (after the general
+`npm test`) and **fails the build on any violation** — there is no
+`--continue-on-error`. For the strategy, scope, and how to add a new a11y
+test, see [`standards/a11y.md`](standards/a11y.md).
 
 ## Layout
 

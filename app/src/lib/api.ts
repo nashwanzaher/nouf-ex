@@ -1379,6 +1379,34 @@ export async function getAdminTimeSeries(
 	});
 }
 
+/** K.8 by-governorate response — added 2026-07-02 (wired in P2-12). */
+export interface AdminGovernorate {
+	name: string;
+	count: number;
+	percent: number;
+}
+export interface AdminGovernorateResponse {
+	scope: 'stores' | 'addresses' | 'merchants';
+	top: number;
+	total: number;
+	governorates: AdminGovernorate[];
+}
+export async function getAdminGovernorate(
+	params: {
+		scope?: 'stores' | 'addresses' | 'merchants';
+		top?: number;
+	} = {},
+	options?: RequestOptions,
+): Promise<AdminGovernorateResponse> {
+	const q = new URLSearchParams();
+	if (params.scope) q.set('scope', params.scope);
+	if (params.top !== undefined) q.set('top', String(params.top));
+	const qs = q.toString();
+	return apiRequest(`/admin/stats/by-governorate${qs ? `?${qs}` : ''}`, {
+		signal: options?.signal,
+	});
+}
+
 // ─── Mutations ──────────────────────────────────────────────
 
 export async function patchAdminUser(id: number, body: AdminUserUpdateBody): Promise<AdminUser> {

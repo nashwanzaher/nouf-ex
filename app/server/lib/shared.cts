@@ -135,44 +135,14 @@ export function buildUpdateSet(fields: Record<string, unknown>): {
 export { writeAuditLog, redactSensitive } from './audit.js';
 
 // ═══════════════════════════════════════════════════════════
-// JSON helpers (used by product/category/etc. endpoints)
+// JSON helpers (used by product/category/etc. endpoints) —
+// moved to ./json.ts (god object refactor, P0-1 phase 6
+// on 2026-07-04). `parseJson` and `getProductWithParsedFields`
+// live there. Self-contained — they need no DB, middleware,
+// or shared-library dependencies; just pure functions on
+// `unknown`.
 // ═══════════════════════════════════════════════════════════
-
-/** P1-1 fix: parseJson accepts `unknown` so the driver can hand us
- *  either a JSON string OR a pre-parsed JS value. Note the function
- *  declaration (not arrow with `<T,>`) — `<T>(...)` in an arrow form
- *  is reserved syntax inside .cts files. */
-export function parseJson<T>(value: unknown, fallback: T): T {
-	if (value == null) return fallback;
-	if (typeof value !== 'string') {
-		if (Array.isArray(value) || typeof value === 'object') {
-			return value as T;
-		}
-		return fallback;
-	}
-	const trimmed = value.trim();
-	if (trimmed === '') return fallback;
-	try {
-		return JSON.parse(trimmed) as T;
-	} catch {
-		return fallback;
-	}
-}
-
-/** Get the parsed product row with the JSON-typed columns (features,
- *  badges, colors, sizes) unwrapped from JSONB / TEXT[] into JS arrays.
- *  Used by every product endpoint that returns products. */
-export const getProductWithParsedFields = (product: Record<string, unknown> | undefined) => {
-	if (!product) return null;
-	return {
-		...product,
-		features: parseJson<string[]>(product.features, []),
-		badges: parseJson<string[]>(product.badges, []),
-		specifications: parseJson<Record<string, string>>(product.specifications, {}),
-		colors: parseJson<string[]>(product.colors, []),
-		sizes: parseJson<string[]>(product.sizes, []),
-	};
-};
+export { parseJson, getProductWithParsedFields } from './json.js';
 
 // ═══════════════════════════════════════════════════════════
 // Shared Zod schemas + helpers (used by 2+ routes)

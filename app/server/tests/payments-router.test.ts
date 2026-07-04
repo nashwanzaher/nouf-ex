@@ -14,9 +14,9 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { stubProvider } from '../lib/payments/stub.cts';
 import { paymentsRouter } from '../routes/payments.cts';
 import { signTestToken } from './test-token';
-import { stubProvider } from '../lib/payments/stub.cts';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
 const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });

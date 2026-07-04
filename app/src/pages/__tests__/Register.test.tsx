@@ -12,9 +12,9 @@
  * error-path behaviour.
  */
 
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router';
-import { afterEach, beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());

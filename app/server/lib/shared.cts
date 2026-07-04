@@ -17,7 +17,7 @@
  * this file as CommonJS-by-default and skips the .ts→.cts extension
  * map that bit us earlier with `pg-wrapper.cts`.
  */
-import { NextFunction, Request, Response } from 'express';
+import { Request } from 'express';
 import { z } from 'zod';
 import { PgDb } from '../db/pg-wrapper.cts';
 import {
@@ -58,40 +58,22 @@ export const db = new PgDb(_databaseUrl);
 // (god object refactor, 2026-07-03). hashPassword and verifyPassword
 // are re-exported at the top of this file (see "./auth.js" import).
 // ═══════════════════════════════════════════════════════════
-// Rate limiter (DB-backed, used by auth + payment routes)
-
+// Rate limiter (DB-backed) — moved to ./ratelimit.ts
+// (god object refactor, P0-1 phase 4 on 2026-07-04). The
+// `rateLimit` factory and the pre-configured `authLimiter` live
+// in ./ratelimit.ts. They are re-exported here so route files
+// continue to import everything from one barrel.
+//
+// Why the lazy import inside `rateLimit(...)`: the limiter body
+// references `sendError` and `log`, both of which live in
+// middleware.ts (re-exported through shared.cts). Importing them
+// at module top-level would re-introduce the same circular
+// dependency the type extraction closed. The dynamic `await
+// import('./shared.cts')` defers resolution until the limiter
+// is actually invoked on a request — past module-load time —
+// so the cycle never becomes a real problem.
 // ═══════════════════════════════════════════════════════════
-// Rate limiter (DB-backed, used by auth + payment routes)
-// ═══════════════════════════════════════════════════════════
-export function rateLimit(windowMs: number, max: number, bucket = 'global') {
-	return async (req: Request, res: Response, next: NextFunction) => {
-		const route = (req.route?.path as string | undefined) || req.path.split('?')[0];
-		const ip = req.ip || req.socket.remoteAddress || 'anon';
-		const key = `${bucket}:${req.method}:${route}:${ip}`;
-		try {
-			const row = (await db
-				.prepare('SELECT allowed, retry_after_ms FROM consume_rate_limit($1, $2, $3, $4)')
-				.get(bucket, key, windowMs, max)) as
-				| { allowed: boolean; retry_after_ms: number }
-				| undefined;
-			if (!row) return next();
-			if (!row.allowed) {
-				res.setHeader('Retry-After', Math.ceil(row.retry_after_ms / 1000));
-				return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
-			}
-		} catch (err) {
-			log.warn({
-				msg: 'rate_limit_db_error',
-				bucket,
-				route,
-				error: (err as Error).message,
-			});
-		}
-		next();
-	};
-}
-
-export const authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth');
+export { rateLimit, authLimiter } from './ratelimit.js';
 
 // ═══════════════════════════════════════════════════════════
 // Generic helpers
@@ -356,43 +338,11 @@ export const getProductWithParsedFields = (product: Record<string, unknown> | un
 // the `db` connection, which would otherwise create a circular
 // import (validation.ts → shared.cts → validation.ts).
 export {
-	emailSchema,
-	passwordSchema,
-	registerSchema,
-	loginSchema,
-	evaluatePasswordStrength,
-	orderItemSchema,
-	orderSchema,
-	OrderProductRow,
-	ResolveStoreIdResult,
-	resolveOrderStoreId,
-	reviewSchema,
-	addressSchema,
-	profileUpdateSchema,
-	passwordChangeSchema,
-	paymentCreateSchema,
-	refundCreateSchema,
-	couponRedeemSchema,
-	COUPON_COLUMNS,
-	CouponRow,
-	paginationSchema,
-	adminUserUpdateSchema,
-	adminStoreUpdateSchema,
-	adminOrderStatusSchema,
-	adminProductUpdateSchema,
-	adminDisputeUpdateSchema,
-	cartAddSchema,
-	cartItemIdParamSchema,
-	cartItemUpdateSchema,
-	wishlistAddSchema,
-	wishlistItemIdParamSchema,
-	notificationIdParamSchema,
-	sellerProductCreateSchema,
-	sellerProductUpdateSchema,
-	sellerProductIdParamSchema,
-	sellerStoreUpdateSchema,
-	sellerOrderStatusUpdateSchema,
-	sellerProductImageAddSchema,
+    addressSchema, adminDisputeUpdateSchema, adminOrderStatusSchema,
+    adminProductUpdateSchema, adminStoreUpdateSchema, adminUserUpdateSchema, cartAddSchema,
+    cartItemIdParamSchema,
+    cartItemUpdateSchema, COUPON_COLUMNS, couponRedeemSchema, CouponRow, emailSchema, evaluatePasswordStrength, loginSchema, notificationIdParamSchema, orderItemSchema, OrderProductRow, orderSchema, paginationSchema, passwordChangeSchema, passwordSchema, paymentCreateSchema, profileUpdateSchema, refundCreateSchema, registerSchema, resolveOrderStoreId, ResolveStoreIdResult, reviewSchema, sellerOrderStatusUpdateSchema, sellerProductCreateSchema, sellerProductIdParamSchema, sellerProductImageAddSchema, sellerProductUpdateSchema, sellerStoreUpdateSchema, wishlistAddSchema,
+    wishlistItemIdParamSchema
 } from './validation.js';
 
 // `computeCouponDiscount` lives here (not in validation.ts) because

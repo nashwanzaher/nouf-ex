@@ -339,6 +339,17 @@ export const getProductWithParsedFields = (product: Record<string, unknown> | un
 // ═══════════════════════════════════════════════════════════
 // Shared Zod schemas (used by 2+ routes)
 // ═══════════════════════════════════════════════════════════
+// FUTURE REFACTOR (P0-1 phase 3, tracked 2026-07-03):
+//   The Zod schemas below will be moved to `./validation.ts` to
+//   finish the god object refactor. The challenge is that several
+//   schemas (passwordSchema, registerSchema, loginSchema) depend
+//   on the password evaluation helpers (COMMON_PASSWORDS set,
+//   hasLower/hasUpper/hasDigit/hasSymbol/classCount/hasRepeatedRuns/
+//   hasSequentialRuns, evaluatePasswordStrength) that live further
+//   down in this file. The extraction must move both the schemas
+//   AND the helpers together. Tracked as a follow-up commit.
+//   Until then, the schemas stay here.
+// ═══════════════════════════════════════════════════════════
 
 // ── Auth ───────────────────────────────────────────────────
 export const emailSchema = z.string().email().max(255);

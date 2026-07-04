@@ -17,9 +17,7 @@
  * this file as CommonJS-by-default and skips the .ts→.cts extension
  * map that bit us earlier with `pg-wrapper.cts`.
  */
-import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
-import { promisify } from 'util';
 import { z } from 'zod';
 import { PgDb } from '../db/pg-wrapper.cts';
 import {
@@ -36,6 +34,9 @@ import {
 // of this barrel — route files that imported `AuthRole` from here
 // continue to work.
 export type { AuthRole, TokenPayload } from './types.js';
+// Password helpers (`hashPassword`, `verifyPassword`) re-exported
+// from `./auth.ts` (extracted 2026-07-03 to break the god object).
+export { hashPassword, verifyPassword } from './auth.js';
 
 // Re-export the pg-wrapper connection so route files have a single
 // import surface for "everything I need to talk to the DB".
@@ -53,32 +54,11 @@ if (!_databaseUrl) {
 export const db = new PgDb(_databaseUrl);
 export { HttpError, log, requireAuth, requireRole, sendError, sendSuccess };
 // ═══════════════════════════════════════════════════════════
-// Password hashing (scrypt, Node built-in)
+// Password hashing (scrypt, Node built-in) — moved to ./auth.ts
+// (god object refactor, 2026-07-03). hashPassword and verifyPassword
+// are re-exported at the top of this file (see "./auth.js" import).
 // ═══════════════════════════════════════════════════════════
-const scrypt = promisify(scryptCb) as (
-	password: string,
-	salt: string | Buffer,
-	keylen: number,
-) => Promise<Buffer>;
-const SCRYPT_KEYLEN = 64;
-
-export async function hashPassword(password: string): Promise<string> {
-	const salt = randomBytes(16);
-	const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN);
-	return `scrypt$${salt.toString('base64')}$${derivedKey.toString('base64')}`;
-}
-
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-	if (!stored.startsWith('scrypt$')) return false;
-	const parts = stored.split('$');
-	if (parts.length !== 3) return false;
-	const [, saltB64, keyB64] = parts;
-	const salt = Buffer.from(saltB64, 'base64');
-	const derivedKey = await scrypt(password, salt, SCRYPT_KEYLEN);
-	const storedKey = Buffer.from(keyB64, 'base64');
-	if (derivedKey.length !== storedKey.length) return false;
-	return timingSafeEqual(derivedKey, storedKey);
-}
+// Rate limiter (DB-backed, used by auth + payment routes)
 
 // ═══════════════════════════════════════════════════════════
 // Rate limiter (DB-backed, used by auth + payment routes)

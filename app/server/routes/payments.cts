@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { hasProvider, listProviders, selectProvider } from '../lib/payments/registry.cts';
 import type { PaymentMethod } from '../lib/payments/types.cts';
+import type { PgTxDb } from '../db/pg-wrapper.cts';
 import {
     authLimiter,
     db,
@@ -38,6 +39,14 @@ paymentsRouter.get('/methods', (_req: Request, res: Response) => {
 // POST /api/payments/webhook/:method — entrypoint for provider callbacks.
 // We accept both Stripe-style (sig in body) and Paymob-style (sig in
 // query) webhooks; the chosen provider's verifyWebhook() decides.
+//
+// P1-1 (2026-07-04, deep audit 2026-06-30): this endpoint is now
+// idempotent via the `webhook_events` dedup table (see migration
+// 0020). The dedup key is (provider, event_id, transaction_id,
+// event_type) — an UNIQUE constraint we claim atomically with
+// `INSERT ... ON CONFLICT DO NOTHING`. The matching payments UPDATE
+// and the dedup-row "processed" flag transition happen inside the
+// same transaction so concurrent duplicates update at most once.
 paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res: Response) => {
 	try {
 		const method = req.params.method as PaymentMethod;
@@ -52,14 +61,115 @@ paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res
 		if (!verification.valid || !verification.status || !verification.transactionId) {
 			return sendError(res, 'Webhook signature rejected', 400);
 		}
-		// Update the matching local payment by provider transaction_id.
-		await db
+		// Normalise the dedup inputs. event_id is optional — Stripe
+		// provides one, Paymob does not. When absent we fall back
+		// to the transaction_id so we still have a stable key.
+		const eventId =
+			(verification as { eventId?: string }).eventId ?? verification.transactionId;
+		const eventType = verification.status; // 'succeeded' | 'failed' | 'refunded'
+
+		// Atomic claim: if a row for this dedup key already exists,
+		// the INSERT returns no row and we short-circuit to a 200
+		// with `duplicate: true` so the provider stops retrying.
+		const claimed = (await db
 			.prepare(
-				`UPDATE payments SET status = ?, updated_at = NOW()
-					 WHERE provider_txn_id = ?`,
+				`INSERT INTO webhook_events
+                    (provider, event_id, transaction_id, event_type, payload)
+                 VALUES ($1, $2, $3, $4, $5::jsonb)
+                 ON CONFLICT (provider, event_id, transaction_id, event_type)
+                    DO NOTHING
+                 RETURNING id`,
 			)
-			.run(verification.status, verification.transactionId);
-		sendSuccess(res, { updated: true, status: verification.status });
+			.get(
+				method,
+				eventId,
+				verification.transactionId,
+				eventType,
+				JSON.stringify({
+					header_count: Object.keys(headers).length,
+					body_len: raw.length,
+				}),
+			)) as { id: number } | undefined;
+
+		if (!claimed) {
+			// Duplicate: this dedup key has been seen before. Look
+			// up when it was first processed and return idempotent
+			// success without performing another UPDATE.
+			const existing = (await db
+				.prepare(
+					`SELECT processing_state, processed_at
+                       FROM webhook_events
+                      WHERE provider = $1
+                        AND event_id  = $2
+                        AND transaction_id = $3
+                        AND event_type = $4`,
+				)
+				.get(method, eventId, verification.transactionId, eventType)) as
+				| { processing_state: string; processed_at: string | null }
+				| undefined;
+			console.info(
+				JSON.stringify({
+					event: 'webhook_duplicate',
+					method,
+					event_id: eventId,
+					txn_id: verification.transactionId,
+					processing_state: existing?.processing_state,
+				}),
+			);
+			return sendSuccess(res, {
+				updated: true,
+				idempotent: true,
+				duplicate: true,
+				first_processed_at: existing?.processed_at ?? null,
+			});
+		}
+
+		// First time we see this dedup key. Atomically: (a) UPDATE
+		// the matching payments row, and (b) flip the dedup row's
+		// processing_state to 'processed'. Both inside one
+		// transaction so concurrent inserts of the same key can't
+		// both reach this branch.
+		await db.tx(async (txDb: PgTxDb) => {
+			const upd = (await txDb
+				.prepare(
+					`UPDATE payments
+                            SET status    = $1,
+                                updated_at = NOW()
+                          WHERE provider_txn_id = $2
+                          RETURNING id`,
+				)
+				.get(verification.status, verification.transactionId)) as
+				| { id: number }
+				| undefined;
+			await txDb
+				.prepare(
+					`UPDATE webhook_events
+                            SET processing_state = 'processed',
+                                processed_at      = NOW()
+                          WHERE id = $1`,
+				)
+				.run(claimed.id);
+			if (!upd) {
+				// No matching local payment row yet (provider beat
+				// the checkout flow — rare but documented). The
+				// webhook is still 200: the dedup row prevents
+				// future retries from re-applying.
+				console.warn(
+					JSON.stringify({
+						event: 'webhook_no_local_payment',
+						method,
+						txn_id: verification.transactionId,
+					}),
+				);
+			}
+		});
+
+		sendSuccess(res, {
+			updated: true,
+			idempotent: true,
+			duplicate: false,
+			status: verification.status,
+		});
 	} catch (err) {
 		return sendError(res, err);
 	}

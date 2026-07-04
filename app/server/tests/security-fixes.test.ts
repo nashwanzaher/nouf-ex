@@ -130,17 +130,26 @@ describe('payments.cts uses provider_txn_id (not transaction_id)', () => {
 });
 
 describe('writeAuditLog uses the SECURITY DEFINER function', () => {
-	// We assert on shared.cts source — the function is small enough
-	// that we can check the SQL it sends.
-	const src = SRC('app/server/lib/shared.cts');
+	// P0-1 phase 5 (2026-07-04): the audit-log writer was extracted
+	// from shared.cts to ./audit.ts to keep the god object slim.
+	// We assert on the new module's source instead.
+	const auditSrc = SRC('app/server/lib/audit.ts');
+	const sharedSrc = SRC('app/server/lib/shared.cts');
 	it('writeAuditLog invokes a stored function (not a direct INSERT)', () => {
 		// The old version had a direct INSERT into admin_audit_log.
 		// The new version delegates to write_audit_log() PL/pgSQL
 		// which is SECURITY DEFINER.
-		expect(src).not.toMatch(/INSERT\s+INTO\s+admin_audit_log/i);
+		expect(auditSrc).not.toMatch(/INSERT\s+INTO\s+admin_audit_log/i);
 		// The function call shape: `SELECT write_audit_log($1, $2, ...)` or
 		// `CALL write_audit_log(...)` or `write_audit_log(...)` invocation.
-		expect(src).toMatch(/write_audit_log\s*\(/);
+		expect(auditSrc).toMatch(/write_audit_log\s*\(/);
+	});
+	it('shared.cts no longer contains the audit SQL (re-exports only)', () => {
+		// Regression guard for the P0-1 phase 5 refactor: shared.cts
+		// is a barrel. It must NOT contain the SQL string — that
+		// would mean the extraction was reverted or stale.
+		expect(sharedSrc).not.toMatch(/SELECT\s+write_audit_log/i);
+		expect(sharedSrc).not.toMatch(/INSERT\s+INTO\s+admin_audit_log/i);
 	});
 });
 

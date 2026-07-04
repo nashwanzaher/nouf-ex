@@ -6,3 +6,16 @@ coverage
 *.local
 .DS_Store
 *.lockb
+
+# SECURITY (prettier foot-gun): PL/pgSQL files use single-token
+# lines that the formatter line-wraps, breaking the syntax. The
+# specific tokens at risk are 'END IF;' and 'END $$;' which must
+# each stay on a single line for psql to parse the migration.
+# This is the durable fix for the recurring corruption noted in
+# commit 384cc05 ("fix(db): repair formatter-induced syntax
+# breakage in 0021 migration") and again in the follow-ups. Once
+# a SQL file is excluded here, prettier will not touch it.
+database/**/*.sql
+# Markdownlint has its own handbook (docs/architecture/SKILLS_MINDMAP.md
+# section 9.5); exclude pre-commit hook artifacts.
+.husky/_/*

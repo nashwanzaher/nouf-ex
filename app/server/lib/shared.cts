@@ -17,7 +17,6 @@
  * this file as CommonJS-by-default and skips the .ts→.cts extension
  * map that bit us earlier with `pg-wrapper.cts`.
  */
-import { z } from 'zod';
 import { PgDb } from '../db/pg-wrapper.cts';
 import {
     HttpError,
@@ -77,50 +76,14 @@ export { rateLimit, authLimiter } from './ratelimit.js';
 // ═══════════════════════════════════════════════════════════
 // Generic helpers
 // ═══════════════════════════════════════════════════════════
-
-/** Zod validator that returns a tagged union instead of throwing.
- *
- * Uses `z.ZodSchema` and infers the output type via `z.infer`. The
- * original signature (`z.ZodType<T>`) was too narrow — schemas with
- * `.default(...)` fields have different Output vs Input types, and
- * the constraint would force Output = Input. With `z.ZodSchema`,
- * inference flows through the schema's own `_output` type even when
- * the schema is re-exported across a `.cts` / `.ts` module
- * boundary (which is now the case for every schema: they live in
- * `./validation.ts` and are re-exported from here).
- */
-export function validate<T extends z.ZodSchema>(
-	schema: T,
-	body: unknown,
-): { ok: true; data: z.infer<T> } | { ok: false; error: string } {
-	const r = schema.safeParse(body);
-	return r.success
-		? { ok: true, data: r.data }
-		: {
-				ok: false,
-				error: r.error.issues.map((i) => i.path.join('.') + ': ' + i.message).join('; '),
-			};
-}
-
-/** Builds a dynamic `SET col = $N` list from a partial object. Throws
- *  HttpError(400) when no updateable fields are present. */
-export function buildUpdateSet(fields: Record<string, unknown>): {
-	sql: string;
-	params: unknown[];
-} {
-	const sets: string[] = [];
-	const params: unknown[] = [];
-	for (const [k, v] of Object.entries(fields)) {
-		params.push(v);
-		sets.push(`${k} = $${params.length}`);
-	}
-	if (sets.length === 0) {
-		throw new HttpError(400, 'At least one updateable field must be provided.', {
-			code: 'EMPTY_UPDATE',
-		});
-	}
-	return { sql: sets.join(', '), params };
-}
+// P0-1 phase 7 (2026-07-04): the two remaining inline helpers
+// in this barrel have been moved out.
+//   - `validate<T>(schema, body)` → ./validation.ts (it lives
+//     next to the Zod schemas it operates on)
+//   - `buildUpdateSet(fields)`    → ./sql-helpers.ts (a thin
+//     home for string-built SQL, easy to audit)
+export { validate } from './validation.js';
+export { buildUpdateSet } from './sql-helpers.js';
 
 // ═══════════════════════════════════════════════════════════
 // Audit log (SECURITY DEFINER writer + secret redactor) —

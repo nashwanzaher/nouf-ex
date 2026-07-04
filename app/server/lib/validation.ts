@@ -17,8 +17,37 @@
  *     stays in `shared.cts` because it needs the `db` connection,
  *     which would otherwise create a circular import (validation
  *     → shared → validation).
+ *   - `validate<T>(schema, body)` — the standard route-level
+ *     Zod-validator wrapper extracted from `shared.cts` in
+ *     P0-1 phase 7 (2026-07-04). Returns a tagged union so
+ *     the caller can branch on `ok` without a try/catch.
  */
 import { z } from 'zod';
+
+/**
+ * Zod validator that returns a tagged union instead of throwing.
+ *
+ * Uses `z.ZodSchema` and infers the output type via `z.infer`. The
+ * original signature (`z.ZodType<T>`) was too narrow — schemas with
+ * `.default(...)` fields have different Output vs Input types, and
+ * the constraint would force Output = Input. With `z.ZodSchema`,
+ * inference flows through the schema's own `_output` type even when
+ * the schema is re-exported across a `.cts` / `.ts` module
+ * boundary (which is the case here: every schema is re-exported
+ * from `./shared.cts`).
+ */
+export function validate<T extends z.ZodSchema>(
+	schema: T,
+	body: unknown,
+): { ok: true; data: z.infer<T> } | { ok: false; error: string } {
+	const r = schema.safeParse(body);
+	return r.success
+		? { ok: true, data: r.data }
+		: {
+				ok: false,
+				error: r.error.issues.map((i) => i.path.join('.') + ': ' + i.message).join('; '),
+			};
+}
 
 // ── Password strength helpers ────────────────────────────────────────────
 //

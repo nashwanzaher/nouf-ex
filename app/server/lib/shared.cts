@@ -29,8 +29,13 @@ import {
     requireRole,
     sendError,
     sendSuccess,
-    type AuthRole,
 } from '../middleware.js';
+// `TokenPayload` and `AuthRole` are re-exported from `./types.ts`
+// (extracted on 2026-07-03 to break the circular import between this
+// file and `middleware.ts`). The re-export preserves the public API
+// of this barrel — route files that imported `AuthRole` from here
+// continue to work.
+export type { AuthRole, TokenPayload } from './types.js';
 
 // Re-export the pg-wrapper connection so route files have a single
 // import surface for "everything I need to talk to the DB".
@@ -46,11 +51,7 @@ if (!_databaseUrl) {
 	);
 }
 export const db = new PgDb(_databaseUrl);
-// `import { requireAuth, sendError, ... } from '../lib/shared.js'`
-// so a future refactor of the middleware module doesn't break them.
 export { HttpError, log, requireAuth, requireRole, sendError, sendSuccess };
-export type { AuthRole };
-
 // ═══════════════════════════════════════════════════════════
 // Password hashing (scrypt, Node built-in)
 // ═══════════════════════════════════════════════════════════

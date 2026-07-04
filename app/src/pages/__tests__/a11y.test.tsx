@@ -51,6 +51,7 @@
  */
 
 import { cleanup, render, screen } from '@testing-library/react';
+import type { RunOptions as AxeOptions } from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import {
     afterAll,
@@ -62,7 +63,6 @@ import {
     vi,
 } from 'vitest';
 import { axe } from 'vitest-axe';
-import type { RunOptions as AxeOptions } from 'axe-core';
 import {
     installFetchSpy,
     uninstallFetchSpy,

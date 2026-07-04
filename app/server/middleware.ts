@@ -397,19 +397,12 @@ export const notFoundHandler: RequestHandler = (req, res) => {
 //   app.post('/api/auth/login', ...) → return { token, user }
 //   app.use(requireAuth)            → sets req.user = { id, role }
 // =========================================================================
-export type AuthRole = 'customer' | 'merchant' | 'admin';
-
-interface TokenPayload {
-	sub: number;
-	role: AuthRole;
-	exp: number; // unix seconds
-	// SECURITY (C-3): a per-user token version. Issued at sign-time
-	// from `users.token_version`. On every authenticated request we
-	// verify that the payload's `ver` matches the DB. A bump of the
-	// DB column (e.g. on `/auth/logout`) invalidates every token
-	// that was issued before the bump.
-	ver: number;
-}
+// Types are now in `./lib/types.ts` (re-exported as `AuthRole` and
+// `TokenPayload`) to break the circular import between this file and
+// `./lib/shared.cts`. Importing here as a type-only keeps runtime
+// output zero-cost under `verbatimModuleSyntax: true`.
+import type { AuthRole, TokenPayload } from './lib/types.js';
+export type { AuthRole, TokenPayload };
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 

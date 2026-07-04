@@ -12,12 +12,12 @@
  * Auth strategy: drive the real `requireAuth` by signing a real
  * Bearer token with `signTestToken` (see ./test-token.ts).
  */
-import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { db, hashPassword, verifyPassword } from '../lib/shared.cts';
 import { authRouter } from '../routes/auth.cts';
 import { signTestToken } from './test-token';
-import { db, hashPassword, verifyPassword } from '../lib/shared.cts';
 
 function buildApp(): Express {
 	const app = express();

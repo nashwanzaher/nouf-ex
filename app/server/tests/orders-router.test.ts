@@ -19,12 +19,12 @@
  * Auth strategy: drive the real `requireAuth` by signing a real
  * Bearer token with `signTestToken` (see ./test-token.ts).
  */
-import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { db } from '../lib/shared.cts';
 import { ordersRouter } from '../routes/orders.cts';
 import { signTestToken } from './test-token';
-import { db } from '../lib/shared.cts';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
 const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });

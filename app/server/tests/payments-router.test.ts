@@ -16,7 +16,6 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { paymentsRouter } from '../routes/payments.cts';
 import { signTestToken } from './test-token';
-import { db } from '../lib/shared.cts';
 import { stubProvider } from '../lib/payments/stub.cts';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });

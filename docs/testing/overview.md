@@ -163,7 +163,7 @@ src/
 | Last green run                     | 2026-06-29 (commit `f1daef1` — see CHANGELOG)       |
 
 > **How to regenerate these numbers:** `cd app && npm test` then
-> `npm run test:summary` (`scripts/test-summary.cjs`).
+> `npm run test:summary` (`scripts/quality/test-summary.cjs`).
 
 ## Convention cheatsheet
 

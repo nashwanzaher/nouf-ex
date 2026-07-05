@@ -100,3 +100,6 @@ login-page-fixed.png
 *.bak
 *.swp
 *.swo
+
+# Claude Code workspace state (added 2026-07-04 per MIGRATION_EXECUTION_PLAN.md v2.6.0 §20 R1.2)
+.claude/

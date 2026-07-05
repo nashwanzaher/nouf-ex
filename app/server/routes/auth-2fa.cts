@@ -27,18 +27,19 @@
  * `../lib/backup-codes.cts`. The single-use "partial token" that
  * bridges login → 2fa verify lives in `../lib/partial-token.cts`.
  */
-import { Router, type Request, type Response, type RequestHandler } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
-import { db, sendError, sendSuccess, requireAuth, log, HttpError } from '../lib/shared.cts';
-import { signAuthToken } from '../middleware';
-import { generateSecret, verifyTotp, otpauthUrl } from '../lib/totp.cts';
 import {
-	generateBackupCodes,
-	hashBackupCode,
-	findBackupCode,
-	arrayLiteral,
+    arrayLiteral,
+    findBackupCode,
+    generateBackupCodes,
+    hashBackupCode,
 } from '../lib/backup-codes.cts';
+import { ErrorCodes } from '../lib/error-codes.ts';
 import { verifyPartialToken } from '../lib/partial-token.cts';
+import { db, HttpError, log, requireAuth, sendError, sendSuccess } from '../lib/shared.cts';
+import { generateSecret, otpauthUrl, verifyTotp } from '../lib/totp.cts';
+import { signAuthToken } from '../middleware';
 
 export const auth2faRouter = Router();
 
@@ -251,13 +252,13 @@ function publicUser(u: UserRow): Record<string, unknown> {
 auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const user = await loadUser(req.user!.id);
-		if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		if (!user) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 		if (user.two_factor_enabled) {
 			return sendError(
 				res,
 				'2FA is already enabled. Disable it first to re-enroll.',
 				409,
-				'ALREADY_ENABLED',
+				ErrorCodes.ALREADY_ENABLED,
 			);
 		}
 		const secret = generateSecret();
@@ -305,12 +306,12 @@ auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res
 	try {
 		const v = enableSchema.safeParse(req.body);
 		if (!v.success) {
-			return sendError(res, 'Invalid input: ' + v.error.message, 400, 'VALIDATION_ERROR');
+			return sendError(res, 'Invalid input: ' + v.error.message, 400, ErrorCodes.VALIDATION_ERROR);
 		}
 		const user = await loadUser(req.user!.id);
-		if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		if (!user) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 		if (user.two_factor_enabled) {
-			return sendError(res, '2FA is already enabled.', 409, 'ALREADY_ENABLED');
+			return sendError(res, '2FA is already enabled.', 409, ErrorCodes.ALREADY_ENABLED);
 		}
 		if (!user.totp_secret) {
 			return sendError(
@@ -356,11 +357,11 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 	try {
 		const v = verifySchema.safeParse(req.body);
 		if (!v.success) {
-			return sendError(res, 'Invalid input: ' + v.error.message, 400, 'VALIDATION_ERROR');
+			return sendError(res, 'Invalid input: ' + v.error.message, 400, ErrorCodes.VALIDATION_ERROR);
 		}
 		const partial = await verifyPartialToken(v.data.partial_token);
 		if (!partial) {
-			return sendError(res, 'Invalid or expired partial token.', 401, 'PARTIAL_INVALID');
+			return sendError(res, 'Invalid or expired partial token.', 401, ErrorCodes.PARTIAL_INVALID);
 		}
 		const user = await loadUser(partial.sub);
 		if (!user || !user.two_factor_enabled || !user.totp_secret) {
@@ -426,12 +427,12 @@ auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, r
 	try {
 		const v = disableSchema.safeParse(req.body);
 		if (!v.success) {
-			return sendError(res, 'Invalid input: ' + v.error.message, 400, 'VALIDATION_ERROR');
+			return sendError(res, 'Invalid input: ' + v.error.message, 400, ErrorCodes.VALIDATION_ERROR);
 		}
 		const user = (await db
 			.prepare('SELECT id, password_hash FROM users WHERE id = ? AND deleted_at IS NULL')
 			.get(req.user!.id)) as { id: number; password_hash: string } | undefined;
-		if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		if (!user) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 		// We must re-fetch the full row to verify the password (the
 		// existing middleware helper takes a stored hash string).
 		// Re-use the same path as /api/auth/login.
@@ -499,9 +500,9 @@ auth2faRouter.post(
 	async (req: Request, res: Response) => {
 		try {
 			const user = await loadUser(req.user!.id);
-			if (!user) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+			if (!user) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 			if (!user.two_factor_enabled) {
-				return sendError(res, '2FA is not enabled. Enable it first.', 400, 'NOT_ENABLED');
+				return sendError(res, '2FA is not enabled. Enable it first.', 400, ErrorCodes.NOT_ENABLED);
 			}
 			const newCodes = generateBackupCodes();
 			const hashed = await Promise.all(newCodes.map(hashBackupCode));

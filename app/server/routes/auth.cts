@@ -18,6 +18,11 @@ import {
     type AuthRole,
 } from '../lib/shared.cts';
 import { signAuthToken } from '../middleware.js';
+// R-15 follow-up: use the catalog constants instead of string literals
+// so TypeScript catches typos (e.g. `ErrorCodes.NOT_FOOBAR` is a
+// compile error, but `'NOT_FOOBAR'` silently compiles to a code the
+// frontend can never branch on).
+import { ErrorCodes } from '../lib/error-codes.ts';
 
 // SECURITY (M-2, 2026-07-02): a throwaway scrypt hash used on the
 // "user not found" login path so attackers cannot distinguish
@@ -43,7 +48,7 @@ export const authRouter = Router();
 authRouter.post('/register', authLimiter, async (req: Request, res: Response) => {
 	try {
 		const v = validate(registerSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const { email, password, name } = v.data;
 		const role: AuthRole = 'customer';
 
@@ -59,13 +64,13 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 				)
 				.run(email, passwordHash, name, role)) as { lastInsertRowid: number | null };
 			if (result.lastInsertRowid == null) {
-				throw new HttpError(500, 'Failed to create user', { code: 'INSERT_FAILED' });
+				throw new HttpError(500, 'Failed to create user', { code: ErrorCodes.INSERT_FAILED });
 			}
 			userId = result.lastInsertRowid;
 		} catch (err) {
 			const pg = err as { code?: string };
 			if (pg?.code === '23505') {
-				return sendError(res, 'Email already registered', 409, 'EMAIL_TAKEN');
+				return sendError(res, 'Email already registered', 409, ErrorCodes.DUPLICATE);
 			}
 			throw err;
 		}
@@ -92,7 +97,7 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 	} catch (err) {
 		const pg = err as { code?: string };
 		if (pg?.code === '23505') {
-			return sendError(res, 'Email already registered', 409, 'EMAIL_TAKEN');
+			return sendError(res, 'Email already registered', 409, ErrorCodes.DUPLICATE);
 		}
 		throw err;
 	}
@@ -100,7 +105,7 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 
 authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 	const v = validate(loginSchema, req.body);
-	if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+	if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 	const { email, password } = v.data;
 
 	const user = (await db
@@ -210,7 +215,7 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
 		.get(userId)) as Record<string, unknown> | undefined;
 
 	if (!user) {
-		throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 	}
 	sendSuccess(res, user);
 });
@@ -223,7 +228,7 @@ authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
 authRouter.patch('/me', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(profileUpdateSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const updates = v.data;
 		const userId = req.user!.id;
 
@@ -263,7 +268,7 @@ authRouter.patch('/me', requireAuth, async (req: Request, res: Response) => {
 				`UPDATE users SET ${fields.join(', ')} WHERE id = ? RETURNING id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, last_login, created_at`,
 			)
 			.get(...params)) as Record<string, unknown> | undefined;
-		if (!updated) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		if (!updated) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 		sendSuccess(res, updated, 'Profile updated');
 	} catch (err) {
 		return sendError(res, err);
@@ -276,14 +281,14 @@ authRouter.patch('/me', requireAuth, async (req: Request, res: Response) => {
 authRouter.post('/change-password', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(passwordChangeSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const { current_password, new_password } = v.data;
 		const userId = req.user!.id;
 
 		const row = (await db
 			.prepare('SELECT password_hash FROM users WHERE id = ?')
 			.get(userId)) as { password_hash: string } | undefined;
-		if (!row) throw new HttpError(404, 'User not found', { code: 'NOT_FOUND' });
+		if (!row) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
 
 		const ok = await verifyPassword(current_password, row.password_hash);
 		if (!ok) {

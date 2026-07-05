@@ -8,13 +8,14 @@
  */
 import { Router, type Request, type Response } from 'express';
 import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	addressSchema,
+    addressSchema,
+    db,
+    requireAuth,
+    sendError,
+    sendSuccess,
+    validate,
 } from '../lib/shared.cts';
+import middleware = require('../middleware');
 
 export const addressesRouter = Router();
 
@@ -89,7 +90,7 @@ addressesRouter.put('/:id', requireAuth, async (req: Request, res: Response) => 
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
 		const v = validate(addressSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, middleware.ErrorCodes.VALIDATION_ERROR);
 		const data = v.data;
 		const userId = req.user!.id;
 

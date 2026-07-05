@@ -22,7 +22,7 @@
 ```sh
 # .env (gitignored) — local development only
 AUTH_SECRET=           # generate: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
-DB_PASSWORD=           # match the password you set when running scripts/db-setup.cjs
+DB_PASSWORD=           # match the password you set when running scripts/db/db-setup.cjs
 DATABASE_URL=          # full postgres:// connection string
 ```
 

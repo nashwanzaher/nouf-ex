@@ -203,180 +203,45 @@
 			}
 		},
 		{
-			"label": "🚀 Start API Server (Express + Postgres)",
+			"label": "🚀 Start API Server (tsx dev)",
 			"type": "shell",
-			"command": "C:\\Users\\zaher\\AppData\\Local\\Programs\\nodejs\\node.exe server/index.ts",
-			"args": [],
-			"isBackground": true,
-			"group": ""
+			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/maintenance/start-api.bat\"",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"isBackground": true
 		},
 		{
-			"label": "🔍 Check Listening Ports",
+			"label": "🎨 Start Vite Dev Server (5173)",
 			"type": "shell",
-			"command": "powershell -Command \"netstat -an | Select-String LISTENING | Select-String ':3000|:5173|:5432'\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
+			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/maintenance/start-vite.bat\"",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"isBackground": true
 		},
 		{
-			"label": "🔍 Check Vite logs",
+			"label": "🧪 Test Stack (smoke)",
 			"type": "shell",
-			"command": "powershell -Command \"Get-Content 'c:\\Users\\zaher\\Desktop\\nouf-ex\\logs\\vite-stdout.log' -Tail 20; Write-Host '=== STDERR ==='; Get-Content 'c:\\Users\\zaher\\Desktop\\nouf-ex\\logs\\vite-stderr.log' -Tail 10; Write-Host '=== PORTS ==='; netstat -an | Select-String LISTENING | Select-String ':5173|:3000'\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🎨 Start Vite (5173)",
-			"type": "shell",
-			"command": "powershell -Command \"if (-not (Test-Path 'c:\\Users\\zaher\\Desktop\\nouf-ex\\logs')) { New-Item -ItemType Directory -Path 'c:\\Users\\zaher\\Desktop\\nouf-ex\\logs' -Force | Out-Null }; Start-Process -FilePath 'cmd.exe' -ArgumentList '/c', 'set PATH=C:\\Users\\zaher\\AppData\\Local\\Programs\\nodejs;%PATH%&&cd /d c:\\Users\\zaher\\Desktop\\nouf-ex\\app && .\\node_modules\\.bin\\vite.cmd --port 5173 --host > c:\\Users\\zaher\\Desktop\\nouf-ex\\logs\\vite-stdout.log 2> c:\\Users\\zaher\\Desktop\\nouf-ex\\logs\\vite-stderr.log' -NoNewWindow; Start-Sleep -Seconds 8; Get-Content 'c:\\Users\\zaher\\Desktop\\nouf-ex\\logs\\vite-stdout.log' -Tail 15\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🎨 Start Vite (5173) V2",
-			"type": "shell",
-			"command": "cmd /c \"set PATH=C:\\Users\\zaher\\AppData\\Local\\Programs\\nodejs;%PATH% && cd /d c:\\Users\\zaher\\Desktop\\nouf-ex\\app && .\\node_modules\\.bin\\vite.cmd --port 5173 --host\"",
-			"args": [],
-			"isBackground": true,
-			"group": ""
-		},
-		{
-			"label": "🎨 Start Vite (5173) V3",
-			"type": "shell",
-			"command": "cmd /c \"set PATH=C:\\Users\\zaher\\AppData\\Local\\Programs\\nodejs;%PATH% & cd /d c:\\Users\\zaher\\Desktop\\nouf-ex\\app & .\\node_modules\\.bin\\vite.cmd --port 5173 --host\"",
-			"args": [],
-			"isBackground": true,
-			"group": ""
-		},
-		{
-			"label": "🎨 Start Vite Dev Server",
-			"type": "shell",
-			"command": "cmd /c \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\start-vite.bat\"",
-			"args": [],
-			"isBackground": true,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test All Endpoints",
-			"type": "shell",
-			"command": "powershell -Command \"try { $r = Invoke-WebRequest -Uri 'http://localhost:5173/' -UseBasicParsing -TimeoutSec 5; Write-Host 'Vite Status:' $r.StatusCode; Write-Host 'Body length:' $r.Content.Length; Write-Host 'First 500 chars:'; Write-Host $r.Content.Substring(0, [Math]::Min(500, $r.Content.Length)) } catch { Write-Host 'Vite Error:' $_.Exception.Message }; Write-Host '---'; try { $r = Invoke-WebRequest -Uri 'http://localhost:3000/api/health' -UseBasicParsing -TimeoutSec 5; Write-Host 'API Status:' $r.StatusCode; Write-Host 'Body:' $r.Content } catch { Write-Host 'API Error:' $_.Exception.Message }\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🚀 Start API Server",
-			"type": "shell",
-			"command": "cmd /c \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\start-api.bat\"",
-			"args": [],
-			"isBackground": true,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Stack",
-			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Stack V2",
-			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Stack Final",
-			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🚀 Start API Server (fresh)",
-			"type": "shell",
-			"command": "cmd /c \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\start-api.bat\"",
-			"args": [],
-			"isBackground": true,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Stack After API Restart",
-			"type": "shell",
-			"command": "cmd /c \"timeout /t 3 >nul & powershell -ExecutionPolicy Bypass -File c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Stack Now",
-			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🔍 Check Processes & Ports",
-			"type": "shell",
-			"command": "powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, ProcessName; netstat -ano | Select-String LISTENING | Select-String ':3000|:5173'\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🔍 Live Status Check",
-			"type": "shell",
-			"command": "powershell -Command \"Get-Process node | Select-Object Id,ProcessName | Format-Table -AutoSize; netstat -ano | Select-String LISTENING | Select-String ':3000|:5173'\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Stack Live",
-			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 API Direct Test",
-			"type": "shell",
-			"command": "powershell -Command \"try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1:3000/api/health' -UseBasicParsing -TimeoutSec 5; Write-Host '127.0.0.1 OK:' $r.StatusCode $r.Content } catch { Write-Host '127.0.0.1 FAIL:' $_.Exception.Message }; try { $r = Invoke-WebRequest -Uri 'http://localhost:3000/api/health' -UseBasicParsing -TimeoutSec 5; Write-Host 'localhost OK:' $r.StatusCode $r.Content } catch { Write-Host 'localhost FAIL:' $_.Exception.Message }\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test API 127.0.0.1",
-			"type": "shell",
-			"command": "powershell -Command \"$r = Invoke-WebRequest -Uri 'http://127.0.0.1:3000/api/health' -UseBasicParsing -TimeoutSec 5; Write-Host 'Status:' $r.StatusCode; Write-Host 'Body:' $r.Content\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test API simple",
-			"type": "shell",
-			"command": "curl -s http://127.0.0.1:3000/api/health -m 5",
-			"args": [],
-			"isBackground": false,
-			"group": ""
-		},
-		{
-			"label": "🧪 Test Final Stack",
-			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\test-stack.ps1\"",
-			"args": [],
-			"isBackground": false,
-			"group": ""
+			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/test-stack.ps1\"",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
 		},
 		{
 			"label": "📝 Markdownlint Check (All Files)",

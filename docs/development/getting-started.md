@@ -266,7 +266,7 @@ docker ps --filter "name=Nouf-ex" --format "{{.Names}} | {{.Status}}"
 | Rebuild after code change | `cd app && npm run build && docker compose up -d --build`           |
 | Stop the stack            | `docker compose down`                                               |
 | Re-apply DB migrations    | `cd app && DATABASE_URL=postgresql://postgres:... npm run db:setup` |
-| Re-hash seed passwords    | `cd app && node scripts/gen-seed-hashes.cjs`                        |
+| Re-hash seed passwords    | `cd app && node scripts/db/gen-seed-hashes.cjs`                    |
 | Run all tests             | `cd app && npm test`                                                |
 | Type check                | `cd app && npx tsc --noEmit -p tsconfig.app.json`                   |
 | Lint                      | `cd app && npx eslint .`                                            |

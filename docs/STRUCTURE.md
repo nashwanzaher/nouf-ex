@@ -1,486 +1,199 @@
-# Nouf-ex — Project Structure (Academic Edition)
+# Project Structure (Canonical)
 
-> **Standards applied:** [IEEE 829-2008](https://standards.ieee.org/ieee/829/4987/) ·
-> [ISO/IEC/IEEE 29119](https://www.iso.org/standard/81291.html) ·
-> [ISTQB CTFL](https://www.istqb.org/) ·
-> [Google Style Guide](https://google.github.io/styleguide/) ·
-> [Microsoft Docs — .NET Architecture Guides](https://learn.microsoft.com/en-us/dotnet/architecture/)
+> **Last verified:** 2026-07-05 (per MIGRATION_EXECUTION_PLAN.md v2.7.8 §38 R-7 execution; scripts/ now organized into 4 sub-folders)
+> **Source-of-truth (SSOT):** [MIGRATION_EXECUTION_PLAN.md §4 (SSOT Architecture) and §13 (Current Project Structure Inventory)](planning/MIGRATION_EXECUTION_PLAN.md)
+> **Re-validated by:** Round-7 SSOT audit (MIGRATION_EXECUTION_PLAN.md §25 + §26)
+> **Purpose:** Provide a single canonical reference for the current repository structure. All counts and paths verified against actual filesystem state.
 
-This document is the **canonical map** of the Nouf-ex repository. It is
-maintained alongside the code and is the authoritative reference for
-"where does X live?".
+This file exists per MIGRATION_EXECUTION_PLAN.md v2.7.5 §30.4 Sprint 1 (R-10) to give contributors a navigable overview of the Nouf-ex codebase. **For the canonical, executable plan and full architectural decisions, always refer to MIGRATION_EXECUTION_PLAN.md.**
 
----
+> **2026-07-05 update (R-7 EXECUTED):** `scripts/` was reorganized into 4 canonical sub-folders: `db/`, `devops/`, `quality/`, `maintenance/`. See [scripts/README.md](../scripts/README.md) for the new index.
 
-## 🏛️ Top-Level Layout
+## Top-level Repository Layout
 
 ```
-Nouf-ex/
-├── README.md                       ← Project entry point
-├── CONTRIBUTING.md                 ← Contribution guide
-├── CHANGELOG.md                    ← Recent changes
-├── CODE_OF_CONDUCT.md              ← Community standards (CC v2.1)
-├── SECURITY.md                     ← Security policy + SLAs
-├── LICENSE                         ← MIT (Phase L)
-├── Dockerfile                      ← Container image definition
-├── docker-compose.yml              ← Local stack orchestration
+nouf-ex/                                              ← REPO ROOT (SSOT)
+├── app/                                              ← SINGLE npm package (SSOT code)
+│   ├── package.json              name="my-app", type="module", 59 deps + 38 devDeps
+│   ├── src/                      ← React 19 + Vite 7 frontend (code-split, lazy-loaded)
+│   │   ├── App.tsx, main.tsx
+│   │   ├── components/           68 files (Layout, Navbar, Footer, ui/*)
+│   │   ├── context/              5 files (AppContext, CartContext)
+│   │   ├── hooks/                5 files (useApi, use-mobile)
+│   │   ├── i18n/                 4 files (locales/ar|en|zh.json + index.ts)
+│   │   ├── lib/                  8 files (api.ts, cart-sync.ts, format.ts, utils.ts)
+│   │   ├── pages/                67 files (Home, auth/, customer/, seller/, admin/)
+│   │   └── __tests__/            4 files (vitest setup)
+│   │
+│   ├── server/                   ← Express 5 API (extracted from app/)
+│   │   ├── index.ts              Express entrypoint + middleware chain
+│   │   ├── middleware.ts         873 lines (security, auth, rate-limit, error handler)
+│   │   ├── db/pg-wrapper.cts     async pg.Pool wrapper
+│   │   ├── lib/                  24 files (auth, audit, validation, payments/, ...)
+│   │   ├── routes/               19 .cts files (98 endpoints)
+│   │   └── tests/                33 files (Vitest with mocked pg)
+│   │
+│   ├── tests/                    4 .ts + 18 JSON fixtures (MSW + a11y setup)
+│   ├── public/                   88 product images + 24 SVG variants
+│   ├── scripts/                  2 .cjs files (image tooling)
+│   └── configs: vite.config.ts, vitest.config.ts, tsconfig.{json,app,node,server}.json
+│                 eslint.config.js, tailwind.config.js, postcss.config.js, components.json
 │
-├── mkdocs.yml                      ← MkDocs config (Phase L)
-├── requirements-docs.txt           ← Python deps for docs (Phase L)
-├── release-please-config.json      ← CHANGELOG automation (Phase L)
-├── .markdown-link-check.json       ← Link-check config (Phase L)
+├── database/                                       ← PostgreSQL 17 schema (host-side)
+│   ├── README.md
+│   ├── schema.sql, schema-extra.sql, views.sql, functions.sql, triggers.sql, roles.sql
+│   ├── seed.sql                  Idempotent demo data (gated by `noufex.allow_seed`)
+│   └── migrations/               24 SQL files (0001_baseline → 0024_production_hardening)
 │
-├── app/                            ← Single npm package: frontend + backend
-├── database/                       ← PostgreSQL schema + migrations
-├── docker/                         ← Docker support files
-├── docs/                           ← Active documentation (Diátaxis-organized)
-├── tests/                          ← All test code (cross-cutting)
-├── scripts/                        ← Project-level utility scripts
-├── mcp-server/                     ← MCP server package
+├── mcp-server/                                     ← MCP tooling (separate package, dev-only)
+│   └── src/                        6 files: api-tools, code-tools, db-tools, docs-tools, index, project
 │
-├── archive/                        ← Historical files (read-only)
-│   ├── audit/                      ← Past code audits
-│   └── research/                   ← Past research docs
+├── scripts/                                        ← 25 ACTIVE project-level helpers + 1 README (R-7 reorganized 2026-07-05)
+│   ├── README.md                 Index of all 4 sub-folders
+│   ├── db/                       5 files: DB lifecycle (setup, seed, audit, switch, drop)
+│   ├── devops/                   6 files: Local + container lifecycle (autostart, build, docker, install)
+│   ├── quality/                  8 files: Quality gates (lint, format, test, typecheck, verify)
+│   └── maintenance/              6 files: One-off helpers (scan-unused, e2e-step1, start-api/vite)
 │
-├── .env.example                    ← Environment template (committed)
-├── .env                            ← Live secrets (gitignored)
-├── .dockerignore                   ← Docker build context exclusions
-├── .gitignore                      ← VCS exclusions
-├── .gitattributes                  ← EOL + linguist policy (Phase M)
-├── .prettierrc.json                ← Root Prettier config (Phase M)
-├── .vscode/                        ← Editor config (tasks, launch, settings)
-├── .github/                        ← GitHub Actions + Copilot config
-│   ├── workflows/                  ← ci + deploy-staging + deploy-prod + docs + link-check
-│   ├── ISSUE_TEMPLATE/             ← bug + feature + config
-│   ├── dependabot.yml              ← weekly PRs
-│   ├── CODEOWNERS                  ← 12 ownership sections
-│   ├── PULL_REQUEST_TEMPLATE.md    ← 18-item checklist
-│   └── SECRETS.md                  ← Secrets guide
+├── docs/                                           ← 9 sub-folders (Diátaxis-aligned)
+│   ├── architecture/             C4 diagrams, API specs, schema docs
+│   ├── audits/                   (empty per R2.1; archived to archive/audits-final-2026-07-04/)
+│   ├── development/              CI/CD, conventions, debugging, workflow
+│   ├── operations/               backup-restore, deployment, monitoring
+│   ├── planning/                 THIS plan + ADRs + risks.md
+│   ├── testing/                  overview, phases, standards, templates
+│   ├── tutorials/                run-an-order-end-to-end
+│   ├── workflows/                N8N workflow + env override
+│   └── README.md                 Local docs index
 │
-└── .husky/                         ← Pre-commit hook (lint-staged)
+├── archive/                                        ← 60 historical files (gitignored, NOT in SSOT)
+│   ├── README.md                 ⭐ NEW: navigable index (R-8)
+│   ├── audit/                    12 files (pre-production reviews)
+│   ├── audits-final-2026-07-04/  4 files (Round-2 audit reports)
+│   ├── plans/                    5 files (superseded plans)
+│   ├── research/                 11 files (Alibaba/Taobao research)
+│   ├── scripts-2026-07-fixes/    27 files (one-time fix scripts)
+│   └── testing/                  1 file (historical test artifacts)
+│
+├── docker/                                        ← 1 file (entrypoint.sh)
+├── .github/                                       ← 5 CI workflows + 12 agents + 23 skills + 1 prompt
+├── .vscode/                                       ← editor config (settings, tasks, launch, mcp)
+├── .husky/                                        ← pre-commit hook
+├── .claude/                                       ← Claude Code workspace state (in .gitignore)
+├── Dockerfile                                    ← 3-stage (deps → build → runtime)
+├── docker-compose.yml                            ← single service: Nouf-ex
+├── mkdocs.yml                                    ← MkDocs Material theme
+├── CHANGELOG.md, README.md, CONTRIBUTING.md, ...  ← standard repo files
+└── .env.example                                  ← DATABASE_URL template
 ```
 
-> **Restructuring (2026-07-03):** PowerShell wrappers (`build.ps1`, `tc.ps1`,
-> `test.ps1`, `lint.ps1`, `format.ps1`, `format-check.ps1`, `docker-build.ps1`,
-> `docker-run.ps1`) were moved from the repository root into `scripts/`. The
-> root now contains zero `.ps1` files; see the `scripts/` detailed tree below
-> for their new location.
+## Per-directory Inventory (Round-7 SSOT audit verified)
 
----
+### `app/src/` Structure (React 19 SPA)
 
-## 📂 Detailed Tree
+| Directory | Subdirs | Files (verified) | Purpose |
+|---|---|---:|---|
+| `app/src/__tests__/` | `a11y/`, `i18n/` (R-16) | 5 (4 a11y + 1 i18n consistency) | Vitest setup + accessibility + i18n parity tests |
+| `app/src/components/` | `__tests__/`, `ui/` | 68 (8 root + 52 shadcn/ui + 8 tests) | Layout, Navbar, Footer, ui/* (shadcn) |
+| `app/src/context/` | `__tests__/` | 5 (3 root + 2 tests) | React providers (AppContext, CartContext, index.ts) |
+| `app/src/hooks/` | `__tests__/` | 5 (2 root + 3 tests) | Data hooks (useApi, use-mobile) |
+| `app/src/i18n/` | `locales/`, `__tests__/` | 6 (1 .ts + 3 .json + 1 README + 1 consistency test) | i18next setup + ar/en/zh locales + consistency.test.ts (R-16) |
+| `app/src/lib/` | `__tests__/`, `api/` (R-22) | 8 root (4 + 18 in `api/` subfolder) + 4 tests | API client (now split into 18 domain modules per R-22) + utilities |
+| `app/src/pages/` | `__tests__/`, `admin/`, `auth/`, `customer/`, `Home/`, `seller/` | **53 (46 .tsx + 7 .module.css)** | Role-based pages (Home, auth, customer, seller, admin) — **CORRECTED v2.8.8** (was incorrectly listed as 67/60 in earlier versions; actual `Get-ChildItem -Recurse` count is 46 .tsx) |
 
-### `app/` — Single npm package (frontend + backend)
+### `app/server/` Structure (Express 5 API)
 
-> **Convention:** Per Microsoft's [monorepo guidance](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/architect-microservice-container-applications/maintain-microservice-apis),
-> a single package keeps deployment simple while still separating
-> client and server code into distinct sub-folders.
+| Directory | Subdirs | Files (verified) | Purpose |
+|---|---|---:|---|
+| `app/server/db/` | — | 1 | `pg-wrapper.cts` (async pg.Pool) |
+| `app/server/lib/` | `notifications/`, `payments/` | 24 (13 root + 11 subdirs) | auth, audit, validation, payments |
+| `app/server/routes/` | — | 19 .cts | All Express router files (98 endpoints) |
+| `app/server/tests/` | `notifications/` | 33 (32 root + 1 subdir) | Server unit tests with mocked pg |
 
-```
-app/
-├── README.md
-├── package.json                    ← All deps (frontend + backend)
-├── package-lock.json
-│
-├── tsconfig.json                   ← Root TS project references
-├── tsconfig.app.json               ← Frontend tsconfig
-├── tsconfig.server.json            ← Backend tsconfig
-├── tsconfig.node.json              ← Node-only tools tsconfig
-│
-├── vite.config.ts                  ← Vite (frontend) configuration
-├── vitest.config.ts                ← Vitest (tests) configuration
-├── tailwind.config.js
-├── postcss.config.js
-├── eslint.config.js                ← ESLint 9 flat config
-├── components.json                 ← shadcn/ui generator config
-│
-├── src/                            ← React 19 frontend (Vite)
-│   ├── App.tsx                     ← Root component + router
-│   ├── main.tsx                    ← Entry point
-│   ├── index.css
-│   ├── components/
-│   │   ├── Layout.tsx
-│   │   ├── Navbar.tsx
-│   │   ├── Footer.tsx
-│   │   ├── ErrorBoundary.tsx
-│   │   ├── ProtectedRoute.tsx
-│   │   ├── Skeletons.tsx
-│   │   ├── BottomNav.tsx
-│   │   └── ui/                     ← shadcn/ui generated components
-│   ├── context/
-│   │   ├── AppContext.tsx          ← i18n + auth + toasts
-│   │   └── CartContext.tsx         ← Shopping cart state
-│   ├── data/                       ← Build-time JS fallbacks
-│   ├── hooks/
-│   │   ├── useApi.ts               ← Data fetching hooks
-│   │   └── use-mobile.tsx
-│   ├── i18n/                       ← i18next + locales (ar/en/zh)
-│   │   ├── index.ts
-│   │   └── locales/
-│   │       ├── ar.json
-│   │       ├── en.json
-│   │       └── zh.json
-│   ├── lib/
-│   │   ├── api.ts                  ← Typed API client
-│   │   ├── cart-sync.ts
-│   │   ├── jsonData.ts
-│   │   └── utils.ts                ← cn() helper + class utilities
-│   ├── pages/
-│       ├── Home/
-│       ├── Home.tsx
-│       ├── SearchResults.tsx
-│       ├── ProductDetail.tsx
-│       ├── StorePage.tsx
-│       ├── Categories.tsx
-│       ├── Deals.tsx
-│       ├── Checkout.tsx
-│       ├── NotFound.tsx
-│       ├── auth/                   ← Login, Register, Password reset
-│       ├── customer/               ← Customer dashboard pages
-│       ├── seller/                 ← Merchant dashboard pages
-│       ├── admin/                  ← Admin dashboard pages
-│       └── __tests__/              ← Component unit tests + a11y suite (vitest-axe, 2026-07-03)
-│   └── __tests__/                  ← Cross-cutting a11y tests (vitest-axe, P2-09) — target for `npm run test:a11y`
-│
-├── server/                         ← Express 5 backend
-│   ├── index.ts                    ← Entry point (esbuild bundle target)
-│   ├── index.js                    ← Built bundle (gitignored)
-│   ├── middleware.ts               ← Auth, security headers, logger, rate limit
-│   ├── routes/
-│   │   ├── auth.cts
-│   │   ├── auth-2fa.cts
-│   │   ├── catalog.cts
-│   │   ├── cart.cts
-│   │   ├── orders.cts
-│   │   ├── payments.cts
-│   │   ├── coupons.cts
-│   │   ├── refunds.cts
-│   │   ├── reviews.cts
-│   │   ├── addresses.cts
-│   │   ├── wishlist.cts
-│   │   ├── notifications.cts
-│   │   ├── messages.cts
-│   │   ├── shipping.cts
-│   │   ├── stats.cts
-│   │   ├── admin.cts
-│   │   ├── admin-read.cts
-│   │   └── store-followers.cts
-│   ├── db/
-│   │   └── pg-wrapper.cts          ← Async wrapper around `pg.Pool`
-│   ├── lib/
-│   │   ├── shared.cts              ← Schemas, helpers, db singleton
-│   │   ├── search.cts
-│   │   ├── totp.cts
-│   │   ├── backup-codes.cts
-│   │   ├── partial-token.cts
-│   │   └── payments/
-│   │       ├── registry.cts
-│   │       ├── stripe.cts
-│   │       ├── paymob.cts
-│   │       ├── stub.cts
-│   │       └── types.cts
-│   ├── tests/                      ← Vitest + supertest (integration)
-│   │   ├── api-server.test.ts
-│   │   └── schema.test.ts
-│   └── README.md
-│
-├── tests/                          ← Vitest unit tests (app-level)
-│
-├── public/                         ← Static assets (served by Vite)
-│   ├── manifest.webmanifest
-│   ├── data/
-│   └── products/
-│
-├── dist/                           ← Built bundle (gitignored)
-├── coverage/                       ← Vitest coverage output (gitignored)
-└── scripts/                        ← (legacy — moved to ../../scripts/)
-```
+### `database/` Structure (PostgreSQL 17)
 
----
+| Directory | Files (verified) | Notes |
+|---|---:|---|
+| `database/` | 8 root files | README, schema.sql, schema-extra.sql, views.sql, functions.sql, triggers.sql, roles.sql, seed.sql |
+| `database/migrations/` | 24 SQL + 1 README | 0001_baseline → 0024_production_hardening (idempotent) |
 
-### `database/` — PostgreSQL schema
-
-> **Convention:** Per PostgreSQL best practices, DDL lives in plain SQL
-> files (no ORM), applied via `npm run db:setup`.
-
-```
-database/
-├── README.md                       ← Database overview
-│
-├── schema.sql                      ← Base tables (16 application tables)
-├── schema-extra.sql                ← Extra tables (10 tables: payments, coupons, …)
-├── views.sql                       ← 4 read-only views (security_invoker)
-├── functions.sql                   ← 7 PL/pgSQL trigger functions
-├── triggers.sql                    ← 9 trigger definitions
-├── roles.sql                       ← 4 PostgreSQL roles + GRANTs
-├── seed.sql                        ← Idempotent demo data
-├── seed-dev.sql                    ← Dev-only seed extensions
-│
-└── migrations/                     ← Incremental schema changes
-    ├── README.md
-    ├── 0001_baseline.sql
-    ├── 0002_add_cart_variant.sql
-    ├── ...
-    └── 0013_inventory_log_trigger_definer.sql
-```
-
----
-
-### `docs/` — Documentation
-
-> **Convention:** Per the _Diátaxis_ documentation framework
-> (https://diataxis.fr/), docs are split by intent.
+### `docs/` Structure (Diátaxis-aligned)
 
 ```
 docs/
-├── README.md                       ← Documentation index
-│
-├── STRUCTURE.md                    ← THIS file — project map
-│
-├── architecture/                   ← ⟦explanation⟧ — How the system works
-│   ├── overview.md                 ← (was: docs/architecture.md)
-│   ├── api.md                      ← (was: docs/api.md)
-│   └── database.md                 ← (was: docs/database.md)
-│
-├── development/                    ← ⟦how-to⟧ — Developer's daily companion
-│   ├── getting-started.md          ← (was: docs/getting-started.md)
-│   ├── workflow.md                 ← (was: docs/development.md)
-│   ├── conventions.md              ← Coding conventions
-│   └── docker.md                   ← (was: docs/docker.md)
-│
-├── planning/                       ← ⟦strategy⟧ — Where the project is going
-│   ├── roadmap.md                  ← (was: docs/roadmap.md)
-│   └── competitive-analysis.md      ← (was: docs/competitive-analysis-2026.md)
-│
-├── operations/                     ← ⟦how-to / deployment⟧
-│   └── (deployment guides TBD)
-│
-├── testing/                        ← ⟦reference⟧ — Testing program
-│   ├── README.md                   ← Testing hub
-│   ├── PHASE_TEST_TASKS.md        ← Master Test Plan
-│   ├── conventions.md             ← Test taxonomy + style
-│   ├── overview.md                ← (was: docs/testing.md)
-│   ├── standards/
-│   │   ├── IEEE-829.md
-│   │   ├── ISO-29119.md
-│   │   └── ISTQB-CTFL.md
-│   ├── phases/                    ← Per-PHASE test design specs
-│   └── templates/
-│       └── PS_TEST_HELPER.ps1
-│
-├── audit/                          ⟦historical⟧ — Past code reviews
-├── research/                       ⟦historical⟧ — Past research notes
-├── assets/                         ← Images, screenshots
-└── workflows/                      ← Workflow diagrams
+├── architecture/        C4 diagrams, API specs, schema docs
+├── audits/              (empty per R2.1; archived to archive/audits-final-2026-07-04/)
+├── development/         CI/CD, conventions, debugging, workflow
+├── operations/          backup-restore, deployment, monitoring
+├── planning/            THIS plan + ADRs + risks.md
+├── testing/             overview, phases, standards, templates
+├── tutorials/           run-an-order-end-to-end
+├── workflows/           N8N workflow + env override
+└── README.md            Local docs index
 ```
 
-> **Diátaxis** (https://diataxis.fr/) is a documentation framework that
-> categorises docs by intent: **tutorials** (learning), **how-to**
-> (problem-solving), **reference** (information), **explanation**
-> (understanding). We adopt this convention for navigability.
+## Verified File Counts (Round-7 SSOT audit)
 
----
+| Layer | Verified Count | Notes |
+|---|---:|---|
+| `app/src/components/` root | 8 | Layout, Navbar, Footer, BottomNav, ErrorBoundary, ProtectedRoute, Skeletons, Toast |
+| `app/src/components/ui/` | 52 | shadcn primitives (R-6 verified) |
+| `app/src/components/__tests__/` | 8 | Test files for components |
+| `app/src/pages/` .tsx | **46** | **(CORRECTED v2.8.8)** Plan §1.3 originally said 60; actual `Get-ChildItem -Recurse -File -Include '*.tsx' 'app\src\pages'`.Count` → `46` |
+| `app/src/pages/` .module.css | 7 | |
+| `app/src/lib/` | **4** | **(CORRECTED v2.8.8)** api.ts (now a 17-line re-export shim per R-22), cart-sync.ts, format.ts, utils.ts + `api/` subfolder (18 modules per R-22) |
+| `app/src/context/` | **3** | **(CORRECTED v2.8.8)** AppContext.tsx, CartContext.tsx, index.ts |
+| `app/src/hooks/` | **2** | **(CORRECTED v2.8.8)** useApi.ts, use-mobile.ts |
+| `app/src/i18n/` | 4 (1 .ts + 3 .json) | |
+| `app/tests/` | 22 (4 .ts + 18 JSON fixtures) | |
+| `app/server/tests/` | 33 | |
+| `app/server/routes/` | 19 .cts (98 endpoints) | |
+| `app/server/lib/` | 24 (TS+CTS) | |
+| `database/migrations/` | 24 SQL + 1 README | |
+| `archive/` total | **60 files** | Verified in R-8 (audit/12 + audits-final-2026-07-04/4 + plans/5 + research/11 + scripts-2026-07-fixes/27 + testing/1) |
+| `scripts/` (root + 4 sub-folders) | **25 active files + 1 README** | R-7 EXECUTED (2026-07-05): scripts/ organized into `db/` (5) + `devops/` (6) + `quality/` (8) + `maintenance/` (6) |
 
-### `tests/` — Cross-cutting test suite
+## Cross-references
 
-```
-tests/
-├── README.md                       ← Testing hub
-│
-├── e2e/                            ← End-to-end PowerShell scripts
-│   ├── README.md
-│   ├── helpers/
-│   │   └── PS_TestHelpers.ps1
-│   ├── phase00_health_auth.ps1
-│   ├── phase01_profile_addresses.ps1
-│   ├── phase01_profile_addresses_retest.ps1
-│   ├── phase02_public_catalog.ps1
-│   ├── phase03_search_filters.ps1
-│   └── ... (15 more)
-│
-├── reports/                        ← Test execution logs
-│   ├── phase02_public_catalog.log
-│   ├── phase03_search_filters.log
-│   └── ...
-│
-└── fixtures/                       ← Static test data (JSON)
-```
+- **Canonical plan (MUST-READ):** [MIGRATION_EXECUTION_PLAN.md](planning/MIGRATION_EXECUTION_PLAN.md) v2.7.6+
+- **ADR index (architectural decisions):** [docs/planning/adr/README.md](planning/adr/README.md)
+- **Local docs index:** [docs/README.md](README.md)
+- **API specification:** [docs/architecture/api.md](architecture/api.md)
+- **Database schema:** [docs/architecture/database.md](architecture/database.md) + `database/`
+- **Security model:** [docs/architecture/security.md](architecture/security.md)
+- **CI/CD:** [docs/development/ci-cd.md](development/ci-cd.md) + `.github/workflows/`
+- **Deployment:** [docs/operations/deployment.md](operations/deployment.md)
+- **Getting started:** [docs/development/getting-started.md](development/getting-started.md)
+- **Archive index:** [archive/README.md](../archive/README.md) (60 historical files)
 
-> The `app/tests/` and `app/src/**/__tests__/` directories (not shown
-> here) hold **Vitest unit and integration tests**, colocated with the
-> code they cover.
+## Conventions
 
----
+- **SSOT principle:** the entire `app/` is a single npm package (name="my-app"). No monorepo. No multi-package workspace. (See [ADR-0003](planning/adr/0003-ssot-production-monolith.md).)
+- **Production DB:** single PostgreSQL 17 instance (`noufex_db`), 3 application roles with least privilege. (See [ADR-0004](planning/adr/0004-production-hardening-0024.md).)
+- **TypeScript config:** Project References pattern (4 tsconfigs: root + app + node + server). (See [ADR-0005](planning/adr/0005-tsconfig-project-references.md).)
+- **Documentation:** Diátaxis framework. See <https://diataxis.fr/> for the methodology.
+- **CHANGELOG:** Keep a Changelog 1.1.0. See <https://keepachangelog.com/> for the format.
+- **Commits:** Conventional Commits 1.0.0. See <https://www.conventionalcommits.org/> for the spec.
+- **Versioning:** SemVer 2.0.0. See <https://semver.org/> for the spec.
 
-### `scripts/` — Project-level utility scripts
+## Quality Gates (verified Round-3)
 
-> **Restructured (2026-07-03):** the 8 PowerShell wrappers that used to live
-> at the repository root were consolidated into `scripts/`. The folder now
-> contains ~46 files in total (8 PowerShell wrappers + 38 utility scripts).
-> The tree below is a representative sample of the most-used entries; see
-> [`scripts/README.md`](https://github.com/nashwanzaher/nouf-ex/blob/main/scripts/README.md)
-> for the full index.
+| Gate | Command | Status (2026-07-04) |
+|---|---|---|
+| TypeScript | `cd app && npx tsc -b --noEmit` | ✅ exit 0 |
+| ESLint | `cd app && npx eslint . --max-warnings=0` | ✅ 0 problems |
+| Vitest | `cd app && npx vitest run` | ✅ 817 passed, 3 skipped (820 total) |
+| Coverage threshold (since R-4) | `cd app && npx vitest run --coverage` | 🟢 gate enforced (lines: 50, statements: 50, functions: 55, branches: 45) |
 
-```
-scripts/
-├── README.md
-├── build.ps1                       ← Root build helper (moved from /)
-├── tc.ps1                          ← TypeScript type-check (moved from /)
-├── test.ps1                        ← Vitest runner (moved from /)
-├── lint.ps1                        ← ESLint runner (moved from /)
-├── format.ps1                      ← Prettier write (moved from /)
-├── format-check.ps1                ← Prettier check (moved from /)
-├── docker-build.ps1                ← Docker image build (moved from /)
-├── docker-run.ps1                  ← Docker compose runner (moved from /)
-├── db-setup.cjs                    ← Apply schema + seed (one-time CLI)
-├── verify-fresh.cjs                ← DB-vs-schema freshness check
-├── e2e-step1.ps1                   ← E2E test runner (step 1)
-├── switch-db.ps1                   ← Swap between dev/test DBs
-├── audit-db.cjs                    ← Schema/seed integrity audit
-├── autostart.ps1                   ← Windows autostart
-└── install-autostart.ps1           ← Register autostart task
-```
+## References
 
----
+- **[MIGRATION_EXECUTION_PLAN.md](planning/MIGRATION_EXECUTION_PLAN.md)** v2.7.6+ — the canonical, executable plan (the SSOT)
+- **[archive/README.md](../archive/README.md)** — index of 60 archived historical files
+- **Diátaxis framework** — <https://diataxis.fr/>
+- **Keep a Changelog 1.1.0** — <https://keepachangelog.com/>
 
-### `docker/` — Docker support
+## Revision history
 
-```
-docker/
-└── entrypoint.sh                   ← Container entrypoint
-```
-
-> The main `Dockerfile` and `docker-compose.yml` live at the project root
-> (per Docker convention).
-
----
-
-### `mcp-server/` — MCP server package
-
-```
-mcp-server/
-├── README.md
-├── package.json
-├── tsconfig.json
-├── src/
-└── scripts/
-```
-
----
-
-### `.vscode/` — Editor configuration
-
-```
-.vscode/
-├── settings.json
-├── tasks.json                      ← Run/Debug tasks (Phase scripts, etc.)
-├── launch.json                     ← Debug configurations
-├── extensions.json                 ← Recommended extensions
-└── mcp.json                        ← MCP servers config
-```
-
----
-
-## 📊 Implementation Status per Folder (snapshot 2026-07-02)
-
-> Verified by `ls -R` + `grep -R` pass. Status legend: ✅ live & exercised
-> in tests · 🔄 live but partial · ⏳ TODO per MASTER_PLAN.
-
-| Folder                               | Status   | Notes                                                      |
-|--------------------------------------|----------|------------------------------------------------------------|
-| `app/` (root)                        | ✅       | TS strict, ESLint 0, Vitest 779 passed                     |
-| `app/src/`                           | ✅       | 22 routes wired, all pages smoke-tested                     |
-| `app/src/pages/admin/`               | 🔄       | 4/6 pages on real API (UsersManagement + StoresManagement + DisputesManagement + AdminOverview partial). ReportsAnalytics + AdminDashboard still mock-data (tracked in K.1). |
-| `app/src/pages/Home/`                | ✅       | 9 sub-sections on static data by design                     |
-| `app/src/pages/seller/`              | ✅       | All 3 dashboard pages on real API                          |
-| `app/src/pages/customer/`            | ✅       | All 6 pages on real API                                    |
-| `app/src/lib/`                       | ✅       | `format.ts`, `utils.ts`, `cart-sync.ts` — all unit-tested  |
-| `app/server/`                        | ✅       | 19 routers, 91 endpoint declarations                       |
-| `app/server/tests/`                  | ✅       | `api-server.test.ts` + `schema.test.ts` (40+ tests)        |
-| `app/server/lib/notifications/`      | ✅       | 13 i18n templates + 8 event triggers (Phase C.1)            |
-| `app/server/lib/payments/`           | ✅       | Stripe + Paymob + stub providers                           |
-| `database/`                          | ✅       | 30 tables, 13 fns, 10 triggers, 4 views, 3 roles           |
-| `database/migrations/`               | ✅       | 13 incremental migrations (idempotent)                     |
-| `docs/architecture/`                 | ✅       | 5 reference docs (overview, api, database, security, ER)  |
-| `docs/development/`                  | ✅       | 5 how-to guides (incl. ci-cd, debugging)                   |
-| `docs/operations/`                   | ✅       | 4 ops docs (incl. backup-restore, monitoring, deployment)  |
-| `docs/planning/`                     | ✅       | Roadmap + competitive analysis + risks register            |
-| `docs/testing/`                      | ✅       | 18 PHASE design specs + 4 standards documents              |
-| `tests/e2e/`                         | ✅       | 18 PHASE scripts + 17 smoke scripts + helpers             |
-| `tests/reports/`                     | 🔄       | 5/18 PHASE scripts failing in batch runs due to rate-limit cascade (test-infra, no code bug — see PHASE 12-15 specs) |
-| `scripts/`                           | ✅       | ~46 utility scripts (db-setup, verify-fresh, e2e-step1, plus the 8 PowerShell wrappers moved from root on 2026-07-03) |
-| `mcp-server/`                        | ✅       | TS server, builds via own `tsconfig.json`                  |
-| `docker/`                            | ✅       | single `entrypoint.sh`                                     |
-| `.github/`                           | ✅       | workflows/ + Dependabot + CODEOWNERS + issue templates     |
-| `.github/workflows/`                 | ✅       | ci.yml (6 jobs — includes **Run accessibility (a11y) tests** step since 2026-07-03, P2-09) + deploy-staging.yml + deploy-prod.yml |
-| `.vscode/`                           | ✅       | Tasks include every PHASE script + dev servers            |
-| `archive/audit/`                     | ✅       | Read-only — 11 historical audits                           |
-| `archive/research/`                  | ✅       | Read-only — 11 historical research notes                   |
-| Root `.md` files                     | ✅       | README + CHANGELOG + CONTRIBUTING + CODE_OF_CONDUCT + SECURITY + MASTER_PLAN + STRUCTURE — all current |
-
-> Generated by `ls -R --color=never | head -200; grep -R "\bvi\." app/server/tests 2>/dev/null | wc -l`
-> - the actual MASTER_PLAN §11 reconciliation. Run yourself with the
-> one-liner in [`docs/development/debugging.md`](development/debugging.md) §13.
-
----
-
-### `.github/` — CI/CD
-
-```
-.github/
-└── workflows/
-    └── ci.yml                      ← GitHub Actions
-```
-
----
-
-### `archive/` — Historical files
-
-> Files that have outlived their original location are moved here
-> (not deleted) to preserve git history.
-
----
-
-## 📐 Architectural Decisions Recorded
-
-For each major architectural decision, an **ADR** (Architecture
-Decision Record) lives in [`docs/architecture/`](architecture/) under
-a `<NN>-<slug>.md` filename.
-
-> ADRs follow Michael Nygard's template (https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions).
-
----
-
-## 🔗 Cross-Reference Map
-
-| Question | Answer |
-|----------|--------|
-| "Where does the API run?" | `app/server/index.ts` (port 3000) |
-| "Where is the DB connection?" | `app/server/db/pg-wrapper.cts` |
-| "Where are the routes?" | `app/server/routes/*.cts` |
-| "Where are the shared schemas?" | `app/server/lib/shared.cts` |
-| "Where is the React root?" | `app/src/main.tsx` |
-| "Where do E2E tests live?" | `tests/e2e/` |
-| "Where are unit tests?" | `app/tests/`, `app/src/**/__tests__/` |
-| "Where are the a11y tests?" | `app/src/pages/__tests__/a11y.test.tsx` (`vitest-axe`, run with `npm run test:a11y`) |
-| "Where do reports go?" | `tests/reports/` |
-| "Where is the master test plan?" | `docs/testing/PHASE_TEST_TASKS.md` |
-| "Where is the DB schema?" | `database/*.sql` + `database/migrations/` |
-| "Where are the Docker configs?" | Root `Dockerfile`, `docker-compose.yml`, `docker/` |
-| "Where is the documentation index?" | `docs/README.md` and `docs/testing/README.md` |
-
----
-
-## 📚 Standards Reference (full list)
-
-- [IEEE 829-2008](https://standards.ieee.org/ieee/829/4987/) — Test Documentation
-- [ISO/IEC/IEEE 29119](https://www.iso.org/standard/81291.html) — Software Testing
-- [ISTQB CTFL v4.0](https://www.istqb.org/) — Testing Techniques
-- [Google Style Guide](https://google.github.io/styleguide/) — Code style
-- [Microsoft .NET Architecture Guides](https://learn.microsoft.com/en-us/dotnet/architecture/) — Project layout
-- [Diátaxis](https://diataxis.fr/) — Documentation framework
-- [Conventional Commits](https://www.conventionalcommits.org/) — Commit messages
-- [Semantic Versioning](https://semver.org/) — Versioning
-- [Keep a Changelog](https://keepachangelog.com/) — CHANGELOG format
-- [12-Factor App](https://12factor.net/) — Configuration, dependencies, processes
-- [Google Testing Blog](https://testing.googleblog.com/) — Test design
+| Date | Version | Author | Change |
+|---|---|---|---|
+| 2026-07-05 | **v1.0** | GitHub Copilot (`@reviewer`) | **Initial version.** Created per MIGRATION_EXECUTION_PLAN.md v2.7.5 R-10.1 (Sprint 1). Closes GAP-18 (re-author `docs/STRUCTURE.md`). References §4.1 + §13 inventory from the SSOT plan. Provides navigable overview of the canonical project structure. |

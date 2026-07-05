@@ -14,7 +14,7 @@
     "api": "tsx server/index.ts",
     "api:prod": "NODE_ENV=production tsx server/index.ts",
     "api:build": "esbuild server/index.ts --bundle --platform=node --target=node20 --format=esm --outfile=server/index.js --packages=external",
-    "db:setup": "node ../scripts/db-setup.cjs",
+    "db:setup": "node ../scripts/db/db-setup.cjs",
     "images:populate": "node scripts/populate-product-images.cjs",
     "test": "vitest run",
     "test:unit": "vitest run --exclude 'server/tests/api-server.test.ts'",

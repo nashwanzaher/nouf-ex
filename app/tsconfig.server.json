@@ -1,24 +1,16 @@
 {
+	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
 		"tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo",
-		"target": "ES2023",
+
 		"lib": ["ES2023"],
-		"module": "ESNext",
-		"moduleResolution": "bundler",
 		"types": ["node"],
-		"skipLibCheck": true,
-		"noEmit": true,
 
 		"allowJs": true,
 		"checkJs": false,
-		"resolveJsonModule": true,
-		"allowImportingTsExtensions": true,
 
-		"strict": true,
 		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true,
-		"noUncheckedSideEffectImports": true
+		"noUnusedParameters": true
 	},
 	"include": ["server/**/*.ts", "server/**/*.cts", "server/**/*.cjs"]
 }

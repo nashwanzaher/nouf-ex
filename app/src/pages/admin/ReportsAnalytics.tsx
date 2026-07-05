@@ -23,12 +23,9 @@ import {
     Bar,
     BarChart,
     CartesianGrid,
-    Cell,
     Legend,
     Line,
     LineChart,
-    Pie,
-    PieChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -40,10 +37,7 @@ import {
 /* ------------------------------------------------------------------ */
 const GOLD = '#D4A853';
 const GREEN = '#10B981';
-const BLUE = '#2563EB';
 const RED = '#EF4444';
-const AMBER = '#F59E0B';
-const PURPLE = '#8B5CF6';
 
 /* ------------------------------------------------------------------ */
 /*  Time-series chart data (C.7 — added 2026-07-02)                   */
@@ -60,15 +54,11 @@ const periodOptions = [
 	{ ar: 'سنة', days: 365, bucket: 'month' as const },
 ];
 
-// Governorate split still needs a dedicated endpoint (TODO C.8).
-// Kept as a fixture for the "growth" pie chart only.
-const growthPie = [
-	{ name: 'صنعاء', value: 45, color: GOLD },
-	{ name: 'عدن', value: 25, color: GREEN },
-	{ name: 'تعز', value: 15, color: BLUE },
-	{ name: 'إب', value: 8, color: PURPLE },
-	{ name: 'أخرى', value: 7, color: AMBER },
-];
+// Governorate split endpoint (C.8) is not yet implemented. We do
+// NOT ship a hardcoded fixture here — that would mislead admins
+// into acting on invented numbers. The 'growth' category below
+// renders an honest empty-state until C.8 lands.
+// SEE: docs/planning/roadmap.md C.8 for the planned endpoint.
 
 /* ------------------------------------------------------------------ */
 /*  Report categories                                                  */
@@ -449,7 +439,7 @@ export default function ReportsAnalytics() {
 	}, [period, locale]);
 
 	const handleExportCSV = () => {
-		const dataMap: Record<string, { headers: string[]; rows: (string | number)[][] }> = {
+		const dataMap: Record<string, { headers: string[]; rows: (string | number)[][] } | null> = {
 			revenue: {
 				headers: ['الفترة', 'الإيرادات'],
 				rows: revenueData.map((d) => [d.name, d.value]),
@@ -470,10 +460,7 @@ export default function ReportsAnalytics() {
 				headers: ['الفترة', 'النزاعات'],
 				rows: disputesData.map((d) => [d.name, d.value]),
 			},
-			growth: {
-				headers: ['المحافظة', 'النسبة'],
-				rows: growthPie.map((d) => [d.name, d.value]),
-			},
+			growth: null, // C.8 endpoint not implemented; export is disabled.
 		};
 		const data = dataMap[activeCategory];
 		if (data) exportToCSV(`report_${activeCategory}`, data.headers, data.rows);
@@ -704,51 +691,18 @@ export default function ReportsAnalytics() {
 					</ResponsiveContainer>
 				);
 			case 'growth':
+				// HONEST empty-state: the per-governorate breakdown endpoint
+				// (C.8) is not yet implemented. We do NOT show a fake chart
+				// with invented numbers — admins need to trust this view.
+				// SEE: docs/planning/roadmap.md C.8.
 				return (
-					<div className="flex flex-col md:flex-row items-center gap-8 h-full">
-						<ResponsiveContainer width="100%" height="100%">
-							<PieChart>
-								<Pie
-									data={growthPie}
-									cx="50%"
-									cy="50%"
-									outerRadius="80%"
-									innerRadius="50%"
-									dataKey="value"
-									label={({ name, percent }) =>
-										`${name} ${(percent * 100).toFixed(0)}%`
-									}
-								>
-									{growthPie.map((entry, index) => (
-										<Cell key={index} fill={entry.color} />
-									))}
-								</Pie>
-								<Tooltip
-									contentStyle={{
-										fontFamily: 'Cairo',
-										fontSize: 12,
-										borderRadius: 12,
-										border: 'none',
-										boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-									}}
-								/>
-							</PieChart>
-						</ResponsiveContainer>
-						<div className="flex flex-wrap md:flex-col gap-3 shrink-0">
-							{growthPie.map((item) => (
-								<div key={item.name} className="flex items-center gap-2">
-									<div
-										className="w-3 h-3 rounded-full"
-										style={{ backgroundColor: item.color }}
-									/>
-									<span className="text-xs font-cairo text-[#6B6B6B]">
-										{item.name}
-									</span>
-									<span className="text-xs font-mono font-bold text-[#111111]">
-										{item.value}%
-									</span>
-								</div>
-							))}
+					<div className="flex flex-col items-center justify-center h-full gap-3 text-center">
+						<div className="text-base font-cairo font-semibold text-[#111111]">
+							توزيع المحافظات غير متاح حالياً
+						</div>
+						<div className="text-sm font-cairo text-[#6B6B6B] max-w-md">
+							سيتم تفعيل هذا الرسم البياني بعد اكتمال نقطة النهاية C.8
+							التي تربط بيانات المستخدمين والطلبات بالمحافظات.
 						</div>
 					</div>
 				);

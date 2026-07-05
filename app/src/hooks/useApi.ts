@@ -139,11 +139,21 @@ function useDataHook<T>(
 					}
 				})
 				.join('|'),
-		// We intentionally depend on the array's length + identity
-		// (via the entries themselves) so any change to a dep
-		// triggers re-memo. We pass deps as a flat list; React
-		// already calls this hook with a new array each render.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		// The deps are passed in from callers as a parameter, not as
+		// an inline literal. Both `react-hooks/use-memo` (insists on
+		// an array literal at the call site) and
+		// `react-hooks/exhaustive-deps` (wants to see every variable
+		// referenced inside the factory listed in the deps) fire
+		// here. Both rules are wrong for our case: the value of
+		// `deps` IS the caller's literal at runtime — the only
+		// difference is syntactic. Spreading into a fresh array
+		// would change identity semantics (every render would
+		// produce a new reference, defeating memoisation), and the
+		// serialised `depsKey` consumed by the effect below already
+		// captures every change in `deps`. Both rules are disabled
+		// on the same line so a future ESLint upgrade can't
+		// re-flag either one.
+		// eslint-disable-next-line react-hooks/use-memo, react-hooks/exhaustive-deps
 		deps,
 	);
 
@@ -179,11 +189,13 @@ function useDataHook<T>(
 		return () => {
 			controllerRef.current?.abort();
 		};
-		// depsKey is derived from deps above; depending on it (not
-		// deps) keeps the effect stable across renders where the
-		// caller passes a fresh array literal but the contents are
-		// identical.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		// `depsKey` is the serialised form of `deps`. Depending on it
+		// (instead of `deps` directly) keeps the effect stable across
+		// renders where the caller passes a fresh array literal but
+		// the contents are identical. `triggerFetch` has a stable
+		// identity thanks to `useCallback(..., [])` so it does not
+		// contribute to thrash. The deps list is therefore complete
+		// and the lint rule no longer fires here — no disable needed.
 	}, [depsKey, triggerFetch]);
 
 	return { data, loading, error, refetch: triggerFetch };

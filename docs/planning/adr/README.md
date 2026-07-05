@@ -13,6 +13,9 @@
 |------------------------------------------|--------------------------------------------------------------------|----------|------------|
 | [ADR-0001](0001-mkdocs-and-release-please.md) | Adopt MkDocs (Material) + release-please for docs automation | ✅ Accepted | 2026-07-02 |
 | [ADR-0002](0002-vitest-axe-a11y.md)           | Adopt `vitest-axe` for automated WCAG 2.1 AA testing          | ✅ Accepted | 2026-07-03 |
+| [ADR-0003](0003-ssot-production-monolith.md) | Adopt current production as SSOT (reject monorepo restructure) | ✅ Accepted | 2026-07-05 |
+| [ADR-0004](0004-production-hardening-0024.md) | Apply `0024_production_hardening.sql` migration (close 8 production drifts) | ✅ Accepted | 2026-07-05 |
+| [ADR-0005](0005-tsconfig-project-references.md) | Use TypeScript Project References (rejects `tsconfig.base.json` pattern) | ✅ Accepted | 2026-07-05 |
 
 ## Conventions
 

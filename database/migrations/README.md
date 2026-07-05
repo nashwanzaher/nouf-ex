@@ -9,7 +9,7 @@ current schema.
    where `NNNN` is the next number (`0002`, `0003`, …).
 2. Use `ALTER TABLE … ADD COLUMN IF NOT EXISTS` style statements so the
    migration is safe to re-run.
-3. Track it in `schema_migrations` (inserted by `scripts/db-setup.cjs`).
+3. Track it in `schema_migrations` (inserted by `scripts/db/db-setup.cjs`).
 4. Never edit a deployed migration. Always add a new one.
 
 ## Files

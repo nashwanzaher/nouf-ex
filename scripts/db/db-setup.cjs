@@ -152,9 +152,17 @@ async function main() {
 					continue;
 				}
 				// Latch the GUC that seed.sql's safety check looks for.
-				// SET LOCAL is bound to the current transaction, so the
-				// GUC cannot leak into a later session.
-				await client.query("SET LOCAL noufex.allow_seed = 'true'");
+// SECURITY (fix 2026-07-04): use plain SET, not SET LOCAL.
+// SET LOCAL only persists inside a transaction; db-setup.cjs
+// runs `applyFile` in autocommit mode, so the previous SET LOCAL
+// was a no-op by the time seed.sql ran. The GUC is bound to this
+// Client's session, which is closed at the end of main()
+// (`client.end()`), so it cannot leak to other sessions.
+// The seed.sql safety check uses
+// `current_setting(...) IS DISTINCT FROM 'on'`, so the literal
+// value MUST be the string 'on' — PostgreSQL's custom GUC
+// validator will reject any other value.
+				await client.query("SET noufex.allow_seed = 'on'");
 			}
 			await applyFile(client, label, relPath);
 		}

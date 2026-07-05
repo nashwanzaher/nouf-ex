@@ -261,11 +261,11 @@ See `app/server/middleware.ts:77-94`.
 |--------|------|---------|--------------|
 | `reset-ahmed.cjs` | `logs/reset-ahmed.cjs` | Reset ahmed's password to `customer123` | **Yes** (overwrites hash) |
 | `reset-rate-limit.cjs` | `tests/e2e/reset-rate-limit.cjs` | Clear `rate_limit_buckets` table | **Yes** (drops entries) |
-| `db-setup.cjs` | `scripts/db-setup.cjs` | Apply full schema + seed | **Yes** (drops + recreates) |
-| `gen-seed-hashes.cjs` | `scripts/gen-seed-hashes.cjs` | Generate scrypt hashes for seed users | No (read-only output) |
-| `verify-fresh.cjs` | `scripts/verify-fresh.cjs` | Verify DB is in fresh-seed state | No (read-only) |
-| `drop-test-db.cjs` | `scripts/drop-test-db.cjs` | Drop the test DB | **Yes** (drops DB) |
-| `switch-db.ps1` | `scripts/switch-db.ps1` | Switch between dev/staging DB | No (just edits `.env`) |
+| `db-setup.cjs` | `scripts/db/db-setup.cjs` | Apply full schema + seed | **Yes** (drops + recreates) |
+| `gen-seed-hashes.cjs` | `scripts/db/gen-seed-hashes.cjs` | Generate scrypt hashes for seed users | No (read-only output) |
+| `verify-fresh.cjs` | `scripts/quality/verify-fresh.cjs` | Verify DB is in fresh-seed state | No (read-only) |
+| `drop-test-db.cjs` | `scripts/db/drop-test-db.cjs` | Drop the test DB | **Yes** (drops DB) |
+| `switch-db.ps1` | `scripts/db/switch-db.ps1` | Switch between dev/staging DB | No (just edits `.env`) |
 
 ### 2.2 When to use which
 
@@ -273,10 +273,10 @@ See `app/server/middleware.ts:77-94`.
 |---------|---------------------|
 | PHASE 4-7 fail with 401 | `logs/reset-ahmed.cjs` |
 | PHASE 12+ fail with 429 | `tests/e2e/reset-rate-limit.cjs` |
-| Schema is in an unknown state | `scripts/db-setup.cjs` (after `drop-test-db.cjs`) |
-| Need a new scrypt hash for seed | `scripts/gen-seed-hashes.cjs` |
-| Need to verify the DB is fresh | `scripts/verify-fresh.cjs` |
-| DB connection string is wrong | `scripts/switch-db.ps1` |
+| Schema is in an unknown state | `scripts/db/db-setup.cjs` (after `scripts/db/drop-test-db.cjs`) |
+| Need a new scrypt hash for seed | `scripts/db/gen-seed-hashes.cjs` |
+| Need to verify the DB is fresh | `scripts/quality/verify-fresh.cjs` |
+| DB connection string is wrong | `scripts/db/switch-db.ps1` |
 
 ### 2.3 Safety checklist (before any reset)
 
@@ -794,17 +794,17 @@ const candidates = [
 })().catch((e) => { console.error('FAIL:', e.message); process.exit(1); });
 ```
 
-### 8.3 `scripts/db-setup.cjs`
+### 8.3 `scripts/db/db-setup.cjs`
 
 Applies the 8-file SQL pipeline (see `database/README.md` §"Applying").
 Use this for a full DB rebuild.
 
-### 8.4 `scripts/gen-seed-hashes.cjs`
+### 8.4 `scripts/db/gen-seed-hashes.cjs`
 
 Generates scrypt hashes for the seed users. Use this when adding a new
 seed user or rotating the seed password.
 
-### 8.5 `scripts/verify-fresh.cjs`
+### 8.5 `scripts/quality/verify-fresh.cjs`
 
 Queries the DB to verify it's in a fresh-seed state (10 users, 24
 products, etc.). Use this after `db:setup` to confirm success.

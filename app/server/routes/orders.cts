@@ -1,19 +1,21 @@
-import { Router, type Request, type Response } from 'express';
 import { randomUUID } from 'crypto';
-import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	HttpError,
-	orderSchema,
-	resolveOrderStoreId,
-	COUPON_COLUMNS,
-	computeCouponDiscount,
-	type CouponRow,
-} from '../lib/shared.cts';
+import { Router, type Request, type Response } from 'express';
 import type { PgTxDb } from '../db/pg-wrapper.cts';
+import { ErrorCodes } from '../lib/error-codes.ts';
+import { getSetting } from '../lib/settings.ts';
+import {
+    COUPON_COLUMNS,
+    HttpError,
+    computeCouponDiscount,
+    db,
+    orderSchema,
+    requireAuth,
+    resolveOrderStoreId,
+    sendError,
+    sendSuccess,
+    validate,
+    type CouponRow,
+} from '../lib/shared.cts';
 
 export const ordersRouter = Router();
 
@@ -201,14 +203,33 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Server-side authoritative pricing. `shippingCost` is intentionally
 		// fixed for now (free shipping policy); once a shipping_methods
 		// lookup is wired in we will resolve it per order the same way.
-		const FREE_SHIPPING_THRESHOLD = 10000; // 10,000 YER → free shipping
+		//
+		// P1-2 (2026-07-04): the threshold and flat cost used to be
+		// hardcoded literals (10000 / 500 / 'YER'). They now read
+		// from the `app_settings` table (migration 0023) via
+		// `getSetting()`. The values are read at the top of the
+		// request handler so a single DB round-trip serves this
+		// request (60s in-process cache makes subsequent requests
+		// zero-cost).
+		//
+		// The settings module falls back to the canonical
+		// ('YER', '10000', '500') defaults on DB error, so a DB
+		// outage degrades gracefully to the old behaviour.
+		const [defaultCurrencyRaw, freeShipRaw, flatShipRaw] = await Promise.all([
+			getSetting('DEFAULT_CURRENCY'),
+			getSetting('FREE_SHIPPING_THRESHOLD'),
+			getSetting('FLAT_SHIPPING_COST'),
+		]);
+		const FREE_SHIPPING_THRESHOLD = Number.parseInt(freeShipRaw, 10) || 10000;
+		const FLAT_SHIPPING_COST = Number.parseInt(flatShipRaw, 10) || 500;
+		const DEFAULT_CURRENCY = defaultCurrencyRaw || 'YER';
 		let resolvedSubtotal = 0;
 		for (const item of items) {
 			const product = productById.get(item.productId)!;
 			resolvedSubtotal += product.price * item.quantity;
 		}
 		resolvedSubtotal = Math.round(resolvedSubtotal * 100) / 100;
-		const resolvedShippingCost = resolvedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 500;
+		const resolvedShippingCost = resolvedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
 		let resolvedDiscount = 0;
 		const resolvedCouponCode: string | null = couponCode ? String(couponCode) : null;
 		if (resolvedCouponCode && resolvedSubtotal <= 0) {
@@ -264,26 +285,27 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			         coupon_code, discount_amount, total, currency,
 			         shipping_address, notes)
 			       VALUES (?, ?, ?, 'pending', ?, 'pending',
-			               ?, ?, ?, ?, ?, ?, 'YER',
+			               ?, ?, ?, ?, ?, ?, ?,
 			               ?, ?)
 			       RETURNING id`,
-				)
-				.run(
-					customerId,
-					resolvedStoreId,
-					orderNumber,
-					normalisedPaymentMethod,
-					resolvedSubtotal,
-					resolvedShippingCost,
-					finalDiscount,
-					resolvedCouponCode,
-					finalDiscount,
-					finalTotal,
-					JSON.stringify(shippingAddress),
-					notes || null,
-				)) as { lastInsertRowid: number | null };
+			)
+			.run(
+				customerId,
+				resolvedStoreId,
+				orderNumber,
+				normalisedPaymentMethod,
+				resolvedSubtotal,
+				resolvedShippingCost,
+				finalDiscount,
+				resolvedCouponCode,
+				finalDiscount,
+				finalTotal,
+				DEFAULT_CURRENCY,
+				JSON.stringify(shippingAddress),
+				notes || null,
+			)) as { lastInsertRowid: number | null };
 			if (result.lastInsertRowid == null) {
-				throw new HttpError(500, 'Failed to create order', { code: 'INSERT_FAILED' });
+				throw new HttpError(500, 'Failed to create order', { code: ErrorCodes.INSERT_FAILED });
 			}
 			const newOrderId: number = result.lastInsertRowid;
 
@@ -368,8 +390,10 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			serverSubtotal = Math.round(serverSubtotal * 100) / 100;
 			// Use the server-computed subtotal — never trust the client.
 			// We recompute the totals here to make tampering impossible.
+			// The threshold + flat cost come from the same top-of-handler
+			// `getSetting(...)` cache as the initial INSERT block.
 			const serverDiscount = Math.round(resolvedDiscount * 100) / 100;
-			const serverShippingCost = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 500;
+			const serverShippingCost = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
 			const serverFinalTotal = Math.max(
 				0,
 				Math.round((serverSubtotal + serverShippingCost - serverDiscount) * 100) / 100,

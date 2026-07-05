@@ -71,7 +71,7 @@ Re-running is safe.
 | `layla@mokha-coffee.com`       | `merchant123` | merchant |
 
 > Passwords are stored as `scrypt$<salt_b64>$<hash_b64>` (see
-> `scripts/gen-seed-hashes.cjs`). Regenerate hashes by editing that script
+> `scripts/db/gen-seed-hashes.cjs`). Regenerate hashes by editing that script
 > and re-running it.
 
 ## Production roles

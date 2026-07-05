@@ -1,9 +1,22 @@
 <!doctype html>
-<html lang="en">
+<!--
+  Nouf-ex SPA entry point.
+  - lang="ar" / dir="rtl" must match the PWA manifest (`app/dist/manifest.webmanifest`)
+    and the production HTML (`app/dist/index.html`). Keeping these three
+    in sync prevents FOUC (Flash of Unstyled Content) between the static
+    page load and the runtime i18n hydration.
+  - In production, the server (`app/server/index.ts` → SPA fallback handler)
+    injects a per-request CSP nonce onto every <script>/<style> tag. The
+    dev bundle (`/src/main.tsx`) does not need one — Vite's dev server
+    serves the module graph over the same-origin ws connection.
+-->
+<html lang="ar" dir="rtl">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Nouf-ex</title>
+		<meta name="theme-color" content="#0d9488" />
+		<meta name="description" content="Nouf-ex — Yemen & Middle East B2B/B2C marketplace (Alibaba/Taobao-inspired)" />
+		<title>Nouf-ex — سوق نوف</title>
 	</head>
 	<body>
 		<div id="root"></div>

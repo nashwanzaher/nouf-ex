@@ -42,7 +42,7 @@ From inside the Docker container, `localhost` is the container itself, so
 | Roles + GRANTs           | [`database/roles.sql`](../database/roles.sql)                     |
 | Demo seed data           | [`database/seed.sql`](../database/seed.sql)                       |
 | Incremental migrations   | [`database/migrations/`](../database/migrations/)                 |
-| One-time setup CLI       | [`scripts/db-setup.cjs`](../scripts/db-setup.cjs)                 |
+| One-time setup CLI       | [`scripts/db/db-setup.cjs`](../scripts/db/db-setup.cjs)           |
 | PgDb wrapper             | [`app/server/db/pg-wrapper.cts`](../app/server/db/pg-wrapper.cts) |
 | API server               | [`app/server/index.ts`](../app/server/index.ts)                   |
 | Schema README            | [`database/README.md`](../database/README.md)                     |
@@ -236,7 +236,7 @@ After `db-setup` succeeds, the **app** connects as `noufex_app` (not
 | `layla@mokha-coffee.com`         | `merchant123` | merchant |
 
 Passwords are stored as `scrypt$<salt_b64>$<hash_b64>` (regenerate via
-`scripts/gen-seed-hashes.cjs`).
+`scripts/db/gen-seed-hashes.cjs`).
 
 ---
 

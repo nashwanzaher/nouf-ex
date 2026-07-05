@@ -18,6 +18,12 @@ import { PgDb } from './db/pg-wrapper.cts';
 // dependency is already present indirectly through log, sendError
 // etc., so we keep it as a single line.
 import { db as pgDb } from './lib/shared.cts';
+// Re-export the standardized error catalog so route files can do:
+//   throw new HttpError(404, msg, { code: ErrorCodes.NOT_FOUND });
+// without an extra import line. The catalog lives in lib/error-codes.ts;
+// see that file for the full code list and message table.
+export { ErrorCodes, ErrorMessages, ErrorStatuses, isErrorCode } from './lib/error-codes.ts';
+export type { AuthRole, TokenPayload };
 
 // =========================================================================
 // 1. Request ID — generated per request, exposed in response + logs
@@ -402,7 +408,6 @@ export const notFoundHandler: RequestHandler = (req, res) => {
 // `./lib/shared.cts`. Importing here as a type-only keeps runtime
 // output zero-cost under `verbatimModuleSyntax: true`.
 import type { AuthRole, TokenPayload } from './lib/types.js';
-export type { AuthRole, TokenPayload };
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 

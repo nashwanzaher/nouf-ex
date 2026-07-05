@@ -15,34 +15,34 @@
  *     authoritative, see P0-5) and clears the cart.
  */
 
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { useTranslation } from 'react-i18next';
-import {
-	ShoppingBag,
-	MapPin,
-	Tag,
-	CreditCard,
-	CheckCircle2,
-	Loader2,
-	Plus,
-	AlertCircle,
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useApp, useAuth } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
-import { useAuth, useApp } from '@/context/AppContext';
-import {
-	useUserAddresses,
-	useShippingMethods,
-	usePlaceOrder,
-	useCouponValidation,
-} from '@/hooks/useApi';
-import { createAddress, clearCart } from '@/lib/api';
-import { formatMoney } from '@/lib/format';
 import type { Address, CouponValidation, ShippingMethod } from '@/hooks/useApi';
+import {
+    useCouponValidation,
+    usePlaceOrder,
+    useShippingMethods,
+    useUserAddresses,
+} from '@/hooks/useApi';
+import { clearCart, createAddress, formatApiError } from '@/lib/api';
+import { formatMoney } from '@/lib/format';
+import {
+    AlertCircle,
+    CheckCircle2,
+    CreditCard,
+    Loader2,
+    MapPin,
+    Plus,
+    ShoppingBag,
+    Tag,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router';
 
 export default function Checkout() {
 	const { t, i18n } = useTranslation();
@@ -166,10 +166,12 @@ export default function Checkout() {
 			});
 		} catch (err) {
 			addAppToast({
+				// R-15 §51: use formatApiError to surface the localized
+				// catalog message instead of the raw server string.
+				// Falls back to the i18n key if `err.code` is unknown.
 				message:
-					err instanceof Error
-						? err.message
-						: t('checkout.addressSaveFailed', 'Failed to save address'),
+					formatApiError(err) ||
+					t('checkout.addressSaveFailed', 'Failed to save address'),
 				type: 'error',
 			});
 		}

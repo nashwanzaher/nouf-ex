@@ -1,12 +1,13 @@
 import { Router, type Request, type Response } from 'express';
+import { ErrorCodes } from '../lib/error-codes.ts';
 import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	wishlistAddSchema,
-	wishlistItemIdParamSchema,
+    db,
+    requireAuth,
+    sendError,
+    sendSuccess,
+    validate,
+    wishlistAddSchema,
+    wishlistItemIdParamSchema,
 } from '../lib/shared.cts';
 
 export const wishlistRouter = Router();
@@ -33,7 +34,7 @@ wishlistRouter.get('/:userId', requireAuth, async (req: Request, res: Response) 
 wishlistRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(wishlistAddSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const { productId } = v.data;
 		const userId = req.user!.id;
 
@@ -51,7 +52,7 @@ wishlistRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			)
 			.run(userId, productId)) as { lastInsertRowid: number | null };
 		if (result.lastInsertRowid == null) {
-			return sendError(res, 'Failed to add to wishlist', 500, 'INSERT_FAILED');
+			return sendError(res, 'Failed to add to wishlist', 500, ErrorCodes.INSERT_FAILED);
 		}
 
 		return sendSuccess(res, { id: result.lastInsertRowid }, 'Added to wishlist');

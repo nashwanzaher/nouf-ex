@@ -1,7 +1,8 @@
 import { Router, type Request, type Response } from 'express';
+import type { PgTxDb } from '../db/pg-wrapper.cts';
+import { ErrorCodes } from '../lib/error-codes.ts';
 import { hasProvider, listProviders, selectProvider } from '../lib/payments/registry.cts';
 import type { PaymentMethod } from '../lib/payments/types.cts';
-import type { PgTxDb } from '../db/pg-wrapper.cts';
 import {
     authLimiter,
     db,
@@ -252,7 +253,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 				providerMeta ? JSON.stringify(providerMeta) : '{}',
 			)) as { lastInsertRowid: number | null };
 		if (result.lastInsertRowid == null) {
-			return sendError(res, 'Failed to record payment', 500, 'INSERT_FAILED');
+			return sendError(res, 'Failed to record payment', 500, ErrorCodes.INSERT_FAILED);
 		}
 		const newPaymentId: number = result.lastInsertRowid;
 

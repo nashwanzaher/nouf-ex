@@ -85,7 +85,9 @@ reported through normal GitHub Issues instead:
 - **Transport**: Production expects TLS termination at the proxy. HSTS set.
 - **CSP**: `securityHeaders` middleware sets a deny-by-default CSP with no
   `unsafe-eval`.
-- **Body limit**: `express.json({ limit: '10mb' })` to prevent OOM.
+- **Body limit**: `express.json({ limit: '1mb' })` to prevent OOM DoS (see
+  `app/server/index.ts` SECURITY comment — was tightened from 10MB after the
+  M-1 audit finding).
 - **Rate limiting**: per-user (100/60 s) for `/api/*` + per-IP (30/s) for
   `/health`/`/ready`.
 - **Input validation**: every route uses Zod `.strict()` — unknown fields

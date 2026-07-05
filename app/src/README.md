@@ -32,8 +32,7 @@ app/src/
 │   ├── api.ts                # Typed fetch wrapper + type-only contracts
 │   ├── format.ts             # formatMoney / formatMoneyCompact / parseMoney
 │   ├── utils.ts              # cn(), general-purpose helpers
-│   ├── cart-sync.ts          # Bridges AppContext ↔ CartContext ↔ /api/cart
-│   └── jsonData.ts           # JSON-data helpers (parse, build)
+│   └── cart-sync.ts          # Bridges AppContext ↔ CartContext ↔ /api/cart
 │
 ├── i18n/                     # i18next setup
 │   ├── config.ts             # Detector + fallback chain

@@ -267,7 +267,7 @@ jobs:
           cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
       - run: cd ${{ env.APP_DIR }} && npm ci --no-audit --no-fund
       - name: Run db:setup
-        run: node ../scripts/db-setup.cjs
+        run: node ../scripts/db/db-setup.cjs
       - name: Smoke (DB query via pg)
         run: |
           node -e "const{Client}=require('pg');(async()=>{
@@ -312,7 +312,7 @@ jobs:
           cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
       - run: cd ${{ env.APP_DIR }} && npm ci --no-audit --no-fund
       - name: Apply schema + seed
-        run: node ../scripts/db-setup.cjs
+        run: node ../scripts/db/db-setup.cjs
       - name: Boot API + smoke
         run: |
           set -e

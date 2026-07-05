@@ -25,12 +25,29 @@
  */
 import type AxeCore from 'axe-core';
 
+// `declare module 'vitest'` augments an external module's exported
+// types. ESLint's `no-unused-vars` does not understand module
+// augmentation semantics and reports each `interface Foo` and its
+// generic parameter as unused (the augmentation is consumed by
+// TypeScript at compile time, not by any code in this file). The
+// rule is disabled locally for this block only.
+//
+// We restore the original `interface Foo extends AxeMatchers {}`
+// (empty body) shape because that is the canonical TypeScript
+// interface-merging form. My earlier attempt to add a phantom
+// `_axeBrand?: T` member preserved the ESLint silence but BROKE the
+// TypeScript merge: the augmented `Assertion<AxeResults>` no longer
+// resolved `toHaveNoViolations` (TS sees the phantom member and
+// decides the augmentation is no longer compatible). The proper
+// fix is to keep the empty body AND tell ESLint to accept it.
 declare module 'vitest' {
 	interface AxeMatchers {
 		toHaveNoViolations(): void;
 	}
 
-	interface Assertion<T = any> extends AxeMatchers {}
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars
+	interface Assertion<T = unknown> extends AxeMatchers {}
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	interface AsymmetricMatchersContaining extends AxeMatchers {}
 }
 

@@ -1,20 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { MapPin, Plus, Edit3, Trash2, CheckCircle, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import CustomerSidebar from './CustomerSidebar';
 import { useAuth } from '@/context/AppContext';
-import {
-	getAddresses,
-	createAddress,
-	updateAddress,
-	deleteAddress as apiDeleteAddress,
-} from '@/lib/api';
 import type { Address as ApiAddress, CreateAddressBody } from '@/lib/api';
+import {
+    deleteAddress as apiDeleteAddress,
+    createAddress,
+    formatApiError,
+    getAddresses,
+    updateAddress,
+} from '@/lib/api';
+import { CheckCircle, Edit3, Home, Loader2, MapPin, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import CustomerSidebar from './CustomerSidebar';
 
 const yemeniGovernorates = [
 	'صنعاء',
@@ -149,8 +150,10 @@ export default function Addresses() {
 			setDialogOpen(false);
 		} catch (err) {
 			addToast({
+				// R-15 §51: localized message from ErrorCodes catalog.
 				message:
-					(err as Error)?.message ?? t('addresses.saveError', 'Could not save address'),
+					formatApiError(err) ||
+					t('addresses.saveError', 'Could not save address'),
 				type: 'error',
 			});
 		} finally {
@@ -165,7 +168,9 @@ export default function Addresses() {
 			addToast({ message: t('addresses.deleteSuccess', 'Address deleted'), type: 'success' });
 		} catch (err) {
 			addToast({
-				message: (err as Error)?.message ?? t('addresses.deleteError', 'Could not delete'),
+				message:
+					formatApiError(err) ||
+					t('addresses.deleteError', 'Could not delete'),
 				type: 'error',
 			});
 		}
@@ -199,8 +204,10 @@ export default function Addresses() {
 			});
 		} catch (err) {
 			addToast({
+				// R-15 §51: localized message from ErrorCodes catalog.
 				message:
-					(err as Error)?.message ?? t('addresses.saveError', 'Could not save address'),
+					formatApiError(err) ||
+					t('addresses.saveError', 'Could not save address'),
 				type: 'error',
 			});
 		}

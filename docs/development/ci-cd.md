@@ -119,7 +119,7 @@ suite runs **offline**. The DB-backed integration suite is in §2.4.
 
 **What:**
 1. Spins up a `postgres:17` service container.
-2. Runs `scripts/db-setup.cjs` to apply schema + seed.
+2. Runs `scripts/db/db-setup.cjs` to apply schema + seed.
 3. Counts users via the MCP server (smoke check).
 
 **Trigger:** push to main/develop, OR PRs with "db" in branch name.

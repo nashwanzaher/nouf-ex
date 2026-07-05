@@ -17,10 +17,9 @@ app/
 │   ├── App.tsx, App.css, main.tsx, index.css
 │   ├── components/            # Shared (Navbar, Footer, …) + ui/ (shadcn)
 │   ├── context/               # AppContext, CartContext
-│   ├── data/                  # Build-time JS fallbacks
 │   ├── hooks/                 # useApi, use-mobile
 │   ├── i18n/                  # locales/ar|en|zh.json + i18next setup
-│   ├── lib/                   # api.ts (client), jsonData.ts, utils.ts
+│   ├── lib/                   # api.ts (client), cart-sync.ts, format.ts, utils.ts
 │   └── pages/                 # All routed pages (Home, Search, admin/, …)
 │
 ├── tests/                     # Frontend tests + MSW mocks

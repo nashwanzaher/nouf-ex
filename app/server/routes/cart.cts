@@ -1,13 +1,14 @@
 import { Router, type Request, type Response } from 'express';
+import { ErrorCodes } from '../lib/error-codes.ts';
 import {
-	db,
-	sendSuccess,
-	sendError,
-	validate,
-	requireAuth,
-	cartAddSchema,
-	cartItemIdParamSchema,
-	cartItemUpdateSchema,
+    cartAddSchema,
+    cartItemIdParamSchema,
+    cartItemUpdateSchema,
+    db,
+    requireAuth,
+    sendError,
+    sendSuccess,
+    validate,
 } from '../lib/shared.cts';
 
 export const cartRouter = Router();
@@ -88,7 +89,7 @@ cartRouter.get('/:userId', requireAuth, async (req: Request, res: Response) => {
 cartRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(cartAddSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const { productId, quantity, variant } = v.data;
 		const userId = req.user!.id;
 
@@ -112,7 +113,7 @@ cartRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			lastInsertRowid: number | null;
 		};
 		if (result.lastInsertRowid == null) {
-			return sendError(res, 'Failed to add item to cart', 500, 'INSERT_FAILED');
+			return sendError(res, 'Failed to add item to cart', 500, ErrorCodes.INSERT_FAILED);
 		}
 		return sendSuccess(res, { id: result.lastInsertRowid }, 'Item added to cart');
 	} catch (err) {
@@ -125,7 +126,7 @@ cartRouter.patch('/:id', requireAuth, async (req: Request, res: Response) => {
 		const idV = validate(cartItemIdParamSchema, req.params);
 		if (!idV.ok) return sendError(res, 'Invalid cart item id: ' + idV.error, 400);
 		const v = validate(cartItemUpdateSchema, req.body);
-		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, 'VALIDATION_ERROR');
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const userId = req.user!.id;
 		const existing = (await db
 			.prepare('SELECT id, product_id FROM cart_items WHERE id = ? AND user_id = ?')

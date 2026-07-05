@@ -12,7 +12,8 @@
  * but this path bypasses the trigger and needs the explicit refresh).
  */
 import { Router, type Request, type Response } from 'express';
-import { db, sendSuccess, sendError, validate, requireAuth, reviewSchema } from '../lib/shared.cts';
+import { ErrorCodes } from '../lib/error-codes.ts';
+import { db, requireAuth, reviewSchema, sendError, sendSuccess, validate } from '../lib/shared.cts';
 
 export const reviewsRouter = Router();
 
@@ -96,7 +97,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			lastInsertRowid: number | null;
 		};
 		if (result.lastInsertRowid == null) {
-			return sendError(res, 'Failed to create review', 500, 'INSERT_FAILED');
+			return sendError(res, 'Failed to create review', 500, ErrorCodes.INSERT_FAILED);
 		}
 
 		// Refresh product rating. Visible reviews only.

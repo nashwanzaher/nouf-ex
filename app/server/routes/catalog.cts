@@ -17,8 +17,9 @@
  * to `GET /api/products`).
  */
 import { Router, type Request, type Response } from 'express';
-import { db, sendSuccess, sendError, log, getProductWithParsedFields } from '../lib/shared.cts';
-import { runSearch, logSearch, normalizeQuery } from '../lib/search.cts';
+import { logSearch, normalizeQuery, runSearch } from '../lib/search.cts';
+import { db, getProductWithParsedFields, log, sendError, sendSuccess } from '../lib/shared.cts';
+import middleware = require('../middleware');
 
 export const catalogRouter = Router();
 
@@ -388,7 +389,7 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 	try {
 		const q = String(req.query.q ?? '').trim();
 		if (!q) {
-			return sendError(res, 'Missing required query parameter: q', 400, 'VALIDATION_ERROR');
+			return sendError(res, 'Missing required query parameter: q', 400, middleware.ErrorCodes.VALIDATION_ERROR);
 		}
 		// The query logic — FTS ranking, filters, pagination, store
 		// join — lives in lib/search.cts so it can be unit-tested

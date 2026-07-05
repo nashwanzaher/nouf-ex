@@ -446,17 +446,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_one_active
     ON subscriptions(store_id) WHERE status IN ('active', 'past_due');
 
 -- =====================================================================
--- RATE_LIMIT_BUCKETS
+-- RATE_LIMIT_BUCKETS  — moved to migrations/0004_rate_limit_buckets.sql
 -- ----------------------------------------------------------------------------
--- Persistent state for the application's rate limiter (moved here from
--- the in-memory Map in server/index.ts). consume_rate_limit() and
--- cleanup_rate_limits() in functions.sql operate on this table.
+-- Single source of truth: db-setup.cjs applies `migrations/` AFTER this
+-- file. The CREATE TABLE used to live here AND in the migration — that
+-- was duplicated (DRY violation) and the exact same DDL ran twice per
+-- `db:setup` invocation. The migration is the canonical definition;
+-- this file stops at the prior statement (subscriptions). Touch the
+-- schema only via migrations going forward.
 -- =====================================================================
-CREATE TABLE IF NOT EXISTS rate_limit_buckets (
-    bucket    TEXT        NOT NULL,
-    key       TEXT        NOT NULL,
-    count     INTEGER     NOT NULL DEFAULT 0,
-    reset_at  TIMESTAMPTZ NOT NULL,
-    PRIMARY KEY (bucket, key)
-);
-CREATE INDEX IF NOT EXISTS idx_rate_limit_reset_at ON rate_limit_buckets(reset_at);

@@ -12,29 +12,30 @@
  * The conversation view runs markMessageRead() on each inbound
  * message as it appears.
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-	MessageSquare,
-	Send,
-	RefreshCw,
-	Search,
-	Inbox as InboxIcon,
-	Send as SentIcon,
-	Loader2,
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useApp, useAuth } from '@/context/AppContext';
 import {
-	getInbox,
-	getSent,
-	getConversation,
-	getUnreadMessageCount,
-	markMessageRead,
-	sendMessage,
-	type MessageThread,
-	type Message,
+    formatApiError,
+    getConversation,
+    getInbox,
+    getSent,
+    getUnreadMessageCount,
+    markMessageRead,
+    sendMessage,
+    type Message,
+    type MessageThread,
 } from '@/lib/api';
+import {
+    Inbox as InboxIcon,
+    Loader2,
+    MessageSquare,
+    RefreshCw,
+    Search,
+    Send,
+    Send as SentIcon,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type Folder = 'inbox' | 'sent';
 
@@ -75,8 +76,10 @@ export default function Messages() {
 			}
 			setUnreadCount(countRes.count);
 		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			addToast({ type: 'error', message: 'فشل تحميل الرسائل: ' + msg });
+			// R-15 §51: formatApiError returns a localized message
+			// (from `ErrorCodes` → `ErrorMessages`) instead of the
+			// raw server string. Falls back gracefully for unknown codes.
+			addToast({ type: 'error', message: formatApiError(err) });
 		} finally {
 			setLoadingThreads(false);
 		}
@@ -124,10 +127,9 @@ export default function Messages() {
 				}
 			} catch (err) {
 				if (cancelled) return;
-				const msg = err instanceof Error ? err.message : String(err);
 				addToast({
 					type: 'error',
-					message: 'فشل تحميل المحادثة: ' + msg,
+					message: formatApiError(err),
 				});
 			} finally {
 				if (!cancelled) setLoadingConversation(false);
@@ -179,8 +181,7 @@ export default function Messages() {
 			setComposeBody('');
 			await reloadThreads();
 		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			addToast({ type: 'error', message: 'فشل الإرسال: ' + msg });
+			addToast({ type: 'error', message: formatApiError(err) });
 		} finally {
 			setSending(false);
 		}

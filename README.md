@@ -23,10 +23,9 @@
 │   ├── src/                      # React 19 + Vite 7 frontend
 │   │   ├── components/           # Layout, Navbar, Footer, … + ui/ (shadcn)
 │   │   ├── context/              # AppContext (i18n + auth), CartContext
-│   │   ├── data/                 # build-time JS fallbacks
 │   │   ├── hooks/                # useApi, use-mobile
 │   │   ├── i18n/                 # locales/ar|en|zh.json + i18next setup
-│   │   ├── lib/                  # api.ts (client), jsonData.ts, utils.ts
+│   │   ├── lib/                  # api.ts (client), utils.ts
 │   │   └── pages/                # Home, Search, ProductDetail, StorePage, …
 │   │       ├── admin/  auth/  customer/  seller/  Home/
 │   ├── server/                   # Express 5 API (extracted from app/)
@@ -42,11 +41,11 @@
 │   ├── schema.sql                # 16 base tables
 │   ├── schema-extra.sql          # 9 extra tables (payments, coupons, refunds, …)
 │   ├── views.sql                 # 4 read-only views (security_invoker)
-│   ├── functions.sql             # 7 PL/pgSQL trigger functions
-│   ├── triggers.sql              # 9 trigger definitions
-│   ├── roles.sql                 # noufex_app + noufex_owner + noufex_readonly
-│   ├── seed.sql                  # Idempotent demo data (real scrypt hashes)
-│   └── migrations/               # incremental schema changes (NNNN_*.sql)
+│   ├── functions.sql             # PL/pgSQL trigger functions + cleanup helpers
+│   ├── triggers.sql              # business-logic triggers (32 total in DB)
+│   ├── roles.sql                 # 4 PostgreSQL roles + GRANTs (postgres, noufex_app, noufex_owner, noufex_readonly)
+│   ├── seed.sql                  # Idempotent demo data (real scrypt hashes, gated by `noufex.allow_seed`)
+│   └── migrations/               # incremental schema changes (0001→0024; 25 applied versions)
 │
 ├── scripts/                      # Project-level helpers
 │   ├── README.md
@@ -69,12 +68,13 @@
 
 | Layer        | Tech                                                                                |
 | ------------ | ----------------------------------------------------------------------------------- |
-| Database     | PostgreSQL 17 (external, database `noufex_db`)                                      |
-| API          | Node 20 + Express 5 + `pg`, scrypt hashing, zod validation, in-memory rate limiting  |
+| Database     | PostgreSQL 17 (external, database `noufex_db`) — 32 tables, 32 triggers, 4 views  |
+| API          | Node 20 + Express 5 + `pg`, scrypt hashing, zod validation, DB-backed rate limiting |
 | Frontend     | React 19 + React Router 7 + Vite 7 + Tailwind 3 + shadcn/ui                         |
-| i18n         | i18next — Arabic (default) / English / Chinese                                       |
-| Tests        | Vitest 2 + supertest; `pg` is mocked globally                                       |
+| i18n         | i18next — Arabic (default, RTL) / English / Chinese                                 |
+| Tests        | Vitest 4 + supertest + axe-core + MSW; `pg` is mocked globally                      |
 | Container    | `node:20-alpine` + tini PID 1                                                       |
+| Migrations   | 25 applied (0001 baseline → 0024_production_hardening; idempotent, all use IF NOT EXISTS/OR REPLACE)|
 
 ## Quick start (4 commands)
 
@@ -114,6 +114,7 @@ Full instructions in [docs/getting-started.md](docs/getting-started.md).
 
 | I want to …                              | Read                                                            |
 | ---------------------------------------- | --------------------------------------------------------------- |
+| Understand the project structure         | [docs/STRUCTURE.md](docs/STRUCTURE.md)                          |
 | Get the project running                  | [docs/development/getting-started.md](docs/development/getting-started.md) |
 | Run an order end-to-end (tutorial)       | [docs/tutorials/run-an-order-end-to-end.md](docs/tutorials/run-an-order-end-to-end.md) |
 | Understand the architecture              | [docs/architecture/overview.md](docs/architecture/overview.md) |
@@ -126,10 +127,11 @@ Full instructions in [docs/getting-started.md](docs/getting-started.md).
 | Day-to-day dev workflow                  | [docs/development/workflow.md](docs/development/workflow.md)    |
 | Code style / i18n / git workflow         | [docs/development/conventions.md](docs/development/conventions.md) |
 | Build the docs site                      | [docs/BUILD.md](docs/BUILD.md)                                   |
-| See what's planned                       | [docs/planning/roadmap.md](docs/planning/roadmap.md)            |
+| See the canonical execution plan         | [docs/planning/MIGRATION_EXECUTION_PLAN.md](docs/planning/MIGRATION_EXECUTION_PLAN.md) |
 | Read the risk register / ADRs            | [docs/planning/risks.md](docs/planning/risks.md) · [docs/planning/adr/](docs/planning/adr/) |
 | Read the original Alibaba/Taobao research | [archive/research/](archive/research/)                          |
 | Read past code/UX reviews                | [archive/audit/](archive/audit/)                                |
+| Browse 60 archived historical files      | [archive/README.md](archive/README.md)                          |
 
 ## Contributing
 

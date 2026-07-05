@@ -1793,8 +1793,8 @@ The agent MUST follow these rules for EVERY action on this repository:
 3. **Code Review Checklist** — every PR must pass:
    - [ ] `npm run typecheck` — 0 errors
    - [ ] `npm run lint` — 0 errors
-   - [ ] `npm test` — all 814+ tests pass
-   - [ ] `npm run test:a11y` — all 16+ a11y tests pass
+   - [ ] `npm test` — all ~720 tests pass (499 server + 208 frontend + 13 a11y)
+   - [ ] `npm run test:a11y` — all 13 a11y tests pass
    - [ ] `npm run build` — 0 errors
    - [ ] Conventional Commits format
    - [ ] Diátaxis-compliant docs (if docs added)
@@ -2106,7 +2106,7 @@ Build:
 
 Testing:
   Framework: Vitest 4.1.9
-  Tests: 732 passing, 3 skipped (55 files)
+  Tests: ~720 passing, 3 skipped (65 files: 32 server + 30 frontend + 3 a11y)
   Coverage: 80%+ target
 ```
 
@@ -2149,7 +2149,7 @@ Standards Applied:
 Build Status:
   TypeScript: 0 errors
   ESLint: 0 issues
-  Tests: 732 passing
+  Tests: ~720 passing (verified 2026-07-04 — see audits)
   Build: OK
   Server boot smoke: passing
 

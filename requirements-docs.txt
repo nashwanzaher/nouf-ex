@@ -6,7 +6,7 @@ mkdocs==1.6.1                       # core static-site generator
 mkdocs-material==9.5.49             # theme (Diátaxis-friendly, Material 3)
 mkdocs-minify-plugin==0.8.0         # HTML/CSS/JS minification
 mkdocs-git-revision-date-localized-plugin==1.3.0  # "last updated" per page
-mkdocs-include-markdown-plugin==6.2.1   # cross-file include snippets
+mkdocs-include-markdown-plugin==7.1.8   # cross-file include snippets
 mkdocs-redirects==1.2.1             # friendly URL redirects
 # Useful for the build (used by mkdocs-include-markdown-plugin).
 markdown>=3.6

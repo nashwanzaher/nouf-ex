@@ -1,0 +1,67 @@
+# EditorConfig: https://EditorConfig.org
+#
+# Top-level file. Some tools auto-discover per-directory .editorconfig
+# files (VS Code needs the EditorConfig extension, JetBrains IDEs have
+# it built-in, vim needs the editorconfig-vim plugin).
+#
+# Sections cascade — more specific overrides win. Project standard:
+#   - UTF-8, LF, final newline, trim trailing whitespace.
+#   - 2-space indent (TS/JS/JSON/YAML/HTML/SCSS/MD).
+#   - 4-space indent for Python (legacy) and shell scripts.
+#   - Tabs preserved in Makefiles (Makefile rule) — see override below.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+# Markdown: trailing whitespace matters (2 spaces = <br/>).
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Makefiles require real TABS, not spaces.
+[Makefile]
+indent_style = tab
+
+# Shell scripts: follow Google's shell style — 2 spaces, 80 cols.
+[*.{sh,bash}]
+indent_size = 2
+max_line_length = 80
+
+# JSON: keep tidy at 2 spaces.
+[*.json]
+indent_size = 2
+
+# YAML: standard 2 spaces.
+[*.{yaml,yml}]
+indent_size = 2
+
+# SQL: 2 spaces, uppercase keywords by convention but enforced by linters, not EditorConfig.
+[*.sql]
+indent_size = 2
+
+# PowerShell: 4 spaces (PowerShell community convention).
+[*.ps1]
+indent_size = 4
+
+# Python: 4 spaces (PEP 8).
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# Go: tabs, Go fmt standard.
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Batch / Windows cmd: not auto-formatted — preserve as-is.
+[*.{bat,cmd}]
+indent_style = space
+indent_size = 4
+end_of_line = crlf

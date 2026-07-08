@@ -14,7 +14,7 @@
  * Implementation note: instead of `vi.mock('@/lib/api', ...) + vi.mock(
  * '@/hooks/useApi', ...) + globalThis.fetch = vi.fn().mockResolvedValue([])`
  * (the old "everything returns empty" pattern), we now route every
- * fetch through MSW handlers via `tests/mocks/fetch-spy.ts`. The handlers
+ * fetch through MSW handlers via `mocks/fetch-spy.ts`. The handlers
  * mirror what the real backend returns, so a page that doesn't handle a
  * field correctly will fail with "unhandled GET /api/..." or a render
  * crash — both real, observable bugs.
@@ -24,7 +24,7 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vites
 import { render, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { Suspense, type ReactNode } from 'react';
-import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 import { AppProvider } from '@/context/AppContext';
 import { CartProvider } from '@/context/CartContext';
 

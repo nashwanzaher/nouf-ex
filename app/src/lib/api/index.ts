@@ -23,77 +23,78 @@ export type { ErrorCode } from './error-codes';
 // `formatApiError(err)` is the one-shot helper most call sites want.
 // `getErrorMessage(code, lang)` is for component-specific overrides.
 export { detectLang, formatApiError, getErrorMessage } from './error-messages';
+export { readStoredLang } from './lang-storage';
 export type { SupportedLang } from './error-messages';
 
 // ─── Shared types ───────────────────────────────────────────
 export type {
-    Address,
-    AdminAuditLogEntry,
-    AdminAuditLogResponse,
-    AdminDispute,
-    AdminDisputeListResponse,
-    AdminDisputeUpdateBody,
-    AdminGovernorate,
-    AdminGovernorateResponse,
-    AdminOrder,
-    AdminOrderListResponse,
-    AdminOrderStatusUpdateBody,
-    AdminProduct,
-    AdminProductListResponse,
-    AdminProductUpdateBody,
-    AdminStats,
-    AdminStore,
-    AdminStoreListResponse,
-    AdminStoreUpdateBody,
-    AdminTimeSeriesPoint,
-    AdminTimeSeriesResponse,
-    AdminUser,
-    AdminUserListResponse,
-    AdminUserUpdateBody,
-    AuthResponse,
-    CartItem,
-    Category,
-    CategoryWithProducts,
-    CouponValidation,
-    HomeStats,
-    InboxResponse,
-    Message,
-    MessageThread,
-    Notification,
-    Order,
-    OrderItem,
-    OrderWithItems,
-    Payment,
-    PaymentProviderListEntry,
-    Product,
-    ProductFilters,
-    ProductImage,
-    ProductWithDetails,
-    Refund,
-    Review,
-    ReviewFilters,
-    SellerAnalytics,
-    SellerBalance,
-    SellerDashboard,
-    SellerInventoryItem,
-    SellerOrder,
-    SellerOrderWithItems,
-    SellerPayout,
-    SellerProductCreate,
-    SellerStore,
-    SellerStoreUpdate,
-    ShippingMethod,
-    Store,
-    StoreFollowStatus,
-    StoreWithProducts,
-    SystemHealth,
-    SystemHealthCheck,
-    TwoFactorEnableResponse,
-    TwoFactorSetupResponse,
-    TwoFactorVerifyResponse,
-    UpdateProfileBody,
-    User,
-    WishlistItem
+	Address,
+	AdminAuditLogEntry,
+	AdminAuditLogResponse,
+	AdminDispute,
+	AdminDisputeListResponse,
+	AdminDisputeUpdateBody,
+	AdminGovernorate,
+	AdminGovernorateResponse,
+	AdminOrder,
+	AdminOrderListResponse,
+	AdminOrderStatusUpdateBody,
+	AdminProduct,
+	AdminProductListResponse,
+	AdminProductUpdateBody,
+	AdminStats,
+	AdminStore,
+	AdminStoreListResponse,
+	AdminStoreUpdateBody,
+	AdminTimeSeriesPoint,
+	AdminTimeSeriesResponse,
+	AdminUser,
+	AdminUserListResponse,
+	AdminUserUpdateBody,
+	AuthResponse,
+	CartItem,
+	Category,
+	CategoryWithProducts,
+	CouponValidation,
+	HomeStats,
+	InboxResponse,
+	Message,
+	MessageThread,
+	Notification,
+	Order,
+	OrderItem,
+	OrderWithItems,
+	Payment,
+	PaymentProviderListEntry,
+	Product,
+	ProductFilters,
+	ProductImage,
+	ProductWithDetails,
+	Refund,
+	Review,
+	ReviewFilters,
+	SellerAnalytics,
+	SellerBalance,
+	SellerDashboard,
+	SellerInventoryItem,
+	SellerOrder,
+	SellerOrderWithItems,
+	SellerPayout,
+	SellerProductCreate,
+	SellerStore,
+	SellerStoreUpdate,
+	ShippingMethod,
+	Store,
+	StoreFollowStatus,
+	StoreWithProducts,
+	SystemHealth,
+	SystemHealthCheck,
+	TwoFactorEnableResponse,
+	TwoFactorSetupResponse,
+	TwoFactorVerifyResponse,
+	UpdateProfileBody,
+	User,
+	WishlistItem,
 } from './types';
 
 // ─── Body types ─────────────────────────────────────────────
@@ -105,16 +106,16 @@ export type { CreateRefundBody, ResolveRefundBody } from './refunds';
 
 // ─── Catalog: products, stores, categories, search ─────────
 export {
-    getCategories,
-    getCategory,
-    getDeals,
-    getFeaturedProducts,
-    getProduct,
-    getProducts,
-    getStore,
-    getStoreReviews,
-    getStores,
-    searchProducts
+	getCategories,
+	getCategory,
+	getDeals,
+	getFeaturedProducts,
+	getProduct,
+	getProducts,
+	getStore,
+	getStoreReviews,
+	getStores,
+	searchProducts,
 } from './products';
 
 // ─── Reviews ────────────────────────────────────────────────
@@ -125,37 +126,37 @@ export { createOrder, getOrder, getOrders } from './orders';
 
 // ─── Cart, Wishlist, Store followers ────────────────────────
 export {
-    addToCart,
-    addToWishlist,
-    checkStoreFollowStatus,
-    clearCart,
-    getCart,
-    getCartCount,
-    getWishlist,
-    removeFromCart,
-    removeFromWishlist,
-    updateCartItem
+	addToCart,
+	addToWishlist,
+	checkStoreFollowStatus,
+	clearCart,
+	getCart,
+	getCartCount,
+	getWishlist,
+	removeFromCart,
+	removeFromWishlist,
+	updateCartItem,
 } from './cart';
 
 // ─── Auth + 2FA ─────────────────────────────────────────────
 export {
-    changePassword,
-    disable2FA,
-    enable2FA,
-    getCurrentUser,
-    login,
-    regenerateBackupCodes,
-    register,
-    setup2FA,
-    updateProfile,
-    verify2FA
+	changePassword,
+	disable2FA,
+	enable2FA,
+	getCurrentUser,
+	login,
+	regenerateBackupCodes,
+	register,
+	setup2FA,
+	updateProfile,
+	verify2FA,
 } from './auth';
 
 // ─── Notifications ──────────────────────────────────────────
 export {
-    getNotifications,
-    getUnreadNotificationCount,
-    markNotificationAsRead
+	getNotifications,
+	getUnreadNotificationCount,
+	markNotificationAsRead,
 } from './notifications';
 
 // ─── Addresses ──────────────────────────────────────────────
@@ -168,24 +169,19 @@ export { getShippingMethods } from './shipping';
 export { redeemCoupon, validateCoupon } from './coupons';
 
 // ─── Payments ───────────────────────────────────────────────
-export {
-    confirmPayment,
-    createPayment,
-    getOrderPayments,
-    getPaymentProviders
-} from './payments';
+export { confirmPayment, createPayment, getOrderPayments, getPaymentProviders } from './payments';
 
 // ─── Refunds ────────────────────────────────────────────────
 export { createRefund, resolveRefund } from './refunds';
 
 // ─── Messaging ──────────────────────────────────────────────
 export {
-    getConversation,
-    getInbox,
-    getSent,
-    getUnreadMessageCount,
-    markMessageRead,
-    sendMessage
+	getConversation,
+	getInbox,
+	getSent,
+	getUnreadMessageCount,
+	markMessageRead,
+	sendMessage,
 } from './messages';
 
 // ─── System (home stats + readiness probe) ─────────────────
@@ -193,37 +189,37 @@ export { getHomeStats, getSystemHealth } from './system';
 
 // ─── Seller (merchant) ──────────────────────────────────────
 export {
-    addSellerProductImage,
-    createSellerProduct,
-    deleteSellerProduct,
-    getSellerAnalytics,
-    getSellerDashboard,
-    getSellerInventory,
-    getSellerOrder,
-    getSellerOrders,
-    getSellerPayouts,
-    getSellerProduct,
-    getSellerProducts,
-    getSellerStoreMe,
-    updateSellerOrderStatus,
-    updateSellerProduct,
-    updateSellerStore
+	addSellerProductImage,
+	createSellerProduct,
+	deleteSellerProduct,
+	getSellerAnalytics,
+	getSellerDashboard,
+	getSellerInventory,
+	getSellerOrder,
+	getSellerOrders,
+	getSellerPayouts,
+	getSellerProduct,
+	getSellerProducts,
+	getSellerStoreMe,
+	updateSellerOrderStatus,
+	updateSellerProduct,
+	updateSellerStore,
 } from './seller';
 
 // ─── Admin ──────────────────────────────────────────────────
 export {
-    getAdminAuditLog,
-    getAdminDisputes,
-    getAdminGovernorate,
-    getAdminOrders,
-    getAdminProducts,
-    getAdminStats,
-    getAdminStores,
-    getAdminTimeSeries,
-    getAdminUsers,
-    patchAdminDispute,
-    patchAdminOrderStatus,
-    patchAdminProduct,
-    patchAdminStore,
-    patchAdminUser
+	getAdminAuditLog,
+	getAdminDisputes,
+	getAdminGovernorate,
+	getAdminOrders,
+	getAdminProducts,
+	getAdminStats,
+	getAdminStores,
+	getAdminTimeSeries,
+	getAdminUsers,
+	patchAdminDispute,
+	patchAdminOrderStatus,
+	patchAdminProduct,
+	patchAdminStore,
+	patchAdminUser,
 } from './admin';

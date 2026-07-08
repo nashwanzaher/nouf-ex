@@ -22,6 +22,7 @@
 
 import type { ErrorCode } from './error-codes';
 import { ErrorCodes, isErrorCode } from './error-codes';
+import { readStoredLang } from './lang-storage';
 
 export type SupportedLang = 'ar' | 'en' | 'zh';
 
@@ -152,18 +153,17 @@ export function getErrorMessage(code: string | undefined, lang: SupportedLang): 
 }
 
 /**
- * Convenience: read the user's language from localStorage (where
- * `src/i18n/index.ts` writes it via `i18next-browser-languagedetector`).
+ * Read the user's stored language (via `lang-storage.ts`) and normalise
+ * to one of the three supported values. Indirected through the
+ * `lang-storage` module so tests can stub the read without depending on
+ * DOM internals (happy-dom's localStorage does NOT proxy through
+ * `Storage.prototype`).
+ *
  * Falls back to `'ar'` (the app's `fallbackLng` per `src/i18n/index.ts:11`).
  */
 export function detectLang(): SupportedLang {
-	if (typeof window === 'undefined') return 'ar';
-	try {
-		const v = window.localStorage.getItem('i18nextLng');
-		return v === 'ar' || v === 'en' || v === 'zh' ? v : 'ar';
-	} catch {
-		return 'ar';
-	}
+	const v = readStoredLang();
+	return v === 'ar' || v === 'en' || v === 'zh' ? v : 'ar';
 }
 
 /**
@@ -180,7 +180,12 @@ export function detectLang(): SupportedLang {
 export function formatApiError(err: unknown, lang?: SupportedLang): string {
 	const effectiveLang = lang ?? detectLang();
 	// Type guard first to access `code` safely.
-	if (err && typeof err === 'object' && 'code' in err && typeof (err as { code: unknown }).code === 'string') {
+	if (
+		err &&
+		typeof err === 'object' &&
+		'code' in err &&
+		typeof (err as { code: unknown }).code === 'string'
+	) {
 		const code = (err as { code: string }).code;
 		// Prefer the localized message for known codes; fall back to the
 		// server's `message` for unknown codes so users still see

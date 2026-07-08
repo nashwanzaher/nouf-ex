@@ -16,7 +16,7 @@
  */
 import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readLocalCart, clearLocalCart, syncLocalCartToServer, syncOnLogin } from '../cart-sync';
-import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());
 afterAll(() => uninstallFetchSpy());

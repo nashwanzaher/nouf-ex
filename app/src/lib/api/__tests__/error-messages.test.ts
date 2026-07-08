@@ -12,18 +12,16 @@
  *     `err.code` nor `err.message` is usable.
  *   - `detectLang()` reads from localStorage and falls back to 'ar'.
  *
- * These tests run under the `vitest.dom` project
- * (`include: ['src/**/__tests__/**/*.test.{ts,tsx}']`) and require no
- * network or DB — they're pure unit tests of the catalog + helpers.
+ * These tests run under the vitest.dom project. The include glob
+ * covers all test.ts and test.tsx files under the src test directories.
+ * They require no network or DB — they're pure unit tests of the
+ * catalog + helpers.
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, ErrorCodes } from '../index';
-import {
-	detectLang,
-	formatApiError,
-	getErrorMessage,
-} from '../error-messages';
+import * as langStorage from '../lang-storage';
+import { detectLang, formatApiError, getErrorMessage } from '../error-messages';
 
 describe('error-messages catalog completeness', () => {
 	it('has a non-empty translation for every ErrorCode in every language', () => {
@@ -61,34 +59,48 @@ describe('getErrorMessage', () => {
 
 	it('returns the default fallback for null/undefined codes', () => {
 		expect(getErrorMessage(undefined, 'en')).toMatch(/something went wrong/i);
-		expect(getErrorMessage(null, 'en')).toMatch(/something went wrong/i);
+		// `null` falls into the unknown-code branch the same way
+		// `undefined` does at runtime, so accept both via `undefined`.
+		expect(getErrorMessage(null as unknown as undefined, 'en')).toMatch(
+			/something went wrong/i,
+		);
 	});
 });
 
 describe('detectLang', () => {
-	beforeEach(() => {
-		// Ensure no localStorage bleed between tests
-		vi.spyOn(Storage.prototype, 'getItem');
-	});
+	// Mock `readStoredLang` in its own module (lang-storage). We avoid
+	// mocking `Storage.prototype` because happy-dom's localStorage does
+	// NOT proxy through `Storage.prototype`, so spying on the prototype
+	// has no observable effect — see `lang-storage.ts` JSDoc.
+	let spy: ReturnType<typeof vi.spyOn> | null = null;
 
 	afterEach(() => {
-		vi.restoreAllMocks();
+		spy?.mockRestore();
+		spy = null;
 	});
 
-	it("returns 'ar' when localStorage is unavailable (SSR / private mode)", () => {
-		vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-			throw new Error('localStorage blocked');
-		});
+	it("returns 'ar' when readStoredLang returns null (SSR / private mode)", () => {
+		spy = vi.spyOn(langStorage, 'readStoredLang').mockReturnValue(null);
 		expect(detectLang()).toBe('ar');
 	});
 
 	it("returns the stored language when it's one of the 3 supported", () => {
-		vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('zh');
+		spy = vi.spyOn(langStorage, 'readStoredLang').mockReturnValue('zh');
 		expect(detectLang()).toBe('zh');
 	});
 
 	it("returns 'ar' when the stored language is unsupported (e.g. 'fr')", () => {
-		vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('fr');
+		spy = vi.spyOn(langStorage, 'readStoredLang').mockReturnValue('fr');
+		expect(detectLang()).toBe('ar');
+	});
+
+	it('returns en when stored value is en', () => {
+		spy = vi.spyOn(langStorage, 'readStoredLang').mockReturnValue('en');
+		expect(detectLang()).toBe('en');
+	});
+
+	it('returns ar when stored value is ar', () => {
+		spy = vi.spyOn(langStorage, 'readStoredLang').mockReturnValue('ar');
 		expect(detectLang()).toBe('ar');
 	});
 });
@@ -118,18 +130,18 @@ describe('formatApiError', () => {
 	});
 
 	it('uses detectLang() when no lang is provided', () => {
-		vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('zh');
+		vi.spyOn(langStorage, 'readStoredLang').mockReturnValue('zh');
 		const err = new ApiError('Server says hi', 404, ErrorCodes.NOT_FOUND);
 		expect(formatApiError(err)).toMatch(/未找到/);
 	});
 
 	it('explicit lang override wins over detectLang()', () => {
-		vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('zh');
+		vi.spyOn(langStorage, 'readStoredLang').mockReturnValue('zh');
 		const err = new ApiError('Server says hi', 404, ErrorCodes.NOT_FOUND);
 		expect(formatApiError(err, 'en')).toMatch(/not found/i);
 	});
 
-	it('handles array of codes via isErrorCode (the caller pattern)', () => {
+	it('handles array of codes via isErrorCode (the caller pattern)', async () => {
 		const err = new ApiError('Auth required', 401, ErrorCodes.UNAUTHORIZED);
 		// The recommended pattern uses isErrorCode + formatApiError together.
 		const { isErrorCode } = await import('../index');

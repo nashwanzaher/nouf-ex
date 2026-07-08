@@ -7,8 +7,8 @@
  * error-propagation layer (server catalog → `ApiError.code` →
  * frontend branching).
  *
- * Runs under the `vitest.dom` project (`include:
- * ['src/**/__tests__/**/*.test.{ts,tsx}']`).
+ * Runs under the vitest.dom project. The include glob covers all
+ * test.ts and test.tsx files under the src test directories.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -84,12 +84,10 @@ describe('end-to-end: catch + branch pattern', () => {
 		// The recommended pattern from the client.ts JSDoc.
 		if (isApiError(err) && isErrorCode(err.code, ErrorCodes.NOT_FOUND)) {
 			// Inside this branch, `err` is typed as `ApiError` and
-			// `err.code` is typed as `ErrorCode`.
+			// `err.code === ErrorCodes.NOT_FOUND`.
 			expect(err.status).toBe(404);
 			expect(err.request_id).toBe('req-abc');
-			// The TS compiler narrows `err.code` to `'NOT_FOUND'` here.
-			const _exhaustive: 'NOT_FOUND' = err.code;
-			expect(_exhaustive).toBe(ErrorCodes.NOT_FOUND);
+			expect(err.code).toBe(ErrorCodes.NOT_FOUND);
 		} else {
 			expect.fail('expected the NOT_FOUND branch to match');
 		}

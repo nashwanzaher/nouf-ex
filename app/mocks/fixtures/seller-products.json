@@ -1,0 +1,38 @@
+{
+	"items": [
+		{
+			"id": 1,
+			"store_id": 1,
+			"category_id": 1,
+			"name_ar": "سماعات لاسلكية",
+			"name_en": "Wireless Headphones",
+			"name_zh": "无线耳机",
+			"description": "صوت عالي الجودة",
+			"description_en": "High quality sound",
+			"description_zh": "高品质音效",
+			"price": 12500,
+			"original_price": 15000,
+			"currency": "YER",
+			"moq": 1,
+			"stock": 50,
+			"sold_count": 124,
+			"rating": 4.8,
+			"review_count": 24,
+			"features": [],
+			"specifications": {},
+			"badges": ["best_seller"],
+			"colors": [],
+			"sizes": [],
+			"main_image": "/category-electronics.jpg",
+			"is_active": 1,
+			"is_featured": 1,
+			"deal_discount": 0,
+			"deal_ends_at": "",
+			"created_at": "2024-01-01T00:00:00Z",
+			"updated_at": "2026-06-29T08:30:00Z"
+		}
+	],
+	"total": 1,
+	"limit": 50,
+	"offset": 0
+}

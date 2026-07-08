@@ -12,7 +12,7 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());
 afterAll(() => uninstallFetchSpy());

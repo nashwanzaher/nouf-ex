@@ -133,7 +133,7 @@ describe('i18n locale consistency', () => {
 	describe('summary', () => {
 		it('reports the size of each locale', () => {
 			// Output for CI logs — visible only when --reporter=verbose.
-			// eslint-disable-next-line no-console
+			 
 			console.log(
 				`\n[i18n] ar.json: ${arKeys.size} keys | en.json: ${enKeys.size} keys | zh.json: ${zhKeys.size} keys`,
 			);

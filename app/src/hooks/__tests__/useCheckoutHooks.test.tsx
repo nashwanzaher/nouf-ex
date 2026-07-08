@@ -16,7 +16,7 @@
  */
 import { describe, expect, it, beforeAll, afterAll, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 import {
 	usePlaceOrder,
 	useCouponValidation,

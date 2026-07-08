@@ -16,7 +16,7 @@
 
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 import { useProducts, useProduct, useCategories, useHomeStats } from '../useApi';
 
 beforeAll(() => installFetchSpy());

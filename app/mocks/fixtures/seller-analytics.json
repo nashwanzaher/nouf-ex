@@ -1,0 +1,10 @@
+{
+	"store_id": 1,
+	"total_orders": 145,
+	"delivered_orders": 132,
+	"cancelled_orders": 4,
+	"unique_customers": 87,
+	"today_orders": 3,
+	"gross_revenue": 1845000,
+	"total_revenue": 1654000
+}

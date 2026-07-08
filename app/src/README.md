@@ -52,7 +52,7 @@ app/src/
 │   ├── SearchResults.tsx
 │   └── NotFound.tsx
 │
-└── tests/                    # Test setup (loaded by vitest.config.ts)
+└── (test setup lives in `app/mocks/` — see app/vitest.config.ts)
 ```
 
 ## Path conventions

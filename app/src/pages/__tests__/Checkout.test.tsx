@@ -17,7 +17,7 @@
 import { describe, expect, it, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { installFetchSpy, uninstallFetchSpy } from '../../../tests/mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());
 afterAll(() => uninstallFetchSpy());

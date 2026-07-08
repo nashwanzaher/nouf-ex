@@ -93,8 +93,11 @@ export { API_BASE };
 // Re-export the frontend-mirrored catalog so call sites can do:
 //   import { ErrorCodes, isErrorCode } from '@/lib/api';
 // The mirror is in `./error-codes.ts` (see that file for the sync rule).
-    export { ErrorCodes, ErrorStatuses, isErrorCode } from './error-codes';
-import { isErrorCode as _isErrorCode } from './error-codes';
+// Note: we import the local `isErrorCode` under a private alias to
+// avoid the public re-export below colliding with the
+// helper in `./error-codes.ts` (it has a different signature).
+  import { isErrorCode as _isErrorCode } from './error-codes';
+export { ErrorCodes, ErrorStatuses } from './error-codes';
 
 // ─── Error helpers (R-15 follow-up §50) ──────────────────
 // These let call sites branch on the stable machine-readable `code`

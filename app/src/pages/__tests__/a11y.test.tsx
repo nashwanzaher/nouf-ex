@@ -66,7 +66,7 @@ import { axe } from 'vitest-axe';
 import {
     installFetchSpy,
     uninstallFetchSpy,
-} from '../../../tests/mocks/fetch-spy';
+} from '../../../mocks/fetch-spy';
 
 // Shared axe options — see the file header for the rationale.
 const axeOptions: AxeOptions = {

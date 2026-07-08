@@ -82,13 +82,16 @@ function loadInitialToken(): string | null {
 // localStorage is read at *component mount* time, not at module-load time.
 // Otherwise a user who logs in or changes language in another tab would never
 // see that change reflected on the next page load.
-const initialStateFactory = (): AppState => ({
-	lang: loadInitialLang(),
-	dir: 'rtl',
-	user: loadInitialUser(),
-	token: loadInitialToken(),
-	toasts: [],
-});
+const initialStateFactory = (): AppState => {
+	const lang = loadInitialLang();
+	return {
+		lang,
+		dir: lang === 'ar' ? 'rtl' : 'ltr',
+		user: loadInitialUser(),
+		token: loadInitialToken(),
+		toasts: [],
+	};
+};
 
 function appReducer(state: AppState, action: Action): AppState {
 	switch (action.type) {

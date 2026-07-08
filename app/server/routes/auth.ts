@@ -5,6 +5,7 @@ import {
     db,
     hashPassword,
     HttpError,
+    log,
     loginSchema,
     passwordChangeSchema,
     profileUpdateSchema,
@@ -90,7 +91,7 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 			const { onWelcome } = await import('../lib/notifications/events.ts');
 			await onWelcome({ userId, name });
 		} catch (notifyErr) {
-			console.error('[auth.register] welcome notification failed:', notifyErr);
+			log.error({ msg: 'auth.register.notification_failed', error: (notifyErr as Error).message });
 		}
 
 		sendSuccess(res, { user: safeUser, token }, 201, 'User registered successfully');

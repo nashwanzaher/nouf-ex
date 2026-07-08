@@ -6,6 +6,7 @@ import type { PaymentMethod } from '../lib/payments/types.ts';
 import {
     authLimiter,
     db,
+    log,
     paymentCreateSchema,
     rateLimit,
     requireAuth,
@@ -155,13 +156,11 @@ paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res
 				// the checkout flow — rare but documented). The
 				// webhook is still 200: the dedup row prevents
 				// future retries from re-applying.
-				console.warn(
-					JSON.stringify({
-						event: 'webhook_no_local_payment',
-						method,
-						txn_id: verification.transactionId,
-					}),
-				);
+				log.warn({
+				msg: 'payments.webhook_no_local_payment',
+				method,
+				txn_id: verification.transactionId,
+			});
 			}
 		});
 
@@ -390,7 +389,7 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 				});
 			}
 		} catch (notifyErr) {
-			console.error('[payments] notification dispatch failed:', notifyErr);
+			log.error({ msg: 'payments.notification_dispatch_failed', error: (notifyErr as Error).message });
 		}
 
 		sendSuccess(res, { order_id: result!.order_id }, 'Payment confirmed');

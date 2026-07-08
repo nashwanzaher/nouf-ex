@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import {
 	db,
+	log,
 	sendSuccess,
 	sendError,
 	validate,
@@ -66,7 +67,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				}
 			}
 		} catch (notifyErr) {
-			console.error('[refunds] notification dispatch failed:', notifyErr);
+			log.error({ msg: 'refunds.notification_dispatch_failed', error: (notifyErr as Error).message });
 		}
 
 		sendSuccess(res, result, 'Refund requested');
@@ -146,7 +147,7 @@ refundsRouter.post(
 					});
 				}
 			} catch (notifyErr) {
-				console.error('[refunds] resolve notification failed:', notifyErr);
+				log.error({ msg: 'refunds.resolve_notification_failed', error: (notifyErr as Error).message });
 			}
 
 			sendSuccess(res, { id, status: finalStatus }, 'Refund resolved');

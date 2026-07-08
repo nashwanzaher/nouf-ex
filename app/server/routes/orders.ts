@@ -8,6 +8,7 @@ import {
     HttpError,
     computeCouponDiscount,
     db,
+    log,
     orderSchema,
     requireAuth,
     resolveOrderStoreId,
@@ -467,7 +468,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				});
 			}
 		} catch (notifyErr) {
-			console.error('[orders] notification dispatch failed:', notifyErr);
+			log.error({ msg: 'orders.notification_dispatch_failed', error: (notifyErr as Error).message });
 		}
 	} catch (err) {
 		return sendError(res, err);

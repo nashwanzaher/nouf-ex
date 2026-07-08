@@ -13,7 +13,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { ErrorCodes } from '../lib/error-codes.ts';
-import { db, requireAuth, reviewSchema, sendError, sendSuccess, validate } from '../lib/shared.ts';
+import { db, log, requireAuth, reviewSchema, sendError, sendSuccess, validate } from '../lib/shared.ts';
 
 export const reviewsRouter = Router();
 
@@ -148,7 +148,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				}
 			}
 		} catch (notifyErr) {
-			console.error('[reviews] notification dispatch failed:', notifyErr);
+			log.error({ msg: 'reviews.notification_dispatch_failed', error: (notifyErr as Error).message });
 		}
 
 		sendSuccess(res, { id: result.lastInsertRowid }, 'Review submitted successfully');

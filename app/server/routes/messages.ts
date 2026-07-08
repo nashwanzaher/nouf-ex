@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z as zod } from 'zod';
-import { db, sendSuccess, sendError, requireAuth } from '../lib/shared.ts';
+import { db, log, sendSuccess, sendError, requireAuth } from '../lib/shared.ts';
 
 export const messagesRouter = Router();
 
@@ -296,7 +296,7 @@ messagesRouter.get('/conversation', requireAuth, async (req: Request, res: Respo
 				)
 				.run(peer_id, req.user!.id);
 		} catch (markErr) {
-			console.error('[messages] mark-read failed:', markErr);
+			log.error({ msg: 'messages.mark_read_failed', error: (markErr as Error).message });
 		}
 
 		sendSuccess(res, {

@@ -153,8 +153,6 @@ const priorityConfig: Record<
 	low: { label: 'منخفض', color: 'bg-emerald-500' },
 };
 
-const _TYPE_LABELS = DISPUTE_TYPE_LABELS;
-
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */

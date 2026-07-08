@@ -19,8 +19,6 @@ import {
 	ChevronRight,
 	Eye,
 	Loader2,
-	Wallet,
-	AlertTriangle,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -423,6 +421,3 @@ export default function AdminOrders() {
 		</div>
 	);
 }
-
-const _AlertTriangle = AlertTriangle;
-const _Wallet = Wallet;

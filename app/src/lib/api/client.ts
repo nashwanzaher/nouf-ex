@@ -75,7 +75,6 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 		options.signal.addEventListener('abort', () => controller.abort());
 	}
 	const config: RequestInit = {
-		signal: controller.signal,
 		headers: {
 			'Content-Type': 'application/json',
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -85,8 +84,14 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 		signal: controller.signal,
 	};
 
-	const response = await fetch(url, config);
-	clearTimeout(timeoutId);
+	let response: Response;
+	try {
+		response = await fetch(url, config);
+	} finally {
+		// Always clear the timeout — even if fetch throws (network
+		// error, abort) so the timer doesn't leak.
+		clearTimeout(timeoutId);
+	}
 
 	// Handle non-JSON responses (e.g. 502 from reverse proxy returning HTML)
 	let json: ApiResponse<T>;

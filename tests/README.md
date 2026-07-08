@@ -50,7 +50,7 @@ tests/
     └── ...
 ```
 
-> The `app/tests/` directory (not shown here) holds **Vitest unit and
+> The `app/mocks/` directory (not shown here) holds **Vitest unit and
 > integration tests** colocated with the layer they cover, per the
 > project's convention documented in [`docs/testing/conventions.md`](../docs/testing/conventions.md).
 
@@ -69,7 +69,7 @@ tests/
               ╱  Vitest +   ╲     — supertest + mocked pg
              ╱   supertest   ╲
             ╱─────────────────╲
-           ╱                   ╲  Unit tests (app/tests/, app/src/**/__tests__/)
+           ╱                   ╲  Unit tests (app/mocks/, app/src/**/__tests__/)
           ╱  Vitest +          ╲ — components, hooks, pure functions
          ╱   Testing Library   ╲
         ╱───────────────────────╲

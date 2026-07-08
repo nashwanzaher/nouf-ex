@@ -18,7 +18,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { storeFollowersRouter } from '../routes/store-followers.cts';
+import { storeFollowersRouter } from '../routes/store-followers.ts';
 import { signTestToken } from './test-token';
 
 function buildApp(): Express {

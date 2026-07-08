@@ -34,7 +34,7 @@ import {
 	sellerOrderStatusUpdateSchema,
 	sellerProductImageAddSchema,
 	paginationSchema,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const sellerRouter = Router();
 

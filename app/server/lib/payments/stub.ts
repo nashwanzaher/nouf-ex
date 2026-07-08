@@ -24,7 +24,7 @@ import type {
 	InitiateResult,
 	PaymentProvider,
 	WebhookVerification,
-} from './types.cts';
+} from './types.ts';
 
 export const stubProvider: PaymentProvider = {
 	method: 'stripe', // overridden per-method in the registry

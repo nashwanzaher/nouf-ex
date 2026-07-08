@@ -7,15 +7,15 @@
 // reason but does NOT throw — we don't want a misconfigured SMTP server
 // to break the order flow. Delivery is best-effort.
 // =============================================================================
-import { db } from '../shared.cts';
-import { emailChannel } from './email.cts';
-import { smsChannel } from './sms.cts';
+import { db } from '../shared.ts';
+import { emailChannel } from './email.ts';
+import { smsChannel } from './sms.ts';
 import type {
 	DispatchContext,
 	DispatchResult,
 	NotificationChannel,
 	NotificationRow,
-} from './types.cts';
+} from './types.ts';
 
 const CHANNELS: NotificationChannel[] = [emailChannel, smsChannel];
 

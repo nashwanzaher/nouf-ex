@@ -130,7 +130,7 @@ import type {
 	DispatchResult,
 	NotificationChannel,
 	NotificationRow,
-} from './types.cts';
+} from './types.ts';
 
 export const emailChannel: NotificationChannel = {
 	name: 'email',

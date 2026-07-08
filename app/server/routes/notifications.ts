@@ -6,7 +6,7 @@ import {
 	validate,
 	requireAuth,
 	notificationIdParamSchema,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const notificationsRouter = Router();
 

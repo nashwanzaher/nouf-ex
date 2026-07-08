@@ -13,7 +13,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { ErrorCodes } from '../lib/error-codes.ts';
-import { db, requireAuth, reviewSchema, sendError, sendSuccess, validate } from '../lib/shared.cts';
+import { db, requireAuth, reviewSchema, sendError, sendSuccess, validate } from '../lib/shared.ts';
 
 export const reviewsRouter = Router();
 
@@ -117,7 +117,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Fire bilingual i18n notification to the merchant (best-effort).
 		// (C.1 in MASTER_PLAN.md — real review-posted notification)
 		try {
-			const { onReviewPosted } = await import('../lib/notifications/events.cts');
+			const { onReviewPosted } = await import('../lib/notifications/events.ts');
 			const productInfo = (await db
 				.prepare('SELECT name_en, name_ar, store_id FROM products WHERE id = ?')
 				.get(productId)) as

@@ -16,7 +16,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { shippingRouter } from '../routes/shipping.cts';
+import { shippingRouter } from '../routes/shipping.ts';
 
 function buildApp(): Express {
 	const app = express();

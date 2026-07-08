@@ -31,7 +31,7 @@
  * robust to either ordering.
  */
 
-import { db } from './shared.cts';
+import { db } from './shared.ts';
 
 /** Refresh every 60 s. */
 const CACHE_TTL_MS = 60_000;
@@ -83,7 +83,7 @@ export async function getSetting(key: string): Promise<string> {
         }
         // Logged at warn level so an operator can spot a
         // sustained outage.
-        const { log } = await import('./shared.cts');
+        const { log } = await import('./shared.ts');
         log.warn({
             msg: 'app_settings_db_error',
             key,

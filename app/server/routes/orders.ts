@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Router, type Request, type Response } from 'express';
-import type { PgTxDb } from '../db/pg-wrapper.cts';
+import type { PgTxDb } from '../db/pg-wrapper.ts';
 import { ErrorCodes } from '../lib/error-codes.ts';
 import { getSetting } from '../lib/settings.ts';
 import {
@@ -15,7 +15,7 @@ import {
     sendSuccess,
     validate,
     type CouponRow,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const ordersRouter = Router();
 
@@ -431,7 +431,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// failure here is logged but never blocks the order response.
 		// (C.1 in MASTER_PLAN.md — real notifications with i18n + merchant alert)
 		try {
-			const { onOrderPlaced } = await import('../lib/notifications/events.cts');
+			const { onOrderPlaced } = await import('../lib/notifications/events.ts');
 			// Look up the merchant (store owner) and a product display name
 			// for the notification body.
 			const [storeRow, firstProductRow] = await Promise.all([

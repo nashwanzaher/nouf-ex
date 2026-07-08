@@ -30,7 +30,7 @@
  *     helper so a future migration to Redis / an external
  *     analytics sink can swap that single function out.
  */
-import { db, log } from './shared.cts';
+import { db, log } from './shared.ts';
 
 export interface SearchFilters {
 	category?: string;

@@ -3,7 +3,7 @@
  *
  * Each test mounts the `catalogRouter` in a fresh Express app and uses
  * supertest to drive it. The `pg` driver is mocked globally by
- * `tests/setup.ts`, so the pool returns empty rows for every query —
+ * `mocks/setup.ts`, so the pool returns empty rows for every query —
  * which is exactly what we want for these tests:
  *
  *   - The "happy path" tests verify the success envelope is correct
@@ -20,7 +20,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { catalogRouter } from '../routes/catalog.cts';
+import { catalogRouter } from '../routes/catalog.ts';
 
 // ── Test app factory ─────────────────────────────────────────────────────
 /** Build a minimal Express app that mounts the catalog router. */

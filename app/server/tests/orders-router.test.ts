@@ -22,8 +22,8 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db } from '../lib/shared.cts';
-import { ordersRouter } from '../routes/orders.cts';
+import { db } from '../lib/shared.ts';
+import { ordersRouter } from '../routes/orders.ts';
 import { signTestToken } from './test-token';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });

@@ -17,9 +17,9 @@
  * to `GET /api/products`).
  */
 import { Router, type Request, type Response } from 'express';
-import { logSearch, normalizeQuery, runSearch } from '../lib/search.cts';
-import { db, getProductWithParsedFields, log, sendError, sendSuccess } from '../lib/shared.cts';
-import middleware = require('../middleware');
+import { logSearch, normalizeQuery, runSearch } from '../lib/search.ts';
+import { db, getProductWithParsedFields, log, sendError, sendSuccess } from '../lib/shared.ts';
+import * as middleware from '../middleware.ts';
 
 export const catalogRouter = Router();
 

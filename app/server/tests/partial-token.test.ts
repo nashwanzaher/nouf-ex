@@ -40,7 +40,7 @@ vi.mock('../lib/shared.cts', () => {
 
 // Replace partial-token's actual db import with our test-aware mock
 // so it can honour the single-use contract.
-import { db as realDb } from '../lib/shared.cts';
+import { db as realDb } from '../lib/shared.ts';
 // Cast through unknown so the test can monkey-patch prepare() — the
 // real `db` type from shared.cts is strictly typed and doesn't allow
 // reassignment of its members. We don't type this as `any` because
@@ -58,7 +58,7 @@ type DbLike = { prepare: (sql?: string) => unknown };
 };
 
 const { signPartialToken, verifyPartialToken, _resetPartialTokenForTests } = await import(
-	'../lib/partial-token.cts'
+	'../lib/partial-token.ts'
 );
 
 describe('partial-token', () => {

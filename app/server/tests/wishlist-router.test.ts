@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { wishlistRouter } from '../routes/wishlist.cts';
+import { wishlistRouter } from '../routes/wishlist.ts';
 import { signTestToken } from './test-token';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });

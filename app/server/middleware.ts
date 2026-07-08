@@ -11,13 +11,13 @@
 
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
 import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
-import { PgDb } from './db/pg-wrapper.cts';
+import { PgDb } from './db/pg-wrapper.ts';
 // SECURITY (C-3): import the shared `db` instance so we can look
 // up the user's current token_version on every authenticated
 // request. This couples middleware to lib/shared.cts; that
 // dependency is already present indirectly through log, sendError
 // etc., so we keep it as a single line.
-import { db as pgDb } from './lib/shared.cts';
+import { db as pgDb } from './lib/shared.ts';
 // Re-export the standardized error catalog so route files can do:
 //   throw new HttpError(404, msg, { code: ErrorCodes.NOT_FOUND });
 // without an extra import line. The catalog lives in lib/error-codes.ts;

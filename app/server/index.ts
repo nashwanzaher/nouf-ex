@@ -4,11 +4,11 @@
  */
 
 import cors from 'cors';
-import express, { NextFunction, Request, RequestHandler, Response } from 'express';
+import express, { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { PgDb } from './db/pg-wrapper.cts';
+import { PgDb } from './db/pg-wrapper.ts';
 // Side-effect import: must run BEFORE shared.cts is loaded,
 // because shared.cts reads process.env.DATABASE_URL at module
 // evaluation time and throws if it is missing. A bare
@@ -27,25 +27,25 @@ import {
     resolveDatabaseUrl,
     securityHeaders,
 } from './middleware';
-import { addressesRouter } from './routes/addresses.cts';
-import { adminReadRouter } from './routes/admin-read.cts';
-import { adminRouter } from './routes/admin.cts';
-import { auth2faRouter } from './routes/auth-2fa.cts';
-import { authRouter } from './routes/auth.cts';
-import { cartRouter } from './routes/cart.cts';
-import { catalogRouter } from './routes/catalog.cts';
-import { couponsRouter } from './routes/coupons.cts';
-import { messagesRouter } from './routes/messages.cts';
-import { notificationsRouter } from './routes/notifications.cts';
-import { ordersRouter } from './routes/orders.cts';
-import { paymentsRouter } from './routes/payments.cts';
-import { refundsRouter } from './routes/refunds.cts';
-import { reviewsRouter } from './routes/reviews.cts';
-import { sellerRouter } from './routes/seller.cts';
-import { shippingRouter } from './routes/shipping.cts';
-import { statsRouter } from './routes/stats.cts';
-import { storeFollowersRouter } from './routes/store-followers.cts';
-import { wishlistRouter } from './routes/wishlist.cts';
+import { addressesRouter } from './routes/addresses.ts';
+import { adminReadRouter } from './routes/admin-read.ts';
+import { adminRouter } from './routes/admin.ts';
+import { auth2faRouter } from './routes/auth-2fa.ts';
+import { authRouter } from './routes/auth.ts';
+import { cartRouter } from './routes/cart.ts';
+import { catalogRouter } from './routes/catalog.ts';
+import { couponsRouter } from './routes/coupons.ts';
+import { messagesRouter } from './routes/messages.ts';
+import { notificationsRouter } from './routes/notifications.ts';
+import { ordersRouter } from './routes/orders.ts';
+import { paymentsRouter } from './routes/payments.ts';
+import { refundsRouter } from './routes/refunds.ts';
+import { reviewsRouter } from './routes/reviews.ts';
+import { sellerRouter } from './routes/seller.ts';
+import { shippingRouter } from './routes/shipping.ts';
+import { statsRouter } from './routes/stats.ts';
+import { storeFollowersRouter } from './routes/store-followers.ts';
+import { wishlistRouter } from './routes/wishlist.ts';
 
 // Note: `import 'dotenv/config'` above already loaded .env.
 // Keep this comment as a marker so future readers know not to

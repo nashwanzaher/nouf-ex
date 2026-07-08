@@ -19,7 +19,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { reviewsRouter } from '../routes/reviews.cts';
+import { reviewsRouter } from '../routes/reviews.ts';
 import { signTestToken } from './test-token';
 
 function buildApp(): Express {

@@ -34,12 +34,12 @@ import {
     findBackupCode,
     generateBackupCodes,
     hashBackupCode,
-} from '../lib/backup-codes.cts';
+} from '../lib/backup-codes.ts';
 import { ErrorCodes } from '../lib/error-codes.ts';
-import { verifyPartialToken } from '../lib/partial-token.cts';
-import { db, HttpError, log, requireAuth, sendError, sendSuccess } from '../lib/shared.cts';
-import { generateSecret, otpauthUrl, verifyTotp } from '../lib/totp.cts';
-import { signAuthToken } from '../middleware';
+import { verifyPartialToken } from '../lib/partial-token.ts';
+import { db, HttpError, log, requireAuth, sendError, sendSuccess } from '../lib/shared.ts';
+import { generateSecret, otpauthUrl, verifyTotp } from '../lib/totp.ts';
+import { signAuthToken } from '../middleware.ts';
 
 export const auth2faRouter = Router();
 

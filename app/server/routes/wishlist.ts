@@ -8,7 +8,7 @@ import {
     validate,
     wishlistAddSchema,
     wishlistItemIdParamSchema,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const wishlistRouter = Router();
 

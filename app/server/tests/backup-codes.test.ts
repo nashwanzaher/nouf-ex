@@ -17,7 +17,7 @@ import {
 	verifyBackupCodeHash,
 	findBackupCode,
 	arrayLiteral,
-} from '../lib/backup-codes.cts';
+} from '../lib/backup-codes.ts';
 
 describe('generateBackupCode()', () => {
 	it('returns a 10-character code from the safe alphabet', () => {

@@ -9,7 +9,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { db, sendSuccess, sendError, validate, requireAuth } from '../lib/shared.cts';
+import { db, sendSuccess, sendError, validate, requireAuth } from '../lib/shared.ts';
 
 export const storeFollowersRouter = Router();
 

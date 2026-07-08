@@ -14,8 +14,8 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { stubProvider } from '../lib/payments/stub.cts';
-import { paymentsRouter } from '../routes/payments.cts';
+import { stubProvider } from '../lib/payments/stub.ts';
+import { paymentsRouter } from '../routes/payments.ts';
 import { signTestToken } from './test-token';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
@@ -276,7 +276,7 @@ describe('paymentsRouter — POST /api/payments/webhook/:method (idempotency, P1
 		const fs = await import('node:fs');
 		const path = await import('node:path');
 		const src = fs.readFileSync(
-			path.resolve(process.cwd(), 'server/routes/payments.cts'),
+			path.resolve(process.cwd(), 'server/routes/payments.ts'),
 			'utf8',
 		);
 		// The dedup INSERT block must be present, and must mention

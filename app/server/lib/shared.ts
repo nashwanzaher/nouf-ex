@@ -17,7 +17,7 @@
  * this file as CommonJS-by-default and skips the .ts→.cts extension
  * map that bit us earlier with `pg-wrapper.cts`.
  */
-import { PgDb } from '../db/pg-wrapper.cts';
+import { PgDb } from '../db/pg-wrapper.ts';
 import {
     HttpError,
     log,
@@ -67,11 +67,11 @@ export const db = new PgDb(_databaseUrl);
 // middleware.ts (re-exported through shared.cts). Importing them
 // at module top-level would re-introduce the same circular
 // dependency the type extraction closed. The dynamic `await
-// import('./shared.cts')` defers resolution until the limiter
+// import('./shared.ts')` defers resolution until the limiter
 // is actually invoked on a request — past module-load time —
 // so the cycle never becomes a real problem.
 // ═══════════════════════════════════════════════════════════
-export { rateLimit, authLimiter } from './ratelimit.js';
+export { authLimiter, rateLimit } from './ratelimit.js';
 
 // ═══════════════════════════════════════════════════════════
 // Generic helpers
@@ -82,8 +82,8 @@ export { rateLimit, authLimiter } from './ratelimit.js';
 //     next to the Zod schemas it operates on)
 //   - `buildUpdateSet(fields)`    → ./sql-helpers.ts (a thin
 //     home for string-built SQL, easy to audit)
-export { validate } from './validation.js';
 export { buildUpdateSet } from './sql-helpers.js';
+export { validate } from './validation.js';
 
 // ═══════════════════════════════════════════════════════════
 // Audit log (SECURITY DEFINER writer + secret redactor) —
@@ -91,11 +91,11 @@ export { buildUpdateSet } from './sql-helpers.js';
 // on 2026-07-04). `writeAuditLog` and the now-public
 // `redactSensitive` helper live there.
 //
-// The audit module itself uses lazy `await import('./shared.cts')`
+// The audit module itself uses lazy `await import('./shared.ts')`
 // for the structured `log()` so it doesn't reintroduce the
 // middleware cycle that the type extraction closed.
 // ═══════════════════════════════════════════════════════════
-export { writeAuditLog, redactSensitive } from './audit.js';
+export { redactSensitive, writeAuditLog } from './audit.js';
 
 // ═══════════════════════════════════════════════════════════
 // JSON helpers (used by product/category/etc. endpoints) —
@@ -105,7 +105,7 @@ export { writeAuditLog, redactSensitive } from './audit.js';
 // or shared-library dependencies; just pure functions on
 // `unknown`.
 // ═══════════════════════════════════════════════════════════
-export { parseJson, getProductWithParsedFields } from './json.js';
+export { getProductWithParsedFields, parseJson } from './json.js';
 
 // ═══════════════════════════════════════════════════════════
 // Shared Zod schemas + helpers (used by 2+ routes)
@@ -120,8 +120,8 @@ export {
     addressSchema, adminDisputeUpdateSchema, adminOrderStatusSchema,
     adminProductUpdateSchema, adminStoreUpdateSchema, adminUserUpdateSchema, cartAddSchema,
     cartItemIdParamSchema,
-    cartItemUpdateSchema, COUPON_COLUMNS, couponRedeemSchema, CouponRow, emailSchema, evaluatePasswordStrength, loginSchema, notificationIdParamSchema, orderItemSchema, OrderProductRow, orderSchema, paginationSchema, passwordChangeSchema, passwordSchema, paymentCreateSchema, profileUpdateSchema, refundCreateSchema, registerSchema, resolveOrderStoreId, ResolveStoreIdResult, reviewSchema, sellerOrderStatusUpdateSchema, sellerProductCreateSchema, sellerProductIdParamSchema, sellerProductImageAddSchema, sellerProductUpdateSchema, sellerStoreUpdateSchema, wishlistAddSchema,
-    wishlistItemIdParamSchema
+    cartItemUpdateSchema, COUPON_COLUMNS, couponRedeemSchema, emailSchema, evaluatePasswordStrength, loginSchema, notificationIdParamSchema, orderItemSchema, orderSchema, paginationSchema, passwordChangeSchema, passwordSchema, paymentCreateSchema, profileUpdateSchema, refundCreateSchema, registerSchema, resolveOrderStoreId, reviewSchema, sellerOrderStatusUpdateSchema, sellerProductCreateSchema, sellerProductIdParamSchema, sellerProductImageAddSchema, sellerProductUpdateSchema, sellerStoreUpdateSchema, wishlistAddSchema,
+    wishlistItemIdParamSchema, type CouponRow, type OrderProductRow, type ResolveStoreIdResult
 } from './validation.js';
 
 // `computeCouponDiscount` lives here (not in validation.ts) because

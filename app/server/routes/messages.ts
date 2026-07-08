@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { z as zod } from 'zod';
-import { db, sendSuccess, sendError, requireAuth } from '../lib/shared.cts';
+import { db, sendSuccess, sendError, requireAuth } from '../lib/shared.ts';
 
 export const messagesRouter = Router();
 

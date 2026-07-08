@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { resolveOrderStoreId, type OrderProductRow } from '../lib/shared.cts';
+import { resolveOrderStoreId, type OrderProductRow } from '../lib/shared.ts';
 
 // Mirror of cartAddSchema in server/index.ts
 const cartAddSchema = z

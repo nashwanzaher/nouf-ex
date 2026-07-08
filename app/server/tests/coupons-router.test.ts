@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { couponsRouter } from '../routes/coupons.cts';
+import { couponsRouter } from '../routes/coupons.ts';
 import { signTestToken } from './test-token';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });

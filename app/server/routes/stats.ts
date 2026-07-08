@@ -11,7 +11,7 @@
  * colliding.
  */
 import { Router, type Request, type Response } from 'express';
-import { db, sendSuccess, sendError, getProductWithParsedFields } from '../lib/shared.cts';
+import { db, sendSuccess, sendError, getProductWithParsedFields } from '../lib/shared.ts';
 
 export const statsRouter = Router();
 

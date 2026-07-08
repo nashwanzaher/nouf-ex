@@ -18,7 +18,7 @@ import type {
 	DispatchResult,
 	NotificationChannel,
 	NotificationRow,
-} from './types.cts';
+} from './types.ts';
 
 function isConfigured(): boolean {
 	return !!process.env.SMS_WEBHOOK_URL && !!process.env.SMS_FROM;

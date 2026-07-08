@@ -16,7 +16,7 @@ import type {
 	InitiateResult,
 	PaymentProvider,
 	WebhookVerification,
-} from './types.cts';
+} from './types.ts';
 
 const PAYMOB_API = 'https://accept.paymob.com/api';
 

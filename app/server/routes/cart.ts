@@ -9,7 +9,7 @@ import {
     sendError,
     sendSuccess,
     validate,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const cartRouter = Router();
 

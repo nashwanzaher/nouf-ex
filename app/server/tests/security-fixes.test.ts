@@ -13,16 +13,17 @@
 import fs from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { db } from '../lib/shared.cts';
+import { db } from '../lib/shared.ts';
 
-const SRC = (rel: string) =>
+const SRC = (rel: string) => fs.readFileSync(path.resolve(__dirname, '..', rel), 'utf8');
+const SRC_REPO = (rel: string) =>
 	fs.readFileSync(path.resolve(__dirname, '..', '..', '..', rel), 'utf8');
 
 describe('messages.cts uses u.full_name (not u.name)', () => {
 	// A regression to `u.name` would break /api/messages/inbox and
 	// /sent at runtime with "column u.name does not exist". The
 	// users table only has `full_name`.
-	const src = SRC('app/server/routes/messages.cts');
+	const src = SRC('routes/messages.ts');
 	it('references u.full_name', () => {
 		expect(src).toMatch(/u\.full_name/);
 	});
@@ -43,7 +44,7 @@ describe('messages.cts uses u.full_name (not u.name)', () => {
 });
 
 describe('catalog.cts awaits getProductImages (no Promise leak)', () => {
-	const src = SRC('app/server/routes/catalog.cts');
+	const src = SRC('routes/catalog.ts');
 	it('getProductImages is awaited at the call site', () => {
 		// The fix: change `function getProductImages(...)` to async,
 		// then `await getProductImages(...)` at the call site.
@@ -54,7 +55,7 @@ describe('catalog.cts awaits getProductImages (no Promise leak)', () => {
 
 describe('admin.cts /stats uses one CTE-based query (was 14 round-trips)', () => {
 	// /stats lives in admin-read.cts (the read-side router) in this project.
-	const src = SRC('app/server/routes/admin-read.cts');
+	const src = SRC('routes/admin-read.ts');
 	it('GET /stats is a single SELECT with 14 scalar subqueries (CTE pattern)', () => {
 		// The CTE pattern is unmistakable: one SELECT that produces all
 		// metrics as scalar subqueries in a single statement. The old
@@ -105,7 +106,7 @@ describe('admin.cts /stats uses one CTE-based query (was 14 round-trips)', () =>
 });
 
 describe('orders.cts fetches all products in a single query (no N+1)', () => {
-	const src = SRC('app/server/routes/orders.cts');
+	const src = SRC('routes/orders.ts');
 	it('order-create does NOT have a per-item readProduct call', () => {
 		// The old version had a loop with `await readProduct.get(item.productId)`.
 		// The new version uses `WHERE id = ANY($1)` once.
@@ -117,7 +118,7 @@ describe('orders.cts fetches all products in a single query (no N+1)', () => {
 });
 
 describe('payments.cts uses provider_txn_id (not transaction_id)', () => {
-	const src = SRC('app/server/routes/payments.cts');
+	const src = SRC('routes/payments.ts');
 	it('INSERT uses provider_txn_id (the real column name)', () => {
 		expect(src).toMatch(/provider_txn_id/);
 	});
@@ -131,10 +132,10 @@ describe('payments.cts uses provider_txn_id (not transaction_id)', () => {
 
 describe('writeAuditLog uses the SECURITY DEFINER function', () => {
 	// P0-1 phase 5 (2026-07-04): the audit-log writer was extracted
-	// from shared.cts to ./audit.ts to keep the god object slim.
+	// from shared.ts to ./audit.ts to keep the god object slim.
 	// We assert on the new module's source instead.
-	const auditSrc = SRC('app/server/lib/audit.ts');
-	const sharedSrc = SRC('app/server/lib/shared.cts');
+	const auditSrc = SRC('lib/audit.ts');
+	const sharedSrc = SRC('lib/shared.ts');
 	it('writeAuditLog invokes a stored function (not a direct INSERT)', () => {
 		// The old version had a direct INSERT into admin_audit_log.
 		// The new version delegates to write_audit_log() PL/pgSQL
@@ -144,8 +145,8 @@ describe('writeAuditLog uses the SECURITY DEFINER function', () => {
 		// `CALL write_audit_log(...)` or `write_audit_log(...)` invocation.
 		expect(auditSrc).toMatch(/write_audit_log\s*\(/);
 	});
-	it('shared.cts no longer contains the audit SQL (re-exports only)', () => {
-		// Regression guard for the P0-1 phase 5 refactor: shared.cts
+	it('shared.ts no longer contains the audit SQL (re-exports only)', () => {
+		// Regression guard for the P0-1 phase 5 refactor: shared.ts
 		// is a barrel. It must NOT contain the SQL string — that
 		// would mean the extraction was reverted or stale.
 		expect(sharedSrc).not.toMatch(/SELECT\s+write_audit_log/i);
@@ -203,7 +204,8 @@ describe('write_audit_log() exists with prosecdef=true (live DB)', () => {
 });
 
 describe('seed.sql refuses to run in production', () => {
-	const src = SRC('database/seed.sql');
+	const src = SRC_REPO('database/seed.sql');
+	void src; // touch to satisfy unused-var lint
 	it('first non-comment code block is a GUC guard (DO $$)', () => {
 		// Find the first non-comment, non-empty line of code.
 		const lines = src.split('\n');

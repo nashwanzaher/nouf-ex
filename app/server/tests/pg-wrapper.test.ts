@@ -13,7 +13,7 @@
  * block comments, and dollar-quoted PL/pgSQL bodies.
  */
 import { describe, expect, it } from 'vitest';
-import { pgify, normalizeSql } from '../db/pg-wrapper.cts';
+import { pgify, normalizeSql } from '../db/pg-wrapper.ts';
 
 describe('pgify() — SQL placeholder rewriter', () => {
 	it('rewrites a single placeholder', () => {

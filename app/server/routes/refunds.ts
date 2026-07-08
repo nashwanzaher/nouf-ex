@@ -7,7 +7,7 @@ import {
 	requireAuth,
 	requireRole,
 	refundCreateSchema,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const refundsRouter = Router();
 
@@ -43,7 +43,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Best-effort — never blocks the response.
 		// (C.1 in MASTER_PLAN.md — real refund-requested notification)
 		try {
-			const { onRefundRequested } = await import('../lib/notifications/events.cts');
+			const { onRefundRequested } = await import('../lib/notifications/events.ts');
 			const orderRow = (await db
 				.prepare('SELECT order_number, customer_id, store_id FROM orders WHERE id = ?')
 				.get(order_id)) as
@@ -129,7 +129,7 @@ refundsRouter.post(
 			// Fire bilingual i18n notification to the customer (best-effort).
 			// (C.1 in MASTER_PLAN.md — real refund-resolved notification)
 			try {
-				const { onRefundResolved } = await import('../lib/notifications/events.cts');
+				const { onRefundResolved } = await import('../lib/notifications/events.ts');
 				const orderRow = (await db
 					.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
 					.get(result.order_id)) as

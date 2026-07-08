@@ -32,8 +32,8 @@
  * If that ever stops being true, switch the import to a `require`
  * inside the function body.
  */
-import { NextFunction, Request, Response } from 'express';
-import { db } from './shared.cts';
+import { type NextFunction, type Request, type Response } from 'express';
+import { db } from './shared.ts';
 
 /**
  * Build a per-route, per-IP rate-limit middleware.
@@ -62,7 +62,7 @@ export function rateLimit(windowMs: number, max: number, bucket = 'global') {
 				// don't import sendError at module-load time because
 				// that creates a tighter cycle with middleware.ts;
 				// instead we import lazily to avoid it.
-				const { sendError } = await import('./shared.cts');
+				const { sendError } = await import('./shared.ts');
 				return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
 			}
 		} catch (err) {
@@ -70,7 +70,7 @@ export function rateLimit(windowMs: number, max: number, bucket = 'global') {
 			// must not lock out legitimate users. We log a
 			// structured warning so SREs can spot a sustained
 			// outage in the logs.
-			const { log } = await import('./shared.cts');
+			const { log } = await import('./shared.ts');
 			log.warn({
 				msg: 'rate_limit_db_error',
 				bucket,

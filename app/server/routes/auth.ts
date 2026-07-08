@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { signPartialToken } from '../lib/partial-token.cts';
+import { signPartialToken } from '../lib/partial-token.ts';
 import {
     authLimiter,
     db,
@@ -16,8 +16,8 @@ import {
     verifyPassword,
     writeAuditLog,
     type AuthRole,
-} from '../lib/shared.cts';
-import { signAuthToken } from '../middleware.js';
+} from '../lib/shared.ts';
+import { signAuthToken } from '../middleware.ts';
 // R-15 follow-up: use the catalog constants instead of string literals
 // so TypeScript catches typos (e.g. `ErrorCodes.NOT_FOOBAR` is a
 // compile error, but `'NOT_FOOBAR'` silently compiles to a code the
@@ -87,7 +87,7 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 		// Fire bilingual welcome notification (best-effort, non-blocking).
 		// (C.1 in MASTER_PLAN.md — real welcome notification on signup)
 		try {
-			const { onWelcome } = await import('../lib/notifications/events.cts');
+			const { onWelcome } = await import('../lib/notifications/events.ts');
 			await onWelcome({ userId, name });
 		} catch (notifyErr) {
 			console.error('[auth.register] welcome notification failed:', notifyErr);

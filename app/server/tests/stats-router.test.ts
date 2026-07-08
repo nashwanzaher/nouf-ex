@@ -3,7 +3,7 @@
  *
  * `GET /api/stats/home` is the only endpoint and it is
  * unauthenticated. The mocked `pg` driver returns empty rows
- * (see `tests/setup.ts`), so we can only assert the envelope
+ * (see `mocks/setup.ts`), so we can only assert the envelope
  * shape and the four expected count buckets.
  *
  * What we cover:
@@ -19,7 +19,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { statsRouter } from '../routes/stats.cts';
+import { statsRouter } from '../routes/stats.ts';
 
 function buildApp(): Express {
 	const app = express();

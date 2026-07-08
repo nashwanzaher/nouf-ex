@@ -26,7 +26,7 @@ import {
   _resetSettingsCacheForTests,
   getSetting,
 } from '../lib/settings.js';
-import { db } from '../lib/shared.cts';
+import { db } from '../lib/shared.ts';
 
 describe('getSetting()', () => {
     beforeEach(() => {

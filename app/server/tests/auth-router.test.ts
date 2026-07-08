@@ -15,8 +15,8 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db, hashPassword, verifyPassword } from '../lib/shared.cts';
-import { authRouter } from '../routes/auth.cts';
+import { db, hashPassword, verifyPassword } from '../lib/shared.ts';
+import { authRouter } from '../routes/auth.ts';
 import { signTestToken } from './test-token';
 
 function buildApp(): Express {

@@ -68,6 +68,9 @@ describe('ErrorCodes catalog', () => {
 			ErrorCodes.INSERT_FAILED,
 			ErrorCodes.UPDATE_FAILED,
 			ErrorCodes.DELETE_FAILED,
+			ErrorCodes.ALREADY_ENABLED,
+			ErrorCodes.NOT_ENABLED,
+			ErrorCodes.PARTIAL_INVALID,
 		];
 		expect(Object.keys(ErrorCodes).sort()).toEqual(expected.sort());
 	});

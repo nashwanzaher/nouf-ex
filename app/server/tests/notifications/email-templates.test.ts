@@ -4,7 +4,7 @@
  * for each event type × language combination.
  */
 import { describe, it, expect } from 'vitest';
-import { render, renderBilingual } from '../../lib/notifications/email-templates.cts';
+import { render, renderBilingual } from '../../lib/notifications/email-templates.ts';
 
 describe('email-templates — render()', () => {
 	describe('Arabic (default lang=ar)', () => {

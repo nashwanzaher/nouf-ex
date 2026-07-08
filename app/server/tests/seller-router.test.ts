@@ -20,7 +20,7 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { sellerRouter } from '../routes/seller.cts';
+import { sellerRouter } from '../routes/seller.ts';
 import { signTestToken } from './test-token';
 
 // SECURITY: each token MUST use a distinct sub so the per-process

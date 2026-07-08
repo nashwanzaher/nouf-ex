@@ -140,7 +140,7 @@ npx vitest run app/server/tests/api-server    # one file
 npx vitest run app/server/tests/schema       # DB structural checks
 ```
 
-The `pg` driver is mocked globally in [`../tests/setup.ts`](../tests/setup.ts)
+The `pg` driver is mocked globally in [`../mocks/setup.ts`](../mocks/setup.ts)
 so the suite runs offline.
 
 ## Adding a new route (checklist)

@@ -26,7 +26,7 @@ import {
 	adminProductUpdateSchema,
 	adminDisputeUpdateSchema,
 	getProductWithParsedFields,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const adminRouter = Router();
 

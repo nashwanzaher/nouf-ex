@@ -29,7 +29,7 @@
  * avoid re-introducing the middleware cycle.
  */
 import type { Request } from 'express';
-import { db } from './shared.cts';
+import { db } from './shared.ts';
 
 /** Maximum total attempts (initial + retries) before dead-lettering. */
 const AUDIT_DLQ_MAX_ATTEMPTS = 3;
@@ -116,10 +116,10 @@ async function appendAuditDlq(entry: Record<string, unknown>): Promise<void> {
 		fs.appendFileSync(file, JSON.stringify(entry) + '\n', { encoding: 'utf8' });
 		// Lazy import for `log` to keep the dependency surface
 		// explicit (avoids the cycle).
-		const { log } = await import('./shared.cts');
+		const { log } = await import('./shared.ts');
 		log.error({ msg: 'audit_log_dead_lettered', file });
 	} catch (err) {
-		const { log } = await import('./shared.cts');
+		const { log } = await import('./shared.ts');
 		log.error({
 			msg: 'audit_log_dlq_write_failed',
 			error: (err as Error).message,
@@ -178,7 +178,7 @@ export async function writeAuditLog(
 				.prepare(`SELECT write_audit_log($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8)`)
 				.run(...params);
 			if (attempt > 1) {
-				const { log } = await import('./shared.cts');
+				const { log } = await import('./shared.ts');
 				log.info({
 					msg: 'audit_log_recovered',
 					attempt,
@@ -188,7 +188,7 @@ export async function writeAuditLog(
 			return;
 		} catch (err) {
 			lastError = err;
-			const { log } = await import('./shared.cts');
+			const { log } = await import('./shared.ts');
 			log.warn({
 				msg: 'audit_log_failed',
 				attempt,

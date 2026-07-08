@@ -10,7 +10,7 @@ import {
 	COUPON_COLUMNS,
 	computeCouponDiscount,
 	type CouponRow,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const couponsRouter = Router();
 

@@ -16,7 +16,7 @@ import type {
 	InitiateResult,
 	PaymentProvider,
 	WebhookVerification,
-} from './types.cts';
+} from './types.ts';
 
 const STRIPE_API = 'https://api.stripe.com/v1';
 

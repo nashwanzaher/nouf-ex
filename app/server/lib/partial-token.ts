@@ -28,7 +28,7 @@
  *   proceed"; 0 means "already used, reject".
  */
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
-import { db } from './shared.cts';
+import { db } from './shared.ts';
 
 const PARTIAL_TTL_SECONDS = 5 * 60; // 5 minutes
 

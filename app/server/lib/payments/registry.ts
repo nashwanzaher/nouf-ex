@@ -11,10 +11,10 @@
 // initiated online; the client should fall back to manual confirmation
 // (e.g. admin marks wallet/bank as paid after a transfer screenshot).
 // =============================================================================
-import { stubProvider } from './stub.cts';
-import { stripeProvider } from './stripe.cts';
-import { paymobProvider } from './paymob.cts';
-import type { PaymentMethod, PaymentProvider } from './types.cts';
+import { stubProvider } from './stub.ts';
+import { stripeProvider } from './stripe.ts';
+import { paymobProvider } from './paymob.ts';
+import type { PaymentMethod, PaymentProvider } from './types.ts';
 
 const REGISTRY: Record<PaymentMethod, PaymentProvider | null> = {
 	// Real providers — only active when env keys are configured.

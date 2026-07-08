@@ -16,7 +16,7 @@ import {
 	totpAt,
 	verifyTotp,
 	otpauthUrl,
-} from '../lib/totp.cts';
+} from '../lib/totp.ts';
 
 describe('base32', () => {
 	it('round-trips a simple buffer', () => {

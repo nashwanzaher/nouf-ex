@@ -1,8 +1,8 @@
 import { Router, type Request, type Response } from 'express';
-import type { PgTxDb } from '../db/pg-wrapper.cts';
+import type { PgTxDb } from '../db/pg-wrapper.ts';
 import { ErrorCodes } from '../lib/error-codes.ts';
-import { hasProvider, listProviders, selectProvider } from '../lib/payments/registry.cts';
-import type { PaymentMethod } from '../lib/payments/types.cts';
+import { hasProvider, listProviders, selectProvider } from '../lib/payments/registry.ts';
+import type { PaymentMethod } from '../lib/payments/types.ts';
 import {
     authLimiter,
     db,
@@ -12,7 +12,7 @@ import {
     sendError,
     sendSuccess,
     validate,
-} from '../lib/shared.cts';
+} from '../lib/shared.ts';
 
 export const paymentsRouter = Router();
 
@@ -362,7 +362,7 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 		// Fire bilingual i18n notification to the customer (best-effort).
 		// (C.1 in MASTER_PLAN.md — real payment confirmation notification)
 		try {
-			const { onPaymentConfirmed } = await import('../lib/notifications/events.cts');
+			const { onPaymentConfirmed } = await import('../lib/notifications/events.ts');
 			const orderRow = (await db
 				.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
 				.get(result!.order_id)) as

@@ -13,10 +13,10 @@
  * Errors are logged but not propagated.
  */
 
-import { db } from '../shared.cts';
-import { dispatch } from './dispatcher.cts';
-import { render } from './email-templates.cts';
-import type { NotificationType } from './types.cts';
+import { db } from '../shared.ts';
+import { dispatch } from './dispatcher.ts';
+import { render } from './email-templates.ts';
+import type { NotificationType } from './types.ts';
 
 /**
  * Template data fields are `string` only (no undefined) because the
@@ -82,7 +82,7 @@ async function dispatchOne(
 			.prepare(
 				'SELECT id, user_id, type, title, body, data, is_read, read_at, created_at FROM notifications WHERE id = $1',
 			)
-			.get(result.id)) as unknown as import('./types.cts').NotificationRow;
+			.get(result.id)) as unknown as import('./types.ts').NotificationRow;
 		if (!row) return null;
 		await dispatch(row);
 		return result.id;

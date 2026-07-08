@@ -14,8 +14,8 @@ import {
     sendError,
     sendSuccess,
     validate,
-} from '../lib/shared.cts';
-import middleware = require('../middleware');
+} from '../lib/shared.ts';
+import * as middleware from '../middleware.ts';
 
 export const addressesRouter = Router();
 

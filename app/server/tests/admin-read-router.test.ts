@@ -21,7 +21,7 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { adminReadRouter } from '../routes/admin-read.cts';
+import { adminReadRouter } from '../routes/admin-read.ts';
 import { signTestToken } from './test-token';
 
 const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });

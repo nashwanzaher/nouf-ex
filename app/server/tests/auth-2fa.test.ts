@@ -17,8 +17,8 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import express, { type Express } from 'express';
 import request from 'supertest';
-import { auth2faRouter, __reset2faRateLimitsForTests } from '../routes/auth-2fa.cts';
-import { db } from '../lib/shared.cts';
+import { auth2faRouter, __reset2faRateLimitsForTests } from '../routes/auth-2fa.ts';
+import { db } from '../lib/shared.ts';
 
 // SECURITY (C-2): the rate limiter is now DB-backed. The global
 // pg mock returns empty rows, which makes every call fail-open.

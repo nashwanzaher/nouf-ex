@@ -8,7 +8,7 @@
  * router integration test.
  */
 import { describe, it, expect } from 'vitest';
-import { normalizeQuery } from '../lib/search.cts';
+import { normalizeQuery } from '../lib/search.ts';
 
 describe('normalizeQuery()', () => {
 	it('lowercases', () => {

@@ -71,8 +71,11 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 	// both so either timeout can cancel the request.
 	const controller = new AbortController();
 	const timeoutId = setTimeout(() => controller.abort(), DEFAULT_FETCH_TIMEOUT_MS);
-	if (options?.signal) {
-		options.signal.addEventListener('abort', () => controller.abort());
+	const callerSignal = options?.signal;
+	const onCallerAbort = () => controller.abort();
+	if (callerSignal) {
+		if (callerSignal.aborted) controller.abort();
+		else callerSignal.addEventListener('abort', onCallerAbort);
 	}
 	const config: RequestInit = {
 		headers: {
@@ -91,6 +94,9 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 		// Always clear the timeout — even if fetch throws (network
 		// error, abort) so the timer doesn't leak.
 		clearTimeout(timeoutId);
+		// Clean up the caller signal listener to avoid leaking it on
+		// long-lived components that issue many requests.
+		if (callerSignal) callerSignal.removeEventListener('abort', onCallerAbort);
 	}
 
 	// Handle non-JSON responses (e.g. 502 from reverse proxy returning HTML)
@@ -127,7 +133,7 @@ export { API_BASE };
 // Note: we import the local `isErrorCode` under a private alias to
 // avoid the public re-export below colliding with the
 // helper in `./error-codes.ts` (it has a different signature).
-  import { isErrorCode as _isErrorCode } from './error-codes';
+import { isErrorCode as _isErrorCode } from './error-codes';
 export { ErrorCodes, ErrorStatuses } from './error-codes';
 
 // ─── Error helpers (R-15 follow-up §50) ──────────────────

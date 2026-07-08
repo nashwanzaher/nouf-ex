@@ -4,6 +4,13 @@
 -- Roles (run once by an existing superuser — typically `postgres`).
 -- The application NEVER connects as superuser. It uses `noufex_app`.
 -- Idempotent: DROP IF EXISTS then CREATE for safe re-runs.
+--
+-- SECURITY: Passwords are read from psql variables (:OWNER_PASSWORD,
+-- :APP_PASSWORD, :RO_PASSWORD) which MUST be passed via -v flags.
+-- Example:
+--   psql -v OWNER_PASSWORD="$OWNER_PWD" -v APP_PASSWORD="$APP_PWD" \
+--        -v RO_PASSWORD="$RO_PWD" -f database/roles.sql
+-- NEVER hardcode passwords in version control.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -12,13 +19,13 @@
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'noufex_owner') THEN
-        CREATE ROLE noufex_owner WITH LOGIN PASSWORD 'CHANGE_ME_OWNER';
+        CREATE ROLE noufex_owner WITH LOGIN PASSWORD :'OWNER_PASSWORD';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'noufex_app') THEN
-        CREATE ROLE noufex_app WITH LOGIN PASSWORD 'CHANGE_ME_APP';
+        CREATE ROLE noufex_app WITH LOGIN PASSWORD :'APP_PASSWORD';
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'noufex_readonly') THEN
-        CREATE ROLE noufex_readonly WITH LOGIN PASSWORD 'CHANGE_ME_RO';
+        CREATE ROLE noufex_readonly WITH LOGIN PASSWORD :'RO_PASSWORD';
     END IF;
 END
 $$;

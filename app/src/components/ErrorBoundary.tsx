@@ -17,10 +17,12 @@
  */
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { withTranslation, type TFunction } from 'react-i18next';
 
 interface Props {
 	children: ReactNode;
 	fallback?: (err: Error, reset: () => void) => ReactNode;
+	t: TFunction;
 }
 
 interface State {
@@ -28,7 +30,7 @@ interface State {
 	error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryInner extends Component<Props, State> {
 	override state: State = { hasError: false, error: null };
 
 	static getDerivedStateFromError(error: Error): State {
@@ -36,9 +38,6 @@ export class ErrorBoundary extends Component<Props, State> {
 	}
 
 	override componentDidCatch(error: Error, info: ErrorInfo): void {
-		// In production, ship to Sentry / LogRocket / etc. here. For now
-		// we surface the error in the console with a clear prefix so it
-		// shows up in DevTools and in production error reports.
 		console.error('[ErrorBoundary]', error, info);
 	}
 
@@ -55,24 +54,32 @@ export class ErrorBoundary extends Component<Props, State> {
 			return this.props.fallback(this.state.error, this.reset);
 		}
 
+		const { t } = this.props;
+
 		return (
 			<div
 				role="alert"
 				className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-12 bg-aliSurface"
 			>
 				<div className="text-6xl font-bold text-aliOrange mb-4">!</div>
-				<h1 className="text-xl font-semibold text-aliText mb-2">Something went wrong</h1>
+				<h1 className="text-xl font-semibold text-aliText mb-2">
+					{t('errorBoundary.title', 'Something went wrong')}
+				</h1>
 				<p className="text-sm text-aliTextSec max-w-md mb-6">
-					{this.state.error.message || 'An unexpected error occurred.'}
+					{this.state.error.message || t('errorBoundary.unexpected', 'An unexpected error occurred.')}
 				</p>
 				<button
 					type="button"
 					onClick={this.reset}
 					className="px-5 py-2 bg-aliOrange text-white rounded-lg hover:bg-aliOrangeHover transition-colors"
 				>
-					Try again
+					{t('errorBoundary.tryAgain', 'Try again')}
 				</button>
 			</div>
 		);
 	}
 }
+
+const ErrorBoundary = withTranslation()(ErrorBoundaryInner);
+export { ErrorBoundary };
+export default ErrorBoundary;

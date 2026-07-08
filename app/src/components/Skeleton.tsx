@@ -24,7 +24,7 @@ export function SkeletonBlock({ className = '' }: SkeletonProps) {
 
 export function SkeletonProductCard() {
 	return (
-		<div dir="rtl" className="bg-white rounded-2xl border border-[#F3EDE4] overflow-hidden">
+		<div className="bg-white rounded-2xl border border-[#F3EDE4] overflow-hidden">
 			<SkeletonBlock className="aspect-square w-full" />
 			<div className="p-4 space-y-2">
 				<SkeletonBlock className="h-4 w-3/4" />
@@ -56,7 +56,6 @@ export interface SkeletonGridProps {
 export function SkeletonGrid({ count = 4, Card, className = '' }: SkeletonGridProps) {
 	return (
 		<div
-			dir="rtl"
 			className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 ${className}`}
 		>
 			{Array.from({ length: count }).map((_, i) => (

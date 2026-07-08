@@ -36,10 +36,12 @@ import {
     Send as SentIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type Folder = 'inbox' | 'sent';
 
 export default function Messages() {
+	const { t } = useTranslation();
 	const { addToast } = useApp();
 	const { user, isAuthenticated } = useAuth();
 
@@ -160,11 +162,11 @@ export default function Messages() {
 	const handleCompose = useCallback(async () => {
 		const recipient = Number(composeRecipientId);
 		if (!Number.isInteger(recipient) || recipient <= 0) {
-			addToast({ type: 'error', message: 'معرّف المستلم غير صالح' });
+			addToast({ type: 'error', message: t('messages.invalidRecipient', 'Invalid recipient ID') });
 			return;
 		}
 		if (!composeSubject.trim() || !composeBody.trim()) {
-			addToast({ type: 'error', message: 'الموضوع والمحتوى مطلوبان' });
+			addToast({ type: 'error', message: t('messages.subjectAndBodyRequired', 'Subject and body are required') });
 			return;
 		}
 		setSending(true);
@@ -174,7 +176,7 @@ export default function Messages() {
 				subject: composeSubject,
 				body: composeBody,
 			});
-			addToast({ type: 'success', message: 'تم إرسال الرسالة' });
+			addToast({ type: 'success', message: t('messages.sent', 'Message sent') });
 			setComposeOpen(false);
 			setComposeRecipientId('');
 			setComposeSubject('');
@@ -185,7 +187,7 @@ export default function Messages() {
 		} finally {
 			setSending(false);
 		}
-	}, [composeRecipientId, composeSubject, composeBody, reloadThreads, addToast]);
+	}, [composeRecipientId, composeSubject, composeBody, reloadThreads, addToast, t]);
 
 	if (!isAuthenticated) {
 		return (
@@ -193,7 +195,7 @@ export default function Messages() {
 				<CardContent className="p-10 text-center">
 					<MessageSquare className="w-12 h-12 text-[#AAAAAA] mx-auto mb-4" />
 					<p className="text-base font-cairo text-[#111111]">
-						سجّل الدخول لعرض رسائلك
+						{t('messages.loginToView', 'Sign in to view your messages')}
 					</p>
 				</CardContent>
 			</Card>
@@ -218,7 +220,7 @@ export default function Messages() {
 						}`}
 					>
 						<InboxIcon className="w-4 h-4" />
-						الوارد
+						{t('messages.inbox', 'Inbox')}
 						{unreadCount > 0 && folder === 'inbox' && (
 							<span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
 								{unreadCount}
@@ -238,7 +240,7 @@ export default function Messages() {
 						}`}
 					>
 						<SentIcon className="w-4 h-4" />
-						الصادر
+						{t('messages.sent', 'Sent')}
 					</button>
 				</div>
 				<div className="flex gap-2">
@@ -248,16 +250,16 @@ export default function Messages() {
 						size="sm"
 						className="font-cairo text-xs"
 					>
-						<RefreshCw className="w-4 h-4" />
-						تحديث
+						<RefreshCw className="w-3.5 h-3.5 ml-1" />
+						{t('messages.refresh', 'Refresh')}
 					</Button>
 					<Button
-						onClick={() => setComposeOpen((o) => !o)}
+						onClick={() => setComposeOpen(!composeOpen)}
 						size="sm"
 						className="bg-[#0F7B6C] hover:bg-[#0a6356] text-white font-cairo text-xs"
 					>
-						<Send className="w-4 h-4 ml-1" />
-						رسالة جديدة
+						<Send className="w-3.5 h-3.5 ml-1" />
+						{t('messages.newMessage', 'New Message')}
 					</Button>
 				</div>
 			</div>
@@ -267,7 +269,7 @@ export default function Messages() {
 				<Card className="border-0 shadow-sm">
 					<CardContent className="p-4 space-y-3">
 						<h3 className="text-sm font-cairo font-bold text-[#111111]">
-							رسالة جديدة
+							{t('messages.newMessage', 'New Message')}
 						</h3>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 							<input
@@ -275,21 +277,21 @@ export default function Messages() {
 								min={1}
 								value={composeRecipientId}
 								onChange={(e) => setComposeRecipientId(e.target.value)}
-								placeholder="معرّف المستلم (#ID)"
+								placeholder={t('messages.recipientIdPlaceholder', 'Recipient ID (#ID)')}
 								className="md:col-span-1 text-sm px-3 py-2.5 rounded-xl border border-[#e5e5e5] bg-[#F8F8F8] font-mono"
 							/>
 							<input
 								type="text"
 								value={composeSubject}
 								onChange={(e) => setComposeSubject(e.target.value)}
-								placeholder="الموضوع"
+								placeholder={t('messages.subjectPlaceholder', 'Subject')}
 								className="md:col-span-2 text-sm px-3 py-2.5 rounded-xl border border-[#e5e5e5] bg-[#F8F8F8] font-cairo"
 							/>
 						</div>
 						<textarea
 							value={composeBody}
 							onChange={(e) => setComposeBody(e.target.value)}
-							placeholder="اكتب رسالتك…"
+							placeholder={t('messages.bodyPlaceholder', 'Write your message...')}
 							rows={4}
 							className="w-full text-sm p-3 rounded-xl border border-[#e5e5e5] bg-[#F8F8F8] font-cairo resize-none"
 						/>
@@ -300,7 +302,7 @@ export default function Messages() {
 								size="sm"
 								onClick={() => setComposeOpen(false)}
 							>
-								إلغاء
+								{t('messages.cancel', 'Cancel')}
 							</Button>
 							<Button
 								type="button"
@@ -314,7 +316,7 @@ export default function Messages() {
 								) : (
 									<Send className="w-4 h-4 ml-1" />
 								)}
-								إرسال
+								{t('messages.send', 'Send')}
 							</Button>
 						</div>
 					</CardContent>
@@ -332,7 +334,7 @@ export default function Messages() {
 							/>
 							<input
 								type="text"
-								placeholder="بحث في المحادثات…"
+								placeholder={t('messages.searchPlaceholder', 'Search conversations...')}
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								className="w-full pr-9 pl-3 py-2 rounded-xl border border-[#e5e5e5] bg-[#F8F8F8] text-sm font-cairo"
@@ -346,7 +348,7 @@ export default function Messages() {
 							</div>
 						) : filteredThreads.length === 0 ? (
 							<div className="p-6 text-center text-xs text-[#AAAAAA] font-cairo">
-								لا توجد رسائل
+								{t('messages.noMessages', 'No messages')}
 							</div>
 						) : (
 							filteredThreads.map((t) => {

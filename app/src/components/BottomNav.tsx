@@ -12,11 +12,11 @@ export default function BottomNav() {
 	const isActive = (p: string) => path === p;
 
 	const items = [
-		{ to: '/', icon: Home, label: t('nav.home') },
-		{ to: '/categories', icon: Grid3X3, label: t('nav.categories') },
-		{ to: '/search', icon: MessageSquare, label: 'Messages' },
-		{ to: '/checkout', icon: ShoppingCart, label: t('nav.cart') },
-		{ to: '/auth/login', icon: User, label: t('nav.account') },
+		{ to: '/', icon: Home, label: t('nav.home'), ariaLabel: t('nav.home') },
+		{ to: '/categories', icon: Grid3X3, label: t('nav.categories'), ariaLabel: t('nav.categories') },
+		{ to: '/messages', icon: MessageSquare, label: t('nav.messages'), ariaLabel: t('nav.messages') },
+		{ to: '/checkout', icon: ShoppingCart, label: t('nav.cart'), ariaLabel: t('nav.cart') },
+		{ to: '/auth/login', icon: User, label: t('nav.account'), ariaLabel: t('nav.account') },
 	];
 
 	return (
@@ -26,6 +26,7 @@ export default function BottomNav() {
 					<Link
 						key={item.to}
 						to={item.to}
+						aria-label={item.ariaLabel}
 						className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors ${
 							isActive(item.to)
 								? 'text-aliOrange'

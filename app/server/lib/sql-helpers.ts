@@ -10,8 +10,13 @@
  */
 import { HttpError } from '../middleware.js';
 
+// SECURITY: only allow safe column names — lowercase letters, digits,
+// and underscores. Prevents SQL injection via crafted column names.
+const SAFE_COLUMN_RE = /^[a-z][a-z0-9_]*$/;
+
 /** Builds a dynamic `SET col = $N` list from a partial object. Throws
- *  HttpError(400) when no updateable fields are present. */
+ *  HttpError(400) when no updateable fields are present or when any
+ *  column name is unsafe (SQL injection protection). */
 export function buildUpdateSet(fields: Record<string, unknown>): {
 	sql: string;
 	params: unknown[];
@@ -19,6 +24,11 @@ export function buildUpdateSet(fields: Record<string, unknown>): {
 	const sets: string[] = [];
 	const params: unknown[] = [];
 	for (const [k, v] of Object.entries(fields)) {
+		if (!SAFE_COLUMN_RE.test(k)) {
+			throw new HttpError(400, `Invalid column name: "${k}"`, {
+				code: 'INVALID_COLUMN',
+			});
+		}
 		params.push(v);
 		sets.push(`${k} = $${params.length}`);
 	}

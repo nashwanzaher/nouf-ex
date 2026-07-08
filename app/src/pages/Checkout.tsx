@@ -456,6 +456,7 @@ export default function Checkout() {
 											type="radio"
 											name="address"
 											value={a.id}
+											aria-label={`${a.label} - ${a.full_name}`}
 											checked={selectedAddressId === a.id}
 											onChange={() => setSelectedAddressId(a.id)}
 											className="mt-1"
@@ -492,6 +493,11 @@ export default function Checkout() {
 							{(['cod', 'card', 'wallet'] as const).map((m) => (
 								<label
 									key={m}
+									aria-label={m === 'cod'
+										? t('checkout.paymentCod', 'Cash on delivery')
+										: m === 'card'
+											? t('checkout.paymentCard', 'Card')
+											: t('checkout.paymentWallet', 'Wallet')}
 									className={`flex flex-col items-center gap-1 p-3 border rounded-lg cursor-pointer text-xs ${
 										paymentMethod === m
 											? 'border-aliOrange bg-aliOrange/5 text-aliText font-bold'

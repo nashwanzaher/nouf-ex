@@ -364,6 +364,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 		});
 	}
 	// 4. Anything else — log full detail, return generic message.
+	// SECURITY: never leak error internals to the client, even in dev.
 	log.error({
 		msg: 'unhandled_error',
 		request_id: requestId,
@@ -373,10 +374,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 		error_message: (err as Error)?.message,
 		stack: (err as Error)?.stack,
 	});
-	const isDev = process.env.NODE_ENV !== 'production';
 	res.status(500).json({
 		success: false,
-		error: isDev ? (err as Error)?.message || 'Internal error' : 'Internal server error.',
+		error: 'Internal server error.',
 		request_id: requestId,
 	});
 };
@@ -822,21 +822,19 @@ export function sendError(
 			});
 			return;
 		}
-		// 3. Anything else — log full detail, return a generic
-		//    message in production or the original `err.message`
-		//    in development for easier debugging.
-		log.error({
-			msg: 'unhandled_error',
-			error_name: err.name,
-			error_message: err.message,
-		});
-		const isDev = process.env.NODE_ENV !== 'production';
-		res.status(status).json({
-			success: false,
-			error: isDev ? err.message : 'Internal server error.',
-			request_id: res.req?.id,
-		});
-		return;
+	// 3. Anything else — log full detail, return a generic
+	//    message. SECURITY: never leak error internals to the client.
+	log.error({
+		msg: 'unhandled_error',
+		error_name: err.name,
+		error_message: err.message,
+	});
+	res.status(status).json({
+		success: false,
+		error: 'Internal server error.',
+		request_id: res.req?.id,
+	});
+	return;
 	}
 	// Original string-based path (used for explicit client errors
 	// like "Coupon not found" or "Invalid input").

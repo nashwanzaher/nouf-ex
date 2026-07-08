@@ -1,11 +1,14 @@
 import {
 	Award,
 	BadgeCheck,
+	Calendar,
 	ChevronRight,
 	Clock,
 	Heart,
+	MapPin,
 	MessageCircle,
 	Minus,
+	Package,
 	Plus,
 	RefreshCw,
 	ShieldCheck,
@@ -93,17 +96,19 @@ export default function ProductDetail() {
 		return (
 			<div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
 				<div className="text-6xl font-bold text-aliOrange mb-4">404</div>
-				<h2 className="text-xl font-semibold text-aliText mb-2">Invalid product ID</h2>
+				<h2 className="text-xl font-semibold text-aliText mb-2">
+					{t('product.invalidId', 'Invalid product ID')}
+				</h2>
 				<p className="text-aliTextSec mb-6">
-					The product ID{' '}
-					<code className="bg-aliSurface px-1.5 py-0.5 rounded">{String(id)}</code> is not
-					valid.
+					{t('product.invalidIdMessage', 'The product ID')}{' '}
+					<code className="bg-aliSurface px-1.5 py-0.5 rounded">{String(id)}</code>{' '}
+					{t('product.invalidIdSuffix', 'is not valid.')}
 				</p>
 				<Link
 					to="/"
 					className="px-5 py-2 bg-aliOrange text-white rounded-lg hover:bg-aliOrangeHover"
 				>
-					Back to home
+					{t('common.back')}
 				</Link>
 			</div>
 		);
@@ -641,7 +646,7 @@ export default function ProductDetail() {
 										</span>
 									</div>
 									<div className="flex items-center gap-3 text-sm">
-										<CalendarIcon size={16} className="text-[#FF6A00]" />
+										<Calendar size={16} className="text-[#FF6A00]" />
 										<span className="text-[#666]">
 											{t('product.storeEstablishedLabel', 'Established:')}
 										</span>
@@ -650,7 +655,7 @@ export default function ProductDetail() {
 										</span>
 									</div>
 									<div className="flex items-center gap-3 text-sm">
-										<PackageIcon size={16} className="text-[#FF6A00]" />
+										<Package size={16} className="text-[#FF6A00]" />
 										<span className="text-[#666]">
 											{t('product.storeProductsLabel', 'Products:')}
 										</span>
@@ -899,67 +904,5 @@ export default function ProductDetail() {
 				</div>
 			)}
 		</div>
-	);
-}
-
-// Extra icon components
-function CalendarIcon({ size, className }: { size: number; className?: string }) {
-	return (
-		<svg
-			width={size}
-			height={size}
-			className={className}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		>
-			<rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-			<line x1="16" y1="2" x2="16" y2="6" />
-			<line x1="8" y1="2" x2="8" y2="6" />
-			<line x1="3" y1="10" x2="21" y2="10" />
-		</svg>
-	);
-}
-
-function MapPin({ size, className }: { size: number; className?: string }) {
-	return (
-		<svg
-			width={size}
-			height={size}
-			className={className}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		>
-			<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-			<circle cx="12" cy="10" r="3" />
-		</svg>
-	);
-}
-
-function PackageIcon({ size, className }: { size: number; className?: string }) {
-	return (
-		<svg
-			width={size}
-			height={size}
-			className={className}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		>
-			<line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
-			<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-			<polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-			<line x1="12" y1="22.08" x2="12" y2="12" />
-		</svg>
 	);
 }

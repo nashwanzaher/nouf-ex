@@ -96,7 +96,6 @@ RUN chmod +x /usr/local/bin/noufex-entrypoint.sh
 # that user. The `node` user is a system account (no password, no
 # shell), which is the right shape for a long-running service.
 RUN chown -R node:node /app
-RUN chmod +x /usr/local/bin/noufex-entrypoint.sh
 
 USER node
 

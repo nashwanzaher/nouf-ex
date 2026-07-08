@@ -56,10 +56,10 @@ jobs:
     # Only run after CI passes (mirrors the same status check matrix
     # as the protection rules in branch-protection.md).
     needs:
-      - ci / Lint
-      - ci / Typecheck
-      - ci / Test
-      - ci / Build
+      - Lint
+      - Typecheck
+      - Test
+      - Build
     environment:
       name: staging
       url: ${{ secrets.STAGING_URL }}

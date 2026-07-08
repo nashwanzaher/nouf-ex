@@ -190,9 +190,9 @@ export default function Login() {
 											className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'} ${styles.inputIcon}`}
 											strokeWidth={1.5}
 										/>
-										<Input
-											type="text"
-											value={email}
+									<Input
+										type="email"
+										value={email}
 											onChange={(e) => {
 												setEmail(e.target.value);
 												setErrors((p) => ({ ...p, email: '' }));

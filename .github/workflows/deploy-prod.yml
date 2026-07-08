@@ -94,6 +94,13 @@ jobs:
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} <<'EOF'
             set -e
             cd /opt/noufex
+            
+            # Create backup before deploy
+            if [ -d "app/server" ]; then
+              cp -r app/server app/server.bak.$(date +%s) 2>/dev/null || true
+              cp -r app/dist app/dist.bak.$(date +%s) 2>/dev/null || true
+            fi
+            
             (cd app && npm ci --no-audit --no-fund && npm run db:setup) || true
             mv build/app/dist/* app/dist/ 2>/dev/null || true
             mv build/app/server/index.js app/server/
@@ -118,15 +125,20 @@ jobs:
             docker compose restart noufex
           EOF
 
-      - name: Wait + smoke checks
+      - name: Wait + smoke checks with rollback
         run: |
           BASE="${{ secrets.PROD_URL }}"
           echo "Waiting for $BASE/api/health ..."
+          ROLLBACK_NEEDED=0
           for i in $(seq 1 30); do
             CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/health" 2>/dev/null || echo 000)
             if [ "$CODE" = "200" ]; then
               echo "Production API ready after ${i}s"
               break
+            fi
+            if [ "$i" = "30" ]; then
+              echo "::error::API did not come back up within 60s — triggering rollback"
+              ROLLBACK_NEEDED=1
             fi
             sleep 2
           done
@@ -134,7 +146,29 @@ jobs:
           READY=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/ready")
           STATS=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/api/stats/home")
           if [ "$HEALTH" != "200" ] || [ "$READY" != "200" ] || [ "$STATS" != "200" ]; then
-            echo "::error::Production smoke failed"
+            echo "::error::Production smoke failed — triggering rollback"
+            ROLLBACK_NEEDED=1
+          fi
+          if [ "$ROLLBACK_NEEDED" = "1" ]; then
+            echo "Rolling back to previous version..."
+            ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} <<'RBEOF'
+              set -e
+              cd /opt/noufex
+              LATEST_BAK=$(ls -td app/server.bak.* 2>/dev/null | head -1)
+              LATEST_DIST=$(ls -td app/dist.bak.* 2>/dev/null | head -1)
+              if [ -n "$LATEST_BAK" ]; then
+                rm -rf app/server
+                mv "$LATEST_BAK" app/server
+                echo "Server rolled back"
+              fi
+              if [ -n "$LATEST_DIST" ]; then
+                rm -rf app/dist
+                mv "$LATEST_DIST" app/dist
+                echo "Static files rolled back"
+              fi
+              docker compose restart noufex
+            RBEOF
+            echo "::error::Rollback completed"
             exit 1
           fi
           echo "Production smoke passed: health=$HEALTH ready=$READY stats=$STATS"

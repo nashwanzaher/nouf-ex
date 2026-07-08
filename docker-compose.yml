@@ -22,7 +22,12 @@ services:
     container_name: Nouf-ex
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
     env_file:
       - .env
     environment:

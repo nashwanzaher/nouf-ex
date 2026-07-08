@@ -54,6 +54,18 @@ export default function Navbar() {
 		}
 	};
 
+	const handleCatDropdownKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === 'Escape') {
+			setCatDropdownOpen(false);
+		}
+	};
+
+	const handleUserDropdownKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === 'Escape') {
+			setUserOpen(false);
+		}
+	};
+
 	const changeLang = (lng: string) => {
 		i18n.changeLanguage(lng);
 		dispatch({ type: 'SET_LANG', payload: lng as 'ar' | 'en' | 'zh' });
@@ -121,10 +133,12 @@ export default function Navbar() {
 					<form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-4">
 						<div className="flex w-full h-11 rounded-3xl border-2 border-aliOrange overflow-hidden bg-white focus-within:shadow-md transition-shadow">
 							{/* Category dropdown */}
-							<div ref={catRef} className="relative shrink-0">
+							<div ref={catRef} className="relative shrink-0" onKeyDown={handleCatDropdownKeyDown}>
 								<button
 									type="button"
 									onClick={() => setCatDropdownOpen(!catDropdownOpen)}
+									aria-haspopup="true"
+									aria-expanded={catDropdownOpen}
 									className="h-full px-3 flex items-center gap-1 text-sm text-aliTextSec hover:bg-aliSurface border-r border-aliBorder transition-colors"
 								>
 									<span className="truncate max-w-[80px]">
@@ -225,9 +239,11 @@ export default function Navbar() {
 						</Link>
 
 						{/* User */}
-						<div ref={userRef} className="relative">
+						<div ref={userRef} className="relative" onKeyDown={handleUserDropdownKeyDown}>
 							<button
 								onClick={() => setUserOpen(!userOpen)}
+								aria-haspopup="true"
+								aria-expanded={userOpen}
 								className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-aliSurface transition-colors text-aliText"
 							>
 								<User size={18} />

@@ -28,7 +28,7 @@
   "packages": {
     ".": {
       "path": "app",
-      "package-name": "my-app",
+      "package-name": "nouf-ex",
       "release-type": "node"
     }
   }

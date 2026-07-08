@@ -97,6 +97,7 @@ export interface Category {
 	parent_id: number | null;
 	icon: string;
 	image: string;
+	image_url?: string;
 	sort_order: number;
 	is_active: number;
 	created_at: string;
@@ -718,11 +719,13 @@ export interface ProductFilters {
 	category?: string;
 	search?: string;
 	store?: number;
+	storeId?: number;
 	minPrice?: number;
 	maxPrice?: number;
 	sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
 	limit?: number;
 	offset?: number;
+	onSale?: boolean;
 }
 
 export interface ReviewFilters {

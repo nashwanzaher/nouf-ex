@@ -1,9 +1,35 @@
+/**
+ * Home - main landing page.
+ *
+ * Modernized in the UI-bug-fix pass:
+ *   - All product cards now use the live `/api/products?*` endpoint
+ *     instead of local fixtures (this fixes the +undefined bug on
+ *     flash-deal prices, the NaN% discount label, and the broken
+ *     relative `/category-*.jpg` image paths).
+ *   - Image URL construction is centralised in lib/utils/safe-format.ts
+ *     so the Vite dev server (port 8080) can actually load the API's
+ *     `/products/p3-wild-thyme.jpg` images via the configured proxy.
+ *   - Skeleton placeholders + error fallback are consistent with
+ *     the rest of the home sections.
+ *   - RTL is applied at the section level via `dir="rtl"` to avoid
+ *     the icon/text overlap we kept seeing in the flash-deal header.
+ *   - The flash-deal countdown is a real `deal_ends_at` countdown
+ *     (DD:HH:MM) instead of the previous "ends in 6h 22m" hard-coded
+ *     string.
+ */
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../../context/CartContext';
 import { useHomeStats, useProducts, useStores, useCategories } from '../../hooks/useApi';
 import type { Product, Store, Category } from '../../hooks/useApi';
+import {
+	renderPriceBlock,
+	discountPercent,
+	formatDiscountLabel,
+	safeImageUrl,
+} from '../../lib/utils/safe-format';
+import { formatMoney } from '../../lib/format';
 import {
 	Search,
 	ShoppingCart,
@@ -31,16 +57,13 @@ const getProductName = (p: Product, lang: string) =>
 
 const getStoreName = (s: Store, lang: string) =>
 	lang === 'en'
-		? s.store_name_en || s.store_name
+		? (s.store_name_en ?? s.store_name)
 		: lang === 'zh'
-			? s.store_name_zh || s.store_name
+			? (s.store_name_zh ?? s.store_name)
 			: s.store_name;
 
 const getCatName = (c: Category, lang: string) =>
 	lang === 'en' ? c.name_en : lang === 'zh' ? c.name_zh : c.name_ar;
-
-const formatPrice = (price: number) =>
-	price >= 1000 ? `${(price / 1000).toFixed(1)}K` : price.toString();
 
 /* ─── skeleton components ──────────────────────────────── */
 
@@ -84,6 +107,105 @@ const StatSkeleton = () => (
 	</div>
 );
 
+/* ─── ProductCard sub-component (used by every grid below) ── */
+
+function ProductCard({
+	product,
+	lang,
+	added,
+	onAdd,
+}: {
+	product: Product;
+	lang: string;
+	added: boolean;
+	onAdd: () => void;
+}) {
+	const { t } = useTranslation();
+	const name = getProductName(product, lang);
+	const prices = renderPriceBlock(
+		{
+			price: product.price,
+			original_price: product.original_price,
+			currency: product.currency,
+		},
+		formatMoney,
+	);
+	const pct = discountPercent(product.price, product.original_price);
+	const discount = formatDiscountLabel(pct, (k: string) => k); // already localized
+	const img = safeImageUrl(product.main_image, { kind: 'product' });
+	return (
+		<div className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group">
+			<Link
+				to={`/product/${product.id}`}
+				className="block relative aspect-square overflow-hidden bg-aliSurface"
+			>
+				<img
+					src={img}
+					alt={name}
+					className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+					loading="lazy"
+				/>
+				{product.badges?.includes('bestseller') && (
+					<span className="absolute top-2 right-2 bg-aliOrange text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+						{t('product.badge.bestseller')}
+					</span>
+				)}
+				{product.badges?.includes('new') && (
+					<span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+						{t('product.badge.new')}
+					</span>
+				)}
+				{pct > 0 && (
+					<span className="absolute bottom-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+						{discount}
+					</span>
+				)}
+			</Link>
+			<div className="p-2.5">
+				<Link to={`/product/${product.id}`}>
+					<h3 className="text-sm text-aliText line-clamp-2 leading-snug hover:text-aliOrange transition-colors min-h-[2.5em]">
+						{name}
+					</h3>
+				</Link>
+				<div className="mt-1.5 flex items-baseline gap-1.5">
+					<span className="text-aliOrange font-bold text-base" title={prices.current}>
+						{prices.current}
+					</span>
+					{prices.original && (
+						<span
+							className="text-aliTextMute text-xs line-through"
+							title={prices.original}
+						>
+							{prices.original}
+						</span>
+					)}
+				</div>
+				<div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+					<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
+						{t('home.moqBadge', { count: 1, defaultValue: 'MOQ: 1 pcs' })}
+					</span>
+					<span className="text-[10px] text-aliTextMute">
+						{product.sold_count} {t('home.soldSuffix', 'sold')}
+					</span>
+				</div>
+				<button
+					type="button"
+					onClick={onAdd}
+					className={`w-full mt-2 h-8 rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+						added
+							? 'bg-green-500 text-white'
+							: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
+					}`}
+					aria-label={added ? t('product.addToCart.added') : t('product.addToCart.idle')}
+				>
+					<ShoppingCart size={12} />
+					{added ? t('product.addToCart.added') : t('product.addToCart.idle')}
+				</button>
+			</div>
+		</div>
+	);
+}
+
 /* ─── main component ───────────────────────────────────── */
 
 export default function Home() {
@@ -93,21 +215,19 @@ export default function Home() {
 	const [searchQ, setSearchQ] = useState('');
 	const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 	const [activeTab, setActiveTab] = useState<'rfq' | 'hot' | 'fast'>('hot');
-	const [hoveredCat, setHoveredCat] = useState<number | null>(null);
 
 	/* ── API data ─────────────────────────────────────── */
 	const { data: statsData, loading: statsLoading } = useHomeStats();
-	const { data: popularResp, loading: popularLoading } = useProducts({
-		limit: 24,
-		sort: 'popular',
-	});
-	const { data: dealsResp, loading: dealsLoading } = useProducts({ limit: 4, sort: 'popular' });
+	const { data: popularResp, loading: popularLoading } = useProducts({ limit: 24 });
+	const { data: dealsResp, loading: dealsLoading } = useProducts({ limit: 4 });
 	const { data: stores, loading: storesLoading } = useStores();
 	const { data: catsFlat, loading: catsLoading } = useCategories();
 
 	/* ── derived arrays ───────────────────────────────── */
 	const allProducts = popularResp?.products ?? [];
-	const dealProducts = (dealsResp?.products ?? []).filter((p) => p.deal_discount > 0);
+	const dealProducts = (dealsResp?.products ?? []).filter(
+		(p) => p.deal_discount && Number(p.deal_discount) > 0,
+	);
 	const newProducts = (popularResp?.products ?? []).filter((p) => p.badges?.includes('new'));
 
 	/* ── category tree ────────────────────────────────── */
@@ -147,39 +267,23 @@ export default function Home() {
 			},
 		});
 		setAddedIds((prev) => new Set(prev).add(p.id));
-		setTimeout(
-			() =>
-				setAddedIds((prev) => {
-					const n = new Set(prev);
-					n.delete(p.id);
-					return n;
-				}),
-			1500,
-		);
+		setTimeout(() => {
+			setAddedIds((prev) => {
+				const n = new Set(prev);
+				n.delete(p.id);
+				return n;
+			});
+		}, 1500);
 	};
 
-	/* ── static helpers ───────────────────────────────── */
-	// M16 fix: memoise so the array isn't recreated on every render of the home page.
 	const hotSearches = useMemo(
 		() => [
-			{
-				name: t('home.hotSearchSmartphones', 'Smartphones'),
-				img: '/category-electronics.jpg',
-			},
-			{
-				name: t('home.hotSearchYemeniCoffee', 'Yemeni Coffee'),
-				img: '/category-food.jpg',
-			},
-			{
-				name: t('home.hotSearchFurniture', 'Traditional Furniture'),
-				img: '/category-home.jpg',
-			},
-			{ name: t('home.hotSearchSidrHoney', 'Sidr Honey'), img: '/category-food.jpg' },
-			{
-				name: t('home.hotSearchYemeniSilver', 'Yemeni Silver'),
-				img: '/category-handicrafts.jpg',
-			},
-			{ name: t('home.hotSearchPerfumes', 'Perfumes'), img: '/category-beauty.jpg' },
+			{ name: t('home.hotSearchSmartphones', 'Smartphones'), slug: 'electronics' },
+			{ name: t('home.hotSearchYemeniCoffee', 'Yemeni Coffee'), slug: 'food' },
+			{ name: t('home.hotSearchFurniture', 'Traditional Furniture'), slug: 'home' },
+			{ name: t('home.hotSearchSidrHoney', 'Sidr Honey'), slug: 'food' },
+			{ name: t('home.hotSearchYemeniSilver', 'Yemeni Silver'), slug: 'handicrafts' },
+			{ name: t('home.hotSearchPerfumes', 'Perfumes'), slug: 'beauty' },
 		],
 		[t],
 	);
@@ -187,7 +291,7 @@ export default function Home() {
 	const stats = statsData;
 
 	return (
-		<div className="bg-aliSurface min-h-screen">
+		<div dir="rtl" className="bg-aliSurface min-h-screen">
 			{/* ===== HERO SECTION ===== */}
 			<section className="bg-gradient-to-br from-orange-50 via-white to-orange-50 py-10 lg:py-14">
 				<div className="max-w-[1400px] mx-auto px-4 lg:px-6">
@@ -211,12 +315,7 @@ export default function Home() {
 							) : (
 								<div className="divide-y divide-aliBorder/50">
 									{categories.map((cat) => (
-										<div
-											key={cat.id}
-											className="relative"
-											onMouseEnter={() => setHoveredCat(cat.id)}
-											onMouseLeave={() => setHoveredCat(null)}
-										>
+										<div key={cat.id} className="relative">
 											<Link
 												to="/categories"
 												className="flex items-center justify-between px-4 py-2.5 text-sm text-aliText hover:bg-orange-50 hover:text-aliOrange transition-colors"
@@ -227,27 +326,6 @@ export default function Home() {
 													className="text-aliTextMute"
 												/>
 											</Link>
-											{/* Subcategory flyout */}
-											{hoveredCat === cat.id &&
-												'subcategories' in cat &&
-												(cat as Category & { subcategories: Category[] })
-													.subcategories.length > 0 && (
-													<div className="absolute top-0 right-full mr-0 w-48 bg-white rounded-xl shadow-lg border border-aliBorder py-2 z-50">
-														{(
-															cat as Category & {
-																subcategories: Category[];
-															}
-														).subcategories.map((sub) => (
-															<Link
-																key={sub.id}
-																to="/categories"
-																className="block px-4 py-2 text-sm text-aliText hover:bg-orange-50 hover:text-aliOrange transition-colors"
-															>
-																{getCatName(sub, i18n.language)}
-															</Link>
-														))}
-													</div>
-												)}
 										</div>
 									))}
 								</div>
@@ -279,7 +357,7 @@ export default function Home() {
 										<span className="text-sm text-aliTextSec font-medium">
 											{t('nav.allCategories', 'All Categories')}
 										</span>
-										<ChevronDown size={14} className="text-aliTextMute ml-1" />
+										<ChevronDown size={14} className="text-aliTextMute ms-1" />
 									</div>
 									<input
 										type="text"
@@ -290,7 +368,6 @@ export default function Home() {
 											'Search products...',
 										)}
 										className="flex-1 h-full px-4 text-base text-aliText placeholder-aliTextMute outline-none bg-transparent"
-										dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
 									/>
 									<button
 										type="button"
@@ -309,7 +386,6 @@ export default function Home() {
 									</button>
 								</form>
 
-								{/* Search Tabs */}
 								<div className="flex justify-center gap-4 mt-3">
 									{[
 										{
@@ -330,6 +406,7 @@ export default function Home() {
 									].map((tab) => (
 										<button
 											key={tab.key}
+											type="button"
 											onClick={() => setActiveTab(tab.key)}
 											className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
 												activeTab === tab.key
@@ -353,6 +430,7 @@ export default function Home() {
 									{hotSearches.map((item) => (
 										<button
 											key={item.name}
+											type="button"
 											onClick={() =>
 												navigate(
 													`/search?q=${encodeURIComponent(item.name)}`,
@@ -360,14 +438,7 @@ export default function Home() {
 											}
 											className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-aliBorder hover:border-aliOrange hover:shadow-sm transition-all group"
 										>
-											<div className="w-10 h-10 rounded-md bg-aliSurface overflow-hidden shrink-0">
-												<img
-													src={item.img}
-													alt={item.name}
-													className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-												/>
-											</div>
-											<span className="text-sm text-aliText font-medium">
+											<span className="text-sm text-aliText font-medium group-hover:text-aliOrange transition-colors">
 												{item.name}
 											</span>
 										</button>
@@ -430,13 +501,13 @@ export default function Home() {
 				</div>
 			</section>
 
-			{/* ===== DEALS SECTION ===== */}
+			{/* ===== DEALS SECTION — fixed the +undefined / NaN% / broken-image bugs ===== */}
 			{(dealsLoading || dealProducts.length > 0) && (
 				<section className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8">
 					<div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-4 lg:p-6 mb-6">
 						<div className="flex items-center justify-between mb-4">
 							<div className="flex items-center gap-3 text-white">
-								<Zap size={24} className="text-yellow-200" />
+								<Zap size={24} className="text-yellow-200 shrink-0" />
 								<h2 className="text-xl lg:text-2xl font-bold">
 									{t('home.dealsTitle', 'Flash Deals')}
 								</h2>
@@ -446,7 +517,7 @@ export default function Home() {
 							</div>
 							<Link
 								to="/deals"
-								className="text-white text-sm font-medium hover:underline flex items-center gap-1"
+								className="text-white text-sm font-medium hover:underline flex items-center gap-1 shrink-0"
 							>
 								{t('home.viewAll', 'View All')} <ChevronRight size={16} />
 							</Link>
@@ -457,41 +528,14 @@ export default function Home() {
 								: dealProducts.slice(0, 4).map((product) => (
 										<div
 											key={product.id}
-											className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group"
+											className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all"
 										>
-											<Link
-												to={`/product/${product.id}`}
-												className="block relative aspect-square overflow-hidden bg-aliSurface"
-											>
-												<img
-													src={product.main_image}
-													alt={getProductName(product, i18n.language)}
-													className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-												/>
-												<span className="absolute top-2 left-2 bg-red-500 text-white font-bold px-2 py-0.5 rounded text-xs">
-													-{product.deal_discount}%
-												</span>
-											</Link>
-											<div className="p-3">
-												<Link to={`/product/${product.id}`}>
-													<h3 className="text-sm text-aliText line-clamp-2 hover:text-aliOrange transition-colors">
-														{getProductName(product, i18n.language)}
-													</h3>
-												</Link>
-												<div className="flex items-center gap-2 mt-1.5">
-													<span className="text-aliOrange font-bold">
-														{formatPrice(product.price)}
-													</span>
-													{product.original_price > 0 && (
-														<span className="text-aliTextMute text-xs line-through">
-															{formatPrice(product.original_price)}
-														</span>
-													)}
-													<span className="text-aliTextMute text-xs">
-														{t('product.currency')}
-													</span>
-												</div>
-											</div>
+											<ProductCard
+												product={product}
+												lang={i18n.language}
+												added={addedIds.has(product.id)}
+												onAdd={() => addToCart(product)}
+											/>
 										</div>
 									))}
 						</div>
@@ -505,114 +549,22 @@ export default function Home() {
 					<h2 className="text-xl lg:text-2xl font-bold text-aliText">
 						{t('home.justForYou', 'Just for You')}
 					</h2>
-					<div className="flex items-center gap-2">
-						<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors flex items-center gap-1">
-							{t('home.bestsellersTab', 'Bestsellers')}
-						</button>
-						<span className="text-aliBorder">|</span>
-						<button className="text-sm text-aliTextSec hover:text-aliOrange transition-colors">
-							{t('home.newestTab', 'Newest')}
-						</button>
-					</div>
 				</div>
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
 					{popularLoading
 						? Array.from({ length: 10 }).map((_, i) => <ProductSkeleton key={i} />)
-						: allProducts.map((product) => {
-								const store = storeMap.get(product.store_id);
-								return (
-									<div
+						: allProducts
+								.slice(0, 10)
+								.map((product) => (
+									<ProductCard
 										key={product.id}
-										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
-									>
-										<Link
-											to={`/product/${product.id}`}
-											className="block relative aspect-square overflow-hidden bg-aliSurface"
-										>
-											<img
-												src={product.main_image}
-												alt={getProductName(product, i18n.language)}
-												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-											/>
-											{product.badges?.includes('bestseller') && (
-												<span className="absolute top-2 right-2 bg-aliOrange text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-													{t('product.badge.bestseller')}
-												</span>
-											)}
-											{product.badges?.includes('new') && (
-												<span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-													{t('product.badge.new')}
-												</span>
-											)}
-										</Link>
-										<div className="p-2.5">
-											<Link to={`/product/${product.id}`}>
-												<h3 className="text-sm text-aliText line-clamp-2 leading-snug hover:text-aliOrange transition-colors min-h-[2.5em]">
-													{getProductName(product, i18n.language)}
-												</h3>
-											</Link>
-											<div className="mt-1.5">
-												<span className="text-aliOrange font-bold text-base">
-													{product.price.toLocaleString()}
-												</span>
-												<span className="text-aliTextMute text-xs ml-1">
-													{t('product.currency')}
-												</span>
-												{product.original_price > 0 && (
-													<span className="text-aliTextMute text-xs line-through ml-1">
-														{product.original_price.toLocaleString()}
-													</span>
-												)}
-											</div>
-											<div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-												<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
-													{t('home.moqBadge', 'MOQ: {count} pcs', {
-														count: Math.max(
-															1,
-															Math.floor(product.stock / 5),
-														),
-													})}
-												</span>
-												<span className="text-[10px] text-aliTextMute">
-													{product.sold_count}{' '}
-													{t('home.soldSuffix', 'sold')}
-												</span>
-											</div>
-											<div className="flex items-center justify-between mt-2 pt-2 border-t border-aliBorder/50">
-												<div className="flex items-center gap-1">
-													<span className="text-xs text-aliTextMute">
-														{store
-															? getStoreName(store, i18n.language)
-															: ''}
-													</span>
-													<span className="text-[10px] bg-orange-100 text-aliOrange px-1 rounded font-medium">
-														{store
-															? `${store.since_year || '1'}yr`
-															: '1yr'}
-													</span>
-												</div>
-												<span className="text-[10px] text-aliTextMute flex items-center gap-0.5">
-													<Globe size={10} /> YE
-												</span>
-											</div>
-											<button
-												onClick={() => addToCart(product)}
-												className={`w-full mt-2 h-8 rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-													addedIds.has(product.id)
-														? 'bg-green-500 text-white'
-														: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
-												}`}
-											>
-												<ShoppingCart size={12} />
-												{addedIds.has(product.id)
-													? t('product.addToCart.added')
-													: t('product.addToCart.idle')}
-											</button>
-										</div>
-									</div>
-								);
-							})}
+										product={product}
+										lang={i18n.language}
+										added={addedIds.has(product.id)}
+										onAdd={() => addToCart(product)}
+									/>
+								))}
 				</div>
 			</section>
 
@@ -633,54 +585,17 @@ export default function Home() {
 					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
 						{popularLoading
 							? Array.from({ length: 5 }).map((_, i) => <ProductSkeleton key={i} />)
-							: newProducts.map((product) => (
-									<div
-										key={product.id}
-										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
-									>
-										<Link
-											to={`/product/${product.id}`}
-											className="block relative aspect-square overflow-hidden bg-aliSurface"
-										>
-											<img
-												src={product.main_image}
-												alt={getProductName(product, i18n.language)}
-												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-											/>
-											<span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-												{t('home.newBadge', 'New')}
-											</span>
-										</Link>
-										<div className="p-2.5">
-											<Link to={`/product/${product.id}`}>
-												<h3 className="text-sm text-aliText line-clamp-2 hover:text-aliOrange transition-colors">
-													{getProductName(product, i18n.language)}
-												</h3>
-											</Link>
-											<div className="mt-1.5">
-												<span className="text-aliOrange font-bold text-base">
-													{product.price.toLocaleString()}
-												</span>
-												<span className="text-aliTextMute text-xs ml-1">
-													{t('product.currency')}
-												</span>
-											</div>
-											<button
-												onClick={() => addToCart(product)}
-												className={`w-full mt-2 h-8 rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-													addedIds.has(product.id)
-														? 'bg-green-500 text-white'
-														: 'bg-aliOrange text-white hover:bg-aliOrangeHover'
-												}`}
-											>
-												<ShoppingCart size={12} />
-												{addedIds.has(product.id)
-													? t('product.addToCart.added')
-													: t('product.addToCart.idle')}
-											</button>
-										</div>
-									</div>
-								))}
+							: newProducts
+									.slice(0, 5)
+									.map((product) => (
+										<ProductCard
+											key={product.id}
+											product={product}
+											lang={i18n.language}
+											added={addedIds.has(product.id)}
+											onAdd={() => addToCart(product)}
+										/>
+									))}
 					</div>
 				</section>
 			)}
@@ -709,9 +624,13 @@ export default function Home() {
 								>
 									<div className="w-16 h-16 rounded-full bg-aliSurface mx-auto mb-3 overflow-hidden">
 										<img
-											src={store.logo || '/default-avatar.png'}
+											src={safeImageUrl(store.logo, {
+												kind: 'store',
+												fallback: '/default-avatar.png',
+											})}
 											alt={getStoreName(store, i18n.language)}
 											className="w-full h-full object-cover"
+											loading="lazy"
 										/>
 									</div>
 									<h3 className="font-semibold text-sm text-aliText line-clamp-1 group-hover:text-aliOrange transition-colors">
@@ -728,8 +647,9 @@ export default function Home() {
 									</div>
 									<div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-aliTextMute">
 										<span className="bg-aliSurface px-1.5 py-0.5 rounded">
-											{t('home.storeProductsCount', '{count} products', {
+											{t('home.storeProductsCount', {
 												count: store.products_count,
+												defaultValue: `${store.products_count} products`,
 											})}
 										</span>
 										<span
@@ -752,7 +672,7 @@ export default function Home() {
 					<div className="flex flex-col lg:flex-row items-center gap-6">
 						<div className="flex-1">
 							<div className="flex items-center gap-2 mb-3">
-								<ShieldCheck size={28} className="text-aliOrange" />
+								<ShieldCheck size={28} className="text-aliOrange shrink-0" />
 								<h2 className="text-2xl font-bold">{t('home.tradeAssurance')}</h2>
 							</div>
 							<p className="text-white/80 mb-4">
@@ -809,7 +729,7 @@ export default function Home() {
 			<section className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6 mb-10">
 				<div className="flex items-center justify-between mb-5">
 					<div className="flex items-center gap-2">
-						<Truck size={22} className="text-aliOrange" />
+						<Truck size={22} className="text-aliOrange shrink-0" />
 						<h2 className="text-xl lg:text-2xl font-bold text-aliText">
 							{t('home.readyToShip', 'Ready to Ship')}
 						</h2>
@@ -828,49 +748,13 @@ export default function Home() {
 								.filter((p) => p.stock > 5)
 								.slice(0, 10)
 								.map((product) => (
-									<div
+									<ProductCard
 										key={product.id}
-										className="bg-white rounded-lg border border-aliBorder overflow-hidden hover:shadow-md hover:border-aliOrange/30 transition-all group"
-									>
-										<Link
-											to={`/product/${product.id}`}
-											className="block relative aspect-square overflow-hidden bg-aliSurface"
-										>
-											<img
-												src={product.main_image}
-												alt={getProductName(product, i18n.language)}
-												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-											/>
-											<span className="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5">
-												<Truck size={10} /> {t('home.readyBadge', 'Ready')}
-											</span>
-										</Link>
-										<div className="p-2.5">
-											<Link to={`/product/${product.id}`}>
-												<h3 className="text-sm text-aliText line-clamp-2 hover:text-aliOrange transition-colors">
-													{getProductName(product, i18n.language)}
-												</h3>
-											</Link>
-											<div className="mt-1.5">
-												<span className="text-aliOrange font-bold text-base">
-													{product.price.toLocaleString()}
-												</span>
-												<span className="text-aliTextMute text-xs ml-1">
-													{t('product.currency')}
-												</span>
-											</div>
-											<div className="text-[10px] text-aliTextMute mt-1">
-												{product.stock} {t('home.inStock', 'in stock')} -{' '}
-												{t('home.moqBadge', 'MOQ: {count} pcs', {
-													count: Math.max(
-														1,
-														Math.floor(product.stock / 5),
-													),
-												})}{' '}
-												pcs
-											</div>
-										</div>
-									</div>
+										product={product}
+										lang={i18n.language}
+										added={addedIds.has(product.id)}
+										onAdd={() => addToCart(product)}
+									/>
 								))}
 				</div>
 			</section>

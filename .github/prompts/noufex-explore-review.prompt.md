@@ -65,7 +65,7 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 ### المرحلة 5 — الجودة والمخاطر (10 دقائق)
 
 - اقرأ [docs/testing.md](../../docs/testing.md) و [docs/conventions.md](../../docs/conventions.md).
-- اقرأ [archive/audit/](../../archive/audit/) (code-audit, review-code, review-database, review-features, review-ux, ops-verification).
+- Historical audits/review notes are no longer in the repo — refer to git history on GitHub for prior audit reports (e.g. `code-audit-2026-06-21.md`, `review-code.md`, etc.).
 - اقرأ [docs/roadmap.md](../../docs/roadmap.md) و [docs/competitive-analysis-2026.md](../../docs/competitive-analysis-2026.md).
 - ابحث في الكود عن: `TODO`, `FIXME`, `HACK`, `XXX`, `console.log`, `mockData`, `dummyData`, `placeholder`.
 - افحص ملف `app/src/pages/customer/Notifications.tsx` (مثال على بيانات وهمية في P1-7).

@@ -49,4 +49,4 @@ app/scripts/
 mcp-server/
 
 # Legacy / archived research docs
-docs/research/
+# (archive/ removed 2026-07-07; docs/research/ no longer exists)

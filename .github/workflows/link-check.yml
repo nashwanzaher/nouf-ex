@@ -10,7 +10,7 @@
 #     outside the scope of a single page (orphan files, bad refs in
 #     nav, etc.).
 # ---------------------------------------------------------------------
-# Configuration: `.markdown-link-check.json` at the repo root.
+# Configuration: `.markdown-link-check.json` at `docs/`.
 # Standards referenced:
 #   - Microsoft Docs guidance on doc health monitoring
 #   - GitHub Actions documentation
@@ -24,7 +24,7 @@ on:
     paths:
       - "**/*.md"
       - "**/*.mdx"
-      - ".markdown-link-check.json"
+      - "docs/.markdown-link-check.json"
       - ".github/workflows/link-check.yml"
   schedule:
     # Nightly at 06:00 UTC — catches external link rot
@@ -86,18 +86,12 @@ jobs:
           files=()
           # shellcheck disable=SC2086
           for file in $PATTERN; do
-            # Skip files under archive/ — they're historical and
-            # intentionally frozen. New contributors can read them
-            # but we never want to fix dead external links in them.
-            case "$file" in
-              archive/*) continue ;;
-            esac
             files+=("$file")
           done
           echo "Checking ${#files[@]} files in scope '${{ matrix.scope }}'"
           for file in "${files[@]}"; do
             npx markdown-link-check \
-              --config .markdown-link-check.json \
+              --config docs/.markdown-link-check.json \
               --quiet \
               "$file" || {
                 echo "::error file=$file::Broken links in $file"

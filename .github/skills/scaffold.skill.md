@@ -257,7 +257,7 @@ export default defineConfig({
 ### Phase 5: Add Tests
 
 ```yaml
-Test Setup (tests/setup.ts):
+Test Setup (mocks/setup.ts):
 import { beforeAll, afterAll } from 'vitest';
 
 beforeAll(async () => {

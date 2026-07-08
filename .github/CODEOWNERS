@@ -79,9 +79,8 @@ SECRETS.md                                          @nashwanzaher
 /app/test.ps1                                       @nashwanzaher
 
 # === Legacy: history dirs need no review =======================
-/archive/                                           @nashwanzaher
-/.github/audit-checks.ps1                          @nashwanzaher
-/.github/copilot-instructions.md                    @nashwanzaher
+# (archive/ removed 2026-07-07)
+# === Auto-merge candidates (Dependabot + lockfiles) ===========
 
 # === Auto-merge candidates (Dependabot + lockfiles) ===========
 # When Dependabot opens a PR, we want to auto-merge after CI

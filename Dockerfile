@@ -88,7 +88,7 @@ COPY --from=build /build/app/package.json ./package.json
 COPY --from=build /build/app/dist ./dist
 
 # Copy the API entrypoint.
-COPY docker/entrypoint.sh /usr/local/bin/noufex-entrypoint.sh
+COPY scripts/devops/docker-entrypoint.sh /usr/local/bin/noufex-entrypoint.sh
 RUN chmod +x /usr/local/bin/noufex-entrypoint.sh
 
 # Drop root: the official `node:20-alpine` image already ships a

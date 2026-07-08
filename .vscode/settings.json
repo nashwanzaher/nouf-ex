@@ -450,5 +450,9 @@
 	"http.proxy": "",
 	"http.proxyStrictSSL": true,
 	"http.systemCertificates": true,
-	"http.noProxy": ["localhost", "127.0.0.1"]
+  "http.noProxy": [
+    "localhost",
+    "127.0.0.1"
+  ],
+  "github.copilot.chat.agentDebugLog.fileLogging.enabled": true
 }

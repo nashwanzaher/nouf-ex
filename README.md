@@ -129,9 +129,7 @@ Full instructions in [docs/getting-started.md](docs/getting-started.md).
 | Build the docs site                      | [docs/BUILD.md](docs/BUILD.md)                                   |
 | See the canonical execution plan         | [docs/planning/MIGRATION_EXECUTION_PLAN.md](docs/planning/MIGRATION_EXECUTION_PLAN.md) |
 | Read the risk register / ADRs            | [docs/planning/risks.md](docs/planning/risks.md) · [docs/planning/adr/](docs/planning/adr/) |
-| Read the original Alibaba/Taobao research | [archive/research/](archive/research/)                          |
-| Read past code/UX reviews                | [archive/audit/](archive/audit/)                                |
-| Browse 60 archived historical files      | [archive/README.md](archive/README.md)                          |
+| Browse historical audits / research     | Git history on GitHub (see [docs/README.md §History](docs/README.md#-history)) |
 
 ## Contributing
 

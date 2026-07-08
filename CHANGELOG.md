@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - 🧰 New npm script: `npm run test:a11y` (wrapper around
     `vitest run a11y.test.tsx`).
   - 🪝 Global matcher registered in
-    [`app/tests/setup.ts`](app/tests/setup.ts) via
+    [`app/mocks/setup.ts`](app/mocks/setup.ts) via
     `import 'vitest-axe/extend-expect'` so `toHaveNoViolations()`
     is available in every test file.
   - 📖 Decision documented in

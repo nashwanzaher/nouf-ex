@@ -140,7 +140,7 @@ jobs:
           npm run typecheck
 
   # ─────────────────────────────────────────────────────────────────
-  # 3. Unit tests (no DB; pg is mocked globally in app/tests/setup.ts)
+  # 3. Unit tests (no DB; pg is mocked globally in app/mocks/setup.ts)
   # ─────────────────────────────────────────────────────────────────
   test:
     name: Test

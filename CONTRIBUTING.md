@@ -13,7 +13,7 @@ All contributors are expected to follow our
 | ------------------------------- | ---------------------------------------------------- |
 | `app/src/`                      | Frontend (React 19 + Vite 7)                         |
 | `app/server/`                   | Backend (Express 5 + `pg`)                           |
-| `app/tests/`                    | Frontend tests + MSW mocks                           |
+| `app/mocks/`                    | Frontend tests + MSW mocks                           |
 | `app/server/tests/`             | Backend tests (api-server + schema)                  |
 | `database/`                     | SQL schema + seed (applied by `npm run db:setup`)    |
 | `scripts/`                      | Project-level helpers (db-setup.cjs, test-summary)   |

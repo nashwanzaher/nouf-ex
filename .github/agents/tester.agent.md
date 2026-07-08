@@ -160,7 +160,7 @@ expect(spy).toHaveBeenCalledWith('expected message');
 ### Test Setup
 
 ```typescript
-// tests/setup.ts
+// mocks/setup.ts
 import { beforeAll, afterAll, beforeEach } from 'vitest';
 import { pool } from '../src/db';
 
@@ -186,7 +186,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./mocks/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

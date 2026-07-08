@@ -79,6 +79,5 @@
 # Linguist overrides — keep these languages out of the GitHub
 # language statistics so the repo's "primary language" stays accurate.
 docs/*      linguist-documentation
-archive/*   linguist-documentation
 *.md        linguist-documentation
 *.ps1       linguist-vendored

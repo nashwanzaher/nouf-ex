@@ -108,15 +108,20 @@ export default function Addresses() {
 	 *  the previous version only mutated local React state and the edit
 	 *  was lost on reload. */
 	const saveAddress = async () => {
-		if (
-			!form.label ||
-			!form.full_name ||
-			!form.phone ||
-			!form.governorate ||
-			!form.city ||
-			!form.street
-		)
+		const missing: string[] = [];
+		if (!form.label) missing.push(t('addresses.label', 'Label'));
+		if (!form.full_name) missing.push(t('addresses.fullName', 'Full name'));
+		if (!form.phone) missing.push(t('addresses.phone', 'Phone'));
+		if (!form.governorate) missing.push(t('addresses.governorate', 'Governorate'));
+		if (!form.city) missing.push(t('addresses.city', 'City'));
+		if (!form.street) missing.push(t('addresses.street', 'Street'));
+		if (missing.length > 0) {
+			addToast({
+				message: t('addresses.requiredFieldsMissing', { defaultValue: 'Please fill in: {{fields}}', fields: missing.join(', ') }),
+				type: 'error',
+			});
 			return;
+		}
 		if (!user) return;
 		const body: CreateAddressBody = {
 			label: form.label,

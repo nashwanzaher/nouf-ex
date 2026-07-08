@@ -164,6 +164,7 @@ export default function AdminAuditLog() {
 							<input
 								type="text"
 								placeholder="بحث في الإجراء/الكيان/المعرّف..."
+								aria-label="بحث سجل التدقيق"
 								value={search}
 								onChange={(e) => {
 									setSearch(e.target.value);

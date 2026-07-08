@@ -212,6 +212,7 @@ export default function UsersManagement() {
 							<input
 								type="text"
 								placeholder="اسم، بريد، هاتف..."
+								aria-label="بحث المستخدمين"
 								value={search}
 								onChange={(e) => {
 									setSearch(e.target.value);

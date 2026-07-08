@@ -285,6 +285,7 @@ export default function StoresManagement() {
 						<input
 							type="text"
 							placeholder="اسم المتجر..."
+							aria-label="بحث المتاجر"
 							value={search}
 							onChange={(e) => {
 								setSearch(e.target.value);

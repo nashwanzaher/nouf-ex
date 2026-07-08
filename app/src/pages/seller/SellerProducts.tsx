@@ -246,6 +246,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 	const { t } = useTranslation();
 	const [step, setStep] = useState<WizardStep>(1);
 	const [images, setImages] = useState<string[]>([]);
+	const [errors, setErrors] = useState<Record<string, string>>({});
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const steps = [
@@ -271,7 +272,34 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 	};
 
 	const handleNext = () => {
+		// Validate current step before advancing
+		const stepErrors = validateStep(step);
+		if (Object.keys(stepErrors).length > 0) {
+			setErrors(stepErrors);
+			return;
+		}
+		setErrors({});
 		if (step < 6) setStep((s) => (s + 1) as WizardStep);
+	};
+
+	/** Validate fields for the current wizard step.
+	 *  Returns a map of field key → error message. Empty map = valid. */
+	const validateStep = (s: WizardStep): Record<string, string> => {
+		const errs: Record<string, string> = {};
+		if (s === 1) {
+			// Step 1 — Basic Info (name + description are required)
+			const name = (formRef.current?.name ?? '').toString().trim();
+			const desc = (formRef.current?.description ?? '').toString().trim();
+			if (!name) errs.name = t('seller.fieldRequired', 'This field is required');
+			if (!desc) errs.description = t('seller.fieldRequired', 'This field is required');
+		} else if (s === 3) {
+			// Step 3 — Pricing & Stock
+			const price = Number(formRef.current?.price ?? 0);
+			const stock = Number(formRef.current?.stock ?? 0);
+			if (!price || price <= 0) errs.price = t('seller.priceInvalid', 'Price must be greater than 0');
+			if (!Number.isInteger(stock) || stock < 0) errs.stock = t('seller.stockInvalid', 'Stock must be a non-negative integer');
+		}
+		return errs;
 	};
 
 	const handlePrev = () => {

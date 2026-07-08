@@ -31,6 +31,11 @@ export interface RequestOptions {
 	signal?: AbortSignal;
 }
 
+/** Default timeout for fetch requests (30s). Prevents the UI from
+ *  hanging forever if the server stops responding. Callers can
+ *  override by passing their own `signal`. */
+const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
+
 export class ApiError extends Error {
 	status: number;
 	/** Stable error code from `ErrorCodes` (or unknown string for new codes). */
@@ -61,16 +66,27 @@ function readAuthToken(): string | null {
 export async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const url = `${API_BASE}${endpoint}`;
 	const token = readAuthToken();
+	// Set up a default timeout so the UI doesn't hang forever on a
+	// stuck connection. If the caller already passed a signal, attach
+	// both so either timeout can cancel the request.
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), DEFAULT_FETCH_TIMEOUT_MS);
+	if (options?.signal) {
+		options.signal.addEventListener('abort', () => controller.abort());
+	}
 	const config: RequestInit = {
+		signal: controller.signal,
 		headers: {
 			'Content-Type': 'application/json',
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
 			...options?.headers,
 		},
 		...options,
+		signal: controller.signal,
 	};
 
 	const response = await fetch(url, config);
+	clearTimeout(timeoutId);
 
 	// Handle non-JSON responses (e.g. 502 from reverse proxy returning HTML)
 	let json: ApiResponse<T>;

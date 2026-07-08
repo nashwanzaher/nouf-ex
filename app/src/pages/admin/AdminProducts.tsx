@@ -166,6 +166,7 @@ export default function AdminProducts() {
 							<input
 								type="text"
 								placeholder="اسم المنتج، رقم المنتج..."
+								aria-label="بحث المنتجات"
 								value={search}
 								onChange={(e) => {
 									setSearch(e.target.value);

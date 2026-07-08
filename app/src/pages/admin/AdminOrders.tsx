@@ -221,6 +221,7 @@ export default function AdminOrders() {
 							<input
 								type="text"
 								placeholder="رقم الطلب، معرّف العميل..."
+								aria-label="بحث الطلبات"
 								value={search}
 								onChange={(e) => {
 									setSearch(e.target.value);

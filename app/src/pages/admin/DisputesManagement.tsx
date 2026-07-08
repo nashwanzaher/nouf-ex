@@ -327,6 +327,7 @@ export default function DisputesManagement() {
 							<input
 								type="text"
 								placeholder="رقم النزاع، الموضوع، رقم الطلب..."
+								aria-label="بحث النزاعات"
 								value={search}
 								onChange={(e) => {
 									setSearch(e.target.value);

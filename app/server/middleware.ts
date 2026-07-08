@@ -553,6 +553,7 @@ export function __setCachedAuthForTests(
 	ver: number,
 	role: AuthRole,
 ): void {
+	if (process.env.NODE_ENV === 'production') return;
 	authCache.set(userId, { ver, role, cachedAt: Date.now() });
 }
 
@@ -904,7 +905,10 @@ export function loadEnv(): Env {
 export function resolveDatabaseUrl(env: Env): string {
 	if (env.DATABASE_URL) return env.DATABASE_URL;
 	if (env.DB_HOST && env.DB_NAME && env.DB_USER && env.DB_PASSWORD) {
-		return `postgresql://${env.DB_USER}:${env.DB_PASSWORD}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
+		// URL-encode credentials to handle special characters (@, :, /, etc.)
+		const user = encodeURIComponent(env.DB_USER);
+		const password = encodeURIComponent(env.DB_PASSWORD);
+		return `postgresql://${user}:${password}@${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`;
 	}
 	throw new Error(
 		'DATABASE_URL is not set. Copy .env.example to .env and fill in DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (or set DATABASE_URL directly).',

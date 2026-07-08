@@ -83,15 +83,19 @@ couponsRouter.post('/redeem', requireAuth, async (req: Request, res: Response) =
 		if (already)
 			return sendSuccess(res, { id: (already as { id: number }).id }, 'Already redeemed');
 
-		const result = (await db
-			.prepare(
+		// Atomic: INSERT usage + UPDATE usage_count inside a transaction
+		// to prevent race conditions where concurrent requests over-use
+		// the coupon.
+		const result = await db.tx(async (tx) => {
+			const row = (await tx.prepare(
 				`INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount, used_at)
          VALUES (?, ?, ?, 0, NOW()) RETURNING id`,
-			)
-			.get(coupon.id, user_id, order_id)) as { id: number };
-		await db
-			.prepare('UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?')
-			.run(coupon.id);
+			).get(coupon.id, user_id, order_id)) as { id: number };
+			await tx.prepare(
+				'UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?',
+			).run(coupon.id);
+			return row;
+		});
 		sendSuccess(res, result, 'Coupon redeemed');
 	} catch (err) {
 		return sendError(res, err);

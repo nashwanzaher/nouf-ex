@@ -18,7 +18,6 @@ export async function register(body: {
 	email: string;
 	password: string;
 	name: string;
-	role?: string;
 }): Promise<AuthResponse> {
 	return apiRequest('/auth/register', {
 		method: 'POST',

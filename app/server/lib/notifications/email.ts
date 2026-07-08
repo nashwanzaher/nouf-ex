@@ -13,6 +13,7 @@
 // so the dispatcher can fall through to in_app logging.
 // =============================================================================
 import { connect, type Socket } from 'net';
+import { connect as tlsConnect, type TLSSocket } from 'tls';
 import { connect as tlsConnect } from 'tls';
 
 function isConfigured(): boolean {
@@ -43,7 +44,7 @@ async function smtpSend(opts: {
 	to: string;
 	mail: string;
 }): Promise<string> {
-	const sock: Socket = opts.secure
+	let sock: Socket = opts.secure
 		? await new Promise((resolve, reject) => {
 				const s = tlsConnect({ host: opts.host, port: opts.port });
 				s.once('secureConnect', () => resolve(s));
@@ -86,6 +87,15 @@ async function smtpSend(opts: {
 			}
 			return resp;
 		});
+	/** Upgrade a plain TCP socket to TLS in-place. Returns the new
+	 *  TLSSocket that replaces `sock` for all subsequent reads/writes. */
+	const upgradeToTls = (plain: Socket): Promise<TLSSocket> =>
+		new Promise((resolve, reject) => {
+			const tlsSock = tlsConnect({ socket: plain, servername: opts.host, rejectUnauthorized: true }, () => {
+				resolve(tlsSock);
+			});
+			tlsSock.once('error', reject);
+		});
 	try {
 		await expect('220');
 		await write(`EHLO nouf-ex.local`);
@@ -94,10 +104,11 @@ async function smtpSend(opts: {
 		if (supportsStartTls) {
 			await write('STARTTLS');
 			await expect('220');
-			// Re-issue EHLO over TLS.
-			// (We can't easily upgrade an existing net.Socket to TLS from
-			// here without tls.connect; the cleanest path is to reconnect
-			// with TLS. Skip for now — most prod uses port 465 + secure.)
+			// Upgrade the plain socket to TLS in-place.
+			sock = await upgradeToTls(sock);
+			// Re-issue EHLO over the encrypted channel.
+			await write(`EHLO nouf-ex.local`);
+			await expect('250');
 		}
 		if (opts.user && opts.password) {
 			await write('AUTH PLAIN');

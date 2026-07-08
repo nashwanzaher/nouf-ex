@@ -299,6 +299,10 @@ sellerRouter.get('/orders', ...sellerAuth, async (req: Request, res: Response) =
 		if (!v.ok) return sendError(res, 'Invalid pagination: ' + v.error, 400);
 		const { limit, offset } = v.data;
 		const status = (req.query.status as string | undefined) ?? null;
+		const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+		if (status && !validStatuses.includes(status)) {
+			return sendError(res, `Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
+		}
 		let sql = `SELECT o.*, u.email AS customer_email
              FROM orders o
              JOIN users u ON o.customer_id = u.id

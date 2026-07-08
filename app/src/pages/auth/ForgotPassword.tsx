@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Mail, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -14,6 +14,14 @@ export default function ForgotPassword() {
 	const [submitted, setSubmitted] = useState(false);
 	const [error, setError] = useState('');
 	const [countdown, setCountdown] = useState(60);
+	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+	// Clean up interval on unmount
+	useEffect(() => {
+		return () => {
+			if (timerRef.current) clearInterval(timerRef.current);
+		};
+	}, []);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -33,10 +41,14 @@ export default function ForgotPassword() {
 
 		// Start countdown
 		let seconds = 60;
-		const timer = setInterval(() => {
+		if (timerRef.current) clearInterval(timerRef.current);
+		timerRef.current = setInterval(() => {
 			seconds--;
 			setCountdown(seconds);
-			if (seconds <= 0) clearInterval(timer);
+			if (seconds <= 0) {
+				clearInterval(timerRef.current!);
+				timerRef.current = null;
+			}
 		}, 1000);
 	};
 
@@ -46,10 +58,14 @@ export default function ForgotPassword() {
 		await new Promise((r) => setTimeout(r, 1000));
 		setIsLoading(false);
 		let seconds = 60;
-		const timer = setInterval(() => {
+		if (timerRef.current) clearInterval(timerRef.current);
+		timerRef.current = setInterval(() => {
 			seconds--;
 			setCountdown(seconds);
-			if (seconds <= 0) clearInterval(timer);
+			if (seconds <= 0) {
+				clearInterval(timerRef.current!);
+				timerRef.current = null;
+			}
 		}, 1000);
 	};
 

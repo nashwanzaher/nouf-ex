@@ -67,6 +67,16 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.get(customerId, productId)) as { found: 1 } | undefined;
 		const isVerified = Boolean(purchased);
 
+		// Prevent duplicate reviews: one review per customer per product.
+		const existingReview = (await db
+			.prepare(
+				'SELECT id FROM reviews WHERE product_id = ? AND customer_id = ?',
+			)
+			.get(productId, customerId)) as { id: number } | undefined;
+		if (existingReview) {
+			return sendError(res, 'You have already reviewed this product', 409, 'DUPLICATE_REVIEW');
+		}
+
 		// Look up the product's store_id. reviews.store_id is NOT NULL, so we
 		// must derive it server-side from the product. The client-supplied
 		// storeId (if any) is only used as a sanity check.

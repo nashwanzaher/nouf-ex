@@ -8,7 +8,6 @@ import express, { type NextFunction, type Request, type RequestHandler, type Res
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-import { PgDb } from './db/pg-wrapper.ts';
 // Side-effect import: must run BEFORE shared.cts is loaded,
 // because shared.cts reads process.env.DATABASE_URL at module
 // evaluation time and throws if it is missing. A bare
@@ -24,9 +23,12 @@ import {
     optionalAuth,
     requestId,
     requestLogger,
-    resolveDatabaseUrl,
     securityHeaders,
 } from './middleware';
+// Re-use the single shared DB pool (shared.ts creates it once from
+// DATABASE_URL). Creating a second PgDb here would double the max
+// connection count and waste resources.
+import { db } from './lib/shared.ts';
 import { addressesRouter } from './routes/addresses.ts';
 import { adminReadRouter } from './routes/admin-read.ts';
 import { adminRouter } from './routes/admin.ts';
@@ -70,11 +72,7 @@ const __dirname = (() => {
 
 const app = express();
 const PORT = env.API_PORT;
-const DATABASE_URL = resolveDatabaseUrl(env);
 const STATIC_PATH = env.STATIC_PATH || path.resolve(__dirname, 'dist');
-
-// --- Database Connection (PostgreSQL via pg) ---
-const db = new PgDb(DATABASE_URL);
 
 // --- Middleware stack (order matters) ---
 configureTrustProxy(app);
@@ -189,13 +187,13 @@ setInterval(async () => {
 			| { n: number }
 			| undefined;
 		if (r && r.n > 0) log.debug({ msg: 'rate_limit_cleanup', deleted: r.n });
+		const j = (await db.prepare('SELECT cleanup_used_jtis() AS n').get()) as
+			| { n: number }
+			| undefined;
+		if (j && j.n > 0) log.debug({ msg: 'used_jtis_cleanup', deleted: j.n });
 	} catch {
 		/* ignore */
 	}
-	const j = (await db.prepare('SELECT cleanup_used_jtis() AS n').get()) as
-		| { n: number }
-		| undefined;
-	if (j && j.n > 0) log.debug({ msg: 'used_jtis_cleanup', deleted: j.n });
 }, 60 * 1000).unref();
 
 // ── Router mounts ─────────────────────────────────────────────────────────

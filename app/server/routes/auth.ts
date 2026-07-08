@@ -104,66 +104,70 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 });
 
 authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
-	const v = validate(loginSchema, req.body);
-	if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
-	const { email, password } = v.data;
+	try {
+		const v = validate(loginSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
+		const { email, password } = v.data;
 
-	const user = (await db
-		.prepare(
-			// SECURITY (C-3): select `token_version` so the freshly
-			// signed token matches the user's current revocation
-			// counter. A logout elsewhere will bump this number and
-			// invalidate the token on its next use.
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at, token_version FROM users WHERE email = ?',
-		)
-		.get(email)) as
-		| (Record<string, unknown> & {
-				id: number;
-				password_hash: string;
-				role: AuthRole;
-				token_version: number;
-		  })
-		| undefined;
+		const user = (await db
+			.prepare(
+				// SECURITY (C-3): select `token_version` so the freshly
+				// signed token matches the user's current revocation
+				// counter. A logout elsewhere will bump this number and
+				// invalidate the token on its next use.
+				'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at, token_version FROM users WHERE email = ?',
+			)
+			.get(email)) as
+			| (Record<string, unknown> & {
+					id: number;
+					password_hash: string;
+					role: AuthRole;
+					token_version: number;
+			  })
+			| undefined;
 
-	if (!user) {
-		// SECURITY (M-2, 2026-07-02): constant-time login. Without
-		// this dummy hash, an attacker measuring response time can
-		// distinguish a missing account (~10 ms) from a wrong
-		// password on a real account (~110 ms scrypt cost). We pay
-		// the scrypt cost on the "user not found" path too so both
-		// paths take the same wall-clock time. The hash is a fixed
-		// throwaway string — the comparison always fails, we just
-		// want the time to be uniform.
-		await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
-		return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
+		if (!user) {
+			// SECURITY (M-2, 2026-07-02): constant-time login. Without
+			// this dummy hash, an attacker measuring response time can
+			// distinguish a missing account (~10 ms) from a wrong
+			// password on a real account (~110 ms scrypt cost). We pay
+			// the scrypt cost on the "user not found" path too so both
+			// paths take the same wall-clock time. The hash is a fixed
+			// throwaway string — the comparison always fails, we just
+			// want the time to be uniform.
+			await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
+			return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
+		}
+
+		const ok = await verifyPassword(password, user.password_hash);
+		if (!ok) {
+			return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
+		}
+
+		await db
+			.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
+			.run(user.id)
+			.catch(() => undefined);
+
+		const { password_hash: _omit, ...userWithoutPassword } = user;
+		if ((user as { two_factor_enabled?: boolean }).two_factor_enabled) {
+			const partial_token = signPartialToken(user.id);
+			return sendSuccess(
+				res,
+				{
+					requires_2fa: true,
+					partial_token,
+					user_id: user.id,
+				},
+				200,
+				'Password OK. 2FA required — call /api/auth/2fa/verify with the code.',
+			);
+		}
+		const token = signAuthToken({ sub: user.id, role: user.role, ver: user.token_version });
+		sendSuccess(res, { user: userWithoutPassword, token }, 200, 'Login successful');
+	} catch (err) {
+		return sendError(res, err);
 	}
-
-	const ok = await verifyPassword(password, user.password_hash);
-	if (!ok) {
-		return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
-	}
-
-	await db
-		.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?')
-		.run(user.id)
-		.catch(() => undefined);
-
-	const { password_hash: _omit, ...userWithoutPassword } = user;
-	if ((user as { two_factor_enabled?: boolean }).two_factor_enabled) {
-		const partial_token = signPartialToken(user.id);
-		return sendSuccess(
-			res,
-			{
-				requires_2fa: true,
-				partial_token,
-				user_id: user.id,
-			},
-			200,
-			'Password OK. 2FA required — call /api/auth/2fa/verify with the code.',
-		);
-	}
-	const token = signAuthToken({ sub: user.id, role: user.role, ver: user.token_version });
-	sendSuccess(res, { user: userWithoutPassword, token }, 200, 'Login successful');
 });
 
 /**
@@ -207,17 +211,21 @@ authRouter.post('/logout', requireAuth, async (req: Request, res: Response) => {
 });
 
 authRouter.get('/me', requireAuth, async (req: Request, res: Response) => {
-	const userId = req.user!.id;
-	const user = (await db
-		.prepare(
-			'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, last_login, created_at FROM users WHERE id = ?',
-		)
-		.get(userId)) as Record<string, unknown> | undefined;
+	try {
+		const userId = req.user!.id;
+		const user = (await db
+			.prepare(
+				'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, last_login, created_at FROM users WHERE id = ?',
+			)
+			.get(userId)) as Record<string, unknown> | undefined;
 
-	if (!user) {
-		throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
+		if (!user) {
+			throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
+		}
+		sendSuccess(res, user);
+	} catch (err) {
+		return sendError(res, err);
 	}
-	sendSuccess(res, user);
 });
 
 /** Self-service profile update. Users edit their own name / phone /

@@ -347,8 +347,10 @@ messagesRouter.put('/:id/read', requireAuth, async (req: Request, res: Response)
 			.get(id, req.user!.id)) as { id: number; read_at: string } | undefined;
 
 		if (!updated) {
-			// Either doesn't exist, not yours, or already read. Distinguish.
-			const exists = (await db.prepare('SELECT id FROM messages WHERE id = ?').get(id)) as
+			// Either doesn't exist, not yours, or already read.
+			const exists = (await db.prepare(
+				'SELECT id FROM messages WHERE id = ? AND receiver_id = ?',
+			).get(id, req.user!.id)) as
 				| { id: number }
 				| undefined;
 			if (!exists) return sendError(res, 'Message not found', 404);

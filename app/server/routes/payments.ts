@@ -236,13 +236,21 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 			initialStatus = 'pending';
 		}
 
-		const result = (await db
-			.prepare(
+		// Re-check for existing payment inside a transaction to prevent
+		// race conditions where concurrent requests both pass the
+		// idempotency check and both insert duplicate payments.
+		const result = await db.tx(async (tx) => {
+			const duplicateCheck = (await tx.prepare(
+				'SELECT id, status FROM payments WHERE order_id = ? AND method = ?',
+			).get(order_id, method)) as { id: number; status: string } | undefined;
+			if (duplicateCheck) {
+				return { ...duplicateCheck, idempotent: true };
+			}
+			const row = (await tx.prepare(
 				`INSERT INTO payments (order_id, user_id, amount, currency, method, status, provider_txn_id, provider_meta, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, NOW(), NOW())
          RETURNING id`,
-			)
-			.run(
+			).run(
 				order_id,
 				order.customer_id,
 				amount,
@@ -252,10 +260,15 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 				txnId,
 				providerMeta ? JSON.stringify(providerMeta) : '{}',
 			)) as { lastInsertRowid: number | null };
-		if (result.lastInsertRowid == null) {
+			return { id: row.lastInsertRowid, status: initialStatus, idempotent: false };
+		});
+		if ('idempotent' in result && result.idempotent) {
+			return sendSuccess(res, { id: result.id, status: result.status, idempotent: true });
+		}
+		if (result.id == null) {
 			return sendError(res, 'Failed to record payment', 500, ErrorCodes.INSERT_FAILED);
 		}
-		const newPaymentId: number = result.lastInsertRowid;
+		const newPaymentId: number = result.id;
 
 		// Auto-mark as 'paid' only when the provider explicitly returned
 		// accepted=true (real Stripe / Paymob). Stub returns keep the

@@ -87,6 +87,13 @@ export const stripeProvider: PaymentProvider = {
 		const ts = parts['t'];
 		const sig = parts['v1'];
 		if (!ts || !sig) return { valid: false, transactionId: null, status: null, raw: {} };
+		// SECURITY: verify timestamp freshness to prevent replay attacks.
+		// Stripe recommends rejecting events older than 5 minutes.
+		const tolerance = 300; // seconds
+		const eventAge = Math.abs(Date.now() / 1000 - Number(ts));
+		if (eventAge > tolerance) {
+			return { valid: false, transactionId: null, status: null, raw: {} };
+		}
 		const expected = createHmac('sha256', secret).update(`${ts}.${rawBody}`).digest('hex');
 		const a = Buffer.from(sig, 'hex');
 		const b = Buffer.from(expected, 'hex');

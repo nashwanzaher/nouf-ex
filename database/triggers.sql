@@ -98,3 +98,42 @@ DROP TRIGGER IF EXISTS trg_refunds_resolve_payments ON refunds;
 CREATE TRIGGER trg_refunds_resolve_payments
     BEFORE INSERT OR UPDATE ON refunds
     FOR EACH ROW EXECUTE FUNCTION trg_refunds_resolve_payments();
+
+-- ---------------------------------------------------------------------
+-- 7) reviews → stores.rating + stores.review_count
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_reviews_refresh_store_stats_ins ON reviews;
+CREATE TRIGGER trg_reviews_refresh_store_stats_ins
+    AFTER INSERT ON reviews
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_review_stats();
+
+DROP TRIGGER IF EXISTS trg_reviews_refresh_store_stats_upd ON reviews;
+CREATE TRIGGER trg_reviews_refresh_store_stats_upd
+    AFTER UPDATE ON reviews
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_review_stats();
+
+DROP TRIGGER IF EXISTS trg_reviews_refresh_store_stats_del ON reviews;
+CREATE TRIGGER trg_reviews_refresh_store_stats_del
+    AFTER DELETE ON reviews
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_review_stats();
+
+-- ---------------------------------------------------------------------
+-- 8) store_followers → stores.followers_count
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_followers_refresh_count_ins ON store_followers;
+CREATE TRIGGER trg_followers_refresh_count_ins
+    AFTER INSERT ON store_followers
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_followers_count();
+
+DROP TRIGGER IF EXISTS trg_followers_refresh_count_del ON store_followers;
+CREATE TRIGGER trg_followers_refresh_count_del
+    AFTER DELETE ON store_followers
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_followers_count();
+
+-- ---------------------------------------------------------------------
+-- 9) orders → stores.sales_count (on delivered status)
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_orders_refresh_store_sales ON orders;
+CREATE TRIGGER trg_orders_refresh_store_sales
+    AFTER UPDATE ON orders
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_sales_count();

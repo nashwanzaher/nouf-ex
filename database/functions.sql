@@ -252,3 +252,89 @@ BEGIN
     RETURN NEW;
 END
 $$;
+
+-- ---------------------------------------------------------------------
+-- trg_stores_refresh_review_stats — stores.rating + stores.review_count
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION trg_stores_refresh_review_stats()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+    v_store_id int;
+BEGIN
+    v_store_id := COALESCE(NEW.store_id, OLD.store_id);
+
+    UPDATE stores
+       SET rating = COALESCE((
+               SELECT AVG(r.rating)
+                 FROM reviews r
+                 JOIN products p ON p.id = r.product_id
+                WHERE p.store_id = v_store_id
+                  AND r.is_visible = TRUE
+           ), 0),
+           review_count = (
+               SELECT COUNT(*)
+                 FROM reviews r
+                 JOIN products p ON p.id = r.product_id
+                WHERE p.store_id = v_store_id
+                  AND r.is_visible = TRUE
+           )
+     WHERE id = v_store_id;
+
+    RETURN COALESCE(NEW, OLD);
+END
+$$;
+
+-- ---------------------------------------------------------------------
+-- trg_stores_refresh_followers_count — stores.followers_count
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION trg_stores_refresh_followers_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+    v_store_id int;
+BEGIN
+    v_store_id := COALESCE(NEW.store_id, OLD.store_id);
+
+    UPDATE stores
+       SET followers_count = (
+           SELECT COUNT(*) FROM store_followers
+            WHERE store_id = v_store_id
+       )
+     WHERE id = v_store_id;
+
+    RETURN COALESCE(NEW, OLD);
+END
+$$;
+
+-- ---------------------------------------------------------------------
+-- trg_stores_refresh_sales_count — stores.sales_count (on delivered)
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION trg_stores_refresh_sales_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+    v_store_id int;
+BEGIN
+    IF NEW.status = 'delivered' AND OLD.status IS DISTINCT FROM 'delivered' THEN
+        SELECT oi.store_id INTO v_store_id
+          FROM order_items oi
+         WHERE oi.order_id = NEW.id
+         LIMIT 1;
+
+        IF v_store_id IS NOT NULL THEN
+            UPDATE stores
+               SET sales_count = sales_count + 1
+             WHERE id = v_store_id;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END
+$$;

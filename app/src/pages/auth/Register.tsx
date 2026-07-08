@@ -48,11 +48,18 @@ export default function Register() {
 				'authCommon.passwordMinLength',
 				'Password must be at least 6 characters',
 			);
+		else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+			// Weak password warning — not blocking, just advisory
+			errs.passwordWarning = t(
+				'authCommon.passwordStrength',
+				'For better security, use uppercase, lowercase, and numbers',
+			);
+		}
 		if (password !== confirmPassword)
 			errs.confirmPassword = t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
 		if (!terms) errs.terms = t('authRegister.termsRequired', 'You must agree to the terms');
 		setErrors(errs);
-		return Object.keys(errs).length === 0;
+		return !errs.email && !errs.password && !errs.confirmPassword && !errs.terms;
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -301,6 +308,11 @@ export default function Register() {
 									{errors.password && (
 										<p className={`text-xs mt-1 ${styles.fieldError}`}>
 											{errors.password}
+										</p>
+									)}
+									{errors.passwordWarning && !errors.password && (
+										<p className="text-xs mt-1 text-amber-600">
+											{errors.passwordWarning}
 										</p>
 									)}
 								</div>

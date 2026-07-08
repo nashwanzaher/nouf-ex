@@ -266,7 +266,7 @@ export default function SearchResults() {
 						</select>
 						<ChevronDown
 							size={12}
-							className="absolute right-2 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none"
+							className={`absolute top-1/2 -translate-y-1/2 text-[#999] pointer-events-none ${isRTL ? 'left-2' : 'right-2'}`}
 						/>
 					</div>
 
@@ -285,11 +285,11 @@ export default function SearchResults() {
 										{so.label}
 									</option>
 								))}
-							</select>
-							<ChevronDown
-								size={12}
-								className="absolute right-2 top-1/2 -translate-y-1/2 text-[#999] pointer-events-none"
-							/>
+						</select>
+						<ChevronDown
+							size={12}
+							className={`absolute top-1/2 -translate-y-1/2 text-[#999] pointer-events-none ${isRTL ? 'left-2' : 'right-2'}`}
+						/>
 						</div>
 						<div className="flex border border-[#E5E5E5] rounded overflow-hidden ml-2">
 							<button

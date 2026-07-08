@@ -100,7 +100,8 @@ CREATE TABLE IF NOT EXISTS stores (
     products_count    INTEGER       NOT NULL DEFAULT 0,
     sales_count       INTEGER       NOT NULL DEFAULT 0,
     followers_count   INTEGER       NOT NULL DEFAULT 0,
-    since_year        VARCHAR(4)    DEFAULT '2024',
+    since_year        SMALLINT      DEFAULT 2024
+        CHECK (since_year IS NULL OR (since_year BETWEEN 2000 AND 2100)),
     is_active         BOOLEAN       NOT NULL DEFAULT TRUE,
     is_verified       BOOLEAN       NOT NULL DEFAULT FALSE,
     deleted_at        TIMESTAMPTZ,
@@ -260,6 +261,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer        ON orders(customer_id, cre
 CREATE INDEX IF NOT EXISTS idx_orders_store           ON orders(store_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_status          ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_payment_status  ON orders(payment_status);
+CREATE INDEX IF NOT EXISTS idx_orders_store_status    ON orders(store_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_created_brin    ON orders USING BRIN (created_at);
 
 -- =====================================================================

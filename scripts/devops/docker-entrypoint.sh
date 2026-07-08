@@ -6,7 +6,7 @@
 # before Postgres is ready, so we poll the DB until it accepts connections
 # (up to 60 s). Then we exec the API.
 # ============================================================================
-set -e
+set -eu
 
 echo "[entrypoint] Nouf-ex API container starting..."
 echo "[entrypoint] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}..."

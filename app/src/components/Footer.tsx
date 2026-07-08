@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Truck, RefreshCw, Headphones } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 /**
  * P1-8 — Footer i18n pass.
@@ -11,7 +12,8 @@ import { ShieldCheck, Truck, RefreshCw, Headphones } from 'lucide-react';
  * initial load or when a key is missing from the active locale.
  */
 export default function Footer() {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
+	const { state } = useApp();
 	const year = new Date().getFullYear();
 
 	const footerColumns = [
@@ -54,7 +56,7 @@ export default function Footer() {
 	];
 
 	return (
-		<footer className="bg-[#333333] text-white" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
+		<footer className="bg-[#333333] text-white" dir={state.dir}>
 			{/* Trust Badges */}
 			<div className="border-b border-white/10">
 				<div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">

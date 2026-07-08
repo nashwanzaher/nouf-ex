@@ -192,8 +192,9 @@ export default function ProductDetail() {
 	const discount = product.original_price
 		? Math.round((1 - product.price / product.original_price) * 100)
 		: 0;
-	const colors = product.colors?.length ? product.colors : ['Red', 'Blue', 'Green', 'Black'];
-	const sizes = product.sizes?.length ? product.sizes : ['S', 'M', 'L', 'XL'];
+	// Only show colors/sizes if the product actually has them
+	const colors = product.colors?.length ? product.colors : [];
+	const sizes = product.sizes?.length ? product.sizes : [];
 
 	// Price range mock for Alibaba-style display
 	const minPrice = product.price;
@@ -234,6 +235,7 @@ export default function ProductDetail() {
 								src={allImages[selectedImage]}
 								alt={getName(product)}
 								className="w-full h-full object-cover"
+								referrerPolicy="no-referrer"
 							/>
 							{discount > 0 && (
 								<span className="absolute top-3 left-3 bg-[#FF6A00] text-white font-bold px-2 py-1 rounded text-sm">
@@ -334,41 +336,45 @@ export default function ProductDetail() {
 						</div>
 					</div>
 
-					{/* Variants - Colors */}
-					<div className="mt-4">
-						<span className="text-sm font-medium text-[#333]">
-							{t('product.colorLabel', 'Color:')}
-						</span>
-						<div className="flex flex-wrap gap-2 mt-1.5">
-							{colors.map((c) => (
-								<button
-									key={c}
-									onClick={() => setSelectedColor(c)}
-									className={`px-3 py-1.5 rounded border text-sm font-medium transition-all ${selectedColor === c ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}
-								>
-									{c}
-								</button>
-							))}
+					{/* Variants - Colors (only if product has colors) */}
+					{colors.length > 0 && (
+						<div className="mt-4">
+							<span className="text-sm font-medium text-[#333]">
+								{t('product.colorLabel', 'Color:')}
+							</span>
+							<div className="flex flex-wrap gap-2 mt-1.5">
+								{colors.map((c) => (
+									<button
+										key={c}
+										onClick={() => setSelectedColor(c)}
+										className={`px-3 py-1.5 rounded border text-sm font-medium transition-all ${selectedColor === c ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}
+									>
+										{c}
+									</button>
+								))}
+							</div>
 						</div>
-					</div>
+					)}
 
-					{/* Variants - Sizes */}
-					<div className="mt-3">
-						<span className="text-sm font-medium text-[#333]">
-							{t('product.sizeLabel', 'Size:')}
-						</span>
-						<div className="flex flex-wrap gap-2 mt-1.5">
-							{sizes.map((s) => (
-								<button
-									key={s}
-									onClick={() => setSelectedSize(s)}
-									className={`w-10 h-10 rounded border text-sm font-medium transition-all flex items-center justify-center ${selectedSize === s ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}
-								>
-									{s}
-								</button>
-							))}
+					{/* Variants - Sizes (only if product has sizes) */}
+					{sizes.length > 0 && (
+						<div className="mt-3">
+							<span className="text-sm font-medium text-[#333]">
+								{t('product.sizeLabel', 'Size:')}
+							</span>
+							<div className="flex flex-wrap gap-2 mt-1.5">
+								{sizes.map((s) => (
+									<button
+										key={s}
+										onClick={() => setSelectedSize(s)}
+										className={`w-10 h-10 rounded border text-sm font-medium transition-all flex items-center justify-center ${selectedSize === s ? 'border-[#FF6A00] text-[#FF6A00] bg-[#FFF8F3]' : 'border-[#E5E5E5] text-[#666] hover:border-[#FF6A00]/50'}`}
+									>
+										{s}
+									</button>
+								))}
+							</div>
 						</div>
-					</div>
+					)}
 
 					{/* Quantity */}
 					<div className="flex items-center gap-4 mt-4">

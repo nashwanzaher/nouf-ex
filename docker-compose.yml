@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile
     image: noufex:latest
     container_name: Nouf-ex
-    restart: unless-stopped
+    restart: on-failure:5
     ports:
       - '127.0.0.1:3000:3000'
     deploy:

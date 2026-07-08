@@ -73,8 +73,10 @@ WHERE p.is_active = TRUE
 -- ---------------------------------------------------------------------
 -- v_store_stats — store + aggregated metrics (merchant dashboard)
 --
--- Implemented with scalar subqueries to avoid the Cartesian product
--- bug that a multi-table LEFT JOIN + GROUP BY would introduce.
+-- SECURITY: Uses denormalized counters on stores table (products_count,
+-- review_count, rating, sales_count, followers_count) which are kept
+-- in sync by triggers. This avoids expensive scalar subqueries.
+-- For real-time analytics, query the source tables directly.
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE VIEW v_store_stats
 WITH (security_invoker = true) AS
@@ -91,26 +93,19 @@ SELECT
     s.is_active,
     s.is_verified,
     s.created_at,
-    (SELECT COUNT(*) FROM products
-        WHERE store_id = s.id AND deleted_at IS NULL)::int
-        AS total_products,
-    (SELECT COUNT(*) FROM products
-        WHERE store_id = s.id AND deleted_at IS NULL AND is_active)::int
-        AS active_products,
-    (SELECT COUNT(*) FROM orders
-        WHERE store_id = s.id
-          AND status IN ('delivered','shipped','processing'))::int
-        AS total_orders,
+    s.products_count     AS total_products,
+    s.review_count       AS total_reviews,
+    s.rating             AS computed_rating,
+    s.sales_count        AS total_orders,
+    s.followers_count    AS total_followers,
+    -- Compute revenue from orders (not denormalized due to complexity)
     (SELECT COALESCE(SUM(total), 0) FROM orders
         WHERE store_id = s.id AND status IN ('delivered','shipped'))
         AS total_revenue,
-    (SELECT COUNT(*) FROM reviews WHERE store_id = s.id AND is_visible)::int
-        AS total_reviews,
-    (SELECT COALESCE(AVG(rating), 0)::numeric(2,1) FROM reviews
-        WHERE store_id = s.id AND is_visible)
-        AS computed_rating,
-    (SELECT COUNT(*) FROM store_followers WHERE store_id = s.id)::int
-        AS total_followers
+    -- Count active products (subset of products_count)
+    (SELECT COUNT(*) FROM products
+        WHERE store_id = s.id AND deleted_at IS NULL AND is_active = TRUE)::int
+        AS active_products
 FROM stores s
 WHERE s.deleted_at IS NULL;
 

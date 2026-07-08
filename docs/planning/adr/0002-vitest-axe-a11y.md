@@ -104,7 +104,7 @@ We need an automated, CI-friendly tool that:
   - Sub-100ms per component — 3 tests added **~2s** to CI (verified
     locally on 2026-07-03).
   - **Zero new infra** — `npm install vitest-axe`, register the
-    matcher once in `app/tests/setup.ts`, write `*.test.tsx` like
+    matcher once in `app/mocks/setup.ts`, write `*.test.tsx` like
     any other test.
   - Reports each violation with `{ id, impact, help, helpUrl, nodes[] }`
     so the failure log is self-documenting.
@@ -134,7 +134,7 @@ Specifically:
 | a11y library         | `vitest-axe@^0.1.0` (new dep, dev-only)             |
 | Underlying engine    | `axe-core` (pulled transitively by `vitest-axe`)    |
 | DOM env              | `happy-dom` (existing, in `app/vitest.config.ts`)   |
-| Matcher registration | `app/tests/setup.ts` → `import 'vitest-axe/extend-expect'` |
+| Matcher registration | `app/mocks/setup.ts` → `import 'vitest-axe/extend-expect'` |
 | Test file            | `app/src/pages/__tests__/a11y.test.tsx` (new)       |
 | CI step              | `.github/workflows/ci.yml` → `npm run test:a11y`    |
 | Rule set             | WCAG 2.1 AA defaults (no overrides yet)             |
@@ -209,7 +209,7 @@ CI **fails** if any of these checks reports a violation.
       `app/package.json` → `devDependencies`.
 - [x] `npm run test:a11y` script added to `app/package.json` →
       `scripts` section.
-- [x] `app/tests/setup.ts` imports `vitest-axe/extend-expect` so
+- [x] `app/mocks/setup.ts` imports `vitest-axe/extend-expect` so
       `toHaveNoViolations` is available in every test file.
 - [x] `app/src/pages/__tests__/a11y.test.tsx` covers OrderTimeline,
       StatusBadge, and AdminDashboard sidebar — 3 tests, all green

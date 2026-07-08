@@ -72,7 +72,7 @@ command only if you're publishing a one-off hotfix.
 | `mkdocs.yml`                          | Build + nav + Material theme config              |
 | `requirements-docs.txt`               | Pinned Python deps for the build                 |
 | `docs/assets/css/extra.css`           | Project-specific theme overrides                 |
-| `.markdown-link-check.json`           | CI link-check rules                              |
+| `docs/.markdown-link-check.json`      | CI link-check rules                              |
 | `.github/workflows/docs.yml`          | Build + deploy site to GitHub Pages              |
 | `.github/workflows/link-check.yml`    | Cross-doc link check on every PR                 |
 | `release-please-config.json`          | CHANGELOG + SemVer automation                    |

@@ -1,0 +1,63 @@
+{
+  "_comment": [
+    "markdown-link-check configuration for Nouf-ex docs.",
+    "Aligned with Microsoft Docs and Keep-a-Changelog guidance:",
+    "fail on broken internal links, warn on rate-limited externals.",
+    "The package's defaults are sane; we only tweak what we need."
+  ],
+  "ignorePatterns": [
+    {
+      "pattern": "^https://localhost"
+    },
+    {
+      "pattern": "^https://127\\.0\\.0\\.1"
+    },
+    {
+      "pattern": "^http://localhost"
+    },
+    {
+      "pattern": "^http://127\\.0\\.0\\.1"
+    },
+    {
+      "pattern": "^mailto:"
+    }
+  ],
+  "replacementPatterns": [
+    {
+      "pattern": "^/docs/",
+      "replacement": "{{BASEURL}}/docs/"
+    },
+    {
+      "pattern": "^/(?!docs|app|tests|database|scripts|docker|mcp-server|\\.github)",
+      "replacement": "{{BASEURL}}/"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": [
+        "https://github.com/nashwanzaher/nouf-ex"
+      ],
+      "headers": {
+        "Accept": "application/vnd.github+json"
+      }
+    }
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 2,
+  "fallbackPenalty": 3,
+  "aliveStatusCodes": [
+    200,
+    206
+  ],
+  "deadStatusCodes": [
+    400,
+    404,
+    405,
+    410,
+    500,
+    501,
+    502,
+    503
+  ]
+}

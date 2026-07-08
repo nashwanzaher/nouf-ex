@@ -49,7 +49,7 @@ and only climbs up when there is integration value to capture.
 | Color-contrast ratios              | happy-dom can't compute runtime contrast; tracked separately (see [`standards/a11y.md`](standards/a11y.md)). |
 
 The unit/integration tests **do not** need a live database. `pg` is mocked
-globally in [`app/tests/setup.ts`](../app/tests/setup.ts), so the entire
+globally in [`app/mocks/setup.ts`](../app/mocks/setup.ts), so the entire
 suite runs offline.
 
 ## Running
@@ -175,7 +175,7 @@ src/
 - **No I/O without setup.** Filename tells you: `api-server.test.ts` is
   server, `<page>.test.tsx` is UI.
 - **MSW for fetch, mocks for modules.** Don't mix.
-- **No real `pg`.** The global mock in `app/tests/setup.ts` is enough.
+- **No real `pg`.** The global mock in `app/mocks/setup.ts` is enough.
 - **Helpers > copy-paste.** Add to `tests/e2e/helpers/PS_TestHelpers.ps1`
   or `app/src/lib/__tests__/test-utils.tsx`, not the next test file.
 

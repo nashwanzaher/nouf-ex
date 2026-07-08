@@ -17,7 +17,7 @@ Daily commands. All of them assume your shell is in `app/` unless noted.
 | `npm run test:watch`  | Vitest watch mode.                                                    |
 | `npm run test:coverage` | Vitest with V8 coverage → `coverage/`.                              |
 | `npm run test:ui`     | Vitest's interactive UI.                                              |
-| `npm run lint`        | ESLint over `app/src/`, `app/server/`, `app/tests/`, `scripts/`. (`scripts/` is now organized into `db/`, `devops/`, `quality/`, `maintenance/` sub-folders — see [`scripts/README.md`](../../scripts/README.md).) |
+| `npm run lint`        | ESLint over `app/src/`, `app/server/`, `app/mocks/`, `scripts/`. (`scripts/` is now organized into `db/`, `devops/`, `quality/`, `maintenance/` sub-folders — see [`scripts/README.md`](../../scripts/README.md).) |
 
 ## Lint
 

@@ -14,7 +14,7 @@ This document is the **canonical reference** for how tests are organized in the 
 | **Server tests** | `app/server/tests/` | `node` (pg mocked) | API routes, server helpers, db wrapper | **33** |
 | **Frontend tests** | `app/src/**/__tests__/` | `happy-dom` (RTL + MSW) | Components, hooks, context, lib, pages | **32** |
 | **E2E (manual/CI)** | `tests/e2e/` | Live stack | Full stack via PowerShell + curl | **18 PHASE + 17 smoke** |
-| **Setup & mocks** | `app/tests/` | (used by Vitest) | Vitest setup, MSW handlers, fixtures | **1 setup + 4 mock modules** |
+| **Setup & mocks** | `app/mocks/` | (used by Vitest) | Vitest setup, MSW handlers, fixtures | **1 setup + 4 mock modules** |
 
 **Total Vitest tests:** 65 files / ~720 tests passing + 3 skipped (per §11.3 audit).
 
@@ -72,7 +72,7 @@ Defined in [`app/vitest.config.ts`](../../app/vitest.config.ts) under `projects[
 {
   name: 'server',
   environment: 'node',
-  setupFiles: [path.resolve(__dirname, 'tests/setup.ts')],
+  setupFiles: [path.resolve(__dirname, 'mocks/setup.ts')],
   include: [
     'tests/**/*.test.{js,ts,tsx,cjs,mjs}',
     'server/tests/**/*.test.{js,ts,tsx,cjs,mjs}',
@@ -153,7 +153,7 @@ Defined in [`app/vitest.config.ts`](../../app/vitest.config.ts) under `projects[
 {
   name: 'dom',
   environment: 'happy-dom',
-  setupFiles: [path.resolve(__dirname, 'tests/setup.ts')],
+  setupFiles: [path.resolve(__dirname, 'mocks/setup.ts')],
   include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
 }
 ```
@@ -207,12 +207,12 @@ E2E tests run **against a live stack** (npm run api + Vite dev server + PostgreS
 
 ---
 
-## Setup & Mocks (`app/tests/`)
+## Setup & Mocks (`app/mocks/`)
 
 ### Layout
 
 ```
-app/tests/
+app/mocks/
 ├── setup.ts                        # Vitest global setup (MSW server, polyfills)
 └── mocks/                          # MSW handlers + fixtures
     ├── fetch-spy.ts
@@ -223,7 +223,7 @@ app/tests/
 
 ### Why this folder isn't named `__tests__/`
 
-`app/tests/` is the **Vitest setup root** (not a test directory). It contains:
+`app/mocks/` is the **Vitest setup root** (not a test directory). It contains:
 
 - **`setup.ts`** — imported by `setupFiles` in `vitest.config.ts`
 - **`mocks/`** — MSW handlers + fetch spies used by tests via `setup.ts`
@@ -238,7 +238,7 @@ The folder is **deliberately named `tests/` (plural, top-level)** to distinguish
 
 | Approach | Pros | Cons | Verdict |
 |----------|------|------|---------|
-| **A. All in `app/tests/`** (one big folder) | Easy to find | Loses co-location; tests far from code | ❌ Rejected |
+| **A. All in `app/mocks/`** (one big folder) | Easy to find | Loses co-location; tests far from code | ❌ Rejected |
 | **B. All co-located `__tests__/`** | Co-location everywhere | Server tests don't have a "near" code home; breaks Vitest projects | ❌ Rejected |
 | **C. Hybrid (current)** | Co-location for frontend (where it matters), dedicated `server/tests/` for backend | Heterogeneous — needs this doc | ✅ **Chosen** |
 

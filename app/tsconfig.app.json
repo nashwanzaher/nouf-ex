@@ -19,5 +19,5 @@
 		"noUnusedParameters": false,
 		"erasableSyntaxOnly": true
 	},
-	"include": ["src", "src/**/__tests__/**/*", "tests/setup.ts", "tests/mocks/**/*.ts"]
+	"include": ["src", "src/**/__tests__/**/*", "mocks/setup.ts", "mocks/**/*.ts"]
 }

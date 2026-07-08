@@ -69,14 +69,14 @@ app/
               ╱  Integ  ╲       app/server/tests/
              ╱   tests   ╲      — supertest + mocked pg
             ╱──────────────╲
-           ╱    Unit tests  ╲   app/tests/, app/src/**/__tests__/
+           ╱    Unit tests  ╲   app/mocks/, app/src/**/__tests__/
           ╱   (Vitest + RTL) ╲  — components, hooks, pure fns
          ╱────────────────────╲
 ```
 
 | Level | Tooling | Mocking | Runtime | Where |
 |-------|---------|---------|---------|-------|
-| Unit | Vitest + Testing Library | Heavy (no DB) | < 1 ms/test | `app/tests/` |
+| Unit | Vitest + Testing Library | Heavy (no DB) | < 1 ms/test | `app/mocks/` |
 | Integration | Vitest + supertest | Partial (mocked `pg`) | < 50 ms/test | `app/server/tests/` |
 | System (E2E) | PowerShell + Invoke-WebRequest | None (real DB) | ~5 s/test | `tests/e2e/` |
 

@@ -14,7 +14,7 @@
  * Auth strategy: drive the real requireAuth by signing a real Bearer
  * token with signTestToken. The token uses the same AUTH_SECRET as the
  * API, so requireAuth accepts it and the handler runs end-to-end
- * (only `pg` is mocked globally via tests/setup.ts).
+ * (only `pg` is mocked globally via mocks/setup.ts).
  *
  * Copy this file to app/server/tests/__RESOURCE__-router.test.ts and
  * replace every __PLACEHOLDER__ with real values (most editors have a

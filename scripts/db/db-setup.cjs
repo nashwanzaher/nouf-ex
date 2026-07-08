@@ -31,13 +31,13 @@ const path = require('path');
 
 // Resolve `pg` (and `dotenv`) from app/node_modules — the project keeps
 // its single node_modules in app/ alongside the front-end and back-end
-// code, so the root-level scripts need to look one directory down.
-// A clear error is thrown if `pg` is missing so the user knows to
-// run `npm install` from the app/ directory.
+// code, so the root-level scripts need to walk up two directories to
+// reach app/node_modules. A clear error is thrown if `pg` is missing
+// so the user knows to run `npm install` from the app/ directory.
 let Client, dotenv;
 try {
-	({ Client } = require(path.join(__dirname, '..', 'app', 'node_modules', 'pg')));
-	dotenv = require(path.join(__dirname, '..', 'app', 'node_modules', 'dotenv'));
+	({ Client } = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'pg')));
+	dotenv = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'dotenv'));
 } catch (err) {
 	throw new Error(
 		'Cannot resolve `pg` / `dotenv` from app/node_modules. ' +
@@ -45,9 +45,9 @@ try {
 	);
 }
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
-const DB_DIR = path.resolve(__dirname, '..', 'database');
+const DB_DIR = path.resolve(__dirname, '..', '..', 'database');
 const MIGRATIONS = path.join(DB_DIR, 'migrations');
 
 const PIPELINE = [

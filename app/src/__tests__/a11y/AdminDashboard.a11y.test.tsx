@@ -12,7 +12,7 @@
  *     accessible name (visible text or aria-label).
  *
  * `vitest-axe/extend-expect` is loaded globally via
- * `app/tests/setup.ts`.
+ * `app/mocks/setup.ts`.
  */
 
 import { cleanup, render, screen, within } from '@testing-library/react';
@@ -32,7 +32,7 @@ import { axe } from 'vitest-axe';
 import {
     installFetchSpy,
     uninstallFetchSpy,
-} from '../../../tests/mocks/fetch-spy';
+} from '../../../mocks/fetch-spy';
 
 const axeOptions: RunOptions = {
 	rules: {

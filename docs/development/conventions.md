@@ -79,8 +79,7 @@
   - `feat/<scope>` — new feature.
   - `fix/<scope>` — bug fix.
   - `chore/<scope>` — tooling / docs / housekeeping.
-  - `audit/<date>` — periodic cleanup passes (matches
-    `archive/audit/code-audit-YYYY-MM-DD.md`).
+  - `audit/<date>` — periodic cleanup passes.
 - **Commit messages:** imperative mood, ≤ 72 chars on the subject line.
   Body explains _why_. Reference roadmap IDs when applicable:
   `P0-1: cart→order pipeline E2E`
@@ -102,6 +101,7 @@
 - **Update docs in the same PR as the code.** If you change an endpoint,
   update [`api.md`](api.md). If you change the schema, update
   [`database.md`](database.md).
-- **Long-form research** lives under `archive/research/`. **Audits and
-  reviews** live under `archive/audit/`. Never overwrite — append a dated
-  file.
+- **Historical artifacts are not stored in the repo.** Consult git history
+  on GitHub for superseded documents (audits, research notes, plans).
+  This is the academic best practice: git is the canonical historical
+  record, not an `archive/` directory.

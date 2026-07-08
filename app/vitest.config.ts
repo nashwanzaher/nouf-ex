@@ -94,9 +94,9 @@ export default defineConfig({
 				test: {
 					name: 'server',
 					environment: 'node',
-					setupFiles: [path.resolve(__dirname, 'tests/setup.ts')],
+					setupFiles: [path.resolve(__dirname, 'mocks/setup.ts')],
 					include: [
-						'tests/**/*.test.{js,ts,tsx,cjs,mjs}',
+						'mocks/**/*.test.{js,ts,tsx,cjs,mjs}',
 						'server/tests/**/*.test.{js,ts,tsx,cjs,mjs}',
 					],
 				},
@@ -110,7 +110,7 @@ export default defineConfig({
 				test: {
 					name: 'dom',
 					environment: 'happy-dom',
-					setupFiles: [path.resolve(__dirname, 'tests/setup.ts')],
+					setupFiles: [path.resolve(__dirname, 'mocks/setup.ts')],
 					include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
 				},
 			},

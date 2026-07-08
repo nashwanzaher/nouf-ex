@@ -55,9 +55,8 @@ nouf-ex/                                              ← REPO ROOT (SSOT)
 │   ├── quality/                  8 files: Quality gates (lint, format, test, typecheck, verify)
 │   └── maintenance/              6 files: One-off helpers (scan-unused, e2e-step1, start-api/vite)
 │
-├── docs/                                           ← 9 sub-folders (Diátaxis-aligned)
+├── docs/                                           ← 8 sub-folders (Diátaxis-aligned)
 │   ├── architecture/             C4 diagrams, API specs, schema docs
-│   ├── audits/                   (empty per R2.1; archived to archive/audits-final-2026-07-04/)
 │   ├── development/              CI/CD, conventions, debugging, workflow
 │   ├── operations/               backup-restore, deployment, monitoring
 │   ├── planning/                 THIS plan + ADRs + risks.md
@@ -66,20 +65,10 @@ nouf-ex/                                              ← REPO ROOT (SSOT)
 │   ├── workflows/                N8N workflow + env override
 │   └── README.md                 Local docs index
 │
-├── archive/                                        ← 60 historical files (gitignored, NOT in SSOT)
-│   ├── README.md                 ⭐ NEW: navigable index (R-8)
-│   ├── audit/                    12 files (pre-production reviews)
-│   ├── audits-final-2026-07-04/  4 files (Round-2 audit reports)
-│   ├── plans/                    5 files (superseded plans)
-│   ├── research/                 11 files (Alibaba/Taobao research)
-│   ├── scripts-2026-07-fixes/    27 files (one-time fix scripts)
-│   └── testing/                  1 file (historical test artifacts)
-│
 ├── docker/                                        ← 1 file (entrypoint.sh)
 ├── .github/                                       ← 5 CI workflows + 12 agents + 23 skills + 1 prompt
 ├── .vscode/                                       ← editor config (settings, tasks, launch, mcp)
 ├── .husky/                                        ← pre-commit hook
-├── .claude/                                       ← Claude Code workspace state (in .gitignore)
 ├── Dockerfile                                    ← 3-stage (deps → build → runtime)
 ├── docker-compose.yml                            ← single service: Nouf-ex
 ├── mkdocs.yml                                    ← MkDocs Material theme
@@ -122,7 +111,6 @@ nouf-ex/                                              ← REPO ROOT (SSOT)
 ```
 docs/
 ├── architecture/        C4 diagrams, API specs, schema docs
-├── audits/              (empty per R2.1; archived to archive/audits-final-2026-07-04/)
 ├── development/         CI/CD, conventions, debugging, workflow
 ├── operations/          backup-restore, deployment, monitoring
 ├── planning/            THIS plan + ADRs + risks.md
@@ -145,13 +133,15 @@ docs/
 | `app/src/context/` | **3** | **(CORRECTED v2.8.8)** AppContext.tsx, CartContext.tsx, index.ts |
 | `app/src/hooks/` | **2** | **(CORRECTED v2.8.8)** useApi.ts, use-mobile.ts |
 | `app/src/i18n/` | 4 (1 .ts + 3 .json) | |
-| `app/tests/` | 22 (4 .ts + 18 JSON fixtures) | |
+| `app/mocks/` | 22 (4 .ts + 18 JSON fixtures) | |
 | `app/server/tests/` | 33 | |
 | `app/server/routes/` | 19 .cts (98 endpoints) | |
 | `app/server/lib/` | 24 (TS+CTS) | |
 | `database/migrations/` | 24 SQL + 1 README | |
-| `archive/` total | **60 files** | Verified in R-8 (audit/12 + audits-final-2026-07-04/4 + plans/5 + research/11 + scripts-2026-07-fixes/27 + testing/1) |
 | `scripts/` (root + 4 sub-folders) | **25 active files + 1 README** | R-7 EXECUTED (2026-07-05): scripts/ organized into `db/` (5) + `devops/` (6) + `quality/` (8) + `maintenance/` (6) |
+
+> **2026-07-07 update:** `archive/` removed (was 60 historical files, gitignored, outside SSOT).
+> Git history on GitHub remains the canonical historical record. See [docs/README.md](README.md) §History.
 
 ## Cross-references
 
@@ -164,7 +154,6 @@ docs/
 - **CI/CD:** [docs/development/ci-cd.md](development/ci-cd.md) + `.github/workflows/`
 - **Deployment:** [docs/operations/deployment.md](operations/deployment.md)
 - **Getting started:** [docs/development/getting-started.md](development/getting-started.md)
-- **Archive index:** [archive/README.md](../archive/README.md) (60 historical files)
 
 ## Conventions
 
@@ -175,20 +164,20 @@ docs/
 - **CHANGELOG:** Keep a Changelog 1.1.0. See <https://keepachangelog.com/> for the format.
 - **Commits:** Conventional Commits 1.0.0. See <https://www.conventionalcommits.org/> for the spec.
 - **Versioning:** SemVer 2.0.0. See <https://semver.org/> for the spec.
+- **Historical artifacts:** not stored in the repo — consult git history on GitHub.
 
-## Quality Gates (verified Round-3)
+## Quality Gates (verified 2026-07-07)
 
-| Gate | Command | Status (2026-07-04) |
+| Gate | Command | Status (2026-07-07) |
 |---|---|---|
 | TypeScript | `cd app && npx tsc -b --noEmit` | ✅ exit 0 |
 | ESLint | `cd app && npx eslint . --max-warnings=0` | ✅ 0 problems |
-| Vitest | `cd app && npx vitest run` | ✅ 817 passed, 3 skipped (820 total) |
+| Vitest | `cd app && npx vitest run` | ✅ 859 passed, 3 skipped, 6 pre-existing failures (unrelated) |
 | Coverage threshold (since R-4) | `cd app && npx vitest run --coverage` | 🟢 gate enforced (lines: 50, statements: 50, functions: 55, branches: 45) |
 
 ## References
 
 - **[MIGRATION_EXECUTION_PLAN.md](planning/MIGRATION_EXECUTION_PLAN.md)** v2.7.6+ — the canonical, executable plan (the SSOT)
-- **[archive/README.md](../archive/README.md)** — index of 60 archived historical files
 - **Diátaxis framework** — <https://diataxis.fr/>
 - **Keep a Changelog 1.1.0** — <https://keepachangelog.com/>
 
@@ -197,3 +186,4 @@ docs/
 | Date | Version | Author | Change |
 |---|---|---|---|
 | 2026-07-05 | **v1.0** | GitHub Copilot (`@reviewer`) | **Initial version.** Created per MIGRATION_EXECUTION_PLAN.md v2.7.5 R-10.1 (Sprint 1). Closes GAP-18 (re-author `docs/STRUCTURE.md`). References §4.1 + §13 inventory from the SSOT plan. Provides navigable overview of the canonical project structure. |
+| 2026-07-07 | **v1.1** | opencode cleanup | Removed `archive/` (60 historical files, gitignored, outside SSOT); removed `.claude/`, `logs/`, `apply-0024.sh`, empty `docs/audits/`. Updated §History of `docs/README.md` to reflect the cleanup. Updated count table (removed archive row). Updated mkdocs nav references implicitly via the .markdownlinkcheck pattern. |

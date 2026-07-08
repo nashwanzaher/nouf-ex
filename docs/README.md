@@ -90,12 +90,12 @@ docs/
     └── templates/            ← Reusable PS/JS templates + helpers reference
 ├── tutorials/                  ← ⟦Tutorials⟧ — Learning-oriented walkthroughs
 │   └── run-an-order-end-to-end.md  ← IEEE 829-style hands-on exercise
+├── workflows/                  ← ⟦External automation⟧ — N8N integration
+│   ├── n8n-noufex-review-workflow.json
+│   └── n8n-env-override.env.example
 └── planning/adr/               ← ⟦Explanation⟧ — Architecture Decision Records
     ├── README.md
     └── 0001-mkdocs-and-release-please.md
-archive/                     ← ⟦Historical⟧ (read-only, do not link)
-├── audit/                    ← Past code audits (11 files, 2026-06-27)
-└── research/                 ← Past research docs (11 files, 2026-06-27)
 ```
 
 ---
@@ -117,21 +117,23 @@ archive/                     ← ⟦Historical⟧ (read-only, do not link)
 
 ---
 
-## 🗄️ Archive
+## 🗄️ History
 
-> Files preserved for historical reference — they no longer represent the
-> current code. Do not link from new content.
+Historical artifacts (audits, research, superseded plans, one-off fix scripts)
+were previously kept in an `archive/` directory at the repo root.
+**As of 2026-07-07, the archive was removed** because:
 
-- [`../archive/audit/`](../archive/audit/) — Past code audits, extension
-  audits, reviews (11 files, moved 2026-06-27).
-- [`../archive/research/`](../archive/research/) — Original deep-research
-  notes, plans, design study (11 files, moved 2026-06-27).
+1. It was gitignored and explicitly *not* part of the project's SSOT.
+2. Modern academic best practice treats git history as the canonical
+   historical record — superseded content is preserved in commit logs.
+3. The canonical, always-current documentation lives under `docs/` per the
+   Diátaxis layout shown above.
 
-> **Verified 2026-07-02:** the `docs/audit/`, `docs/research/`,
-> `docs/assets/`, and `docs/workflows/` directories referenced by older
-> versions of this page were deleted in 2026-06-27. If you find a stray
-> link in the wild, fix it to point under `archive/` and add the
-> candidate file with a `grep -R "docs/audit\." docs/` check.
+If you need to recover an archived artifact, look at the project's git
+history on GitHub before the cleanup commit. The relevant commits carry
+detailed rationale in their messages and the
+[`MIGRATION_EXECUTION_PLAN.md`](planning/MIGRATION_EXECUTION_PLAN.md)
+changelog.
 
 ---
 
@@ -153,11 +155,11 @@ archive/                     ← ⟦Historical⟧ (read-only, do not link)
 
 | Metric                          | Value |
 |---------------------------------|-------|
-| Active docs in `docs/`          | 22 (after 2026-07-02 sweep — added `tutorials/`, `planning/adr/`, `BUILD.md`) |
-| Root-level docs                 | 8 (`README`, `CHANGELOG`, `CONTRIBUTING`, `CODE_OF_CONDUCT`, `SECURITY`, `LICENSE`, `MASTER_PLAN`, `STRUCTURE`) |
-| Archived docs (read-only)       | 22 (`archive/audit/` + `archive/research/`) |
+| Active docs in `docs/`          | 23 (after 2026-07-07 sweep — removed `archive/`, added `workflows/`) |
+| Root-level docs                 | 7 (`README`, `CHANGELOG`, `CONTRIBUTING`, `CODE_OF_CONDUCT`, `SECURITY`, `LICENSE`, `STRUCTURE`) |
+| Archived docs                   | 0 (removed 2026-07-07 — see History section above) |
 | Broken cross-links (last sweep) | 0 |
-| Stale docs flagged              | 0 (after 2026-07-02 sweep — see `CHANGELOG.md` §Unreleased) |
+| Stale docs flagged              | 0 (after 2026-07-07 sweep) |
 | Diátaxis folders covered        | 5 of 5 (tutorials, how-to, reference, explanation, about) |
 | Docs site deploy                | GitHub Pages via `.github/workflows/docs.yml` |
 | Link check                      | `.github/workflows/link-check.yml` on every PR |

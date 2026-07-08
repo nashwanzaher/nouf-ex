@@ -22,11 +22,11 @@ app/
 │   ├── lib/                   # api.ts (client), cart-sync.ts, format.ts, utils.ts
 │   └── pages/                 # All routed pages (Home, Search, admin/, …)
 │
-├── tests/                     # Frontend tests + MSW mocks
+├── mocks/                     # MSW handlers + fixtures + vitest setup
 │
 ├── public/                    # Static assets, JSON fixtures
 │
-├── scripts/                   # (empty after extraction; see ../../scripts/)
+├── scripts/                   # Build-time tooling (image pipeline)
 │
 ├── vite.config.ts, vitest.config.ts
 ├── tailwind.config.js, postcss.config.js

@@ -176,7 +176,7 @@ What this does:
    - Stage `deps`: `npm ci` for production dependencies.
    - Stage runtime: `node:20-alpine` + `tini` (PID 1) + the API code.
 2. **Starts the container** `Nouf-ex` on port 3000.
-3. **Runs the entrypoint** (`docker/entrypoint.sh`):
+3. **Runs the entrypoint** (`scripts/devops/docker-entrypoint.sh`):
    - Polls `${DB_HOST}:5432` for up to 60 s (Postgres may not be ready).
    - Logs `DB reachable after Ns` once the TCP connection succeeds.
    - Execs `node server/bootstrap.cjs` (see §6.1 below).
@@ -302,5 +302,5 @@ to `/api/*`. Every authenticated request includes
 payload signed with `AUTH_SECRET`.
 
 For end-to-end user-flow diagrams (login, cart, checkout, 2FA, …) see
-[Architecture → User flows](architecture.md#user-flows) or the audit
-files in `archive/audit/`.
+[Architecture → User flows](architecture.md#user-flows) or the project
+git history on GitHub for historical audits.

@@ -16,14 +16,14 @@ with CTFL terminology and structure.
 |-----------|------------------|---------------|
 | **Functional** | "Does it do what it should?" | All routes in `tests/e2e/` |
 | **Non-functional** | Performance, security, usability | (Out of E2E scope — see separate suites) |
-| **Structural (white-box)** | Code paths, branches | `app/tests/`, Vitest unit tests |
+| **Structural (white-box)** | Code paths, branches | `app/mocks/`, Vitest unit tests |
 | **Change-related** | Regression after a change | `phase17_full_regression.ps1` |
 
 The CTFL distinguishes **levels** of testing:
 
 | Level | Scope | Nouf-ex |
 |-------|-------|---------|
-| Component (unit) | Single function/class | `app/tests/` + `app/src/**/__tests__/` |
+| Component (unit) | Single function/class | `app/mocks/` + `app/src/**/__tests__/` |
 | Integration | Multiple components | `app/server/tests/api-server.test.ts` |
 | System | Full system | `tests/e2e/phase*.ps1` ← **THIS folder** |
 | Acceptance | User perspective | Manual UAT (out of automation scope) |

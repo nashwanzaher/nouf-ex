@@ -1,6 +1,5 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { inspectAttr } from 'plugin-inspect-react-code';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -23,7 +22,6 @@ export default defineConfig({
 	// production bundle's byte size.
 	base: '/',
 	plugins: [
-		inspectAttr(),
 		react(),
 		VitePWA({
 			registerType: 'autoUpdate',
@@ -127,14 +125,14 @@ export default defineConfig({
 		}),
 	],
 	server: {
-		port: 3000,
-		// Proxy /api requests to the running Nouf-ex container (port 3000).
-		// The container is the canonical API host in dev too: it has the
+		port: 8080,
+		// Proxy /api requests to the running Nouf-ex API (port 3000).
+		// The API is the canonical backend host in dev: it has the
 		// real `noufex_db` connection and the real seed data, so dev work
-		// hits the same data the production app sees. Vite's own port
-		// (3000) auto-increments to 3001/5173/... when 3000 is in use.
-		// When the container is stopped, set `API_PORT` to 3000 and run
-		// `npm run api` to use tsx directly — this proxy will still work.
+		// hits the same data the production app sees. Vite serves the
+		// SPA on port 8080, API runs on 3000 — both are explicit
+		// non-default ports to avoid clashing with other tools on the
+		// developer machine.
 		proxy: {
 			'/api': {
 				target: 'http://localhost:3000',
@@ -169,35 +167,16 @@ export default defineConfig({
 					// ~50 kB gz off the Home bundle and ~40 kB gz off
 					// the seller bundle.
 					framer: ['framer-motion'],
-					gsap: ['gsap', '@gsap/react'],
-					// All 28 @radix-ui/* packages → one chunk
+					gsap: ['gsap'],
+					// All remaining @radix-ui/* packages → one chunk
 					'radix-ui': [
-						'@radix-ui/react-accordion',
-						'@radix-ui/react-alert-dialog',
-						'@radix-ui/react-aspect-ratio',
 						'@radix-ui/react-avatar',
-						'@radix-ui/react-checkbox',
-						'@radix-ui/react-collapsible',
-						'@radix-ui/react-context-menu',
 						'@radix-ui/react-dialog',
-						'@radix-ui/react-dropdown-menu',
-						'@radix-ui/react-hover-card',
 						'@radix-ui/react-label',
-						'@radix-ui/react-menubar',
-						'@radix-ui/react-navigation-menu',
-						'@radix-ui/react-popover',
-						'@radix-ui/react-progress',
-						'@radix-ui/react-radio-group',
-						'@radix-ui/react-scroll-area',
-						'@radix-ui/react-select',
 						'@radix-ui/react-separator',
-						'@radix-ui/react-slider',
 						'@radix-ui/react-slot',
 						'@radix-ui/react-switch',
 						'@radix-ui/react-tabs',
-						'@radix-ui/react-toggle',
-						'@radix-ui/react-toggle-group',
-						'@radix-ui/react-tooltip',
 					],
 					// PERF-H6 (2026-07-02): REMOVED `lucide: ['lucide-react']`.
 					// Listing the module as a manual-chunk entry
@@ -206,8 +185,6 @@ export default defineConfig({
 					// Rollup tree-shakes the actual imports, leaving
 					// only the icons each page uses. This typically
 					// saves 100-200 kB gz on the Home bundle.
-					// Date / time helpers
-					dates: ['date-fns', 'react-day-picker'],
 				},
 			},
 		},
@@ -216,3 +193,4 @@ export default defineConfig({
 		chunkSizeWarningLimit: 800,
 	},
 });
+

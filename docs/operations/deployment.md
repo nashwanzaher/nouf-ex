@@ -671,7 +671,7 @@ psql -h $DB_HOST -U noufex_owner -d noufex_db \
 - [`database.md`](database.md) — schema and roles
 - [`../../Dockerfile`](../../../../Dockerfile) — API image build
 - [`../../docker-compose.yml`](../../../../docker-compose.yml) — local stack
-- [`../../docker/entrypoint.sh`](../../../../docker/entrypoint.sh) — container entrypoint
+- [`../../scripts/devops/docker-entrypoint.sh`](../../../../scripts/devops/docker-entrypoint.sh) — container entrypoint
 - [`../testing/conventions.md`](../testing/conventions.md) — test taxonomy
 - [`../development/getting-started.md`](../development/getting-started.md) — local dev setup
 

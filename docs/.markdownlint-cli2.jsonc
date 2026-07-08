@@ -1,0 +1,74 @@
+{
+  "config": {
+    "default": true,
+    "MD013": {
+      "line_length": 200,
+      "code_blocks": false,
+      "tables": false,
+      "headings": false,
+      "strict": false
+    },
+    "MD033": {
+      "allowed_elements": [
+        "br", "kbd", "details", "summary", "sub", "sup",
+        "div", "span", "a", "img", "iframe", "video", "audio",
+        "table", "tr", "td", "th", "tbody", "thead",
+        "code", "pre", "mark", "picture", "source"
+      ]
+    },
+    "MD041": false,
+    "MD024": {
+      "siblings_only": true,
+      "allowed_headings": ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
+    },
+    "MD025": { "front_matter_title": "^\\s*title\\s*[:=]" },
+    "MD046": { "style": "fenced" },
+    "MD048": { "style": "backtick" },
+    "MD049": { "style": "underscore" },
+    "MD050": { "style": "asterisk" },
+    "MD060": false,
+    "MD007": { "indent": 2 },
+    "MD004": { "style": "dash" },
+    "MD009": {
+      "br_spaces": 2,
+      "list_item_empty_lines": false
+    },
+    "MD012": false,
+    "MD032": false,
+    "MD040": false,
+    "MD034": false,
+    "MD053": false,
+    "MD045": false,
+    "MD031": false,
+    "MD036": false,
+    "MD035": false,
+    "MD014": false,
+    "MD026": false,
+    "MD030": false,
+    "MD056": false,
+    "MD058": false
+  },
+  "globs": [
+    ".github/**/*.md",
+    "*.md",
+    "docs/**/*.md",
+    "scripts/**/*.md",
+    "mcp-server/**/*.md",
+    "#node_modules/**",
+    "#app/node_modules/**",
+    "#dist/**",
+    "#build/**",
+    "#coverage/**",
+    "#.git/**",
+    "#temp-*/**",
+    "#.next/**",
+    "#.nuxt/**",
+    "#app/dist/**",
+    "#app/coverage/**",
+    "#tests/**",
+    "#tests/e2e/**",
+    "#ISSUE_TEMPLATE/**",
+    "#**/*.min.md",
+    "#E.md"
+  ]
+}

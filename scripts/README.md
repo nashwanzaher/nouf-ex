@@ -29,7 +29,7 @@ None of them are bundled into the API container.
 | `switch-db.ps1` | Switches the active DB by editing `.env` between dev/staging profiles. |
 | `audit-db.cjs` | Audits the current DB state (table counts, FK integrity, orphaned rows). Read-only. |
 
-## `scripts/devops/` — Local + container lifecycle (6 files)
+## `scripts/devops/` — Local + container lifecycle (7 files)
 
 | Script | What it does |
 |---|---|
@@ -39,6 +39,7 @@ None of them are bundled into the API container.
 | `build.ps1` | `cd app && npm run build` → writes `scripts/_build.out` + `_build_exit.txt`. |
 | `docker-build.ps1` | `docker build -t noufex:latest .` using only the allowlisted build args (no `.env` secret leak). Writes `scripts/_docker_build.out`. |
 | `docker-run.ps1` | Recreate `Nouf-ex` container with `--env-file .env`, wait 25s, dump status + last 30 log lines. |
+| `docker-entrypoint.sh` | Container entrypoint — `tini` PID 1 + waits for DB + starts the API via `tsx`. Used by the Dockerfile. |
 
 ## `scripts/quality/` — Quality gates (8 files)
 

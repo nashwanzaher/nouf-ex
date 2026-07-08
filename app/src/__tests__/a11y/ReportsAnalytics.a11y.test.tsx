@@ -10,7 +10,7 @@
  *   - The first button on the page is keyboard-focusable and Enter-activatable.
  *
  * `vitest-axe/extend-expect` is loaded globally via
- * `app/tests/setup.ts`.
+ * `app/mocks/setup.ts`.
  *
  * recharts is mocked globally because happy-dom does not implement
  * the layout primitives (ResizeObserver, getBoundingClientRect)
@@ -37,7 +37,7 @@ import { axe } from 'vitest-axe';
 import {
     installFetchSpy,
     uninstallFetchSpy,
-} from '../../../tests/mocks/fetch-spy';
+} from '../../../mocks/fetch-spy';
 
 const axeOptions: RunOptions = {
 	rules: {

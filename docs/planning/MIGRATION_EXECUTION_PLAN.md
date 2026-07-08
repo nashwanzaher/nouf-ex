@@ -253,7 +253,7 @@ nouf-ex/                                              ← REPO ROOT (SSOT)
 │   ├── skills/                   23 reusable workflow definitions
 │   ├── STANDARDS.md, SECRETS.md, PULL_REQUEST_TEMPLATE.md, copilot-instructions.md
 │
-├── docker/entrypoint.sh          Container entrypoint (tini PID 1 + DB wait + tsx)
+├── scripts/devops/docker-entrypoint.sh          Container entrypoint (tini PID 1 + DB wait + tsx)
 ├── .vscode/                       Editor config (454-line settings, 22 tasks)
 ├── .env (LOCAL DEV), .env.example (production template)
 ├── .gitignore (102 lines), .dockerignore, .markdownlint-cli2.jsonc, .markdown-link-check.json

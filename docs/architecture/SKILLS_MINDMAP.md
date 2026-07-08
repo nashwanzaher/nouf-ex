@@ -376,7 +376,7 @@
 - **5.5.3** Server `index.cjs` (0% covered) needs to be addressed via route-level integration tests
 - **5.5.4** Excludes: `app/src/components/ui/*` (shadcn primitives, vendor code)
 
-> **Files to master:** `app/vitest.config.ts`, `app/tests/setup.ts`, all files in `app/server/tests/`, all files in `app/src/**/__tests__/`, `tests/e2e/phase*.ps1`
+> **Files to master:** `app/vitest.config.ts`, `app/mocks/setup.ts`, all files in `app/server/tests/`, all files in `app/src/**/__tests__/`, `tests/e2e/phase*.ps1`
 
 ---
 

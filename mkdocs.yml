@@ -235,10 +235,8 @@ nav:
 # ---------------------------------------------------------------------
 # EXCLUDES — never build these (rendered output is identical to source)
 # ---------------------------------------------------------------------
-exclude_docs: |
-  archive/
-  archive/audit/
-  archive/research/
+# (archive/ was removed in 2026-07-07 cleanup; no excludes needed)
+exclude_docs: ~
 
 # ---------------------------------------------------------------------
 # Strict mode: emit a warning on any internal broken link or missing

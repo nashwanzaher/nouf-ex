@@ -105,7 +105,7 @@ stages only run if the cheap ones pass.
 
 **Trigger:** after lint + typecheck pass.
 
-**Why no DB?** `pg` is mocked globally in `app/tests/setup.ts`, so the
+**Why no DB?** `pg` is mocked globally in `app/mocks/setup.ts`, so the
 suite runs **offline**. The DB-backed integration suite is in §2.4.
 
 **Coverage:** uploaded as artifact on `main` only (saves storage).

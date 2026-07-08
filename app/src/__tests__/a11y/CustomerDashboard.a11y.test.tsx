@@ -11,7 +11,7 @@
  *     right element when more than one order is rendered.
  *
  * The `vitest-axe/extend-expect` side-effect import lives in
- * `app/tests/setup.ts` (P2-09), so `toHaveNoViolations()` is
+ * `app/mocks/setup.ts` (P2-09), so `toHaveNoViolations()` is
  * available globally without any extra setup here.
  *
  * Color-contrast rule is disabled for the same reasons documented
@@ -35,7 +35,7 @@ import { axe } from 'vitest-axe';
 import {
     installFetchSpy,
     uninstallFetchSpy,
-} from '../../../tests/mocks/fetch-spy';
+} from '../../../mocks/fetch-spy';
 
 // Shared axe options — see file header for the rationale.
 const axeOptions: RunOptions = {

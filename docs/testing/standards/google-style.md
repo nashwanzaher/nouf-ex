@@ -44,7 +44,7 @@ app/
         └── schema.test.ts            ← structural SQL checks
 ```
 
-- `app/tests/setup.ts` is loaded by **every** Vitest project — it
+- `app/mocks/setup.ts` is loaded by **every** Vitest project — it
   mocks `pg`, sets env defaults, and registers `@testing-library/jest-dom`.
 - Use `__tests__` for "I want this test to live close to the code".
 

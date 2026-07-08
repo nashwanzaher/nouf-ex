@@ -122,25 +122,41 @@ app.use(
 // to the standard urlencoded parser. JSON requests skip this
 // entirely and use the json() parser above (which also captures
 // the raw body via `verify`).
-app.use((req, _res, next) => {
-	const contentType = String(req.headers['content-type'] ?? '');
-	if (!contentType.startsWith('application/x-www-form-urlencoded')) {
-		return next();
-	}
-	let buf = '';
-	req.setEncoding('utf8');
-	req.on('data', (chunk) => (buf += chunk));
-	req.on('end', () => {
-		(req as Request & { rawBody?: string }).rawBody = buf;
-		try {
-			req.body = Object.fromEntries(new URLSearchParams(buf));
-		} catch {
-			req.body = {};
+	app.use((req, _res, next) => {
+		const contentType = String(req.headers['content-type'] ?? '');
+		if (!contentType.startsWith('application/x-www-form-urlencoded')) {
+			return next();
 		}
-		next();
+		// SECURITY: enforce a 1MB size limit to prevent memory exhaustion
+		// DoS attacks via oversized urlencoded bodies.
+		const contentLength = Number(req.headers['content-length'] || 0);
+		if (contentLength > 1_048_576) {
+			req.destroy();
+			_res.writeHead(413);
+			_res.end('Payload Too Large');
+			return;
+		}
+		let buf = '';
+		req.setEncoding('utf8');
+		req.on('data', (chunk) => {
+			buf += chunk;
+			if (buf.length > 1_048_576) {
+				req.destroy();
+				_res.writeHead(413);
+				_res.end('Payload Too Large');
+			}
+		});
+		req.on('end', () => {
+			(req as Request & { rawBody?: string }).rawBody = buf;
+			try {
+				req.body = Object.fromEntries(new URLSearchParams(buf));
+			} catch {
+				req.body = {};
+			}
+			next();
+		});
+		req.on('error', next);
 	});
-	req.on('error', next);
-});
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(optionalAuth);
 app.use(requestLogger);

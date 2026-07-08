@@ -106,21 +106,21 @@ jobs:
             mv build/app/server/index.js app/server/
             rm -rf build
             cat > .env <<EOT
-            NODE_ENV=production
-            API_PORT=3000
-            HOST=0.0.0.0
-            SERVE_STATIC=true
-            STATIC_PATH=/app/dist
-            DB_HOST=${DB_HOST:-localhost}
-            DB_PORT=${DB_PORT:-5432}
-            DB_NAME=${DB_NAME:-noufex_db}
-            DB_USER=${DB_USER:-noufex_app}
-            DB_PASSWORD=${DB_PASSWORD}
-            DATABASE_URL=${DATABASE_URL}
-            AUTH_SECRET=${AUTH_SECRET}
-            ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://noufex.example.com}
-            LOG_LEVEL=info
-            EOT
+NODE_ENV=production
+API_PORT=3000
+HOST=0.0.0.0
+SERVE_STATIC=true
+STATIC_PATH=/app/dist
+DB_HOST=${DB_HOST:-localhost}
+DB_PORT=${DB_PORT:-5432}
+DB_NAME=${DB_NAME:-noufex_db}
+DB_USER=${DB_USER:-noufex_app}
+DB_PASSWORD=${DB_PASSWORD}
+DATABASE_URL=${DATABASE_URL}
+AUTH_SECRET=${AUTH_SECRET}
+ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://noufex.example.com}
+LOG_LEVEL=info
+EOT
             cd /opt/noufex
             docker compose restart noufex
           EOF

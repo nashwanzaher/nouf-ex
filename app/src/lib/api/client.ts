@@ -71,7 +71,17 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 	};
 
 	const response = await fetch(url, config);
-	const json = (await response.json()) as ApiResponse<T>;
+
+	// Handle non-JSON responses (e.g. 502 from reverse proxy returning HTML)
+	let json: ApiResponse<T>;
+	try {
+		json = (await response.json()) as ApiResponse<T>;
+	} catch {
+		throw new ApiError(
+			`Server returned non-JSON response (${response.status})`,
+			response.status,
+		);
+	}
 
 	if (!json.success) {
 		// ApiError carries code + request_id so callers can branch on

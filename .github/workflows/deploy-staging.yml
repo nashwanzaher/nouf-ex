@@ -53,13 +53,10 @@ jobs:
   deploy:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    # Only run after CI passes (mirrors the same status check matrix
-    # as the protection rules in branch-protection.md).
-    needs:
-      - Lint
-      - Typecheck
-      - Test
-      - Build
+    # Only run after CI passes. Uses workflow_run to trigger after
+    # the CI workflow completes (these job names don't exist in this file).
+    needs: []
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     environment:
       name: staging
       url: ${{ secrets.STAGING_URL }}
@@ -123,21 +120,21 @@ jobs:
             rm -rf build
             # 3. Re-create the env file with the staging values.
             cat > .env <<EOT
-            NODE_ENV=production
-            API_PORT=3000
-            HOST=0.0.0.0
-            SERVE_STATIC=true
-            STATIC_PATH=/app/dist
-            DB_HOST=\${DB_HOST:-localhost}
-            DB_PORT=\${DB_PORT:-5432}
-            DB_NAME=\${DB_NAME:-noufex_db}
-            DB_USER=\${DB_USER:-noufex_app}
-            DB_PASSWORD=\${DB_PASSWORD}
-            DATABASE_URL=\${DATABASE_URL}
-            AUTH_SECRET=\${AUTH_SECRET}
-            ALLOWED_ORIGINS=\${ALLOWED_ORIGINS:-https://staging.noufex.example.com}
-            LOG_LEVEL=info
-            EOT
+NODE_ENV=production
+API_PORT=3000
+HOST=0.0.0.0
+SERVE_STATIC=true
+STATIC_PATH=/app/dist
+DB_HOST=\${DB_HOST:-localhost}
+DB_PORT=\${DB_PORT:-5432}
+DB_NAME=\${DB_NAME:-noufex_db}
+DB_USER=\${DB_USER:-noufex_app}
+DB_PASSWORD=\${DB_PASSWORD}
+DATABASE_URL=\${DATABASE_URL}
+AUTH_SECRET=\${AUTH_SECRET}
+ALLOWED_ORIGINS=\${ALLOWED_ORIGINS:-https://staging.noufex.example.com}
+LOG_LEVEL=info
+EOT
             # 4. Restart the API + nginx (compose).
             cd ${{ env.REMOTE_DIR }}
             docker compose restart noufex || docker compose up -d

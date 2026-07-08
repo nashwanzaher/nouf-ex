@@ -28,12 +28,103 @@ import { Pool } from 'pg';
  *  - `is_<col> = 1` / `is_<col> = 0` → `is_<col> = TRUE` / `is_<col> = FALSE`
  *    (PostgreSQL accepts the integer form via implicit cast but the boolean form is
  *     clearer and silences type-mismatch warnings.)
+ *
+ *  SECURITY: rewrites are only applied OUTSIDE string literals. Without
+ *  this guard, a SQL like
+ *    SELECT 'is_active = 1' AS label
+ *  would have its string body corrupted (the `is_active = 1` inside the
+ *  literal would become `is_active = TRUE`, producing a different value).
+ *  We use the same state machine as `pgify` (single-quoted strings with
+ *  `''` escapes, double-quoted identifiers, dollar-quoted strings, line
+ *  comments) to track whether the cursor is inside a literal.
  */
 export function normalizeSql(sql: string): string {
-	return sql
-		.replace(/datetime\('now'\)/gi, 'CURRENT_TIMESTAMP')
-		.replace(/\b(is_\w+)\s*=\s*1\b/gi, '$1 = TRUE')
-		.replace(/\b(is_\w+)\s*=\s*0\b/gi, '$1 = FALSE');
+	let out = '';
+	let i = 0;
+	const len = sql.length;
+	while (i < len) {
+		const ch = sql[i];
+		// Skip string literals verbatim
+		if (ch === "'") {
+			let j = i + 1;
+			while (j < len) {
+				if (sql[j] === "'" && sql[j + 1] === "'") {
+					j += 2; // doubled-quote escape
+					continue;
+				}
+				if (sql[j] === "'") {
+					j++;
+					break;
+				}
+				j++;
+			}
+			out += sql.slice(i, j);
+			i = j;
+			continue;
+		}
+		// Skip double-quoted identifiers verbatim
+		if (ch === '"') {
+			let j = i + 1;
+			while (j < len) {
+				if (sql[j] === '"' && sql[j + 1] === '"') {
+					j += 2;
+					continue;
+				}
+				if (sql[j] === '"') {
+					j++;
+					break;
+				}
+				j++;
+			}
+			out += sql.slice(i, j);
+			i = j;
+			continue;
+		}
+		// Skip dollar-quoted strings ($tag$ ... $tag$) verbatim
+		if (ch === '$') {
+			const tagMatch = sql.slice(i).match(/^(\$[A-Za-z0-9_]*\$)/);
+			if (tagMatch) {
+				const tag = tagMatch[1];
+				const endIdx = sql.indexOf(tag, i + tag.length);
+				if (endIdx !== -1) {
+					const stop = endIdx + tag.length;
+					out += sql.slice(i, stop);
+					i = stop;
+					continue;
+				}
+			}
+		}
+		// Skip line comments
+		if (ch === '-' && sql[i + 1] === '-') {
+			const j = sql.indexOf('\n', i);
+			const stop = j === -1 ? len : j;
+			out += sql.slice(i, stop);
+			i = stop;
+			continue;
+		}
+		// Apply the `datetime('now')` rewrite
+		if (sql.slice(i, i + 16).toLowerCase() === "datetime('now')") {
+			out += 'CURRENT_TIMESTAMP';
+			i += 16;
+			continue;
+		}
+		// Apply is_<col> = 1 / is_<col> = 0 rewrites
+		const isTrueMatch = sql.slice(i).match(/^(\bis_\w+)\s*=\s*1\b/i);
+		if (isTrueMatch) {
+			out += `${isTrueMatch[1]} = TRUE`;
+			i += isTrueMatch[0].length;
+			continue;
+		}
+		const isFalseMatch = sql.slice(i).match(/^(\bis_\w+)\s*=\s*0\b/i);
+		if (isFalseMatch) {
+			out += `${isFalseMatch[1]} = FALSE`;
+			i += isFalseMatch[0].length;
+			continue;
+		}
+		out += ch;
+		i++;
+	}
+	return out;
 }
 
 /**
@@ -282,12 +373,19 @@ export class PgDb {
 	private readonly pool: Pool;
 
 	constructor(connectionString: string) {
+		const rawMax = process.env.DB_POOL_MAX;
+		let poolMax = 20;
+		if (rawMax !== undefined && rawMax !== '') {
+			const parsed = Number(rawMax);
+			if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 1000) {
+				poolMax = Math.floor(parsed);
+			}
+			// If invalid, fall back to default 20 silently — the env
+			// var is for tuning, not a security boundary.
+		}
 		const config = {
 			connectionString,
-			// Pool size: default 20 (was 10). Override via DB_POOL_MAX env var.
-			// 20 matches a typical 4-vCPU host under moderate load; raise
-			// further for high-concurrency deployments.
-			max: parseInt(process.env.DB_POOL_MAX || '20', 10),
+			max: poolMax,
 			idleTimeoutMillis: 30_000,
 			connectionTimeoutMillis: 5_000,
 		};

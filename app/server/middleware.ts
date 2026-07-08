@@ -499,6 +499,7 @@ interface AuthCacheEntry {
 }
 const authCache = new Map<number, AuthCacheEntry>();
 const AUTH_CACHE_TTL_MS = 30_000; // 30s per request window
+const AUTH_CACHE_MAX_SIZE = 10_000; // cap to prevent unbounded growth
 
 async function fetchUserAuth(
 	userId: number,
@@ -522,6 +523,14 @@ async function fetchUserAuth(
 			// the same behavior, which is the correct production
 			// semantics.
 			return null;
+		}
+		// LRU eviction: if cache is at cap, remove the oldest entry
+		// before inserting a new one. The Map's insertion order
+		// serves as a cheap LRU proxy (most recent access stays at
+		// the tail; oldest access is at the head and evicted first).
+		if (authCache.size >= AUTH_CACHE_MAX_SIZE) {
+			const oldestKey = authCache.keys().next().value;
+			if (oldestKey !== undefined) authCache.delete(oldestKey);
 		}
 		authCache.set(userId, {
 			ver: row.token_version,

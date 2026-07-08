@@ -207,8 +207,10 @@ setInterval(async () => {
 			| { n: number }
 			| undefined;
 		if (j && j.n > 0) log.debug({ msg: 'used_jtis_cleanup', deleted: j.n });
-	} catch {
-		/* ignore */
+	} catch (err) {
+		// Log so operators can see if the DB is sick or migrations
+		// have dropped the cleanup functions.
+		log.warn({ msg: 'background_sweeper_error', error: (err as Error).message });
 	}
 }, 60 * 1000).unref();
 
@@ -308,15 +310,6 @@ app.use(errorHandler);
 // START SERVER
 // ═══════════════════════════════════════════════════════════
 
-process.on('SIGTERM', async () => {
-	await db.close();
-	process.exit(0);
-});
-process.on('SIGINT', async () => {
-	await db.close();
-	process.exit(0);
-});
-
 const __isMainModule = (() => {
 	try {
 		const here = import.meta.url;
@@ -326,12 +319,39 @@ const __isMainModule = (() => {
 		return false;
 	}
 })();
+let server: import('http').Server | null = null;
+
+/** Graceful shutdown: stop accepting new connections, wait for
+ *  in-flight requests to complete (up to 10s), then close the DB pool. */
+async function gracefulShutdown(signal: string): Promise<void> {
+	log.info({ msg: 'shutdown_started', signal });
+	if (server) {
+		await new Promise<void>((resolve) => {
+			server!.close(() => resolve());
+			// Force exit after 10s if connections don't drain
+			setTimeout(() => {
+				log.warn({ msg: 'shutdown_force_exit' });
+				resolve();
+			}, 10_000).unref();
+		});
+	}
+	try {
+		await db.close();
+	} catch (err) {
+		log.warn({ msg: 'db_close_error', error: (err as Error).message });
+	}
+	log.info({ msg: 'shutdown_complete' });
+	process.exit(0);
+}
+
+process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
 if (__isMainModule) {
-	app.listen(PORT, () => {
+	server = app.listen(PORT, () => {
 		log.info({
 			msg: 'server_started',
 			port: PORT,
-			database: PgDb.redactUrl(DATABASE_URL),
+			database: env.DATABASE_URL ? PgDb.redactUrl(env.DATABASE_URL) : 'via DB_* vars',
 			static_path: STATIC_PATH,
 			env: process.env.NODE_ENV || 'development',
 		});

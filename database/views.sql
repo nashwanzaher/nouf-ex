@@ -99,8 +99,10 @@ SELECT
     s.sales_count        AS total_orders,
     s.followers_count    AS total_followers,
     -- Compute revenue from orders (not denormalized due to complexity)
+    -- Only include paid orders to avoid counting shipped-but-unpaid COD
     (SELECT COALESCE(SUM(total), 0) FROM orders
-        WHERE store_id = s.id AND status IN ('delivered','shipped'))
+        WHERE store_id = s.id AND status IN ('delivered','shipped')
+          AND payment_status = 'paid')
         AS total_revenue,
     -- Count active products (subset of products_count)
     (SELECT COUNT(*) FROM products

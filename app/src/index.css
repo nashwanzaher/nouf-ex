@@ -150,14 +150,6 @@
 
 /* === CRITICAL PRODUCTION FIXES === */
 
-/* Ensure body has proper base colors */
-body {
-	background-color: #f7f8fa;
-	color: #333333;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-
 /* High contrast focus states */
 *:focus-visible {
 	outline: 2px solid #d4a853;

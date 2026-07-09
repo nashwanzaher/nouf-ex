@@ -109,15 +109,13 @@ paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res
 				.get(method, eventId, verification.transactionId, eventType)) as
 				| { processing_state: string; processed_at: string | null }
 				| undefined;
-			console.info(
-				JSON.stringify({
-					event: 'webhook_duplicate',
-					method,
-					event_id: eventId,
-					txn_id: verification.transactionId,
-					processing_state: existing?.processing_state,
-				}),
-			);
+		log.info({
+			event: 'webhook_duplicate',
+			method,
+			event_id: eventId,
+			txn_id: verification.transactionId,
+			processing_state: existing?.processing_state,
+		});
 			return sendSuccess(res, {
 				updated: true,
 				idempotent: true,
@@ -367,9 +365,12 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
           WHERE id = ? RETURNING order_id, amount`,
 			)
 			.get(id)) as { order_id: number; amount: number } | undefined;
+		if (!result) {
+			return sendError(res, 'Payment not found or already confirmed', 404);
+		}
 		await db
 			.prepare(`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`)
-			.run(result!.order_id);
+			.run(result.order_id);
 
 		// Fire bilingual i18n notification to the customer (best-effort).
 		// (C.1 in MASTER_PLAN.md — real payment confirmation notification)
@@ -377,22 +378,22 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 			const { onPaymentConfirmed } = await import('../lib/notifications/events.ts');
 			const orderRow = (await db
 				.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
-				.get(result!.order_id)) as
+				.get(result.order_id)) as
 				| { order_number: string; customer_id: number }
 				| undefined;
 			if (orderRow) {
 				await onPaymentConfirmed({
-					orderId: result!.order_id,
+					orderId: result.order_id,
 					customerId: orderRow.customer_id,
 					orderNumber: orderRow.order_number,
-					amount: Number(result!.amount),
+					amount: Number(result.amount),
 				});
 			}
 		} catch (notifyErr) {
 			log.error({ msg: 'payments.notification_dispatch_failed', error: (notifyErr as Error).message });
 		}
 
-		sendSuccess(res, { order_id: result!.order_id }, 'Payment confirmed');
+		sendSuccess(res, { order_id: result.order_id }, 'Payment confirmed');
 	} catch (err) {
 		return sendError(res, err);
 	}

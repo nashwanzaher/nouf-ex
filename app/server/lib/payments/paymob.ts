@@ -119,9 +119,9 @@ export const paymobProvider: PaymentProvider = {
 			'order',
 			'owner',
 			'pending',
-			' Source_data_pan',
-			' Source_data_sub_type',
-			' Source_data_type',
+			'Source_data_pan',
+			'Source_data_sub_type',
+			'Source_data_type',
 			'success',
 		];
 		const concat = fields.map((f) => params.get(f) ?? '').join('');

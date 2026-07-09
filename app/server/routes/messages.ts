@@ -157,8 +157,13 @@ messagesRouter.get('/inbox', requireAuth, async (req: Request, res: Response) =>
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments:
-				typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
+			attachments: (() => {
+				try {
+					return typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments;
+				} catch {
+					return [];
+				}
+			})(),
 		}));
 
 		// Compute unread count for the badge.
@@ -218,8 +223,13 @@ messagesRouter.get('/sent', requireAuth, async (req: Request, res: Response) => 
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments:
-				typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
+			attachments: (() => {
+				try {
+					return typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments;
+				} catch {
+					return [];
+				}
+			})(),
 		}));
 
 		sendSuccess(res, {
@@ -282,8 +292,13 @@ messagesRouter.get('/conversation', requireAuth, async (req: Request, res: Respo
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments:
-				typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments,
+			attachments: (() => {
+				try {
+					return typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments;
+				} catch {
+					return [];
+				}
+			})(),
 		}));
 
 		// Best-effort: mark all messages from peer to me as read in this thread.

@@ -79,11 +79,15 @@ export const stripeProvider: PaymentProvider = {
 		if (!secret || !sigHeader)
 			return { valid: false, transactionId: null, status: null, raw: {} };
 		// Stripe signs "<timestamp>.<body>" with HMAC-SHA256(secret).
-		const parts = sigHeader.split(',').reduce<Record<string, string>>((acc, p) => {
-			const [k, v] = p.split('=');
-			acc[k] = v;
-			return acc;
-		}, {});
+		// Format: "t=1234567890,v1=abc123..." — split on comma first,
+		// then split each part on the first '=' only (v1 signatures
+		// can contain '=' padding).
+		const parts: Record<string, string> = {};
+		for (const p of sigHeader.split(',')) {
+			const idx = p.indexOf('=');
+			if (idx === -1) continue;
+			parts[p.slice(0, idx)] = p.slice(idx + 1);
+		}
 		const ts = parts['t'];
 		const sig = parts['v1'];
 		if (!ts || !sig) return { valid: false, transactionId: null, status: null, raw: {} };

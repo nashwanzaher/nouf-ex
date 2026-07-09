@@ -246,7 +246,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 	const { t } = useTranslation();
 	const [step, setStep] = useState<WizardStep>(1);
 	const [images, setImages] = useState<string[]>([]);
-	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [_errors, setErrors] = useState<Record<string, string>>({});
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const steps = [
@@ -569,8 +569,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 												</div>
 												<div>
 													<label className="block text-sm font-cairo font-semibold text-[#111111] mb-1.5">
-														t('seller.comparePriceLabel', 'Compare-at
-														price')
+														{t('seller.comparePriceLabel', 'Compare-at price')}
 													</label>
 													<input
 														type="text"

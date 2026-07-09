@@ -113,7 +113,7 @@ jobs:
             set -e
             cd ${{ env.REMOTE_DIR }}
             # 1. Make sure the staging DB is migrated.
-            (cd app && npm ci --no-audit --no-fund && npm run db:setup) || true
+            (cd app && npm ci --no-audit --no-fund && npm run db:setup)
             # 2. Atomically swap the new artefacts in.
             mv build/app/dist/* app/dist/ 2>/dev/null || true
             mv build/app/server/index.js app/server/

@@ -14,7 +14,6 @@
 // =============================================================================
 import { connect, type Socket } from 'net';
 import { connect as tlsConnect, type TLSSocket } from 'tls';
-import { connect as tlsConnect } from 'tls';
 
 function isConfigured(): boolean {
 	return !!process.env.SMTP_HOST && !!process.env.SMTP_FROM;

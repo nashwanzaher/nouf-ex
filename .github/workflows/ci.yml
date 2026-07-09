@@ -157,13 +157,6 @@ jobs:
       - run: cd ${{ env.APP_DIR }} && npm ci --no-audit --no-fund
       - name: Run vitest
         run: cd ${{ env.APP_DIR }} && npm test
-      # a11y gate: vitest-axe checks components for accessibility violations
-      # (color contrast, missing aria-labels, role mismatches, etc.).
-      # Fails the build on any violation.
-      - name: Run accessibility (a11y) tests
-        run: cd ${{ env.APP_DIR }} && npm run test -- src/**/__tests__/a11y.test.tsx
-        env:
-          CI: 'true'
       - name: Upload coverage artifact (main only)
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4

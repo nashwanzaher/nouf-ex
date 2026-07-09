@@ -73,7 +73,7 @@ const floatingProducts = [
 ];
 
 export default function HeroSection() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const sectionRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const productsRef = useRef<HTMLDivElement>(null);
@@ -307,7 +307,7 @@ export default function HeroSection() {
 							'Search products, merchants, or brands...',
 						)}
 						className="flex-1 h-full bg-transparent px-4 text-sm md:text-base font-cairo text-[#111111] placeholder:text-[#AAAAAA] outline-none text-right"
-						dir="rtl"
+						dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
 					/>
 					<Search
 						className="w-5 h-5 text-[#AAAAAA] mr-4 shrink-0 hidden md:block"

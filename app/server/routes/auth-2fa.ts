@@ -37,7 +37,7 @@ import {
 } from '../lib/backup-codes.ts';
 import { ErrorCodes } from '../lib/error-codes.ts';
 import { verifyPartialToken } from '../lib/partial-token.ts';
-import { db, HttpError, log, requireAuth, sendError, sendSuccess } from '../lib/shared.ts';
+import { db, HttpError, log, requireAuth, sendError, sendSuccess, verifyPassword } from '../lib/shared.ts';
 import { generateSecret, otpauthUrl, verifyTotp } from '../lib/totp.ts';
 import { signAuthToken } from '../middleware.ts';
 
@@ -433,32 +433,10 @@ auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, r
 			.prepare('SELECT id, password_hash FROM users WHERE id = ? AND deleted_at IS NULL')
 			.get(req.user!.id)) as { id: number; password_hash: string } | undefined;
 		if (!user) throw new HttpError(404, 'User not found', { code: ErrorCodes.NOT_FOUND });
-		// We must re-fetch the full row to verify the password (the
-		// existing middleware helper takes a stored hash string).
-		// Re-use the same path as /api/auth/login.
-		const verifyModule = await import('../middleware.js' as string).catch(() => null);
-		// Fallback: in-line scrypt verify (we don't want a runtime
-		// dynamic import for a hot path — keep this self-contained).
-		// The hash format is `scrypt$<base64-salt>$<base64-key>` (set
-		// by hashPassword() in middleware.ts).
-		const { scrypt: scryptCb, timingSafeEqual } = await import('crypto');
-		const { promisify } = await import('util');
-		const scryptAsync = promisify(scryptCb) as (
-			password: string,
-			salt: Buffer,
-			keylen: number,
-		) => Promise<Buffer>;
-		const parts = user.password_hash.split('$');
-		if (parts.length !== 3 || parts[0] !== 'scrypt') {
-			return sendError(res, 'Invalid stored hash format.', 500, 'INTERNAL');
-		}
-		const salt = Buffer.from(parts[1], 'base64');
-		const expected = Buffer.from(parts[2], 'base64');
-		const derived = await scryptAsync(v.data.password, salt, expected.length);
-		if (derived.length !== expected.length || !timingSafeEqual(derived, expected)) {
+		const ok = await verifyPassword(v.data.password, user.password_hash);
+		if (!ok) {
 			return sendError(res, 'Invalid password.', 401, 'AUTH_INVALID');
 		}
-		void verifyModule; // (unused — kept for symmetry with /auth/login)
 		// Deactivate and clear secrets.
 		await db
 			.prepare(

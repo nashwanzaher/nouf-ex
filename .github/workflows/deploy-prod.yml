@@ -101,7 +101,7 @@ jobs:
               cp -r app/dist app/dist.bak.$(date +%s) 2>/dev/null || true
             fi
             
-            (cd app && npm ci --no-audit --no-fund && npm run db:setup) || true
+            (cd app && npm ci --no-audit --no-fund && npm run db:setup)
             mv build/app/dist/* app/dist/ 2>/dev/null || true
             mv build/app/server/index.js app/server/
             rm -rf build

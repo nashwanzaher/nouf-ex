@@ -75,8 +75,8 @@ export default function Navbar() {
 	const { data: apiCategories } = useCategories();
 	const categories = apiCategories ?? [];
 
-	const getCatName = (c: Category) =>
-		i18n.language === 'en' ? c.name_en : i18n.language === 'zh' ? c.name_zh : c.name_ar;
+	const getCatName = (c: Category | undefined) =>
+		c ? (i18n.language === 'en' ? c.name_en : i18n.language === 'zh' ? c.name_zh : c.name_ar) : '';
 
 	return (
 		<header className="sticky top-0 z-50 bg-white border-b border-aliBorder shadow-sm">
@@ -142,15 +142,15 @@ export default function Navbar() {
 									aria-expanded={catDropdownOpen}
 									className="h-full px-3 flex items-center gap-1 text-sm text-aliTextSec hover:bg-aliSurface border-r border-aliBorder transition-colors"
 								>
-									<span className="truncate max-w-[80px]">
-										{searchCat === 'all'
-											? t('nav.allCategories', 'All Categories')
-											: getCatName(
-													categories.find(
-														(c) => String(c.id) === searchCat,
-													)!,
-												)}
-									</span>
+								<span className="truncate max-w-[80px]">
+									{searchCat === 'all'
+										? t('nav.allCategories', 'All Categories')
+										: getCatName(
+												categories.find(
+													(c) => String(c.id) === searchCat,
+												),
+											)}
+								</span>
 									<ChevronDown size={14} />
 								</button>
 								{catDropdownOpen && (

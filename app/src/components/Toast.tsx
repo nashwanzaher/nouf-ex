@@ -35,7 +35,11 @@ interface ToastContainerProps {
 
 export default function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 	return (
-		<div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[90vw] max-w-md pointer-events-none">
+		<div
+			role="status"
+			aria-live="polite"
+			className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[90vw] max-w-md pointer-events-none"
+		>
 			<AnimatePresence>
 				{toasts.map((toast) => {
 					const Icon = icons[toast.type];

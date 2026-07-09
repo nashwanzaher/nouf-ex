@@ -433,7 +433,7 @@ export const handlers = [
 		});
 	}),
 	http.post('*/api/orders', async ({ request }) => {
-		const body = (await request.json()) as Record<string, unknown>;
+		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 		const newId = ordersFixture.length + 1;
 		const total = Number(body.total ?? 0);
 		const discount = Number(body.discount ?? 0);
@@ -453,7 +453,7 @@ export const handlers = [
 		return HttpResponse.json({ success: true, data: addressesFixture });
 	}),
 	http.post('*/api/addresses', async ({ request }) => {
-		const body = (await request.json()) as Record<string, unknown>;
+		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
 	}),
 	http.delete('*/api/addresses/:id', async () => {
@@ -462,7 +462,7 @@ export const handlers = [
 
 	// Coupons
 	http.post('*/api/coupons/validate', async ({ request }) => {
-		const body = (await request.json()) as { code: string; order_subtotal: number };
+		const body = (await request.json().catch(() => ({}))) as { code: string; order_subtotal: number };
 		if (body.code !== 'SAVE10') {
 			return HttpResponse.json(
 				{ success: false, error: 'Coupon not found or inactive' },
@@ -527,7 +527,7 @@ export const handlers = [
 
 	// Refunds
 	http.post('*/api/refunds', async ({ request }) => {
-		const body = (await request.json()) as Record<string, unknown>;
+		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
 	}),
 	http.post('*/api/refunds/:id/resolve', async ({ params }) => {
@@ -539,7 +539,7 @@ export const handlers = [
 
 	// Payments
 	http.post('*/api/payments', async ({ request }) => {
-		const body = (await request.json()) as Record<string, unknown>;
+		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 		return HttpResponse.json({ success: true, data: { id: 1, status: 'pending', ...body } });
 	}),
 	http.get('*/api/payments/order/:orderId', async () => {

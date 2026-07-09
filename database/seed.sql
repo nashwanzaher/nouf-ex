@@ -656,7 +656,7 @@ VALUES
    '{"coupon_code":"YEMEN25"}'::jsonb,                                       FALSE, NULL,                       now() - interval '1 day'),
 (6, 4, 'order',    'تم تسليم طلبك',         'تم تسليم طلبك #NOF-2026-0005',
    '{"order_id":5}'::jsonb,                                                  TRUE,  now() - interval '3 days',      now() - interval '4 days'),
-(7, 3, 'refund',   'تم معالجة استرجاعك',     'تم رد مبلغ 9200 ر.ي',
+(7, 3, 'refund',   'تم استلام طلب الاسترجاع',     'طلب استرجاع #1 قيد المراجعة',
    '{"refund_id":1}'::jsonb,                                                 FALSE, NULL,                       now() - interval '1 day'),
 (8, 4, 'system',   'تحديث النظام',          'تم تحديث نظام المدفوعات',
    '{}'::jsonb,                                                              TRUE,  now() - interval '2 days',      now() - interval '3 days')
@@ -696,9 +696,9 @@ VALUES
    '{"kyc_status":"pending"}'::jsonb,
    '{"kyc_status":"verified"}'::jsonb,
    now() - interval '60 days'),
-(5, 1, 'BAN',      'user',      '4',
+(5, 1, 'SUSPEND',   'user',      '4',
    '{"status":"active"}'::jsonb,
-   '{"status":"banned","reason":"fraud"}'::jsonb,
+   '{"status":"suspended","reason":"suspicious_activity"}'::jsonb,
    now() - interval '15 days')
 ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('admin_audit_log','id'), GREATEST((SELECT MAX(id) FROM admin_audit_log), 1));

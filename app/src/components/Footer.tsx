@@ -116,6 +116,9 @@ export default function Footer() {
 								<a
 									key={social}
 									href="#"
+									aria-label={`Visit us on ${social}`}
+									target="_blank"
+									rel="noopener noreferrer"
 									className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-aliOrange transition-colors"
 								>
 									<span className="text-xs font-bold uppercase">{social[0]}</span>

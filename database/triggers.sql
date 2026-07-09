@@ -36,9 +36,17 @@ $$;
 
 -- ---------------------------------------------------------------------
 -- 2) orders state machine + timeline
+--    IMPORTANT: state machine MUST fire before timeline append.
+--    PostgreSQL fires BEFORE triggers alphabetically by name, so we
+--    prefix with 'a_' to ensure validation happens first. If the
+--    state machine raises an exception, the entire transaction rolls
+--    back including any timeline changes. If valid, it sets
+--    NEW.cancelled_at / NEW.delivered_at which the timeline then
+--    captures in its entry.
 -- ---------------------------------------------------------------------
 DROP TRIGGER IF EXISTS trg_orders_state_machine ON orders;
-CREATE TRIGGER trg_orders_state_machine
+DROP TRIGGER IF EXISTS trg_orders_a_state_machine ON orders;
+CREATE TRIGGER trg_orders_a_state_machine
     BEFORE UPDATE ON orders
     FOR EACH ROW EXECUTE FUNCTION trg_orders_state_machine();
 

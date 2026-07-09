@@ -248,6 +248,7 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 	const [images, setImages] = useState<string[]>([]);
 	const [_errors, setErrors] = useState<Record<string, string>>({});
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const formRef = useRef<HTMLFormElement>(null);
 
 	const steps = [
 		{ num: 1, label: t('seller.stepBasics', 'Basic Info'), icon: FileText },

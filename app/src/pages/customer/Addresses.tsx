@@ -124,15 +124,15 @@ export default function Addresses() {
 		}
 		if (!user) return;
 		const body: CreateAddressBody = {
-			label: form.label,
-			full_name: form.full_name,
-			phone: form.phone,
-			governorate: form.governorate,
-			city: form.city,
-			district: form.district,
-			street: form.street,
-			building: form.building,
-			notes: form.notes,
+			label: form.label ?? '',
+			full_name: form.full_name ?? '',
+			phone: form.phone ?? '',
+			governorate: form.governorate ?? '',
+			city: form.city ?? '',
+			district: form.district ?? '',
+			street: form.street ?? '',
+			building: form.building ?? '',
+			notes: form.notes ?? '',
 			is_default: form.is_default,
 		};
 		setSaving(true);

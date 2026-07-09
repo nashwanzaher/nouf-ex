@@ -17,7 +17,8 @@
  */
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { withTranslation, type TFunction } from 'react-i18next';
+import { withTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 
 interface Props {
 	children: ReactNode;

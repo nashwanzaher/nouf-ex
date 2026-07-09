@@ -28,6 +28,7 @@ import {
 // Re-use the single shared DB pool (shared.ts creates it once from
 // DATABASE_URL). Creating a second PgDb here would double the max
 // connection count and waste resources.
+import { PgDb } from './db/pg-wrapper.ts';
 import { db } from './lib/shared.ts';
 import { addressesRouter } from './routes/addresses.ts';
 import { adminReadRouter } from './routes/admin-read.ts';
@@ -157,7 +158,6 @@ app.use(
 		});
 		req.on('error', next);
 	});
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(optionalAuth);
 app.use(requestLogger);
 

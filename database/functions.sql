@@ -208,19 +208,27 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SET search_path = pg_catalog, public
 AS $$
-DECLARE
-    v_store_id int;
 BEGIN
-    v_store_id := COALESCE(NEW.store_id, OLD.store_id);
+    -- Handle store_id change on UPDATE: recalculate BOTH old and new store
+    IF TG_OP = 'UPDATE' AND OLD.store_id IS DISTINCT FROM NEW.store_id THEN
+        UPDATE stores
+           SET products_count = (
+                SELECT COUNT(*) FROM products
+                 WHERE store_id = OLD.store_id
+                   AND deleted_at IS NULL
+                   AND is_active = TRUE
+               )
+         WHERE id = OLD.store_id;
+    END IF;
 
     UPDATE stores
        SET products_count = (
             SELECT COUNT(*) FROM products
-             WHERE store_id = v_store_id
+             WHERE store_id = COALESCE(NEW.store_id, OLD.store_id)
                AND deleted_at IS NULL
                AND is_active = TRUE
            )
-     WHERE id = v_store_id;
+     WHERE id = COALESCE(NEW.store_id, OLD.store_id);
 
     RETURN COALESCE(NEW, OLD);
 END

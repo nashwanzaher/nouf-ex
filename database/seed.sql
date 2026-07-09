@@ -291,7 +291,7 @@ SELECT setval(pg_get_serial_sequence('products','id'), GREATEST((SELECT MAX(id) 
 UPDATE stores SET products_count = sub.cnt
 FROM (SELECT store_id, COUNT(*)::int AS cnt
         FROM products
-       WHERE deleted_at IS NULL
+       WHERE deleted_at IS NULL AND is_active = TRUE
        GROUP BY store_id) sub
 WHERE stores.id = sub.store_id;
 
@@ -423,7 +423,7 @@ VALUES
     '[{"status":"pending","at":"2026-06-21T08:00:00Z","payment":"pending"}]'::jsonb,
     now() - interval '1 day'),
 (5, 'NOF-2026-0005', 4, 5, 'delivered','wallet', 'paid',
-    85000.00, 1500.00, 8500.00, 'WELCOME10', 8500.00, 78000.00, 'YER',
+    85000.00, 1500.00, 5000.00, 'WELCOME10', 5000.00, 81500.00, 'YER',
     '{"name":"عمر العمري","phone":"+967712345673","city":"تعز","street":"شارع 15","building":"عمارة الأمل"}'::jsonb,
     'YE1122334455', 'Aramex', now() - interval '8 days', now() - interval '4 days', NULL,
     '[{"status":"pending","at":"2026-06-13T15:00:00Z","payment":"pending"},{"status":"delivered","at":"2026-06-16T12:00:00Z","payment":"paid"}]'::jsonb,
@@ -448,6 +448,16 @@ VALUES
     now() - interval '8 days')
 ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('orders','id'), GREATEST((SELECT MAX(id) FROM orders), 1));
+
+-- Update stores.sales_count to match delivered orders
+-- (The trg_stores_refresh_sales_count trigger fires on UPDATE, not INSERT,
+--  so seeded orders with status='delivered' don't increment the counter.)
+UPDATE stores SET sales_count = sub.cnt
+FROM (SELECT store_id, COUNT(*)::int AS cnt
+        FROM orders
+       WHERE status = 'delivered'
+       GROUP BY store_id) sub
+WHERE stores.id = sub.store_id;
 
 -- ---------------------------------------------------------------------
 -- ORDER_ITEMS — one to many per order (product_name is NOT NULL snapshot)
@@ -660,7 +670,7 @@ INSERT INTO disputes (id, order_id, customer_id, store_id, type, status, priorit
                      subject, description, evidence, created_at)
 OVERRIDING SYSTEM VALUE
 VALUES
-(1, 7, 3, 2, 'not_received', 'investigating', 'high',
+(1, 7, 3, 1, 'not_received', 'investigating', 'high',
    'لم يصل الطلب', 'الطلب لم يصل حتى الآن رغم مرور 48 ساعة',
    '[]'::jsonb, now() - interval '1 day')
 ON CONFLICT (id) DO NOTHING;

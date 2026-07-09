@@ -133,6 +133,11 @@ CREATE TRIGGER trg_followers_refresh_count_ins
     AFTER INSERT ON store_followers
     FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_followers_count();
 
+DROP TRIGGER IF EXISTS trg_followers_refresh_count_upd ON store_followers;
+CREATE TRIGGER trg_followers_refresh_count_upd
+    AFTER UPDATE ON store_followers
+    FOR EACH ROW EXECUTE FUNCTION trg_stores_refresh_followers_count();
+
 DROP TRIGGER IF EXISTS trg_followers_refresh_count_del ON store_followers;
 CREATE TRIGGER trg_followers_refresh_count_del
     AFTER DELETE ON store_followers

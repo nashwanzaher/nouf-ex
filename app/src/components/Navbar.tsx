@@ -32,6 +32,7 @@ export default function Navbar() {
 	const [userOpen, setUserOpen] = useState(false);
 	const userRef = useRef<HTMLDivElement>(null);
 	const catRef = useRef<HTMLDivElement>(null);
+	const secondaryCatRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		function handleClick(e: MouseEvent) {
@@ -315,7 +316,7 @@ export default function Navbar() {
 			{/* Secondary Nav */}
 			<div className="hidden lg:block border-t border-aliBorder bg-white">
 				<div className="max-w-[1400px] mx-auto px-4 lg:px-6 flex items-center gap-6 h-10 text-sm">
-					<div ref={catRef} className="relative">
+					<div ref={secondaryCatRef} className="relative">
 						<button
 							onClick={() => setCatDropdownOpen(!catDropdownOpen)}
 							className="flex items-center gap-1.5 font-semibold text-aliText hover:text-aliOrange transition-colors h-full"

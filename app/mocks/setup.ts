@@ -23,13 +23,9 @@ import { toHaveNoViolations } from 'vitest-axe/matchers';
 
 expect.extend({ toHaveNoViolations });
 
-console.log('[setup.ts] running, cwd=', process.cwd());
-
 // Load .env from the project ROOT (one level up from app/), not the cwd,
 // because tests run with app/ as cwd but .env lives in the repo root.
 loadDotenv({ path: '../.env', quiet: true });
-
-console.log('[setup.ts] after dotenv: DATABASE_URL=', process.env.DATABASE_URL ? 'set' : 'MISSING');
 
 // Test-wide defaults
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
@@ -39,8 +35,6 @@ process.env.PORT = process.env.PORT ?? '0';
 // syntactically valid URL for the server module to import without throwing.
 process.env.DATABASE_URL =
 	process.env.DATABASE_URL ?? 'postgresql://postgres:test@localhost:5432/test';
-
-console.log('[setup.ts] final: DATABASE_URL=', process.env.DATABASE_URL ? 'set' : 'MISSING');
 
 // jest-dom matchers are DOM-only but safe to load in any environment —
 // they extend `expect()` globally and the matchers themselves are no-ops

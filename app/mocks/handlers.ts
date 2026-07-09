@@ -372,11 +372,11 @@ export const handlers = [
 		const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 		return HttpResponse.json({ success: true, data: { id: 1, ...body } });
 	}),
-	http.delete('*/api/cart/:id', async ({ params }) => {
-		return HttpResponse.json({ success: true, data: { id: Number(params.id) } });
-	}),
 	http.delete('*/api/cart/clear/:userId', async ({ params }) => {
 		return HttpResponse.json({ success: true, data: { user_id: Number(params.userId) } });
+	}),
+	http.delete('*/api/cart/:id', async ({ params }) => {
+		return HttpResponse.json({ success: true, data: { id: Number(params.id) } });
 	}),
 
 	// Wishlist

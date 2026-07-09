@@ -82,7 +82,7 @@ export function formatMoney(
 ): string {
 	const {
 		currency = DEFAULT_CURRENCY,
-		lang = 'en',
+		lang = 'ar',
 		maximumFractionDigits = 0,
 		showSymbol = true,
 	} = options;
@@ -125,7 +125,7 @@ export function formatMoneyCompact(
 		lang?: 'ar' | 'en' | 'zh';
 	} = {},
 ): string {
-	const { currency = DEFAULT_CURRENCY, lang = 'en' } = options;
+	const { currency = DEFAULT_CURRENCY, lang = 'ar' } = options;
 
 	if (amount === null || amount === undefined || !Number.isFinite(amount)) {
 		return '—';

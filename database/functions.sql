@@ -247,7 +247,8 @@ BEGIN
            SET status = 'refunded',
                refunded_at = COALESCE(refunded_at, now())
          WHERE order_id = NEW.order_id
-           AND status = 'completed';
+           AND status = 'completed'
+           AND (NEW.payment_id IS NULL OR id = NEW.payment_id);
     END IF;
     RETURN NEW;
 END
@@ -319,20 +320,11 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SET search_path = pg_catalog, public
 AS $$
-DECLARE
-    v_store_id int;
 BEGIN
     IF NEW.status = 'delivered' AND OLD.status IS DISTINCT FROM 'delivered' THEN
-        SELECT oi.store_id INTO v_store_id
-          FROM order_items oi
-         WHERE oi.order_id = NEW.id
-         LIMIT 1;
-
-        IF v_store_id IS NOT NULL THEN
-            UPDATE stores
-               SET sales_count = sales_count + 1
-             WHERE id = v_store_id;
-        END IF;
+        UPDATE stores
+           SET sales_count = sales_count + 1
+         WHERE id = NEW.store_id;
     END IF;
 
     RETURN NEW;

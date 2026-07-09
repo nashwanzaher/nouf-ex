@@ -21,7 +21,9 @@ type CartAction =
 
 function loadCart(): CartItem[] {
 	try {
-		return JSON.parse(localStorage.getItem('noufex_cart') || '[]');
+		const parsed = JSON.parse(localStorage.getItem('noufex_cart') || '[]');
+		if (!Array.isArray(parsed)) return [];
+		return parsed;
 	} catch {
 		return [];
 	}

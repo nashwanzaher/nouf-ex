@@ -219,13 +219,15 @@ export function useOrders(): HookResult<Order[]> {
 // page is needed, re-introduce from git history.)
 
 export function useUserAddresses(userId: number | null): HookResult<Address[]> {
-	return useDataHook(async (signal) =>
-		userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[]),
+	return useDataHook(
+		async (signal) =>
+			userId ? getAddresses(userId, { signal }) : Promise.resolve([] as Address[]),
+		[userId],
 	);
 }
 
 export function useShippingMethods(weightKg = 1): HookResult<ShippingMethod[]> {
-	return useDataHook((signal) => getShippingMethods(weightKg, { signal }));
+	return useDataHook((signal) => getShippingMethods(weightKg, { signal }), [weightKg]);
 }
 
 // ─── Wishlist (server-backed) ────────────────────────────────────────
@@ -234,8 +236,10 @@ export function useShippingMethods(weightKg = 1): HookResult<ShippingMethod[]> {
 // has been removed — see K.5 cleanup).
 
 export function useServerWishlist(userId: number | null): HookResult<WishlistItem[]> {
-	return useDataHook(async (signal) =>
-		userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[]),
+	return useDataHook(
+		async (signal) =>
+			userId ? getWishlist(userId, { signal }) : Promise.resolve([] as WishlistItem[]),
+		[userId],
 	);
 }
 
@@ -325,26 +329,36 @@ export function useProducts(filters?: {
 	limit?: number;
 	offset?: number;
 }): HookResult<ProductsResponse> {
-	return useDataHook(async (signal) => {
-		const result = await getProducts(filters, { signal });
-		// Narrow to the legacy ProductsResponse shape (used by every consumer).
-		return { products: result.products, total: result.total };
-	});
+	return useDataHook(
+		async (signal) => {
+			const result = await getProducts(filters, { signal });
+			return { products: result.products, total: result.total };
+		},
+		[
+			filters?.category,
+			filters?.search,
+			filters?.store,
+			filters?.minPrice,
+			filters?.maxPrice,
+			filters?.sort,
+			filters?.limit,
+			filters?.offset,
+		],
+	);
 }
 
 export function useProduct(id: number | null): HookResult<Product | null> {
-	return useDataHook(async (signal) => {
-		if (!id) return null;
-		// The API returns the product with embedded store + reviews + images.
-		const result = (await getProduct(id, { signal })) as unknown as Product | null;
-		// If a mis-configured route returned a list payload, surface a
-		// clear error so the caller sees it instead of silently getting
-		// the wrong shape.
-		if (result && Array.isArray((result as { products?: unknown[] }).products)) {
-			throw new Error('useProduct received a list payload (route mis-match)');
-		}
-		return result ?? null;
-	});
+	return useDataHook(
+		async (signal) => {
+			if (!id) return null;
+			const result = (await getProduct(id, { signal })) as unknown as Product | null;
+			if (result && Array.isArray((result as { products?: unknown[] }).products)) {
+				throw new Error('useProduct received a list payload (route mis-match)');
+			}
+			return result ?? null;
+		},
+		[id],
+	);
 }
 
 // (Removed useFeaturedProducts + useDeals in K.5 — were orphaned.
@@ -358,12 +372,17 @@ export function useStores(): HookResult<Store[]> {
 }
 
 export function useStore(id: number | null): HookResult<StoreWithProducts | null> {
-	return useDataHook(async (signal) => (id ? await getStore(id, { signal }) : null));
+	return useDataHook(
+		async (signal) => (id ? await getStore(id, { signal }) : null),
+		[id],
+	);
 }
 
 export function useStoreReviews(storeId: number | null): HookResult<Review[]> {
-	return useDataHook((signal) =>
-		storeId ? getReviews({ storeId }, { signal }) : Promise.resolve([] as Review[]),
+	return useDataHook(
+		(signal) =>
+			storeId ? getReviews({ storeId }, { signal }) : Promise.resolve([] as Review[]),
+		[storeId],
 	);
 }
 
@@ -376,7 +395,10 @@ export function useCategories(): HookResult<Category[]> {
 // ─── Reviews ────────────────────────────────────────────────
 
 export function useReviews(productId?: number, storeId?: number): HookResult<Review[]> {
-	return useDataHook((signal) => getReviews({ productId, storeId }, { signal }));
+	return useDataHook(
+		(signal) => getReviews({ productId, storeId }, { signal }),
+		[productId, storeId],
+	);
 }
 
 // ─── Home Stats ─────────────────────────────────────────────
@@ -484,15 +506,15 @@ export function useSellerProducts(): HookResult<{ items: Product[] }> {
 }
 
 export function useSellerProduct(id: number | null): HookResult<ProductWithDetails | null> {
-	return useDataHook(() => getSellerProduct(id ?? 0));
+	return useDataHook(() => getSellerProduct(id ?? 0), [id]);
 }
 
 export function useSellerOrders(status?: string): HookResult<{ items: SellerOrder[] }> {
-	return useDataHook(() => getSellerOrders(status));
+	return useDataHook(() => getSellerOrders(status), [status]);
 }
 
 export function useSellerOrder(id: number | null): HookResult<SellerOrderWithItems | null> {
-	return useDataHook(() => getSellerOrder(id ?? 0));
+	return useDataHook(() => getSellerOrder(id ?? 0), [id]);
 }
 
 export function useSellerAnalytics(): HookResult<SellerAnalytics | null> {
@@ -514,7 +536,7 @@ export function useSellerPayouts(
 	limit: number;
 	offset: number;
 } | null> {
-	return useDataHook(() => getSellerPayouts(limit, offset));
+	return useDataHook(() => getSellerPayouts(limit, offset), [limit, offset]);
 }
 
 export function useSellerDashboard(): HookResult<SellerDashboard | null> {
@@ -587,13 +609,19 @@ export function useSellerMutations(): SellerMutations {
 export function useAdminUsers(
 	params: { role?: string; is_active?: string; limit?: number; offset?: number } = {},
 ) {
-	return useDataHook((signal) => getAdminUsers(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminUsers(params, { signal }),
+		[params.role, params.is_active, params.limit, params.offset],
+	);
 }
 
 export function useAdminStores(
 	params: { is_active?: boolean; is_verified?: boolean; limit?: number; offset?: number } = {},
 ) {
-	return useDataHook((signal) => getAdminStores(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminStores(params, { signal }),
+		[params.is_active, params.is_verified, params.limit, params.offset],
+	);
 }
 
 export function useAdminProducts(
@@ -606,19 +634,35 @@ export function useAdminProducts(
 		offset?: number;
 	} = {},
 ) {
-	return useDataHook((signal) => getAdminProducts(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminProducts(params, { signal }),
+		[
+			params.is_active,
+			params.is_featured,
+			params.store_id,
+			params.category_id,
+			params.limit,
+			params.offset,
+		],
+	);
 }
 
 export function useAdminOrders(
 	params: { status?: string; payment_status?: string; limit?: number; offset?: number } = {},
 ) {
-	return useDataHook((signal) => getAdminOrders(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminOrders(params, { signal }),
+		[params.status, params.payment_status, params.limit, params.offset],
+	);
 }
 
 export function useAdminDisputes(
 	params: { status?: string; limit?: number; offset?: number } = {},
 ) {
-	return useDataHook((signal) => getAdminDisputes(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminDisputes(params, { signal }),
+		[params.status, params.limit, params.offset],
+	);
 }
 
 export function useAdminAuditLog(
@@ -630,7 +674,10 @@ export function useAdminAuditLog(
 		offset?: number;
 	} = {},
 ) {
-	return useDataHook((signal) => getAdminAuditLog(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminAuditLog(params, { signal }),
+		[params.action, params.entity_type, params.user_id, params.limit, params.offset],
+	);
 }
 
 export function useAdminStats() {
@@ -646,7 +693,10 @@ export function useAdminTimeSeries(
 		days?: number;
 	} = {},
 ) {
-	return useDataHook((signal) => getAdminTimeSeries(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminTimeSeries(params, { signal }),
+		[params.metric, params.bucket, params.days],
+	);
 }
 
 /** K.8 per-governorate hook — added 2026-07-02. Powers the
@@ -660,7 +710,10 @@ export function useAdminGovernorate(
 		top?: number;
 	} = {},
 ) {
-	return useDataHook((signal) => getAdminGovernorate(params, { signal }));
+	return useDataHook(
+		(signal) => getAdminGovernorate(params, { signal }),
+		[params.scope, params.top],
+	);
 }
 
 /** /api/ready — public readiness probe. Used by the admin dashboard

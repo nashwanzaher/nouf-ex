@@ -77,13 +77,16 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 		if (callerSignal.aborted) controller.abort();
 		else callerSignal.addEventListener('abort', onCallerAbort);
 	}
+	// Destructure headers out of options before spreading to prevent
+	// caller headers from silently overriding Content-Type and Authorization.
+	const { headers: callerHeaders, ...restOptions } = options || {};
 	const config: RequestInit = {
 		headers: {
 			'Content-Type': 'application/json',
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
-			...options?.headers,
+			...callerHeaders,
 		},
-		...options,
+		...restOptions,
 		signal: controller.signal,
 	};
 

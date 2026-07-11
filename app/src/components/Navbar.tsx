@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useApp } from '../context/AppContext';
+import { useApp, useAuth } from '../context/AppContext';
 import { useCart } from '../context/CartContext';
 import { useCategories } from '../hooks/useApi';
 import type { Category } from '../hooks/useApi';
@@ -21,6 +21,7 @@ import {
 export default function Navbar() {
 	const { t, i18n } = useTranslation();
 	const { state, dispatch } = useApp();
+	const { logout } = useAuth();
 	const { cartCount } = useCart();
 	const navigate = useNavigate();
 	const [searchQ, setSearchQ] = useState('');
@@ -296,9 +297,8 @@ export default function Navbar() {
 											</Link>
 											<button
 												onClick={() => {
-													dispatch({ type: 'SET_USER', payload: null });
-													dispatch({ type: 'SET_TOKEN', payload: null });
-													dispatch({ type: 'CLEAR' });
+													logout();
+													navigate('/');
 													setUserOpen(false);
 												}}
 												className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left"

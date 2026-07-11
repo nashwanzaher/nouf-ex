@@ -93,11 +93,26 @@ cartRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		const { productId, quantity, variant } = v.data;
 		const userId = req.user!.id;
 
+		// Check product exists and is in stock before adding to cart.
+		const product = (await db
+			.prepare('SELECT id, stock, is_active, deleted_at FROM products WHERE id = ?')
+			.get(productId)) as { id: number; stock: number; is_active: boolean; deleted_at: string | null } | undefined;
+		if (!product || !product.is_active || product.deleted_at) {
+			return sendError(res, 'Product is not available', 404);
+		}
+		if (product.stock < quantity) {
+			return sendError(res, `Insufficient stock for product ${productId} (have ${product.stock}, need ${quantity})`, 400, 'INSUFFICIENT_STOCK');
+		}
+
 		const existing = (await db
 			.prepare('SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?')
 			.get(userId, productId)) as { id: number; quantity: number } | undefined;
 
 		if (existing) {
+			const newQty = existing.quantity + quantity;
+			if (product.stock < newQty) {
+				return sendError(res, `Insufficient stock for product ${productId} (have ${product.stock}, need ${newQty})`, 400, 'INSUFFICIENT_STOCK');
+			}
 			await db
 				.prepare('UPDATE cart_items SET quantity = quantity + ? WHERE id = ?')
 				.run(quantity, existing.id);

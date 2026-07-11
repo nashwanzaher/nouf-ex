@@ -441,8 +441,8 @@ sellerRouter.get('/analytics', ...sellerAuth, async (req: Request, res: Response
              COUNT(*) FILTER (WHERE status NOT IN ('cancelled', 'refunded'))::int AS total_orders,
              COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered_orders,
              COUNT(*) FILTER (WHERE status = 'cancelled')::int AS cancelled_orders,
-             COALESCE(SUM(total) FILTER (WHERE status = 'delivered'), 0)::numeric AS gross_revenue,
-             COALESCE(SUM(total), 0)::numeric AS total_revenue,
+			COALESCE(SUM(total) FILTER (WHERE status = 'delivered'), 0)::numeric AS gross_revenue,
+             COALESCE(SUM(total) FILTER (WHERE status NOT IN ('cancelled', 'refunded')), 0)::numeric AS total_revenue,
              COUNT(DISTINCT customer_id)::int AS unique_customers
          FROM orders
         WHERE store_id = $1`,

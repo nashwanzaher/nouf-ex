@@ -471,7 +471,7 @@ export const adminStoreUpdateSchema = z
 	.object({
 		is_active: z.boolean().optional(),
 		is_verified: z.boolean().optional(),
-		trust_level: z.enum(['verified', 'gold', 'premium']).optional(),
+		trust_level: z.enum(['verified', 'golden', 'diamond']).optional(),
 	})
 	.strict();
 
@@ -574,8 +574,8 @@ export const sellerProductCreateSchema = z
 			.regex(/^[a-z0-9-]+$/, 'slug must be lowercase letters, digits, or hyphens'),
 		sku: z.string().trim().min(1).max(50).optional(),
 		category_id: z.number().int().positive(),
-		price: z.number().nonnegative(),
-		original_price: z.number().nonnegative().optional(),
+		price: z.number().positive(),
+		original_price: z.number().positive().optional(),
 		stock: z.number().int().nonnegative().default(0),
 		description: z.string().trim().max(4000).optional(),
 		main_image: z.string().trim().url().optional(),

@@ -62,7 +62,9 @@ export default function Login() {
 				type: 'success',
 			});
 			// Send the user to where they came from, or to the customer dashboard.
-			const from = (location.state as { from?: string } | null)?.from ?? '/customer';
+			const from = (location.state as { from?: string } | null)?.from
+				?? new URLSearchParams(location.search).get('redirect')
+				?? '/customer';
 			navigate(from, { replace: true });
 		} catch (err) {
 			const message =

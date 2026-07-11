@@ -1,22 +1,25 @@
 import { Link, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useApp } from '../context/AppContext';
 import { useCart } from '../context/CartContext';
 import { Home, Grid3X3, MessageSquare, ShoppingCart, User } from 'lucide-react';
 
 export default function BottomNav() {
 	const { t } = useTranslation();
 	const location = useLocation();
+	const { state } = useApp();
 	const { cartCount } = useCart();
 	const path = location.pathname;
 
 	const isActive = (p: string) => path === p || path.startsWith(p + '/');
 
+	const accountPath = state.user ? '/customer' : '/auth/login';
 	const items = [
 		{ to: '/', icon: Home, label: t('nav.home'), ariaLabel: t('nav.home') },
 		{ to: '/categories', icon: Grid3X3, label: t('nav.categories'), ariaLabel: t('nav.categories') },
 		{ to: '/messages', icon: MessageSquare, label: t('nav.messages'), ariaLabel: t('nav.messages') },
 		{ to: '/checkout', icon: ShoppingCart, label: t('nav.cart'), ariaLabel: t('nav.cart') },
-		{ to: '/auth/login', icon: User, label: t('nav.account'), ariaLabel: t('nav.account') },
+		{ to: accountPath, icon: User, label: t('nav.account'), ariaLabel: t('nav.account') },
 	];
 
 	return (

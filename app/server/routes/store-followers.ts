@@ -61,7 +61,7 @@ storeFollowersRouter.get('/check', requireAuth, async (req: Request, res: Respon
 });
 
 const followStoreSchema = z.object({
-	store_id: z.number().int().positive(),
+	store_id: z.coerce.number().int().positive(),
 	notify_new_products: z.boolean().optional().default(true),
 	notify_offers: z.boolean().optional().default(true),
 });

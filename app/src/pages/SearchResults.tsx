@@ -11,8 +11,8 @@ import {
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
-import type { Product } from '../hooks/useApi';
-import { useProducts } from '../hooks/useApi';
+import type { Product, Category } from '../hooks/useApi';
+import { useProducts, useCategories } from '../hooks/useApi';
 
 const sortToApi = (sort: string): 'price_asc' | 'price_desc' | 'popular' | undefined => {
 	switch (sort) {
@@ -120,9 +120,17 @@ export default function SearchResults() {
 		limit: pageSize,
 		offset: (currentPage - 1) * pageSize,
 	});
+	const { data: apiCategories } = useCategories();
 
 	/* Stabilize the results reference so downstream memos don't rebuild every render. */
 	const results: Product[] = useMemo<Product[]>(() => data?.products ?? [], [data]);
+
+	/* Build a category lookup map from the categories API. */
+	const categoryMap = useMemo(() => {
+		const map = new Map<number, Category>();
+		apiCategories?.forEach((c) => map.set(c.id, c));
+		return map;
+	}, [apiCategories]);
 
 	/* Sync query state from URL when the URL changes.
 	 * This is the official React "adjust state during render" pattern.
@@ -239,11 +247,17 @@ export default function SearchResults() {
 							</option>
 							{cats
 								.filter((c) => c !== 'all')
-								.map((cat) => (
-									<option key={cat} value={cat}>
-										{cat}
-									</option>
-								))}
+								.map((cat) => {
+									const catObj = categoryMap.get(Number(cat));
+									const name = catObj
+										? (lang === 'en' ? catObj.name_en : lang === 'zh' ? catObj.name_zh : catObj.name_ar)
+										: cat;
+									return (
+										<option key={cat} value={cat}>
+											{name}
+										</option>
+									);
+								})}
 						</select>
 						<ChevronDown
 							size={12}
@@ -386,7 +400,7 @@ export default function SearchResults() {
 												</span>
 												{p.original_price > p.price && (
 													<span className="text-xs text-[#999] line-through">
-														{(p.original_price * 1.08).toLocaleString()}
+														{p.original_price.toLocaleString()}
 													</span>
 												)}
 											</div>

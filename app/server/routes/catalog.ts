@@ -202,7 +202,7 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 		const { id } = req.params;
 
 		const product = (await db
-			.prepare('SELECT * FROM products WHERE id = ?')
+			.prepare('SELECT * FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
 			.get(Number(id))) as Record<string, unknown> | undefined;
 
 		if (!product) {
@@ -211,7 +211,7 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 
 		// Get store info
 		const store = (await db
-			.prepare('SELECT * FROM stores WHERE id = ?')
+			.prepare('SELECT * FROM stores WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
 			.get(product.store_id as number)) as Record<string, unknown> | undefined;
 
 		// Get reviews (only visible — hidden/spam reviews are not exposed)

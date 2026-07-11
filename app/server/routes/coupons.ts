@@ -94,7 +94,7 @@ couponsRouter.post('/redeem', requireAuth, async (req: Request, res: Response) =
 		if (already)
 			return sendSuccess(res, { id: (already as { id: number }).id }, 'Already redeemed');
 
-		// Enforce per-user limit before the INSERT. The DB trigger is the
+	// Enforce per-user limit before the INSERT. The DB trigger is the
 		// final authority, but checking here gives a clean error message.
 		const userUsageRow = (await db
 			.prepare(
@@ -106,6 +106,13 @@ couponsRouter.post('/redeem', requireAuth, async (req: Request, res: Response) =
 			return sendError(res, 'Coupon usage limit reached for this account', 400);
 		}
 
+		// Compute the actual discount from the order subtotal before redeeming.
+		const order = (await db
+			.prepare('SELECT subtotal FROM orders WHERE id = ?')
+			.get(order_id)) as { subtotal: number } | undefined;
+		if (!order) return sendError(res, 'Order not found', 404);
+		const discount = await computeCouponDiscount(coupon, Number(order.subtotal));
+
 		// Atomic: INSERT usage + UPDATE usage_count inside a transaction
 		// to prevent race conditions where concurrent requests over-use
 		// the coupon.
@@ -113,15 +120,15 @@ couponsRouter.post('/redeem', requireAuth, async (req: Request, res: Response) =
 			const row = (await tx
 				.prepare(
 					`INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount, used_at)
-         VALUES (?, ?, ?, 0, NOW()) RETURNING id`,
+          VALUES (?, ?, ?, ?, NOW()) RETURNING id`,
 				)
-				.get(coupon.id, user_id, order_id)) as { id: number };
+				.get(coupon.id, user_id, order_id, discount)) as { id: number };
 			await tx
 				.prepare('UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?')
 				.run(coupon.id);
 			return row;
 		});
-		sendSuccess(res, result, 'Coupon redeemed');
+		sendSuccess(res, { id: result.id, discount }, 'Coupon redeemed');
 	} catch (err) {
 		return sendError(res, err);
 	}

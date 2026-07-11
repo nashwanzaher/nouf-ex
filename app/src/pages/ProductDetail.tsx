@@ -60,7 +60,9 @@ export default function ProductDetail() {
 		error: productError,
 	} = useProduct(isValidId ? numericId : 0);
 	const { data: reviewsData, loading: reviewsLoading } = useReviews(isValidId ? numericId : 0);
-	const { data: relatedData } = useProducts({ store: productData?.store_id, limit: 5 });
+	const { data: relatedData } = useProducts(
+		productData?.store_id ? { store: productData.store_id, limit: 5 } : undefined,
+	);
 
 	// M14 fix: Escape closes the lightbox.
 	useEffect(() => {

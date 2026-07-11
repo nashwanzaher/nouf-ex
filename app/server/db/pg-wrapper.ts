@@ -339,9 +339,14 @@ class PgStatement {
 	/** Execute a non-SELECT (INSERT/UPDATE/DELETE). Returns { lastInsertRowid, changes }. */
 	async run(...params: unknown[]): Promise<RunResult> {
 		const res = await this._query(params);
+		// UPDATE/DELETE return no rows; only INSERT ... RETURNING gives us
+		// a row back. Guard against the empty-row case before reading
+		// `rows[0].id` (which used to throw "Cannot read properties of
+		// undefined (reading 'id')" for plain UPDATE statements).
+		const firstRow = res.rows && res.rows.length > 0 ? res.rows[0] : null;
 		const lastInsertRowid =
-			res.rows && res.rows[0] && res.rows[0].id !== undefined
-				? (res.rows[0].id as string | number)
+			firstRow && firstRow.id !== undefined
+				? (firstRow.id as string | number)
 				: null;
 		return { lastInsertRowid, changes: res.rowCount || 0 };
 	}

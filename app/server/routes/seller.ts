@@ -127,13 +127,20 @@ sellerRouter.post('/stores', ...sellerAuth, async (req: Request, res: Response) 
 			.slice(0, 60) || 'store';
 		const slug = `${baseSlug}-${userId}`;
 
+		// The `stores` table has `location` (free text) and `governorate`
+		// (VARCHAR(60)) but no dedicated `city` column. We fold the city
+		// into `location` (e.g. "Sana'a, Yemen") so the data is not lost.
+		const location = data.city
+			? `${data.city}${data.governorate ? `, ${data.governorate}` : ''}`
+			: data.governorate ?? null;
+
 		const inserted = (await db
 			.prepare(
 				`INSERT INTO stores (
-					owner_id, store_name, slug, description, governorate, city,
+					owner_id, store_name, slug, description, location, governorate,
 					trust_level, is_active, is_verified, since_year, created_at, updated_at
 				) VALUES (?, ?, ?, ?, ?, ?, 'verified', TRUE, FALSE, EXTRACT(YEAR FROM NOW())::int, NOW(), NOW())
-				RETURNING id, owner_id, store_name, slug, description, governorate, city,
+				RETURNING id, owner_id, store_name, slug, description, location, governorate,
 					trust_level, is_active, is_verified, since_year, created_at, updated_at`,
 			)
 			.get(
@@ -141,8 +148,8 @@ sellerRouter.post('/stores', ...sellerAuth, async (req: Request, res: Response) 
 				data.store_name,
 				slug,
 				data.description ?? null,
+				location,
 				data.governorate ?? null,
-				data.city ?? null,
 			)) as Record<string, unknown> | undefined;
 		if (!inserted) {
 			throw new HttpError(500, 'Failed to create store', { code: ErrorCodes.INSERT_FAILED });

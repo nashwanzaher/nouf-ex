@@ -261,7 +261,34 @@ cd app
 npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:a11y
 ```
 
-## §2.4 Deployment
+## §2.4 Server runtime
+
+> All facts verified against [`app/server/index.ts`](../../app/server/index.ts), [`app/server/middleware.ts`](../../app/server/middleware.ts) and [`app/server/lib/shared.ts`](../../app/server/lib/shared.ts).
+
+| Property | Value | Source |
+|---|---|---|
+| Runtime | Node.js ≥ 20.18 (single ESM process) | `app/package.json:8` |
+| Entry point | `app/server/index.ts` → bundled to `app/server/index.js` via `esbuild` | `app/server/Dockerfile:64-75` |
+| Dev script | `npm run api` → `tsx server/index.ts` (no auto-restart) | `app/package.json:35` |
+| Prod script | container: `tini -- noufex-entrypoint.sh` → runs `server/index.js` | `Dockerfile:96` |
+| Port | `env.API_PORT` (default **3000** per `envSchema`) | `middleware.ts:938` |
+| Bind address | `0.0.0.0` (Express default; `env.HOST` is parsed but **not** passed to `listen()`) | `middleware.ts:939` |
+| Body limit | JSON 1 MB; urlencoded 1 MB; raw body captured to `req.rawBody` for HMAC webhook verification | `index.ts:115-164` |
+| CORS | `env.ALLOWED_ORIGINS` comma-separated (default `localhost:3000,localhost:5173`) with `credentials: true` | `middleware.ts:947`, `index.ts:87-95` |
+| Cache-Control | `public, max-age=N, stale-while-revalidate=N/2` on GET responses for `/api/catalog` (60s), `/api/stats` (30s), `/api/shipping` (300s) | `index.ts:229-242, 245, 259, 260` |
+| Static SPA | `express.static(STATIC_PATH, { index: false })` only when `NODE_ENV=production` OR `SERVE_STATIC=true` (default **true**) | `index.ts:268`, `middleware.ts:949` |
+| SPA fallback | `app.get('/{*splat}')` reads `index.html` from `STATIC_PATH`, injects per-request CSP nonce into every `<script>`/`<style>` tag and adds `<meta name="csp-nonce" content="...">` | `index.ts:274-300` |
+| Edge cache hint | `Cache-Control: public, max-age=60, stale-while-revalidate=30` on catalog; `30/15` on stats; `300/150` on shipping | `index.ts:229-242` |
+| Graceful shutdown | `SIGTERM` / `SIGINT` → close server (10s drain timeout), close DB pool, `process.exit(0)` | `index.ts:326-348` |
+| Main-module guard | `__isMainModule` check (`import.meta.url === pathToFileURL(argv[1]).href`) — `app.listen` only runs when invoked directly, not when imported by tests | `index.ts:313-359` |
+| Background sweeper | every 60s `cleanup_rate_limits()` + `cleanup_used_jtis()`; `.unref()` so it doesn't block exit | `index.ts:204-217` |
+
+**Start log on boot:**
+```json
+{"ts":"…","level":"info","msg":"server_started","port":3000,"database":"postgresql://noufex_app:***@…","static_path":"/app/dist","env":"production"}
+```
+
+## §2.5 Deployment
 
 ### 2.4.1 Architecture (1 container)
 

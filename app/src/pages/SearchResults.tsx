@@ -117,7 +117,8 @@ export default function SearchResults() {
 		category: catFilter !== 'all' ? catFilter : undefined,
 		...priceFilter,
 		sort: apiSort,
-		limit: 50,
+		limit: pageSize,
+		offset: (currentPage - 1) * pageSize,
 	});
 
 	/* Stabilize the results reference so downstream memos don't rebuild every render. */
@@ -355,7 +356,7 @@ export default function SearchResults() {
 										<Link to={`/product/${p.id}`} className="block">
 											<div className="aspect-square bg-[#F7F8FA] overflow-hidden relative">
 												<img
-													src={p.main_image}
+													src={p.main_image || '/images/placeholder.svg'}
 													alt={getProductName(p, lang)}
 													className="w-full h-full object-cover group-hover:scale-105 transition-transform"
 												/>
@@ -470,7 +471,7 @@ export default function SearchResults() {
 										>
 											<div className="aspect-square sm:aspect-auto sm:h-full bg-[#F7F8FA] overflow-hidden relative">
 												<img
-													src={p.main_image}
+													src={p.main_image || '/images/placeholder.svg'}
 													alt={getProductName(p, lang)}
 													className="w-full h-full object-cover group-hover:scale-105 transition-transform"
 												/>

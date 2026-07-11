@@ -10,12 +10,6 @@
  *     payments, etc.).
  *   - Helpers that were previously inlined in `server/index.ts`
  *     (`buildUpdateSet`, `writeAuditLog`, `getProductWithParsedFields`).
- *
- * The reason this is a `.cts` file (not `.ts`) is that the rest of the
- * server runtime is loaded as CJS by esbuild. Keeping the extension
- * consistent with `db/pg-wrapper.cts` means the tsx runtime treats
- * this file as CommonJS-by-default and skips the .ts→.cts extension
- * map that bit us earlier with `pg-wrapper.cts`.
  */
 import { PgDb } from '../db/pg-wrapper.ts';
 import {
@@ -64,7 +58,7 @@ export const db = new PgDb(_databaseUrl);
 //
 // Why the lazy import inside `rateLimit(...)`: the limiter body
 // references `sendError` and `log`, both of which live in
-// middleware.ts (re-exported through shared.cts). Importing them
+// middleware.ts (re-exported through shared.ts). Importing them
 // at module top-level would re-introduce the same circular
 // dependency the type extraction closed. The dynamic `await
 // import('./shared.ts')` defers resolution until the limiter

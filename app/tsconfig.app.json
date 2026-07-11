@@ -11,12 +11,11 @@
 		"paths": {
 			"@/*": ["./src/*"]
 		},
-		"ignoreDeprecations": "5.0",
 		"moduleDetection": "force",
 		"jsx": "react-jsx",
 
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"erasableSyntaxOnly": true
 	},
 	"include": ["src", "src/**/__tests__/**/*", "mocks/setup.ts", "mocks/**/*.ts"]

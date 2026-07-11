@@ -90,7 +90,8 @@ DECLARE
         'store_balance',
         'store_followers',
         'shipping_methods',
-        'used_jtis'               -- auth replay-protection
+        'used_jtis',              -- auth replay-protection
+        'webhook_events'          -- webhook idempotency (P1-1)
     ];
     ro_tables text[] := ARRAY[
         -- Read-only: writes happen only via SECURITY DEFINER triggers

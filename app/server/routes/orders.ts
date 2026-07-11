@@ -4,18 +4,18 @@ import type { PgTxDb } from '../db/pg-wrapper.ts';
 import { ErrorCodes } from '../lib/error-codes.ts';
 import { getSetting } from '../lib/settings.ts';
 import {
-    COUPON_COLUMNS,
-    HttpError,
-    computeCouponDiscount,
-    db,
-    log,
-    orderSchema,
-    requireAuth,
-    resolveOrderStoreId,
-    sendError,
-    sendSuccess,
-    validate,
-    type CouponRow,
+	COUPON_COLUMNS,
+	HttpError,
+	computeCouponDiscount,
+	db,
+	log,
+	orderSchema,
+	requireAuth,
+	resolveOrderStoreId,
+	sendError,
+	sendSuccess,
+	validate,
+	type CouponRow,
 } from '../lib/shared.ts';
 
 export const ordersRouter = Router();
@@ -230,7 +230,8 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			resolvedSubtotal += product.price * item.quantity;
 		}
 		resolvedSubtotal = Math.round(resolvedSubtotal * 100) / 100;
-		const resolvedShippingCost = resolvedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
+		const resolvedShippingCost =
+			resolvedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
 		let resolvedDiscount = 0;
 		const resolvedCouponCode: string | null = couponCode ? String(couponCode) : null;
 		if (resolvedCouponCode && resolvedSubtotal <= 0) {
@@ -253,21 +254,28 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 					)
 					.get(resolvedCouponCode)) as CouponRow | undefined;
 				if (!coupon) {
-					throw new Error('Coupon not found or inactive.');
+					throw new HttpError(400, 'Coupon not found or inactive.', { code: ErrorCodes.NOT_FOUND });
 				}
 				if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-					throw new Error('Coupon has expired.');
+					throw new HttpError(400, 'Coupon has expired.', { code: ErrorCodes.VALIDATION_ERROR });
 				}
 				if (coupon.starts_at && new Date(coupon.starts_at) > new Date()) {
-					throw new Error('Coupon is not yet active.');
+					throw new HttpError(400, 'Coupon is not yet active.', { code: ErrorCodes.VALIDATION_ERROR });
 				}
 				if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
-					throw new Error('Coupon usage limit reached.');
+					throw new HttpError(409, 'Coupon usage limit reached.', { code: ErrorCodes.CONFLICT });
+				}
+				const userUsageRow = (await txDb
+					.prepare(
+						`SELECT COUNT(*)::int AS c FROM coupon_usage WHERE coupon_id = ? AND user_id = ?`,
+					)
+					.get(coupon.id, customerId)) as { c: number } | undefined;
+				const userUsageCount = userUsageRow?.c ?? 0;
+				if (userUsageCount >= coupon.per_user_limit) {
+					throw new HttpError(409, 'Coupon usage limit reached for this account.', { code: ErrorCodes.CONFLICT });
 				}
 				if (coupon.min_order != null && resolvedSubtotal < coupon.min_order) {
-					throw new Error(
-						`Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`,
-					);
+					throw new HttpError(400, `Minimum order for this coupon is ${coupon.min_order.toLocaleString()}.`, { code: ErrorCodes.VALIDATION_ERROR });
 				}
 				resolvedDiscount = await computeCouponDiscount(coupon, resolvedSubtotal);
 			}
@@ -289,24 +297,26 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			               ?, ?, ?, ?, ?, ?, ?,
 			               ?, ?)
 			       RETURNING id`,
-			)
-			.run(
-				customerId,
-				resolvedStoreId,
-				orderNumber,
-				normalisedPaymentMethod,
-				resolvedSubtotal,
-				resolvedShippingCost,
-				finalDiscount,
-				resolvedCouponCode,
-				finalDiscount,
-				finalTotal,
-				DEFAULT_CURRENCY,
-				JSON.stringify(shippingAddress),
-				notes || null,
-			)) as { lastInsertRowid: number | null };
+				)
+				.run(
+					customerId,
+					resolvedStoreId,
+					orderNumber,
+					normalisedPaymentMethod,
+					resolvedSubtotal,
+					resolvedShippingCost,
+					finalDiscount,
+					resolvedCouponCode,
+					finalDiscount,
+					finalTotal,
+					DEFAULT_CURRENCY,
+					JSON.stringify(shippingAddress),
+					notes || null,
+				)) as { lastInsertRowid: number | null };
 			if (result.lastInsertRowid == null) {
-				throw new HttpError(500, 'Failed to create order', { code: ErrorCodes.INSERT_FAILED });
+				throw new HttpError(500, 'Failed to create order', {
+					code: ErrorCodes.INSERT_FAILED,
+				});
 			}
 			const newOrderId: number = result.lastInsertRowid;
 
@@ -317,7 +327,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			const productIds = items.map((i) => i.productId);
 			const productRows = (await txDb
 				.prepare(
-					`SELECT id, name_ar, name_en, price, currency, stock
+					`SELECT id, name_ar, name_en, price, currency, stock, moq
 						 FROM products
 						WHERE id = ANY($1) AND is_active = TRUE AND deleted_at IS NULL
 						FOR UPDATE`,
@@ -329,6 +339,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				price: string;
 				currency: string;
 				stock: number;
+				moq: number;
 			}>;
 			const productById = new Map<
 				number,
@@ -338,6 +349,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 					price: number;
 					currency: string;
 					stock: number;
+					moq: number;
 				}
 			>();
 			for (const p of productRows) {
@@ -347,6 +359,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 					price: Number(p.price),
 					currency: p.currency,
 					stock: p.stock,
+					moq: p.moq,
 				});
 			}
 
@@ -367,6 +380,11 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				const product = productById.get(item.productId);
 				if (!product) {
 					throw new Error(`Product ${item.productId} is unavailable`);
+				}
+				if (item.quantity < product.moq) {
+					throw new Error(
+						`Product ${item.productId} requires a minimum order quantity of ${product.moq}`,
+					);
 				}
 				if (product.stock < item.quantity) {
 					throw new Error(
@@ -394,7 +412,8 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			// The threshold + flat cost come from the same top-of-handler
 			// `getSetting(...)` cache as the initial INSERT block.
 			const serverDiscount = Math.round(resolvedDiscount * 100) / 100;
-			const serverShippingCost = serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
+			const serverShippingCost =
+				serverSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_COST;
 			const serverFinalTotal = Math.max(
 				0,
 				Math.round((serverSubtotal + serverShippingCost - serverDiscount) * 100) / 100,
@@ -468,7 +487,10 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				});
 			}
 		} catch (notifyErr) {
-			log.error({ msg: 'orders.notification_dispatch_failed', error: (notifyErr as Error).message });
+			log.error({
+				msg: 'orders.notification_dispatch_failed',
+				error: (notifyErr as Error).message,
+			});
 		}
 	} catch (err) {
 		return sendError(res, err);

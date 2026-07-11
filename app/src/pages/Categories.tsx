@@ -487,7 +487,7 @@ export default function CategoriesPage() {
 										<div className="flex items-center gap-1.5 mt-1.5">
 											<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
 												MOQ:{' '}
-												{Math.max(1, Math.floor((product.stock ?? 0) / 5))}
+												{product.moq ?? 10}
 											</span>
 											<span className="text-[10px] text-aliTextMute">
 												{product.sold_count} sold

@@ -87,9 +87,9 @@ export async function removeFromWishlist(id: number): Promise<void> {
 // ─── Store followers ────────────────────────────────────────
 
 /** Check whether the authenticated user follows `store_id`. The server
- *  (line 28) compares req.user.id with the optional `user_id` query
- *  param — so for the common case (look up self), only `store_id` is
- *  needed. The server ignores `user_id` for the caller's own role. */
+ *  compares req.user.id with the optional `user_id` query param — so
+ *  for the common case (look up self), only `store_id` is needed.
+ *  The server ignores `user_id` for the caller's own role. */
 export async function checkStoreFollowStatus(
 	body: { store_id: number; user_id?: number },
 	options?: RequestOptions,
@@ -99,5 +99,25 @@ export async function checkStoreFollowStatus(
 	if (body.user_id !== undefined) q.set('user_id', String(body.user_id));
 	return apiRequest(`/store-followers/check?${q.toString()}`, {
 		signal: options?.signal,
+	});
+}
+
+export async function followStore(body: {
+	store_id: number;
+	notify_new_products?: boolean;
+	notify_offers?: boolean;
+}): Promise<{ id: number; store_id: number; following: boolean }> {
+	return apiRequest('/store-followers', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function unfollowStore(
+	store_id: number,
+): Promise<{ store_id: number; following: boolean; removed: boolean }> {
+	return apiRequest('/store-followers', {
+		method: 'DELETE',
+		body: JSON.stringify({ store_id }),
 	});
 }

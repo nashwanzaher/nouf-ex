@@ -7,12 +7,28 @@
  */
 
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppProvider } from '../AppContext';
 import { CartProvider, useCart } from '../CartContext';
 
 function wrapper() {
-	return ({ children }: { children: React.ReactNode }) => <CartProvider>{children}</CartProvider>;
+	return ({ children }: { children: React.ReactNode }) => (
+		<AppProvider>
+			<CartProvider>{children}</CartProvider>
+		</AppProvider>
+	);
 }
+
+// CartProvider now syncs with the server for authenticated users. The
+// tests run without a logged-in user, but we still silence network calls
+// so a stray effect cannot leak fetch errors.
+vi.mock('@/lib/api/cart', () => ({
+	getCart: vi.fn().mockResolvedValue([]),
+	addToCart: vi.fn().mockResolvedValue({ id: 1 }),
+	removeFromCart: vi.fn().mockResolvedValue(undefined),
+	updateCartItem: vi.fn().mockResolvedValue({ id: 1, quantity: 1, variant: null }),
+	clearCart: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe('CartContext', () => {
 	beforeEach(() => localStorage.clear());

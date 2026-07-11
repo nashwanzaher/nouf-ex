@@ -17,7 +17,7 @@
  *     (DD:HH:MM) instead of the previous "ends in 6h 22m" hard-coded
  *     string.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../../context/CartContext';
@@ -253,7 +253,9 @@ export default function Home() {
 		if (searchQ.trim()) navigate(`/search?q=${encodeURIComponent(searchQ.trim())}`);
 	};
 
-	const addToCart = (p: Product) => {
+	const addedTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+	const addToCart = useCallback((p: Product) => {
 		const store = storeMap.get(p.store_id);
 		dispatch({
 			type: 'ADD',
@@ -267,14 +269,19 @@ export default function Home() {
 			},
 		});
 		setAddedIds((prev) => new Set(prev).add(p.id));
-		setTimeout(() => {
+		// Clear any existing timer for this product before setting a new one
+		const existing = addedTimersRef.current.get(p.id);
+		if (existing) clearTimeout(existing);
+		const timer = setTimeout(() => {
 			setAddedIds((prev) => {
 				const n = new Set(prev);
 				n.delete(p.id);
 				return n;
 			});
+			addedTimersRef.current.delete(p.id);
 		}, 1500);
-	};
+		addedTimersRef.current.set(p.id, timer);
+	}, [dispatch, i18n.language, storeMap]);
 
 	const hotSearches = useMemo(
 		() => [
@@ -291,7 +298,7 @@ export default function Home() {
 	const stats = statsData;
 
 	return (
-		<div dir="rtl" className="bg-aliSurface min-h-screen">
+		<div dir={i18n.language === 'ar' ? 'rtl' : 'ltr'} className="bg-aliSurface min-h-screen">
 			{/* ===== HERO SECTION ===== */}
 			<section className="bg-gradient-to-br from-orange-50 via-white to-orange-50 py-10 lg:py-14">
 				<div className="max-w-[1400px] mx-auto px-4 lg:px-6">

@@ -27,7 +27,6 @@ export default function Navbar() {
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [catDropdownOpen, setCatDropdownOpen] = useState(false);
 	const [searchCat, setSearchCat] = useState('all');
-	const _isRTL = i18n.language === 'ar';
 	// C8 fix: declare all useState hooks BEFORE any useEffect. Rules of Hooks require consistent order.
 	const [userOpen, setUserOpen] = useState(false);
 	const userRef = useRef<HTMLDivElement>(null);
@@ -298,6 +297,8 @@ export default function Navbar() {
 											<button
 												onClick={() => {
 													dispatch({ type: 'SET_USER', payload: null });
+													dispatch({ type: 'SET_TOKEN', payload: null });
+													dispatch({ type: 'CLEAR' });
 													setUserOpen(false);
 												}}
 												className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left"

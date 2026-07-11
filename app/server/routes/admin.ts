@@ -131,7 +131,13 @@ adminRouter.get('/stores', ...adminAuth, async (req: Request, res: Response) => 
 		params.push(v.data.limit, v.data.offset);
 		const stores = (await db
 			.prepare(
-				`SELECT * FROM stores ${whereSql}
+				`SELECT id, owner_id, store_name, store_name_en, store_name_zh, slug,
+				        description, description_en, description_zh, logo, banner,
+				        location, governorate, trust_level, response_rate, on_time_delivery,
+				        commission_rate, rating, review_count, products_count, sales_count,
+				        followers_count, since_year, is_active, is_verified, deleted_at,
+				        created_at, updated_at
+				   FROM stores ${whereSql}
 				 ORDER BY created_at DESC
 				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
@@ -195,9 +201,15 @@ adminRouter.get('/products', ...adminAuth, async (req: Request, res: Response) =
 		params.push(v.data.limit, v.data.offset);
 		const products = (await db
 			.prepare(
-				`SELECT * FROM products ${whereSql}
-					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
+				`SELECT id, store_id, category_id, name_ar, name_en, name_zh, description,
+				        description_en, description_zh, price, original_price, currency,
+				        stock, moq, weight, tax_rate, is_digital, main_image, features,
+				        specifications, badges, rating, review_count, sold_count, view_count,
+				        is_active, is_featured, deal_discount, deal_ends_at, deleted_at,
+				        created_at, updated_at
+				   FROM products ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -256,9 +268,14 @@ adminRouter.get('/orders', ...adminAuth, async (req: Request, res: Response) => 
 		params.push(v.data.limit, v.data.offset);
 		const orders = (await db
 			.prepare(
-				`SELECT * FROM orders ${whereSql}
-					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
+				`SELECT id, order_number, customer_id, store_id, status, payment_method,
+				        payment_status, subtotal, shipping_cost, discount, coupon_code,
+				        discount_amount, total, currency, shipping_address, billing_address,
+				        notes, tracking_number, shipping_company, estimated_delivery,
+				        delivered_at, cancelled_at, timeline, created_at, updated_at
+				   FROM orders ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -275,7 +292,16 @@ adminRouter.get('/disputes', ...adminAuth, async (req: Request, res: Response) =
 	try {
 		const v = validate(
 			paginationSchema.extend({
-				status: z.enum(['open', 'in_review', 'resolved', 'rejected']).optional(),
+				status: z
+					.enum([
+						'open',
+						'investigating',
+						'resolved_buyer',
+						'resolved_seller',
+						'closed',
+						'rejected',
+					])
+					.optional(),
 				priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
 			}),
 			req.query,
@@ -302,9 +328,12 @@ adminRouter.get('/disputes', ...adminAuth, async (req: Request, res: Response) =
 		params.push(v.data.limit, v.data.offset);
 		const disputes = (await db
 			.prepare(
-				`SELECT * FROM disputes ${whereSql}
-					 ORDER BY created_at DESC
-					 LIMIT $${params.length - 1} OFFSET $${params.length}`,
+				`SELECT id, order_id, customer_id, store_id, type, status, priority,
+				        subject, description, evidence, refund_amount, resolved_by,
+				        resolved_at, created_at, updated_at
+				   FROM disputes ${whereSql}
+				 ORDER BY created_at DESC
+				 LIMIT $${params.length - 1} OFFSET $${params.length}`,
 			)
 			.all(...params)) as Record<string, unknown>[];
 
@@ -399,8 +428,7 @@ adminRouter.post(
 			const row = (await db
 				.prepare(`SELECT * FROM cleanup_audit_logs($1::interval, $2::interval)`)
 				.get(`${adminDays} days`, `${searchDays} days`)) as
-				| { deleted_admin: string | number; deleted_search: string | number }
-				| undefined;
+				{ deleted_admin: string | number; deleted_search: string | number } | undefined;
 			await writeAuditLog(req, 'maintenance.audit_cleanup', 'system', 0, null, {
 				admin_retention_days: adminDays,
 				search_retention_days: searchDays,
@@ -698,6 +726,181 @@ adminRouter.patch('/disputes/:id', ...adminAuth, async (req: Request, res: Respo
 
 		await writeAuditLog(req, 'update_dispute', 'dispute', disputeId, current, updated);
 		return sendSuccess(res, updated, 'Dispute updated');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/* ------------------------------------------------------------------ */
+/*  K.7 Time-series endpoint (moved from admin-read.ts)               */
+/* ------------------------------------------------------------------ */
+adminRouter.get('/stats/timeseries', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({
+				metric: z
+					.enum(['revenue', 'orders', 'users', 'disputes', 'merchants'])
+					.default('revenue'),
+				bucket: z.enum(['day', 'week', 'month']).default('day'),
+				days: z.coerce.number().int().min(1).max(365).optional(),
+			}),
+			req.query,
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const { metric, bucket } = v.data;
+		const horizonDays = v.data.days ?? (bucket === 'day' ? 30 : bucket === 'week' ? 84 : 365);
+		const truncUnit = bucket === 'day' ? 'day' : bucket === 'week' ? 'week' : 'month';
+
+		const metricConfig: Record<typeof metric, { table: string; where: string }> = {
+			revenue: { table: 'orders', where: "payment_status = 'paid'" },
+			orders: { table: 'orders', where: '1=1' },
+			users: { table: 'users', where: '1=1' },
+			disputes: { table: 'disputes', where: '1=1' },
+			merchants: { table: 'users', where: "role = 'merchant'" },
+		};
+		const cfg = metricConfig[metric];
+		const valueExpr =
+			metric === 'revenue' ? 'COALESCE(SUM(total), 0)::numeric' : 'COUNT(*)::int';
+		const labelFormat = bucket === 'day' ? 'MM-DD' : bucket === 'week' ? '"W"IW' : 'YYYY-MM';
+
+		const sql = `
+			WITH series AS (
+				SELECT generate_series(
+					date_trunc($1, NOW() - ($2 || ' days')::interval),
+					date_trunc($1, NOW()),
+					('1 ' || $1)::interval
+				) AS bucket_ts
+			),
+			data AS (
+				SELECT date_trunc($1, created_at) AS bucket_ts,
+				       ${valueExpr} AS v
+				FROM ${cfg.table}
+				WHERE ${cfg.where}
+				  AND created_at >= NOW() - ($2 || ' days')::interval
+				GROUP BY date_trunc($1, created_at)
+			)
+			SELECT to_char(s.bucket_ts, 'YYYY-MM-DD') AS ts,
+			       to_char(s.bucket_ts, $3)            AS label,
+			       COALESCE(d.v, 0)                     AS value
+			FROM series s
+			LEFT JOIN data d USING (bucket_ts)
+			ORDER BY s.bucket_ts ASC
+		`;
+
+		const rows = (await db
+			.prepare(sql)
+			.all(truncUnit, String(horizonDays), labelFormat)) as Array<{
+			ts: string;
+			label: string;
+			value: string | number;
+		}>;
+
+		return sendSuccess(res, {
+			metric,
+			bucket,
+			horizonDays,
+			points: rows.map((r) => ({
+				ts: r.ts,
+				label: r.label,
+				value: Number(r.value),
+			})),
+		});
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/* ------------------------------------------------------------------ */
+/*  K.8 Per-governorate endpoint (moved from admin-read.ts)           */
+/* ------------------------------------------------------------------ */
+adminRouter.get('/stats/by-governorate', ...adminAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({
+				scope: z.enum(['stores', 'addresses', 'merchants']).default('stores'),
+				top: z.coerce.number().int().min(1).max(20).default(5),
+			}),
+			req.query,
+		);
+		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
+
+		const { scope, top } = v.data;
+
+		const sourceSql: Record<typeof scope, { sql: string; where: string }> = {
+			stores: {
+				sql: `SELECT COALESCE(NULLIF(governorate, ''), 'Unknown') AS name,
+				             COUNT(*)::int AS count
+			      FROM stores
+			      WHERE is_active = TRUE
+			      GROUP BY COALESCE(NULLIF(governorate, ''), 'Unknown')`,
+				where: '',
+			},
+			addresses: {
+				sql: `SELECT COALESCE(NULLIF(governorate, ''), 'Unknown') AS name,
+				             COUNT(*)::int AS count
+			      FROM addresses
+			      GROUP BY COALESCE(NULLIF(governorate, ''), 'Unknown')`,
+				where: '',
+			},
+			merchants: {
+				sql: `SELECT COALESCE(s.governorate, 'Unknown') AS name,
+				             COUNT(*)::int AS count
+			      FROM users u
+			      LEFT JOIN LATERAL (
+			          SELECT governorate
+			          FROM stores
+			          WHERE owner_id = u.id
+			          ORDER BY created_at ASC
+			          LIMIT 1
+			      ) s ON TRUE
+			      WHERE u.role = 'merchant'
+			      GROUP BY COALESCE(s.governorate, 'Unknown')`,
+				where: '',
+			},
+		};
+		const src = sourceSql[scope];
+
+		const sql = `
+			WITH counts AS (${src.sql}),
+			ranked AS (
+				SELECT name, count,
+				       ROW_NUMBER() OVER (ORDER BY count DESC, name ASC) AS rn
+				FROM counts
+			),
+			top_n AS (
+				SELECT name, count FROM ranked WHERE rn <= $1
+			),
+			other AS (
+				SELECT COALESCE(SUM(count), 0)::int AS count
+				FROM ranked WHERE rn > $1
+			)
+			SELECT name, count, FALSE AS is_other FROM top_n
+			UNION ALL
+			SELECT 'Other', count, TRUE AS is_other FROM other
+		`;
+
+		const rows = (await db.prepare(sql).all(top)) as Array<{
+			name: string;
+			count: number;
+			is_other: boolean;
+		}>;
+
+		const total = rows.reduce((sum, r) => sum + r.count, 0);
+		const governorates = rows
+			.filter((r) => r.count > 0)
+			.map((r) => ({
+				name: r.name,
+				count: r.count,
+				percent: total > 0 ? Math.round((r.count / total) * 1000) / 10 : 0,
+			}));
+
+		return sendSuccess(res, {
+			scope,
+			top,
+			total,
+			governorates,
+		});
 	} catch (err) {
 		return sendError(res, err);
 	}

@@ -14,8 +14,7 @@
 	"compilerOptions": {
 		"paths": {
 			"@/*": ["./src/*"]
-		},
-		"ignoreDeprecations": "5.0"
+		}
 	},
 	"exclude": ["node_modules", "dist", "coverage", "**/node_modules/**"]
 }

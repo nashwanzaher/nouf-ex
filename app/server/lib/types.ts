@@ -1,17 +1,17 @@
 /**
- * Shared types used by both `middleware.ts` (auth cache) and `shared.cts`
+ * Shared types used by both `middleware.ts` (auth cache) and `shared.ts`
  * (route handlers that consume the auth result). Extracted on 2026-07-03
  * to break the circular import between those two modules.
  *
  * The previous dependency graph was:
- *   middleware.ts  ──▶  shared.cts  (imports sendError, requireAuth, …)
- *   shared.cts     ──▶  middleware.js (imports HttpError, log, …)
+ *   middleware.ts  ──▶  shared.ts  (imports sendError, requireAuth, …)
+ *   shared.ts     ──▶  middleware.ts (imports HttpError, log, …)
  *
  * After this refactor, both modules import from `./types.js` (no further
  * dependencies), so the import graph is acyclic:
  *   middleware.ts  ──▶  types.js
- *   shared.cts     ──▶  types.js  (re-exports)
- *   shared.cts     ──▶  middleware.js (for behaviour, not types)
+ *   shared.ts     ──▶  types.js  (re-exports)
+ *   shared.ts     ──▶  middleware.js (for behaviour, not types)
  */
 
 /** The set of role strings that the auth subsystem recognises.

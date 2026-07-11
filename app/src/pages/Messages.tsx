@@ -408,7 +408,7 @@ export default function Messages() {
 							<div className="p-10 text-center h-[40vh] flex flex-col items-center justify-center">
 								<MessageSquare className="w-12 h-12 text-[#AAAAAA] mb-3" />
 								<p className="text-sm text-[#6B6B6B] font-cairo">
-									اختر محادثة من القائمة
+									{t('messages.selectThread', 'اختر محادثة من القائمة')}
 								</p>
 							</div>
 						) : (
@@ -431,7 +431,7 @@ export default function Messages() {
 										</div>
 									) : conversation.length === 0 ? (
 										<div className="text-center text-xs text-[#AAAAAA] font-cairo py-6">
-											لا توجد رسائل في هذه المحادثة
+											{t('messages.noMessages', 'لا توجد رسائل في هذه المحادثة')}
 										</div>
 									) : (
 										conversation.map((m) => {

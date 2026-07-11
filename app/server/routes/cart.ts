@@ -69,7 +69,7 @@ cartRouter.get('/:userId', requireAuth, async (req: Request, res: Response) => {
 		if (req.user!.id !== urlUserId && req.user!.role !== 'admin') {
 			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
 		}
-		const userId = req.user!.id;
+		const userId = req.user!.role === 'admin' ? urlUserId : req.user!.id;
 		const cartItems = await db
 			.prepare(
 				`SELECT ci.*, p.name_en, p.name_ar, p.name_zh, p.price, p.original_price, p.main_image, p.stock, s.store_name

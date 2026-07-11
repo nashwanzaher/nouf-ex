@@ -22,8 +22,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		const order = (await db
 			.prepare('SELECT id, customer_id, total, payment_status FROM orders WHERE id = ?')
 			.get(order_id)) as
-			| { id: number; customer_id: number; total: number; payment_status: string }
-			| undefined;
+			{ id: number; customer_id: number; total: number; payment_status: string } | undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
 		if (order.customer_id !== userId) return sendError(res, 'Forbidden', 403);
 		if (order.payment_status !== 'paid') {
@@ -48,8 +47,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			const orderRow = (await db
 				.prepare('SELECT order_number, customer_id, store_id FROM orders WHERE id = ?')
 				.get(order_id)) as
-				| { order_number: string; customer_id: number; store_id: number | null }
-				| undefined;
+				{ order_number: string; customer_id: number; store_id: number | null } | undefined;
 			if (orderRow) {
 				const storeRow = orderRow.store_id
 					? ((await db
@@ -67,7 +65,10 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				}
 			}
 		} catch (notifyErr) {
-			log.error({ msg: 'refunds.notification_dispatch_failed', error: (notifyErr as Error).message });
+			log.error({
+				msg: 'refunds.notification_dispatch_failed',
+				error: (notifyErr as Error).message,
+			});
 		}
 
 		sendSuccess(res, result, 'Refund requested');
@@ -98,8 +99,7 @@ refundsRouter.post(
           RETURNING order_id, amount`,
 				)
 				.get(finalStatus, adminNotes, id)) as
-				| { order_id: number; amount: number }
-				| undefined;
+				{ order_id: number; amount: number } | undefined;
 			if (!result) return sendError(res, 'Refund not found or already resolved', 404);
 
 			if (finalStatus === 'processed') {
@@ -110,20 +110,50 @@ refundsRouter.post(
 					)
 					.run(result.order_id);
 				const order = (await db
-					.prepare('SELECT store_id FROM orders WHERE id = ?')
-					.get(result.order_id)) as { store_id: number | null } | undefined;
+					.prepare('SELECT store_id, currency FROM orders WHERE id = ?')
+					.get(result.order_id)) as
+					{ store_id: number | null; currency: string } | undefined;
 				if (order?.store_id) {
+					// Append-only ledger: balance_after must equal previous + amount.
+					// Fetch the latest recorded balance for this store, defaulting to 0.
+					const previousTx = (await db
+						.prepare(
+							`SELECT balance_after FROM transactions
+							  WHERE store_id = ?
+							  ORDER BY created_at DESC, id DESC
+							  LIMIT 1`,
+						)
+						.get(order.store_id)) as { balance_after: number } | undefined;
+					const previousBalance = previousTx ? Number(previousTx.balance_after) : 0;
+					const refundAmount = -Number(result.amount);
+					const newBalance = Math.round((previousBalance + refundAmount) * 100) / 100;
+
 					await db
 						.prepare(
-							`INSERT INTO transactions (store_id, type, amount, balance_after, reference_type, reference_id, description, created_at)
-             VALUES (?, 'refund', ?, 0, 'refund', ?, ?, NOW())`,
+							`INSERT INTO transactions (store_id, type, amount, balance_after, currency, reference_type, reference_id, description, created_at)
+             VALUES (?, 'refund', ?, ?, ?, 'refund', ?, ?, NOW())`,
 						)
 						.run(
 							order.store_id,
-							-result.amount,
+							refundAmount,
+							newBalance,
+							order.currency,
 							id,
 							`Refund #${id} for order ${result.order_id}`,
 						);
+
+					// Keep the denormalized store_balance in sync so the merchant
+					// dashboard reflects the deduction immediately.
+					await db
+						.prepare(
+							`INSERT INTO store_balance (store_id, available, currency)
+             VALUES (?, GREATEST(0, 0 - ?), ?)
+             ON CONFLICT (store_id)
+             DO UPDATE SET available = GREATEST(0, store_balance.available + ?),
+                           currency = EXCLUDED.currency,
+                           updated_at = NOW()`,
+						)
+						.run(order.store_id, result.amount, order.currency, refundAmount);
 				}
 			}
 
@@ -134,8 +164,7 @@ refundsRouter.post(
 				const orderRow = (await db
 					.prepare('SELECT order_number, customer_id FROM orders WHERE id = ?')
 					.get(result.order_id)) as
-					| { order_number: string; customer_id: number }
-					| undefined;
+					{ order_number: string; customer_id: number } | undefined;
 				if (orderRow) {
 					await onRefundResolved({
 						orderId: result.order_id,
@@ -147,7 +176,10 @@ refundsRouter.post(
 					});
 				}
 			} catch (notifyErr) {
-				log.error({ msg: 'refunds.resolve_notification_failed', error: (notifyErr as Error).message });
+				log.error({
+					msg: 'refunds.resolve_notification_failed',
+					error: (notifyErr as Error).message,
+				});
 			}
 
 			sendSuccess(res, { id, status: finalStatus }, 'Refund resolved');

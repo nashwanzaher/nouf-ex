@@ -1,12 +1,12 @@
-import { clearLocalCart, syncOnLogin } from '@/lib/cart-sync';
+import { clearLocalCart } from '@/lib/cart-sync';
 import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useReducer,
-    type ReactNode,
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useReducer,
+	type ReactNode,
 } from 'react';
 
 type Lang = 'ar' | 'en' | 'zh';
@@ -97,22 +97,12 @@ function appReducer(state: AppState, action: Action): AppState {
 	switch (action.type) {
 		case 'SET_LANG': {
 			const dir = action.payload === 'ar' ? 'rtl' : 'ltr';
-			// Note: DOM mutation is safe here because the reducer only runs after
-			// the React render path is set up (i.e. the AppProvider has mounted).
-			if (typeof document !== 'undefined') {
-				document.documentElement.lang = action.payload;
-				document.documentElement.dir = dir;
-			}
 			return { ...state, lang: action.payload, dir };
 		}
 		case 'SET_USER': {
-			if (action.payload) localStorage.setItem('noufex_user', JSON.stringify(action.payload));
-			else localStorage.removeItem('noufex_user');
 			return { ...state, user: action.payload };
 		}
 		case 'SET_TOKEN': {
-			if (action.payload) localStorage.setItem('noufex_token', action.payload);
-			else localStorage.removeItem('noufex_token');
 			return { ...state, token: action.payload };
 		}
 		case 'ADD_TOAST':
@@ -142,6 +132,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 		document.documentElement.lang = state.lang;
 		document.documentElement.dir = state.dir;
 	}, [state.lang, state.dir]);
+
+	// Persist user and token to localStorage (side effects outside reducer).
+	useEffect(() => {
+		if (typeof localStorage === 'undefined') return;
+		if (state.user) localStorage.setItem('noufex_user', JSON.stringify(state.user));
+		else localStorage.removeItem('noufex_user');
+	}, [state.user]);
+	useEffect(() => {
+		if (typeof localStorage === 'undefined') return;
+		if (state.token) localStorage.setItem('noufex_token', state.token);
+		else localStorage.removeItem('noufex_token');
+	}, [state.token]);
 
 	/** Imperative helpers — wrap the dispatch cases for convenience and
 	 *  so pages don't need to know the action shape. */
@@ -186,15 +188,17 @@ export function useApp() {
 	if (!ctx) throw new Error('useApp must be inside AppProvider');
 	return ctx;
 }
-
 /** Convenience hook: returns the auth slice and helpers. Saves callers
  *  from destructuring the context every time.
  *
- * P0-1: `login` is async and runs `syncOnLogin` after the user/token
- * are set. This pushes the anonymous local cart into the server cart
- * (best-effort) and returns when done. `logout` clears the local cart
- * synchronously (the server cart is left intact — the user may sign
- * back in from another device and expect their items). */
+ * Cart synchronization is now owned by `CartProvider`: it detects the
+ * authenticated user, pushes any anonymous local cart to the server,
+ * and hydrates the UI from the server cart. `login` only writes the
+ * auth credentials so the API client can attach the bearer token.
+ * `logout` clears the local cart synchronously (the server cart is
+ * left intact — the user may sign back in from another device and
+ * expect their items).
+ */
 export function useAuth() {
 	const { state, setUser, setToken, addToast } = useApp();
 	const isAuthenticated = Boolean(state.user && state.token);
@@ -202,11 +206,11 @@ export function useAuth() {
 		async (user: User, token: string): Promise<void> => {
 			// Write the token + user to localStorage IMMEDIATELY (and
 			// synchronously) so the API client (`apiRequest`) can read
-			// them on the very next fetch — e.g. the cart-sync call
-			// below. Without this, React 18 may batch the reducer runs
-			// and the subsequent fetch fires before localStorage is
-			// populated, producing a 401 race even though the user is
-			// already "logged in" by every other measure.
+			// them on the very next fetch. Without this, React 18 may
+			// batch the reducer runs and the subsequent fetch fires
+			// before localStorage is populated, producing a 401 race
+			// even though the user is already "logged in" by every
+			// other measure.
 			try {
 				localStorage.setItem('noufex_user', JSON.stringify(user));
 				localStorage.setItem('noufex_token', token);
@@ -215,28 +219,8 @@ export function useAuth() {
 			}
 			setUser(user);
 			setToken(token);
-			// Best-effort: if the sync fails, the local cart is
-			// preserved (cart-sync.ts only clears local on a clean
-			// push). A failed sync must never block the login.
-			try {
-				const result = await syncOnLogin(Number(user.id));
-				if (result.degraded) {
-					addToast({
-						message:
-							'Some cart items could not be saved to your account. Please review and retry.',
-						type: 'warning',
-					});
-				} else if (result.pushed > 0) {
-					addToast({
-						message: `Synced ${result.pushed} cart item${result.pushed === 1 ? '' : 's'} to your account.`,
-						type: 'success',
-					});
-				}
-			} catch {
-				// Silently swallow — login already succeeded.
-			}
 		},
-		[setUser, setToken, addToast],
+		[setUser, setToken],
 	);
 	const logout = useCallback(() => {
 		// Same race-prevention as `login`: clear localStorage first

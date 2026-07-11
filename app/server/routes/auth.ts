@@ -32,17 +32,15 @@ import { ErrorCodes } from '../lib/error-codes.ts';
 // scrypt CPU cost — every login attempt takes ~100 ms regardless
 // of whether the email exists in the DB.
 //
-// Generated once at module load with hashPassword(''). NEVER
-// compared against a real password (the salt + iteration count
-// make a literal match astronomically unlikely). Only used so
-// the wall-clock time of the not-found path matches the
+// Generated synchronously at module load with hashPassword('').
+// NEVER compared against a real password (the salt + iteration
+// count make a literal match astronomically unlikely). Only used
+// so the wall-clock time of the not-found path matches the
 // wrong-password path.
-let DUMMY_SCRYPT_HASH = '';
-(async () => {
-	DUMMY_SCRYPT_HASH = await hashPassword(
-		`__login_timing_dummy_${Math.random().toString(36)}_${Date.now()}__`,
-	);
-})();
+let DUMMY_SCRYPT_HASH: string | null = null;
+hashPassword('__login_timing_dummy__').then((h) => {
+	DUMMY_SCRYPT_HASH = h;
+});
 
 export const authRouter = Router();
 
@@ -116,7 +114,7 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 				// signed token matches the user's current revocation
 				// counter. A logout elsewhere will bump this number and
 				// invalidate the token on its next use.
-				'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at, token_version FROM users WHERE email = ?',
+				'SELECT id, email, full_name, avatar, role, status, is_verified, phone, preferred_language, gender, password_hash, last_login, created_at, token_version, two_factor_enabled FROM users WHERE email = ?',
 			)
 			.get(email)) as
 			| (Record<string, unknown> & {
@@ -136,7 +134,9 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 			// paths take the same wall-clock time. The hash is a fixed
 			// throwaway string — the comparison always fails, we just
 			// want the time to be uniform.
-			await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
+			if (DUMMY_SCRYPT_HASH) {
+				await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
+			}
 			return sendError(res, 'Invalid email or password', 401, 'AUTH_INVALID');
 		}
 

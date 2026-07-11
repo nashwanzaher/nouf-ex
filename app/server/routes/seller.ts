@@ -68,8 +68,7 @@ sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response
 		const storeId = await getMerchantStoreId(req, res);
 		if (storeId == null) return sendError(res, 'You do not have a store yet', 404);
 		const row = (await db.prepare('SELECT * FROM stores WHERE id = $1').get(storeId)) as
-			| Record<string, unknown>
-			| undefined;
+			Record<string, unknown> | undefined;
 		if (!row) return sendError(res, 'Store not found', 404);
 		return sendSuccess(res, row);
 	} catch (err) {
@@ -119,6 +118,16 @@ sellerRouter.post('/products', ...sellerAuth, async (req: Request, res: Response
 		const v = validate(sellerProductCreateSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
 		const data = v.data;
+
+		if (data.category_id != null) {
+			const category = (await db
+				.prepare('SELECT id FROM categories WHERE id = ? AND is_active = TRUE')
+				.get(data.category_id)) as { id: number } | undefined;
+			if (!category) {
+				return sendError(res, 'Category not found or inactive', 400, 'CATEGORY_NOT_FOUND');
+			}
+		}
+
 		const result = (await db
 			.prepare(
 				`INSERT INTO products
@@ -299,9 +308,21 @@ sellerRouter.get('/orders', ...sellerAuth, async (req: Request, res: Response) =
 		if (!v.ok) return sendError(res, 'Invalid pagination: ' + v.error, 400);
 		const { limit, offset } = v.data;
 		const status = (req.query.status as string | undefined) ?? null;
-		const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+		const validStatuses = [
+			'pending',
+			'confirmed',
+			'processing',
+			'shipped',
+			'delivered',
+			'cancelled',
+			'refunded',
+		];
 		if (status && !validStatuses.includes(status)) {
-			return sendError(res, `Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
+			return sendError(
+				res,
+				`Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+				400,
+			);
 		}
 		let sql = `SELECT o.*, u.email AS customer_email
              FROM orders o
@@ -386,8 +407,7 @@ sellerRouter.post('/orders/:id/status', ...sellerAuth, async (req: Request, res:
               RETURNING id, status, timeline, updated_at`,
 			)
 			.get(data.status, data.note ?? null, req.user!.id, id)) as
-			| Record<string, unknown>
-			| undefined;
+			Record<string, unknown> | undefined;
 		if (!updated) return sendError(res, 'Order not found', 404);
 		await writeAuditLog(
 			req,

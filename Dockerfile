@@ -35,19 +35,8 @@ RUN npm ci --no-audit --no-fund --fetch-timeout=1800000 --fetch-retries=3
 # ----------------------------------------------------------------------------
 # Stage 2: build the API server bundle with esbuild.
 # ----------------------------------------------------------------------------
-# The source mix (.ts ESM + .cts CJS) trips the Node 20 CJS↔ESM
-# bridge when loaded with tsx at runtime — the CJS-from-ESM
-# translator can't resolve `../middleware.js` because the file is
-# actually `../middleware.ts` and tsx's CJS loader hook doesn't
-# register for the ESM-side require chain. Symptom on a fresh
-# build of this image (before the bundle step was added):
-#
-#   TypeError: Cannot read properties of undefined (reading 'exports')
-#     at <anonymous> (/app/server/lib/shared.cts:31:8)
-#     at loadCJSModule (node:internal/modules/esm/translators:205:3)
-#
 # esbuild resolves every relative import at build time, so the
-# runtime image only needs to execute a single CJS file. External
+# runtime image only needs to execute a single ESM file. External
 # packages (`pg`, `express`, `cors`, etc.) stay in node_modules.
 # ----------------------------------------------------------------------------
 FROM node:20-alpine AS build

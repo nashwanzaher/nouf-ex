@@ -25,6 +25,7 @@ import { Link, useParams } from 'react-router';
 import type { Toast } from '../components/Toast';
 import ToastContainer from '../components/Toast';
 import { useCart } from '../context/CartContext';
+import { safeImageUrl } from '../lib/utils/safe-format';
 import type { Product, Review, Store as StoreType } from '../hooks/useApi';
 import { useProduct, useProducts, useReviews } from '../hooks/useApi';
 import styles from './ProductDetail.module.css';
@@ -173,6 +174,14 @@ export default function ProductDetail() {
 	const allImages = product.main_image ? [product.main_image] : ['/product-placeholder.jpg'];
 
 	const handleAddToCart = () => {
+		const moq = product.moq ?? 1;
+		if (qty < moq) {
+			addToast(
+				t('product.moqNotMet', 'Minimum order quantity is {{moq}}', { moq }),
+				'warning',
+			);
+			return;
+		}
 		dispatch({
 			type: 'ADD',
 			payload: {
@@ -231,12 +240,12 @@ export default function ProductDetail() {
 							className="aspect-square relative cursor-zoom-in"
 							onClick={() => setLightboxOpen(true)}
 						>
-							<img
-								src={allImages[selectedImage]}
-								alt={getName(product)}
-								className="w-full h-full object-cover"
-								referrerPolicy="no-referrer"
-							/>
+						<img
+							src={safeImageUrl(allImages[selectedImage], { kind: 'product' })}
+							alt={getName(product)}
+							className="w-full h-full object-cover"
+							referrerPolicy="no-referrer"
+						/>
 							{discount > 0 && (
 								<span className="absolute top-3 left-3 bg-[#FF6A00] text-white font-bold px-2 py-1 rounded text-sm">
 									-{discount}%
@@ -270,7 +279,7 @@ export default function ProductDetail() {
 								onClick={() => setSelectedImage(i)}
 								className={`w-16 h-16 rounded border-2 flex-shrink-0 overflow-hidden transition-all ${selectedImage === i ? 'border-[#FF6A00] shadow' : 'border-[#E5E5E5] hover:border-[#FF6A00]/50'}`}
 							>
-								<img src={img} alt="" className="w-full h-full object-cover" />
+								<img src={safeImageUrl(img, { kind: 'product' })} alt="" className="w-full h-full object-cover" />
 							</button>
 						))}
 					</div>
@@ -443,7 +452,7 @@ export default function ProductDetail() {
 							<>
 								<div className="flex items-center gap-3 pb-4 border-b border-[#E5E5E5]">
 									<img
-										src={store.logo}
+										src={store.logo || '/images/placeholder.svg'}
 										alt=""
 										className="w-12 h-12 rounded-full object-cover"
 									/>
@@ -856,7 +865,7 @@ export default function ProductDetail() {
 							>
 								<div className="aspect-square bg-[#F7F8FA] overflow-hidden">
 									<img
-										src={p.main_image}
+										src={safeImageUrl(p.main_image, { kind: 'product' })}
 										alt={getName(p)}
 										className="w-full h-full object-cover group-hover:scale-105 transition-transform"
 									/>
@@ -902,11 +911,11 @@ export default function ProductDetail() {
 					>
 						<X size={24} />
 					</button>
-					<img
-						src={allImages[selectedImage]}
-						alt=""
-						className="max-w-full max-h-[90vh] object-contain rounded"
-					/>
+				<img
+					src={safeImageUrl(allImages[selectedImage], { kind: 'product' })}
+					alt=""
+					className="max-w-full max-h-[90vh] object-contain rounded"
+				/>
 				</div>
 			)}
 		</div>

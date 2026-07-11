@@ -262,7 +262,7 @@ function DealCard({
 				className="block relative aspect-square overflow-hidden bg-aliSurface"
 			>
 				<img
-					src={product.main_image}
+					src={product.main_image || '/images/placeholder.svg'}
 					alt={getName(product)}
 					className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 				/>

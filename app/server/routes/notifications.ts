@@ -10,7 +10,7 @@ import {
 
 export const notificationsRouter = Router();
 
-notificationsRouter.get('/:userId', requireAuth, async (req: Request, res: Response) => {
+notificationsRouter.get('/', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const userId = req.user!.id;
 		const items = await db

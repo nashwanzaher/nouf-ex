@@ -31,7 +31,7 @@ export type Currency = 'YER' | 'USD' | 'SAR' | 'AED' | 'EUR';
  * `ر.ي` (rial Yemeni) instead of the Latin "YER".
  */
 const CURRENCY_SYMBOLS: Record<string, Record<Currency, string>> = {
-	ar: { YER: 'ر.ي', USD: 'د.أ', SAR: 'ر.س', AED: 'د.إ', EUR: '€' },
+	ar: { YER: 'ر.ي', USD: '$', SAR: 'ر.س', AED: 'د.إ', EUR: '€' },
 	en: { YER: 'YER', USD: '$', SAR: 'SAR', AED: 'AED', EUR: '€' },
 	zh: { YER: 'YER', USD: 'USD', SAR: 'SAR', AED: 'AED', EUR: 'EUR' },
 };

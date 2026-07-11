@@ -4,7 +4,12 @@
  */
 
 import cors from 'cors';
-import express, { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
+import express, {
+	type NextFunction,
+	type Request,
+	type RequestHandler,
+	type Response,
+} from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
@@ -14,16 +19,16 @@ import { fileURLToPath, pathToFileURL } from 'url';
 // `dotenv.config()` call would run too late (after the imports).
 import 'dotenv/config';
 import {
-    configureTrustProxy,
-    errorHandler,
-    healthRateLimit,
-    loadEnv,
-    log,
-    notFoundHandler,
-    optionalAuth,
-    requestId,
-    requestLogger,
-    securityHeaders,
+	configureTrustProxy,
+	errorHandler,
+	healthRateLimit,
+	loadEnv,
+	log,
+	notFoundHandler,
+	optionalAuth,
+	requestId,
+	requestLogger,
+	securityHeaders,
 } from './middleware';
 // Re-use the single shared DB pool (shared.ts creates it once from
 // DATABASE_URL). Creating a second PgDb here would double the max
@@ -31,7 +36,6 @@ import {
 import { PgDb } from './db/pg-wrapper.ts';
 import { db } from './lib/shared.ts';
 import { addressesRouter } from './routes/addresses.ts';
-import { adminReadRouter } from './routes/admin-read.ts';
 import { adminRouter } from './routes/admin.ts';
 import { auth2faRouter } from './routes/auth-2fa.ts';
 import { authRouter } from './routes/auth.ts';
@@ -123,41 +127,41 @@ app.use(
 // to the standard urlencoded parser. JSON requests skip this
 // entirely and use the json() parser above (which also captures
 // the raw body via `verify`).
-	app.use((req, _res, next) => {
-		const contentType = String(req.headers['content-type'] ?? '');
-		if (!contentType.startsWith('application/x-www-form-urlencoded')) {
-			return next();
-		}
-		// SECURITY: enforce a 1MB size limit to prevent memory exhaustion
-		// DoS attacks via oversized urlencoded bodies.
-		const contentLength = Number(req.headers['content-length'] || 0);
-		if (contentLength > 1_048_576) {
+app.use((req, _res, next) => {
+	const contentType = String(req.headers['content-type'] ?? '');
+	if (!contentType.startsWith('application/x-www-form-urlencoded')) {
+		return next();
+	}
+	// SECURITY: enforce a 1MB size limit to prevent memory exhaustion
+	// DoS attacks via oversized urlencoded bodies.
+	const contentLength = Number(req.headers['content-length'] || 0);
+	if (contentLength > 1_048_576) {
+		req.destroy();
+		_res.writeHead(413);
+		_res.end('Payload Too Large');
+		return;
+	}
+	let buf = '';
+	req.setEncoding('utf8');
+	req.on('data', (chunk) => {
+		buf += chunk;
+		if (buf.length > 1_048_576) {
 			req.destroy();
 			_res.writeHead(413);
 			_res.end('Payload Too Large');
-			return;
 		}
-		let buf = '';
-		req.setEncoding('utf8');
-		req.on('data', (chunk) => {
-			buf += chunk;
-			if (buf.length > 1_048_576) {
-				req.destroy();
-				_res.writeHead(413);
-				_res.end('Payload Too Large');
-			}
-		});
-		req.on('end', () => {
-			(req as Request & { rawBody?: string }).rawBody = buf;
-			try {
-				req.body = Object.fromEntries(new URLSearchParams(buf));
-			} catch {
-				req.body = {};
-			}
-			next();
-		});
-		req.on('error', next);
 	});
+	req.on('end', () => {
+		(req as Request & { rawBody?: string }).rawBody = buf;
+		try {
+			req.body = Object.fromEntries(new URLSearchParams(buf));
+		} catch {
+			req.body = {};
+		}
+		next();
+	});
+	req.on('error', next);
+});
 app.use(optionalAuth);
 app.use(requestLogger);
 
@@ -200,12 +204,10 @@ app.get('/api/ready', healthLimiter, async (_req: Request, res: Response) => {
 setInterval(async () => {
 	try {
 		const r = (await db.prepare('SELECT cleanup_rate_limits() AS n').get()) as
-			| { n: number }
-			| undefined;
+			{ n: number } | undefined;
 		if (r && r.n > 0) log.debug({ msg: 'rate_limit_cleanup', deleted: r.n });
 		const j = (await db.prepare('SELECT cleanup_used_jtis() AS n').get()) as
-			| { n: number }
-			| undefined;
+			{ n: number } | undefined;
 		if (j && j.n > 0) log.debug({ msg: 'used_jtis_cleanup', deleted: j.n });
 	} catch (err) {
 		// Log so operators can see if the DB is sick or migrations
@@ -258,8 +260,6 @@ app.use('/api/stats', cacheControl(30, statsRouter)); // stats = 30s edge cache
 app.use('/api/shipping', cacheControl(300, shippingRouter)); // shipping = 5min
 app.use('/api/store-followers', storeFollowersRouter);
 app.use('/api/addresses', addressesRouter);
-
-app.use('/api/admin', adminReadRouter);
 
 // ═══════════════════════════════════════════════════════════
 // STATIC FILES (Production SPA fallback)

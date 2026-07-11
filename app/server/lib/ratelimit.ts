@@ -1,5 +1,5 @@
 /**
- * DB-backed rate limiter, extracted from `shared.cts` as part of
+ * DB-backed rate limiter, extracted from `shared.ts` as part of
  * the P0-1 god object refactor (Phase 4, 2026-07-04).
  *
  * The limiter is implemented as an Express middleware factory. It
@@ -17,20 +17,13 @@
  *     privilege app role we get atomic, transactional counting.
  *
  * Note on circular imports: this file imports `db` from
- * `./shared.cts`, but `shared.cts` only imports the `rateLimit`
+ * `./shared.ts`, but `shared.ts` only imports the `rateLimit`
  * and `authLimiter` NAMES from here (re-exports). The order is
- * safe because:
- *   1. Node CJS evaluates `shared.cts` top-down; the
- *      `export { ... } from './ratelimit.js'` triggers loading
- *      of `ratelimit.ts` *before* the `db` const is declared.
- *   2. However, by the time any route handler runs, the entire
- *      module graph has finished loading. `db` is then available
- *      to `rateLimit` via late binding (the `db` reference is
- *      dereferenced inside the returned async function, not at
- *      import time).
- *
- * If that ever stops being true, switch the import to a `require`
- * inside the function body.
+ * safe because by the time any route handler runs, the entire
+ * module graph has finished loading. `db` is then available
+ * to `rateLimit` via late binding (the `db` reference is
+ * dereferenced inside the returned async function, not at
+ * import time).
  */
 import { type NextFunction, type Request, type Response } from 'express';
 import { db } from './shared.ts';

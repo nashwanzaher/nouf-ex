@@ -90,9 +90,10 @@ catalogRouter.get('/products', async (req: Request, res: Response) => {
 			params.push(Number(maxPrice));
 		}
 		if (search) {
-			const term = `%${search}%`;
+			const escaped = search.replace(/[%_]/g, '\\$&');
+			const term = `%${escaped}%`;
 			where.push(
-				'(name_en LIKE ? OR name_ar LIKE ? OR name_zh LIKE ? OR description_en LIKE ?)',
+				'(name_en LIKE ? ESCAPE \'\\\' OR name_ar LIKE ? ESCAPE \'\\\' OR name_zh LIKE ? ESCAPE \'\\\' OR description_en LIKE ? ESCAPE \'\\\')',
 			);
 			params.push(term, term, term, term);
 		}
@@ -245,11 +246,26 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 
 /**
  * GET /api/stores
- * All stores, highest-rated first.
+ * All stores, highest-rated first. A cap of 100 rows protects the
+ * endpoint from unbounded result sets while keeping the existing
+ * array response shape for backwards compatibility.
  */
-catalogRouter.get('/stores', async (_req: Request, res: Response) => {
+catalogRouter.get('/stores', async (req: Request, res: Response) => {
 	try {
-		const stores = await db.prepare('SELECT * FROM stores ORDER BY rating DESC').all();
+		const rawLimit = Number(req.query.limit);
+		const limit = Math.max(1, Math.min(100, Number.isFinite(rawLimit) ? rawLimit : 100));
+		const offset = Math.max(0, Number(req.query.offset) || 0);
+
+		const stores = (await db
+			.prepare(
+				`SELECT id, store_name, store_name_en, store_name_zh, slug, logo, banner,
+				        trust_level, rating, review_count, products_count, is_active, is_verified
+				   FROM stores
+				 ORDER BY rating DESC
+				 LIMIT $1 OFFSET $2`,
+			)
+			.all(limit, offset)) as Record<string, unknown>[];
+
 		return sendSuccess(res, stores);
 	} catch (err) {
 		return sendError(res, err);
@@ -258,22 +274,48 @@ catalogRouter.get('/stores', async (_req: Request, res: Response) => {
 
 /**
  * GET /api/stores/:id
- * Store detail with its active products.
+ * Store detail with its active products. Product list is capped at 100
+ * rows to avoid unbounded responses; the shape remains unchanged for
+ * backwards compatibility.
  */
 catalogRouter.get('/stores/:id', async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		const store = (await db.prepare('SELECT * FROM stores WHERE id = ?').get(Number(id))) as
-			| Record<string, unknown>
-			| undefined;
+		const storeId = Number(id);
+		if (!Number.isInteger(storeId) || storeId <= 0) {
+			return sendError(res, 'Invalid store id', 400);
+		}
+
+		const store = (await db
+			.prepare(
+				`SELECT id, owner_id, store_name, store_name_en, store_name_zh, slug,
+				        description, description_en, description_zh, logo, banner,
+				        location, governorate, trust_level, response_rate, on_time_delivery,
+				        commission_rate, rating, review_count, products_count, sales_count,
+				        followers_count, since_year, is_active, is_verified, created_at, updated_at
+				   FROM stores
+				  WHERE id = $1`,
+			)
+			.get(storeId)) as Record<string, unknown> | undefined;
 
 		if (!store) {
 			return sendError(res, 'Store not found', 404);
 		}
 
 		const products = (await db
-			.prepare('SELECT * FROM products WHERE store_id = ? AND is_active = 1')
-			.all(Number(id))) as Record<string, unknown>[];
+			.prepare(
+				`SELECT id, store_id, category_id, name_ar, name_en, name_zh, description,
+				        description_en, description_zh, price, original_price, currency,
+				        stock, moq, weight, tax_rate, is_digital, main_image, features,
+				        specifications, badges, rating, review_count, sold_count, view_count,
+				        is_active, is_featured, deal_discount, deal_ends_at, deleted_at,
+				        created_at, updated_at
+				   FROM products
+				  WHERE store_id = $1 AND is_active = 1
+				 ORDER BY created_at DESC
+				 LIMIT 100`,
+			)
+			.all(storeId)) as Record<string, unknown>[];
 
 		return sendSuccess(res, {
 			...store,
@@ -389,7 +431,12 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 	try {
 		const q = String(req.query.q ?? '').trim();
 		if (!q) {
-			return sendError(res, 'Missing required query parameter: q', 400, middleware.ErrorCodes.VALIDATION_ERROR);
+			return sendError(
+				res,
+				'Missing required query parameter: q',
+				400,
+				middleware.ErrorCodes.VALIDATION_ERROR,
+			);
 		}
 		// The query logic — FTS ranking, filters, pagination, store
 		// join — lives in lib/search.cts so it can be unit-tested
@@ -402,11 +449,7 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 			maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
 			sort:
 				(req.query.sort as
-					| 'relevance'
-					| 'price_asc'
-					| 'price_desc'
-					| 'newest'
-					| undefined) ?? 'relevance',
+					'relevance' | 'price_asc' | 'price_desc' | 'newest' | undefined) ?? 'relevance',
 			limit: req.query.limit !== undefined ? Number(req.query.limit) : undefined,
 			offset: req.query.offset !== undefined ? Number(req.query.offset) : undefined,
 		});
@@ -447,8 +490,7 @@ catalogRouter.get('/categories/:slug', async (req: Request, res: Response) => {
 	try {
 		const { slug } = req.params;
 		const category = (await db.prepare('SELECT * FROM categories WHERE slug = ?').get(slug)) as
-			| Record<string, unknown>
-			| undefined;
+			Record<string, unknown> | undefined;
 
 		if (!category) {
 			return sendError(res, 'Category not found', 404);

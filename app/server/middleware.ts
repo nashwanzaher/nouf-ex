@@ -14,7 +14,7 @@ import type { ErrorRequestHandler, RequestHandler, Response } from 'express';
 import { PgDb } from './db/pg-wrapper.ts';
 // SECURITY (C-3): import the shared `db` instance so we can look
 // up the user's current token_version on every authenticated
-// request. This couples middleware to lib/shared.cts; that
+// request. This couples middleware to lib/shared.ts; that
 // dependency is already present indirectly through log, sendError
 // etc., so we keep it as a single line.
 import { db as pgDb } from './lib/shared.ts';
@@ -387,7 +387,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 export const notFoundHandler: RequestHandler = (req, res) => {
 	res.status(404).json({
 		success: false,
-		error: `Not found: ${req.method} ${req.path}`,
+		error: 'Not found',
 		request_id: req.id,
 	});
 };
@@ -451,8 +451,11 @@ export function verifyAuthToken(token: string): TokenPayload | null {
 	const [body, sig] = token.split('.', 2);
 	if (!body || !sig) return null;
 	const expected = base64url(createHmac('sha256', getAuthSecret()).update(body).digest());
-	// timingSafeEqual requires same length.
-	if (expected.length !== sig.length) return null;
+	// Always run timingSafeEqual to prevent timing oracle on length.
+	if (expected.length !== sig.length) {
+		timingSafeEqual(Buffer.from(expected), Buffer.from(expected));
+		return null;
+	}
 	let ok = false;
 	try {
 		ok = timingSafeEqual(Buffer.from(expected), Buffer.from(sig));

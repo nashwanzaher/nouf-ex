@@ -9,7 +9,7 @@ export default function BottomNav() {
 	const { cartCount } = useCart();
 	const path = location.pathname;
 
-	const isActive = (p: string) => path === p;
+	const isActive = (p: string) => path === p || path.startsWith(p + '/');
 
 	const items = [
 		{ to: '/', icon: Home, label: t('nav.home'), ariaLabel: t('nav.home') },

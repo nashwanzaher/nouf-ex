@@ -12,60 +12,75 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
-    Address,
-    CartItem,
-    Category,
-    CategoryWithProducts,
-    CouponValidation,
-    CreateOrderBody,
-    HomeStats,
-    Notification,
-    Order,
-    OrderWithItems,
-    Product,
-    ProductFilters,
-    ProductWithDetails,
-    Review,
-    ReviewFilters,
-    ShippingMethod,
-    Store,
-    StoreWithProducts,
-    User,
-    WishlistItem,
+	Address,
+	CartItem,
+	Category,
+	CategoryWithProducts,
+	CouponValidation,
+	CreateOrderBody,
+	HomeStats,
+	Notification,
+	Order,
+	OrderWithItems,
+	Product,
+	ProductFilters,
+	ProductWithDetails,
+	Review,
+	ReviewFilters,
+	ShippingMethod,
+	Store,
+	StoreWithProducts,
+	User,
+	WishlistItem,
 } from '../lib/api';
 import {
-    ApiError,
-    createOrder,
-    getAddresses,
-    getAdminAuditLog,
-    getAdminDisputes,
-    getAdminGovernorate,
-    getAdminOrders,
-    getAdminProducts,
-    getAdminStats,
-    getAdminStores,
-    getAdminTimeSeries,
-    getAdminUsers,
-    getCategories,
-    getHomeStats,
-    getNotifications,
-    getOrders,
-    getProduct,
-    getProducts,
-    getReviews,
-    getShippingMethods,
-    getStore,
-    getStores,
-    getSystemHealth,
-    getWishlist,
-    validateCoupon,
+	ApiError,
+	createOrder,
+	getAddresses,
+	getAdminAuditLog,
+	getAdminDisputes,
+	getAdminGovernorate,
+	getAdminOrders,
+	getAdminProducts,
+	getAdminStats,
+	getAdminStores,
+	getAdminTimeSeries,
+	getAdminUsers,
+	getCategories,
+	getHomeStats,
+	getNotifications,
+	getOrders,
+	getProduct,
+	getProducts,
+	getReviews,
+	getShippingMethods,
+	getStore,
+	getStores,
+	getSystemHealth,
+	getWishlist,
+	validateCoupon,
 } from '../lib/api';
 
 export type {
-    Address, CartItem, Category,
-    CategoryWithProducts, CouponValidation, HomeStats, Notification, Order,
-    OrderWithItems, Product, ProductFilters, ProductWithDetails, Review, ReviewFilters, ShippingMethod, Store,
-    StoreWithProducts, User, WishlistItem
+	Address,
+	CartItem,
+	Category,
+	CategoryWithProducts,
+	CouponValidation,
+	HomeStats,
+	Notification,
+	Order,
+	OrderWithItems,
+	Product,
+	ProductFilters,
+	ProductWithDetails,
+	Review,
+	ReviewFilters,
+	ShippingMethod,
+	Store,
+	StoreWithProducts,
+	User,
+	WishlistItem,
 };
 
 // ─── Generic Hook Result Type ───────────────────────────────
@@ -372,10 +387,7 @@ export function useStores(): HookResult<Store[]> {
 }
 
 export function useStore(id: number | null): HookResult<StoreWithProducts | null> {
-	return useDataHook(
-		async (signal) => (id ? await getStore(id, { signal }) : null),
-		[id],
-	);
+	return useDataHook(async (signal) => (id ? await getStore(id, { signal }) : null), [id]);
 }
 
 export function useStoreReviews(storeId: number | null): HookResult<Review[]> {
@@ -468,63 +480,91 @@ export function useNotifications(): HookResult<Notification[]> {
 // ─── Seller (C.4) ──────────────────────────────────────────
 
 import type {
-    SellerAnalytics,
-    SellerBalance,
-    SellerDashboard,
-    SellerInventoryItem,
-    SellerOrder,
-    SellerOrderWithItems,
-    SellerPayout,
-    SellerProductCreate,
-    SellerStore,
-    SellerStoreUpdate,
+	SellerAnalytics,
+	SellerBalance,
+	SellerDashboard,
+	SellerInventoryItem,
+	SellerOrder,
+	SellerOrderWithItems,
+	SellerPayout,
+	SellerProductCreate,
+	SellerStore,
+	SellerStoreUpdate,
 } from '../lib/api';
 import {
-    addSellerProductImage,
-    createSellerProduct,
-    deleteSellerProduct,
-    getSellerAnalytics,
-    getSellerDashboard,
-    getSellerInventory,
-    getSellerOrder,
-    getSellerOrders,
-    getSellerPayouts,
-    getSellerProduct,
-    getSellerProducts,
-    getSellerStoreMe,
-    updateSellerOrderStatus,
-    updateSellerProduct,
-    updateSellerStore,
+	addSellerProductImage,
+	createSellerProduct,
+	deleteSellerProduct,
+	getSellerAnalytics,
+	getSellerDashboard,
+	getSellerInventory,
+	getSellerOrder,
+	getSellerOrders,
+	getSellerPayouts,
+	getSellerProduct,
+	getSellerProducts,
+	getSellerStoreMe,
+	updateSellerOrderStatus,
+	updateSellerProduct,
+	updateSellerStore,
 } from '../lib/api';
 
+// Module-level registry so `useSellerMutations().refreshAll()` can
+// trigger every mounted seller read hook to re-fetch. Hooks register
+// their `refetch` callback on mount and unregister on unmount.
+const sellerRefetchRegistry = new Set<() => void>();
+
+function useRegisterSellerRefetch(refetch: () => void) {
+	useEffect(() => {
+		sellerRefetchRegistry.add(refetch);
+		return () => {
+			sellerRefetchRegistry.delete(refetch);
+		};
+	}, [refetch]);
+}
+
 export function useSellerStore(): HookResult<SellerStore | null> {
-	return useDataHook(getSellerStoreMe);
+	const result = useDataHook(getSellerStoreMe);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerProducts(): HookResult<{ items: Product[] }> {
-	return useDataHook(getSellerProducts);
+	const result = useDataHook(getSellerProducts);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerProduct(id: number | null): HookResult<ProductWithDetails | null> {
-	return useDataHook(() => getSellerProduct(id ?? 0), [id]);
+	const result = useDataHook(() => getSellerProduct(id ?? 0), [id]);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerOrders(status?: string): HookResult<{ items: SellerOrder[] }> {
-	return useDataHook(() => getSellerOrders(status), [status]);
+	const result = useDataHook(() => getSellerOrders(status), [status]);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerOrder(id: number | null): HookResult<SellerOrderWithItems | null> {
-	return useDataHook(() => getSellerOrder(id ?? 0), [id]);
+	const result = useDataHook(() => getSellerOrder(id ?? 0), [id]);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerAnalytics(): HookResult<SellerAnalytics | null> {
-	return useDataHook(getSellerAnalytics);
+	const result = useDataHook(getSellerAnalytics);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerInventory(): HookResult<{
 	items: SellerInventoryItem[];
 } | null> {
-	return useDataHook(getSellerInventory);
+	const result = useDataHook(getSellerInventory);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerPayouts(
@@ -536,11 +576,15 @@ export function useSellerPayouts(
 	limit: number;
 	offset: number;
 } | null> {
-	return useDataHook(() => getSellerPayouts(limit, offset), [limit, offset]);
+	const result = useDataHook(() => getSellerPayouts(limit, offset), [limit, offset]);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 export function useSellerDashboard(): HookResult<SellerDashboard | null> {
-	return useDataHook(getSellerDashboard);
+	const result = useDataHook(getSellerDashboard);
+	useRegisterSellerRefetch(result.refetch);
+	return result;
 }
 
 // Mutation helpers — callers invoke these and then call refreshAll()
@@ -562,8 +606,9 @@ export interface SellerMutations {
 }
 
 export function useSellerMutations(): SellerMutations {
-	const [tick, setTick] = useState(0);
-	const refreshAll = useCallback(() => setTick((n) => n + 1), []);
+	const refreshAll = useCallback(() => {
+		sellerRefetchRegistry.forEach((refetch) => refetch());
+	}, []);
 	const createProduct = useCallback((body: SellerProductCreate) => createSellerProduct(body), []);
 	const updateProduct = useCallback(
 		(id: number, body: Partial<SellerProductCreate>) => updateSellerProduct(id, body),
@@ -586,8 +631,6 @@ export function useSellerMutations(): SellerMutations {
 			updateSellerOrderStatus(id, body),
 		[],
 	);
-	// tick is intentionally read by the read hooks via dep arrays.
-	void tick;
 	return {
 		createProduct,
 		updateProduct,

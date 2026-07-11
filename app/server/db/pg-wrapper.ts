@@ -17,9 +17,9 @@
  *   - JSON columns: pg returns already-parsed JS values for JSONB.
  *   - Booleans: pg returns real booleans (no 0/1 normalization needed).
  *
- * Module type: this file is `.cts` (CommonJS TypeScript) so the dev
+ * Module type: this file is `.ts` (ESM TypeScript) so the dev
  * runtime (`tsx`) can find it when `server/index.ts` imports the
- * wrapper. esbuild compiles it to CJS for the production bundle.
+ * wrapper. esbuild compiles it to ESM for the production bundle.
  */
 import { Pool } from 'pg';
 

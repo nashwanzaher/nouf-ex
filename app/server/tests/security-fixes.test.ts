@@ -54,8 +54,8 @@ describe('catalog.cts awaits getProductImages (no Promise leak)', () => {
 });
 
 describe('admin.cts /stats uses one CTE-based query (was 14 round-trips)', () => {
-	// /stats lives in admin-read.cts (the read-side router) in this project.
-	const src = SRC('routes/admin-read.ts');
+	// /stats lives in admin.ts (the single admin router) in this project.
+	const src = SRC('routes/admin.ts');
 	it('GET /stats is a single SELECT with 14 scalar subqueries (CTE pattern)', () => {
 		// The CTE pattern is unmistakable: one SELECT that produces all
 		// metrics as scalar subqueries in a single statement. The old
@@ -64,18 +64,13 @@ describe('admin.cts /stats uses one CTE-based query (was 14 round-trips)', () =>
 		// across Node versions.
 		//
 		// Capture ONLY the /stats handler body — stop at the next
-		// `adminReadRouter.get(` so subsequent routes (/stats/timeseries,
-		// /stats/by-governorate) don't bleed into the assertion. (The
-		// previous `[\s\S]*$` capture-to-EOF was correct when /stats
-		// was the last route but broke when later routes were added.)
+		// `adminRouter.get(` so subsequent routes don't bleed into the
+		// assertion.
 		const _routerSrc = src; // captured for diagnostics
 		const statsBlock = src.match(
-			/adminReadRouter\.get\(['"]\/stats['"][\s\S]*?(?=adminReadRouter\.get\(['"]\/|$)/,
+			/adminRouter\.get\(['"]\/stats['"][\s\S]*?(?=adminRouter\.get\(['"]\/|$)/,
 		);
-		expect(
-			statsBlock,
-			'adminReadRouter /stats block should exist in admin-read.cts',
-		).not.toBeNull();
+		expect(statsBlock, 'adminRouter /stats block should exist in admin.ts').not.toBeNull();
 		const block = statsBlock![0];
 		// Must contain all 14 metrics as scalar subqueries.
 		for (const metric of [

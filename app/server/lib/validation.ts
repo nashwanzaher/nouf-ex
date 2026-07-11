@@ -428,7 +428,7 @@ export const couponRedeemSchema = z.object({
 /** Pick the columns we read from the coupons table. Centralised so
  *  the validate and orders paths stay in sync if we add columns. */
 export const COUPON_COLUMNS =
-	'id, code, type, value, min_order_amount AS min_order, max_discount, usage_limit, usage_count, starts_at, expires_at';
+	'id, code, type, value, min_order_amount AS min_order, max_discount, usage_limit, usage_count, per_user_limit, starts_at, expires_at';
 
 /** Shape returned by the coupon lookup in both /validate and the
  *  in-transaction /orders flow. */
@@ -441,6 +441,7 @@ export type CouponRow = {
 	max_discount: number | null;
 	usage_limit: number | null;
 	usage_count: number;
+	per_user_limit: number;
 	starts_at: string | null;
 	expires_at: string | null;
 };

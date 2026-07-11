@@ -606,9 +606,10 @@ The `postgres` superuser is used **only** for the one-time `npm run db:setup` (c
 
 ### 3.3.1 Authentication
 
-- **HttpOnly-cookie session** — server sets `noufex_token=<JWT>` with `Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800`. Logout sends `Set-Cookie` with `Max-Age=0`.
-- Token payload `{sub, role, exp, token_version}`; HMAC-SHA256 signed with `AUTH_SECRET` (≥ 32 chars); verified with `crypto.timingSafeEqual`.
-- **Password hashing** — scrypt with random 16-byte salt + 64-byte key.
+- **HttpOnly-cookie session** — server sets `noufex_token=<JWT>` with `Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800` (7 days). Logout sends `Set-Cookie` with `Max-Age=0`.
+- Token payload `{sub, role, ver, exp}` — `sub` = user id, `role` = `customer|merchant|admin`, `ver` = current `users.token_version` (NOT `token_version`; abbreviated in the JWT to `ver` for compactness), `exp` = unix-seconds expiry. HMAC-SHA256 signed with `AUTH_SECRET` (≥ 32 chars); verified with `crypto.timingSafeEqual`.
+- **Token revocation** — the JWT's `role` and `ver` are checked against the live `users` row on every request (cached for 30 s per `user_id`). Bumping `users.token_version` (on logout / change-password / 2FA enable / admin force) invalidates every existing session.
+- **Password hashing** — scrypt with Node defaults (`N=16384, r=8, p=1`), random 16-byte salt, 64-byte derived key. Documented as below-current-OWASP-recommendation in the audit (G-2).
 - **2FA (optional)** — TOTP (RFC 6238, 30s window, ±1 step). Setup: `POST /api/auth/2fa/setup`. 10 scrypt-hashed single-use backup codes.
 
 ### 3.3.2 Authorization (RBAC matrix)
@@ -761,7 +762,7 @@ A single Node/Express API talks to one external PostgreSQL database, and a React
 | Database | PostgreSQL 17 | Identity columns, `TIMESTAMPTZ`, `NUMERIC(12,2)`, `JSONB`, BRIN, GIN, partial indexes, RLS |
 | API | Node 20 + Express 5 + `pg` | Mature, async-native, type-safe with TypeScript |
 | Validation | Zod 4 | Type inference, `.strict()`, ergonomic error formatting |
-| Hashing | scrypt + crypto.timingSafeEqual | OWASP-approved, no third-party dep |
+| Hashing | scrypt (Node defaults `N=16384, r=8, p=1`) + crypto.timingSafeEqual | Built-in, no third-party dep; G-2 below current OWASP recommendation |
 | Auth tokens | HMAC-SHA256 (custom) | One dep less; verified with `timingSafeEqual` |
 | 2FA | RFC 6238 TOTP (custom) | No third-party dep, constant-time compare, ±1 step |
 | Frontend | React 19 + Vite 7 + React Router 7 | Code-split routes, fast HMR |
@@ -871,11 +872,11 @@ We use a simplified **STRIDE** model.
 | Characteristic | Rating | Notes |
 |---|---|---|
 | Functional suitability | A | All advertised features present + tested |
-| Performance efficiency | B | Bundle 117 kB gzip; hot paths OK at current scale |
+| Performance efficiency | B | Main SPA chunk ~117 kB gzip (verified from `app/dist/assets/index-*.js`); recharts code-split into its own chunk (~422 kB) only loaded by admin/reports routes |
 | Compatibility | A | PG 17 standard SQL only |
 | Usability (dev/operator) | B | Excellent DX; some migration-journal drift in git history |
 | Reliability | B | 32 DB triggers enforce invariants (incl. order state machine, atomic coupon redemption, transactions balance); one racy trigger tracked in §5.2 (G-15) |
-| Security | B+ | HttpOnly cookies, CSP nonced, audit redaction |
+| Security | B+ | HttpOnly cookies, CSP nonced, audit redaction; scrypt params below current OWASP recommendation (G-2) |
 | Maintainability | B- | Strict TS, lint clean, ADR trail |
 | Portability | A | Linux + Postgres 17, no platform-specific code |
 

@@ -184,20 +184,20 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 										<span className="text-sm font-cairo font-medium flex-1">
 											{t(item.labelKey)}
 										</span>
-										{item.badge && (
-											<span
-												className={cn(
-													'px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
-													item.badgeColor === 'red'
-														? 'bg-[#EF4444] text-white'
-														: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]',
-												)}
-											>
-												{item.badgeKey
-													? t(item.badgeKey, item.badgeParams ?? {})
-													: item.badge}
-											</span>
-										)}
+									{(item.badgeKey || item.badge) && (
+										<span
+											className={cn(
+												'px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
+												item.badgeColor === 'red'
+													? 'bg-[#EF4444] text-white'
+													: 'bg-[rgba(212,168,83,0.2)] text-[#D4A853]',
+											)}
+										>
+											{item.badgeKey
+												? t(item.badgeKey, item.badgeParams ?? {})
+												: item.badge}
+										</span>
+									)}
 									</>
 								)}
 							</Link>

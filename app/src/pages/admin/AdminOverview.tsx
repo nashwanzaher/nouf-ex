@@ -271,7 +271,7 @@ export default function AdminOverview() {
 											strokeWidth={1.5}
 										/>
 									</div>
-									{delta !== null && (
+									{stat.delta != null && (
 										<div
 											className={`flex items-center gap-1 text-xs font-cairo font-semibold ${
 												deltaUp ? 'text-emerald-500' : 'text-red-500'

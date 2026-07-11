@@ -120,7 +120,7 @@ const peakHours = [
 	{ name: '١٢-٣ م', orders: 35 },
 	{ name: '٣-٦ م', orders: 42 },
 	{ name: '٦-٩ م', orders: 38 },
-	{ name: '٩-١٢ ص', orders: 18 },
+	{ name: '٩-١٢ م', orders: 18 },
 ];
 
 const geographicData = [

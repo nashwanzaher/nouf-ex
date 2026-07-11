@@ -86,8 +86,7 @@ storeFollowersRouter.post('/', requireAuth, async (req: Request, res: Response) 
 				.prepare(
 					`UPDATE store_followers
 					    SET notify_new_products = $1,
-					        notify_offers = $2,
-					        created_at = NOW()
+					        notify_offers = $2
 					  WHERE id = $3`,
 				)
 				.run(notify_new_products, notify_offers, existing.id);

@@ -476,7 +476,7 @@ adminRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => 
 					(SELECT COUNT(*)::int FROM users
 						WHERE created_at > NOW() - INTERVAL '7 days')                      AS recent_users,
 					(SELECT COALESCE(SUM(total), 0)::numeric
-						FROM orders WHERE payment_status = 'paid')                        AS revenue_yer`,
+						FROM orders WHERE payment_status = 'paid')                        AS revenue_year`,
 			)
 			.get()) as {
 			users: number;
@@ -492,7 +492,7 @@ adminRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => 
 			inactive_stores: number;
 			recent_orders: number;
 			recent_users: number;
-			revenue_yer: string;
+			revenue_year: string;
 		};
 
 		return sendSuccess(res, {
@@ -515,7 +515,7 @@ adminRouter.get('/stats', ...adminAuth, async (_req: Request, res: Response) => 
 				orders: row.recent_orders,
 				users: row.recent_users,
 			},
-			revenueYer: Number(row.revenue_yer),
+			revenueYear: Number(row.revenue_year),
 		});
 	} catch (err) {
 		return sendError(res, err);

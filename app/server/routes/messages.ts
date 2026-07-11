@@ -4,6 +4,14 @@ import { db, log, sendSuccess, sendError, requireAuth } from '../lib/shared.ts';
 
 export const messagesRouter = Router();
 
+function parseAttachments(raw: unknown): unknown[] {
+	try {
+		return typeof raw === 'string' ? JSON.parse(raw) : (raw as unknown[]) ?? [];
+	} catch {
+		return [];
+	}
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // Zod schemas
 // ──────────────────────────────────────────────────────────────────────────
@@ -157,13 +165,7 @@ messagesRouter.get('/inbox', requireAuth, async (req: Request, res: Response) =>
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments: (() => {
-				try {
-					return typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments;
-				} catch {
-					return [];
-				}
-			})(),
+			attachments: parseAttachments(r.attachments),
 		}));
 
 		// Compute unread count for the badge.
@@ -223,13 +225,7 @@ messagesRouter.get('/sent', requireAuth, async (req: Request, res: Response) => 
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments: (() => {
-				try {
-					return typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments;
-				} catch {
-					return [];
-				}
-			})(),
+			attachments: parseAttachments(r.attachments),
 		}));
 
 		sendSuccess(res, {
@@ -292,13 +288,7 @@ messagesRouter.get('/conversation', requireAuth, async (req: Request, res: Respo
 		const hasMore = rows.length > limit;
 		const items = (hasMore ? rows.slice(0, limit) : rows).map((r) => ({
 			...r,
-			attachments: (() => {
-				try {
-					return typeof r.attachments === 'string' ? JSON.parse(r.attachments) : r.attachments;
-				} catch {
-					return [];
-				}
-			})(),
+			attachments: parseAttachments(r.attachments),
 		}));
 
 		// Best-effort: mark all messages from peer to me as read in this thread.

@@ -68,7 +68,7 @@ export async function getSetting(key: string): Promise<string> {
     }
     try {
         const row = (await db
-            .prepare('SELECT value FROM app_settings WHERE key = ?')
+            .prepare('SELECT value FROM app_settings WHERE key = $1')
             .get(key)) as { value: string } | undefined;
         const value = row?.value ?? FALLBACK[key] ?? '';
         cache.set(key, { value, loadedAt: now });

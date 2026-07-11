@@ -431,12 +431,12 @@ function OrderDetailDrawer({
 										<span
 											className={cn(
 												'font-cairo font-semibold',
-												order.paymentStatus === 'مدفوع'
+												order.paymentStatus === 'paid'
 													? 'text-[#10B981]'
 													: 'text-[#EF4444]',
 											)}
 										>
-											{order.paymentStatus}
+											{order.paymentStatus === 'paid' ? t('seller.paid', 'مدفوع') : t('seller.unpaid', 'غير مدفوع')}
 										</span>
 									</div>
 									<div className="border-t border-[#F3EDE4] pt-2 flex justify-between text-sm font-bold mt-2">
@@ -457,16 +457,16 @@ function OrderDetailDrawer({
 									{t('seller.timeline', 'Order Timeline')}
 								</h3>
 								<div className="space-y-0">
-									{order.timeline.map((t, i) => (
+									{order.timeline.map((step, i) => (
 										<div key={i} className="flex gap-3">
 											<div className="flex flex-col items-center">
 												<div
 													className={cn(
 														'w-6 h-6 rounded-full flex items-center justify-center',
-														t.done ? 'bg-[#10B981]' : 'bg-[#F3EDE4]',
+														step.done ? 'bg-[#10B981]' : 'bg-[#F3EDE4]',
 													)}
 												>
-													{t.done ? (
+													{step.done ? (
 														<CheckCircle2
 															className="w-3.5 h-3.5 text-white"
 															strokeWidth={1.5}
@@ -486,15 +486,15 @@ function OrderDetailDrawer({
 												<p
 													className={cn(
 														'text-xs font-cairo font-semibold',
-														t.done
+														step.done
 															? 'text-[#111111]'
 															: 'text-[#AAAAAA]',
 													)}
 												>
-													{t.status}
+													{step.status}
 												</p>
 												<p className="text-[10px] text-[#6B6B6B] font-cairo">
-													{t.time}
+													{step.time}
 												</p>
 											</div>
 										</div>
@@ -865,12 +865,12 @@ export default function SellerOrders() {
 										<span
 											className={cn(
 												'px-2 py-0.5 rounded-lg text-[10px] font-bold font-cairo',
-												order.paymentStatus === 'مدفوع'
+												order.paymentStatus === 'paid'
 													? 'text-[#10B981] bg-[rgba(16,185,129,0.1)]'
 													: 'text-[#EF4444] bg-[rgba(239,68,68,0.1)]',
 											)}
 										>
-											{order.paymentStatus}
+											{order.paymentStatus === 'paid' ? t('seller.paid', 'مدفوع') : t('seller.unpaid', 'غير مدفوع')}
 										</span>
 									</td>
 									<td className="px-4 py-3">

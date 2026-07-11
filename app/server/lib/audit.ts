@@ -111,7 +111,7 @@ async function appendAuditDlq(entry: Record<string, unknown>): Promise<void> {
 		const fs = await import('node:fs');
 		const path = await import('node:path');
 		const logsDir = path.resolve(process.cwd(), 'logs');
-		if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+		fs.mkdirSync(logsDir, { recursive: true });
 		const file = path.join(logsDir, `audit-dlq-${todayIsoDate()}.jsonl`);
 		fs.appendFileSync(file, JSON.stringify(entry) + '\n', { encoding: 'utf8' });
 		// Lazy import for `log` to keep the dependency surface

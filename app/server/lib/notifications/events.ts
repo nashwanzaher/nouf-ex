@@ -70,8 +70,8 @@ async function dispatchOne(
 		const result = (await db
 			.prepare(
 				`INSERT INTO notifications (user_id, type, title, body, data, is_read, created_at)
-         VALUES (?, ?, ?, ?, ?::jsonb, FALSE, NOW())
-         RETURNING id`,
+				 VALUES ($1, $2, $3, $4, $5::jsonb, FALSE, NOW())
+				 RETURNING id`,
 			)
 			.get(userId, type, title, body, data ? JSON.stringify(data) : null)) as
 			| { id: number }

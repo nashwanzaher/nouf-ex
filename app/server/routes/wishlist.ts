@@ -12,7 +12,7 @@ import {
 
 export const wishlistRouter = Router();
 
-wishlistRouter.get('/:userId', requireAuth, async (req: Request, res: Response) => {
+wishlistRouter.get('/', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const userId = req.user!.id;
 		const items = await db

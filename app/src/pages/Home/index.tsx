@@ -209,28 +209,31 @@ function ProductCard({
 /* ─── main component ───────────────────────────────────── */
 
 export default function Home() {
+	/* ── hooks setup ──────────────────────────────────── */
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const { dispatch } = useCart();
+
+	/* ── state ────────────────────────────────────────── */
 	const [searchQ, setSearchQ] = useState('');
 	const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 	const [activeTab, setActiveTab] = useState<'rfq' | 'hot' | 'fast'>('hot');
+	const addedTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-	/* ── API data ─────────────────────────────────────── */
+	/* ── effects: API data ────────────────────────────── */
 	const { data: statsData, loading: statsLoading } = useHomeStats();
 	const { data: popularResp, loading: popularLoading } = useProducts({ limit: 24 });
 	const { data: dealsResp, loading: dealsLoading } = useProducts({ limit: 4 });
 	const { data: stores, loading: storesLoading } = useStores();
 	const { data: catsFlat, loading: catsLoading } = useCategories();
 
-	/* ── derived arrays ───────────────────────────────── */
+	/* ── effects: derived data ────────────────────────── */
 	const allProducts = popularResp?.products ?? [];
 	const dealProducts = (dealsResp?.products ?? []).filter(
 		(p) => p.deal_discount && Number(p.deal_discount) > 0,
 	);
 	const newProducts = (popularResp?.products ?? []).filter((p) => p.badges?.includes('new'));
 
-	/* ── category tree ────────────────────────────────── */
 	const categories = useMemo(() => {
 		if (!catsFlat) return [];
 		const parents = catsFlat.filter((c) => c.parent_id === null);
@@ -240,48 +243,11 @@ export default function Home() {
 		}));
 	}, [catsFlat]);
 
-	/* ── store lookup map ─────────────────────────────── */
 	const storeMap = useMemo(() => {
 		const map = new Map<number, Store>();
 		stores?.forEach((s) => map.set(s.id, s));
 		return map;
 	}, [stores]);
-
-	/* ── actions ──────────────────────────────────────── */
-	const handleSearch = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (searchQ.trim()) navigate(`/search?q=${encodeURIComponent(searchQ.trim())}`);
-	};
-
-	const addedTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-
-	const addToCart = useCallback((p: Product) => {
-		const store = storeMap.get(p.store_id);
-		dispatch({
-			type: 'ADD',
-			payload: {
-				productId: String(p.id),
-				name: getProductName(p, i18n.language),
-				price: p.price,
-				quantity: 1,
-				image: p.main_image,
-				merchantName: store?.store_name ?? '',
-			},
-		});
-		setAddedIds((prev) => new Set(prev).add(p.id));
-		// Clear any existing timer for this product before setting a new one
-		const existing = addedTimersRef.current.get(p.id);
-		if (existing) clearTimeout(existing);
-		const timer = setTimeout(() => {
-			setAddedIds((prev) => {
-				const n = new Set(prev);
-				n.delete(p.id);
-				return n;
-			});
-			addedTimersRef.current.delete(p.id);
-		}, 1500);
-		addedTimersRef.current.set(p.id, timer);
-	}, [dispatch, i18n.language, storeMap]);
 
 	const hotSearches = useMemo(
 		() => [
@@ -297,6 +263,44 @@ export default function Home() {
 
 	const stats = statsData;
 
+	/* ── handlers ─────────────────────────────────────── */
+	const handleSearch = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (searchQ.trim()) navigate(`/search?q=${encodeURIComponent(searchQ.trim())}`);
+	};
+
+	const addToCart = useCallback(
+		(p: Product) => {
+			const store = storeMap.get(p.store_id);
+			dispatch({
+				type: 'ADD',
+				payload: {
+					productId: String(p.id),
+					name: getProductName(p, i18n.language),
+					price: p.price,
+					quantity: 1,
+					image: p.main_image,
+					merchantName: store?.store_name ?? '',
+				},
+			});
+			setAddedIds((prev) => new Set(prev).add(p.id));
+			// Clear any existing timer for this product before setting a new one
+			const existing = addedTimersRef.current.get(p.id);
+			if (existing) clearTimeout(existing);
+			const timer = setTimeout(() => {
+				setAddedIds((prev) => {
+					const n = new Set(prev);
+					n.delete(p.id);
+					return n;
+				});
+				addedTimersRef.current.delete(p.id);
+			}, 1500);
+			addedTimersRef.current.set(p.id, timer);
+		},
+		[dispatch, i18n.language, storeMap],
+	);
+
+	/* ── JSX ──────────────────────────────────────────── */
 	return (
 		<div dir={i18n.language === 'ar' ? 'rtl' : 'ltr'} className="bg-aliSurface min-h-screen">
 			{/* ===== HERO SECTION ===== */}

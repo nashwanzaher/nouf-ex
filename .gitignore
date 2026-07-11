@@ -66,6 +66,7 @@ app/playwright/.cache/
 # ============================================================================
 admin-dashboard.png
 login-page-fixed.png
+check-e2e.cjs                            # one-off E2E debug script (do not commit)
 .t.txt .l.txt .p.txt .d.txt        # one-letter log files
 
 # Root-level tool output logs (mistakenly created by stray redirect)

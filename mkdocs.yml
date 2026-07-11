@@ -234,6 +234,8 @@ nav:
       - planning/adr/0005-tsconfig-project-references.md
       - planning/adr/0006-httponly-cookie-auth.md
       - planning/adr/0007-owasp-iso25010-nist-ssdf-baseline.md
+    - Market research:
+      - "2026-07-11 · Nouf-ex vs Amazon / Alibaba / Noon / Shopify": research/2026-07-11-Nouf-ex-vs-global-marketplaces-comparative-study.md
 
   - About:
     - Changelog: ../CHANGELOG.md

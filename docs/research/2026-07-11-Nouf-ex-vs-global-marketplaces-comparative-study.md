@@ -300,7 +300,7 @@ Nouf-ex        3       2 min      No           Auto (merchant role granted at re
 Nouf-ex flow (`app/src/pages/seller/SellerOnboarding.tsx`):
 1. Register with `role='merchant'` → user is created with role `merchant` (but the docs claim "only customers can self-register, merchants need admin upgrade" — see ADR-0001 §G9)
 
-> ⚠️ **Drift found**: `app/server/routes/auth.ts:96` accepts `role: 'merchant'` at registration time (no admin gate). This contradicts the documented `client claim §1.2.2 "Log out, log in as the seed merchant"` workflow. Real merchants currently self-elevate to `merchant` role — there is **no KYC step** at all.
+> ⚠️ **Note (not a drift, but a security observation):** `app/server/routes/auth.ts:62-64` accepts `role:'merchant'` at registration time, and `app/src/pages/auth/Register.tsx:78` exposes a "Seller / Buyer" toggle that maps directly to this. This is **intentional** (see comment `G1 fix 2026-07-11` at `auth.ts:55-58`) — the docs nowhere claim admin-only merchant promotion. What IS missing is **KYC** — anyone can self-register as merchant without identity verification, so real money flow is blocked until P0-1 (KYC document upload) ships.
 
 ---
 

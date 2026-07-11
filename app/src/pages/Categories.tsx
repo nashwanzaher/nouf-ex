@@ -69,30 +69,28 @@ function ProductGridSkeleton({ count = 8 }: { count?: number }) {
 	);
 }
 
+/* ─── Main component ─── */
+
 export default function CategoriesPage() {
+	/* ── hooks setup ──────────────────────────────────── */
 	const { t, i18n } = useTranslation();
 	const { dispatch } = useCart();
 	const lang = i18n.language;
 
-	/* ─── Active filters ─── */
+	/* ── state ────────────────────────────────────────── */
 	const [activeCatSlug, setActiveCatSlug] = useState<string | null>(null);
 	const [activeSubSlug, setActiveSubSlug] = useState<string | null>(null);
 	const [priceRange, setPriceRange] = useState<[number, number]>([0, 200000]);
 	const [sortBy, setSortBy] = useState<'price-asc' | 'price-desc' | 'sold' | 'rating'>('sold');
 	const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 
-	/* ─── Fetch categories ─── */
+	/* ── effects: API data ────────────────────────────── */
 	const { data: catData, loading: catLoading } = useCategories();
 	// Stabilise the fallback `[]` so downstream memos don't rebuild every render.
 	const allCategories = useMemo<Category[]>(() => catData ?? [], [catData]);
 
-	/* ─── Build category tree ─── */
-	const tree = useMemo(() => buildCategoryTree(allCategories), [allCategories]);
-
-	/* ─── Determine which slug to use for product filtering ─── */
 	const filterSlug = activeSubSlug ?? activeCatSlug ?? undefined;
 
-	/* ─── Sort mapping ─── */
 	const apiSort = useMemo(() => {
 		switch (sortBy) {
 			case 'price-asc':
@@ -108,20 +106,23 @@ export default function CategoriesPage() {
 		}
 	}, [sortBy]);
 
-	/* ─── Fetch products ─── */
 	const { data: prodData, loading: prodLoading } = useProducts({
 		category: filterSlug,
 		limit: 100,
 		sort: apiSort,
 	});
+
+	/* ── effects: derived data ────────────────────────── */
+	const tree = useMemo(() => buildCategoryTree(allCategories), [allCategories]);
+
 	const apiProducts = prodData?.products ?? [];
 
-	/* ─── Client-side price filter ─── */
+	// Client-side price filter
 	const filtered = apiProducts.filter(
 		(p) => p.price >= priceRange[0] && p.price <= priceRange[1],
 	);
 
-	/* ─── Client-side sort (refine API results) ─── */
+	// Client-side sort (refine API results)
 	const sorted = useMemo(() => {
 		const arr = [...filtered];
 		switch (sortBy) {
@@ -138,7 +139,28 @@ export default function CategoriesPage() {
 		}
 	}, [filtered, sortBy]);
 
-	/* ─── Helpers ─── */
+	const activeParent = allCategories.find((c) => c.slug === activeCatSlug);
+
+	// L6 fix: only top-level categories contribute to the total. The previous code summed
+	// every row, which double-counted products that already lived under a parent.
+	const totalProductCount = useMemo(
+		() =>
+			allCategories
+				.filter((c) => c.parent_id == null)
+				.reduce((sum, c) => sum + (c.product_count ?? 0), 0),
+		[allCategories],
+	);
+
+	const breadcrumb = [
+		{ label: t('nav.home', 'Home'), href: '/' },
+		{
+			label: t('categories.ui.sidebarHeading', 'Categories'),
+			href: '/categories',
+		},
+		...(activeParent ? [{ label: getCatName(activeParent, lang), href: '#' }] : []),
+	];
+
+	/* ── handlers ─────────────────────────────────────── */
 	const addToCart = (p: (typeof apiProducts)[0]) => {
 		dispatch({
 			type: 'ADD',
@@ -163,29 +185,7 @@ export default function CategoriesPage() {
 		);
 	};
 
-	const activeParent = allCategories.find((c) => c.slug === activeCatSlug);
-
-	/* ─── Count helpers ─── */
-	// L6 fix: only top-level categories contribute to the total. The previous code summed
-	// every row, which double-counted products that already lived under a parent.
-	const totalProductCount = useMemo(
-		() =>
-			allCategories
-				.filter((c) => c.parent_id == null)
-				.reduce((sum, c) => sum + (c.product_count ?? 0), 0),
-		[allCategories],
-	);
-
-	/* ─── Breadcrumb ─── */
-	const breadcrumb = [
-		{ label: t('nav.home', 'Home'), href: '/' },
-		{
-			label: t('categories.ui.sidebarHeading', 'Categories'),
-			href: '/categories',
-		},
-		...(activeParent ? [{ label: getCatName(activeParent, lang), href: '#' }] : []),
-	];
-
+	/* ── JSX ──────────────────────────────────────────── */
 	return (
 		<div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-6">
 			{/* Breadcrumb */}

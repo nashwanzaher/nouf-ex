@@ -1356,11 +1356,11 @@
 		"discount": "{{percent}}% 折扣",
 		"removeError": "删除商品失败。请重试。",
 		"moveToCartError": "将商品移至购物车失败。请重试。"
-	}
-},
+	},
 	"errors": {
 		"notFound": {
-			"title": "Page not found"
+			"title": "Page not found",
+			"desc": "The page you are looking for does not exist or has been moved."
 		}
 	}
 }

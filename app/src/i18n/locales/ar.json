@@ -1356,11 +1356,11 @@
 		"discount": "{{percent}}% خصم",
 		"removeError": "تعذّر حذف المنتج. حاول مرة أخرى.",
 		"moveToCartError": "تعذّر نقل المنتج إلى السلة. حاول مرة أخرى."
-	}
-},
+	},
 	"errors": {
 		"notFound": {
-			"title": "Page not found"
+			"title": "Page not found",
+			"desc": "The page you are looking for does not exist or has been moved."
 		}
 	}
 }

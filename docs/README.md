@@ -637,7 +637,8 @@ The `postgres` superuser is used **only** for the one-time `npm run db:setup` (c
 
 - **HttpOnly-cookie session** — server sets `noufex_token=<JWT>` with `Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800` (7 days). Logout sends `Set-Cookie` with `Max-Age=0`.
 - Token payload `{sub, role, ver, exp}` — `sub` = user id, `role` = `customer|merchant|admin`, `ver` = current `users.token_version` (NOT `token_version`; abbreviated in the JWT to `ver` for compactness), `exp` = unix-seconds expiry. HMAC-SHA256 signed with `AUTH_SECRET` (≥ 32 chars); verified with `crypto.timingSafeEqual`.
-- **Token revocation** — the JWT's `role` and `ver` are checked against the live `users` row on every request (cached for 30 s per `user_id`). Bumping `users.token_version` (on logout / change-password / 2FA enable / admin force) invalidates every existing session.
+- **Token revocation** — the JWT's `role` and `ver` are checked against the live `users` row on every request (cached for 30 s per `user_id`). The in-process cache is also explicitly invalidated on `logout` / `change-password` via `invalidateTokenVersionCache(userId)` (see [`app/server/middleware.ts:641`](../../app/server/middleware.ts)). Bumping `users.token_version` (on **logout** + **change-password** only) invalidates every existing session.
+  - ⚠️ **Known gap:** enabling 2FA does NOT bump `token_version` — existing sessions remain valid. Enabling 2FA is a hardening action, not an authentication boundary. Tracked as part of `audit-log-redaction` review.
 - **Password hashing** — scrypt with Node defaults (`N=16384, r=8, p=1`), random 16-byte salt, 64-byte derived key. Documented as below-current-OWASP-recommendation in the audit (G-2).
 - **2FA (optional)** — TOTP (RFC 6238, 30s window, ±1 step). Setup: `POST /api/auth/2fa/setup`. 10 scrypt-hashed single-use backup codes.
 

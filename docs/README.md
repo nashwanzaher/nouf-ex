@@ -99,9 +99,15 @@ cd app && npm run dev                # Vite on :5173 (proxies /api to :3000)
 ### 1.1.4 Smoke test
 
 ```sh
-curl -fs http://localhost:3000/api/health   # → {"ok":true}
-curl -fs http://localhost:3000/api/ready    # → 200 only when DB connection works
+curl -fs http://localhost:3000/api/health
+# → {"status":"ok","uptime_s":N,"ts":"2026-07-11T…Z"}
+
+curl -fs http://localhost:3000/api/ready
+# → {"status":"ready","uptime_s":N,"checks":{"db":{"ok":true,"ms":N}}}
+# → 503 with {"status":"degraded", ...} when DB connection fails
 ```
+
+See [`app/server/index.ts:171-201`](../../app/server/index.ts) for the exact shape. The server-boot smoke job in `ci.yml` asserts that both endpoints return 200 AND that `/api/health` body contains `"status":"ok"` and `"uptime_s":`.
 
 Then open the SPA in a browser, sign in as a seed customer (e.g. `ahmed@gmail.com` / `customer123`), and place a test order.
 
@@ -143,7 +149,7 @@ curl -fsS -b cookies.txt http://localhost:3000/api/orders
 
 ### 1.2.2 Merchant flow
 
-1. Log out, log in as the seed merchant (`merchant@gmail.com` / `merchant123`).
+1. Log out, log in as the seed merchant (e.g. `fatima@spice-yemen.com` / `merchant123`).
 2. Open **Seller Dashboard → Orders** → confirm the order from §1.2.1.
 3. Change status to `shipped`, add a tracking note.
 
@@ -174,7 +180,7 @@ If a step fails unexpectedly, run `npm run typecheck && npm run test:unit` from 
 
 cd app
 npm run dev          # Vite on :5173 (HMR)
-npm run api          # Express on :3000 (auto-restart on file change)
+npm run api          # Express on :3000 (no auto-restart; Ctrl-C + rerun)
 npm run lint -- --fix
 npm run typecheck
 npm run test:unit -- --watch
@@ -217,16 +223,37 @@ GitHub Actions (`.github/workflows/`):
 
 | File | Trigger | Purpose |
 |---|---|---|
-| `ci.yml` | push / PR to `main`, `develop` | Lint · typecheck · Vitest · build · axe a11y · DB integration · server-boot |
+| `ci.yml` | push / PR to `main`, `develop` | docs-presence · lint · typecheck · Vitest · build · axe a11y · DB integration · server-boot |
 | `docs.yml` | push to `main` touching `docs/**` or `mkdocs.yml` | MkDocs build + GitHub Pages deploy |
 | `link-check.yml` | push / PR | `markdown-link-check` over `docs/` |
 | `deploy-staging.yml` | manual | Deploy API container to staging |
 | `deploy-prod.yml` | manual approval | Deploy to production (see §2.4.3) |
 
-**Job order in `ci.yml`** (cheap → expensive, fail-fast):
-`mindmap → lint → typecheck → mcp-server → test → build → a11y → db-integration → server-boot`
+**Job order in `ci.yml`** (parallel where possible, fail-fast):
 
-**Required status checks** for `main` (see `.github/branch-protection.md`): `ci / lint`, `ci / typecheck`, `ci / test`, `ci / build`, `ci / a11y`, `ci / db-integration`, `ci / server-boot`.
+```
+┌────────────────┐  ┌─────────┐  ┌────────────┐
+│ docs-presence  │  │  lint   │  │ typecheck  │  (parallel, no deps)
+└───────┬────────┘  └────┬────┘  └─────┬──────┘
+        │                │              │
+        │               ┌┴──────────────┤
+        │               │    test       │  (needs lint, typecheck)
+        │               └────────┬──────┘
+        │                        │
+        │               ┌────────┴──────┐
+        │               │    build       │  (mcp-server built as step inside)
+        │               └────────┬───────┘
+        │                        │
+   ┌────┴────────────────────────┴────────────────────────┐
+   │ a11y (needs typecheck, lint, build)                  │
+   │ db-integration (needs lint, typecheck)                │  (parallel)
+   │ server-boot (needs lint, typecheck)                   │
+   └───────────────────────────────────────────────────────┘
+```
+
+**Required status checks** for `main` (see [`.github/branch-protection.md`](../../.github/branch-protection.md)): `ci / docs-presence`, `ci / lint`, `ci / typecheck`, `ci / test`, `ci / build`, `ci / a11y`, `ci / db-integration`, `ci / server-boot`.
+
+**Note:** the previous `mindmap` job verified a deleted file (`docs/architecture/SKILLS_MINDMAP.md`); it was replaced by `docs-presence` on 2026-07-11 to verify the 10 canonical documentation files exist. There is no separate `mcp-server` job — it builds as a step inside the `build` job.
 
 **Local simulation:**
 ```sh
@@ -428,20 +455,42 @@ All endpoints are served by `app/server/index.ts` on the same origin as the SPA 
 | `GET` | `/api/orders/:id` | auth | One order with its items |
 | `POST` | `/api/orders` | auth | Create an order from a cart snapshot |
 | `GET` | `/api/cart/:userId` | auth | Cart contents |
+| `GET` | `/api/cart/count/:userId` | auth | Number of items in the cart |
 | `POST` | `/api/cart` | auth | Add an item to the cart |
+| `PATCH` | `/api/cart/:id` | auth | Update cart-item quantity |
 | `DELETE` | `/api/cart/:id` | auth | Remove one cart item |
 | `DELETE` | `/api/cart/clear/:userId` | auth | Clear an entire cart |
-| `GET` | `/api/wishlist/:userId` | auth | Wishlist contents |
+| `GET` | `/api/wishlist/` | auth | Wishlist contents |
 | `POST` | `/api/wishlist` | auth | Add to wishlist |
 | `DELETE` | `/api/wishlist/:id` | auth | Remove one wishlist item |
-| `GET` | `/api/notifications/:userId` | auth | List notifications |
+| `GET` | `/api/notifications/` | auth | List notifications for the current user |
 | `PUT` | `/api/notifications/:id/read` | auth | Mark one as read |
+| `POST` | `/api/messages/` | auth | Send a message (customer↔merchant or merchant↔customer) |
+| `GET` | `/api/messages/inbox` | auth | Inbox messages for the current user |
+| `GET` | `/api/messages/sent` | auth | Sent messages for the current user |
+| `GET` | `/api/messages/conversation` | auth | One conversation thread (query: `with=userId&productId=…`) |
+| `GET` | `/api/messages/unread-count` | auth | Number of unread messages |
+| `PUT` | `/api/messages/:id/read` | auth | Mark one message as read |
+| `GET` | `/api/store-followers/check` | auth | Check whether the current user follows a store (query: `storeId=…`) |
+| `POST` | `/api/store-followers` | auth | Follow a store |
+| `DELETE` | `/api/store-followers` | auth | Unfollow a store (query: `storeId=…`) |
 | `POST` | `/api/auth/register` | rate-limited | Create an account |
 | `POST` | `/api/auth/login` | rate-limited | Exchange credentials for a session |
+| `POST` | `/api/auth/logout` | auth | Invalidate the session and clear the cookie |
 | `GET` | `/api/auth/me` | auth | Currently authenticated user |
+| `PATCH` | `/api/auth/me` | auth | Update profile (name, phone, avatar, language, gender) |
+| `POST` | `/api/auth/change-password` | auth | Change the current password |
+| `POST` | `/api/auth/forgot-password` | rate-limited | Request a password-reset email/token |
+| `POST` | `/api/auth/reset-password` | rate-limited | Reset password using the token from forgot-password |
+| `POST` | `/api/auth/2fa/setup` | auth (rate-limited) | Begin TOTP setup (returns secret + otpauth URL) |
+| `POST` | `/api/auth/2fa/enable` | auth (rate-limited) | Enable TOTP after verifying the first code |
+| `POST` | `/api/auth/2fa/verify` | rate-limited | Verify a TOTP code (returns full session token) |
+| `POST` | `/api/auth/2fa/disable` | auth (rate-limited) | Disable TOTP (requires current password) |
 | `POST` | `/api/payments` | rate-limited | Create a payment for an order |
 | `GET` | `/api/payments/order/:orderId` | auth | Payments for one order |
 | `POST` | `/api/payments/:id/confirm` | auth (admin) | Confirm a payment (e.g. on COD receipt) |
+| `GET` | `/api/payments/methods` | — | List active payment providers/methods |
+| `POST` | `/api/payments/webhook/:method` | rate-limited | Provider webhook (Stripe/Paymob); verified against rawBody |
 | `GET` | `/api/addresses` | auth | List a user's saved addresses |
 | `POST` | `/api/addresses` | auth | Create a new address |
 | `DELETE` | `/api/addresses/:id` | auth | Remove a saved address |
@@ -450,12 +499,42 @@ All endpoints are served by `app/server/index.ts` on the same origin as the SPA 
 | `POST` | `/api/coupons/redeem` | auth | Redeem (persist) a coupon redemption |
 | `POST` | `/api/refunds` | auth | Open a refund / dispute |
 | `POST` | `/api/refunds/:id/resolve` | auth (admin) | Admin: resolve a refund |
-| `/api/admin/*` | — | auth (admin) | Admin operations |
-| `/api/seller/*` | — | auth (merchant) | Merchant operations |
-| `/api/store-followers/*` | — | auth | Follow / unfollow a store |
-| `/api/auth/2fa/*` | — | auth | 2FA setup / verify / disable / backup codes |
+| `/api/admin/users` | `GET` | auth (admin) | List users |
+| `/api/admin/users/:id` | `PATCH` | auth (admin) | Update a user (role, status, etc.) |
+| `/api/admin/stores` | `GET` | auth (admin) | List stores |
+| `/api/admin/stores/:id` | `PATCH` | auth (admin) | Verify / unverify / suspend a store |
+| `/api/admin/products` | `GET` | auth (admin) | List products (admin view) |
+| `/api/admin/products/:id` | `PATCH` | auth (admin) | Update a product (admin override) |
+| `/api/admin/orders` | `GET` | auth (admin) | List all orders |
+| `/api/admin/orders/:id/status` | `PATCH` | auth (admin) | Override an order's status |
+| `/api/admin/disputes` | `GET` | auth (admin) | List disputes |
+| `/api/admin/disputes/:id` | `PATCH` | auth (admin) | Resolve / escalate a dispute |
+| `/api/admin/audit-log` | `GET` | auth (admin) | Read the audit log |
+| `/api/admin/stats` | `GET` | auth (admin) | Dashboard counters |
+| `/api/admin/stats/timeseries` | `GET` | auth (admin) | Time-series buckets for charts |
+| `/api/admin/stats/by-governorate` | `GET` | auth (admin) | Geographic distribution |
+| `/api/seller/stores/me` | `GET` | auth (merchant) | The current merchant's store |
+| `/api/seller/stores` | `POST` | auth (merchant) | Create a store (onboarding) |
+| `/api/seller/stores/:id` | `PATCH` | auth (merchant) | Update the current merchant's store |
+| `/api/seller/products` | `POST` | auth (merchant) | Create a product |
+| `/api/seller/products` | `GET` | auth (merchant) | List the merchant's products |
+| `/api/seller/products/:id` | `GET` | auth (merchant) | One of the merchant's products |
+| `/api/seller/products/:id` | `PATCH` | auth (merchant) | Update a product |
+| `/api/seller/products/:id` | `DELETE` | auth (merchant) | Soft-delete a product |
+| `/api/seller/products/:id/images` | `POST` | auth (merchant) | Add an image to a product |
+| `/api/seller/orders` | `GET` | auth (merchant) | Orders for the merchant's store |
+| `/api/seller/orders/:id` | `GET` | auth (merchant) | One order detail |
+| `/api/seller/orders/:id/status` | `POST` | auth (merchant) | Update order status (e.g. → shipped) |
+| `/api/seller/analytics` | `GET` | auth (merchant) | Sales / traffic analytics |
+| `/api/seller/inventory` | `GET` | auth (merchant) | Stock levels |
+| `/api/seller/payouts` | `GET` | auth (merchant) | Payout history |
+| `/api/seller/dashboard` | `GET` | auth (merchant) | Aggregated dashboard summary |
+| `/api/store-followers/*` | — | auth | Follow / unfollow a store (see `/api/messages/` block above) |
+| `/api/auth/2fa/*` | — | auth | 2FA setup / verify / disable / backup codes (see `/api/auth/` block above) |
 
-**Auth legend:** `—` = public; `auth` = any logged-in user; `auth (admin)` = admin role only; `auth (merchant)` = merchant or admin; `rate-limited` = per-IP rate-limited on `/api/auth/*` (20 req / 15 min).
+**Auth legend:** `—` = public; `auth` = any logged-in user; `auth (admin)` = admin role only; `auth (merchant)` = merchant or admin; `rate-limited` = per-IP rate-limited on `/api/auth/*` (20 req / 15 min) — see [`app/server/lib/ratelimit.ts`](../../app/server/lib/ratelimit.ts).
+
+**Endpoint count (verified 2026-07-11):** **92 endpoints** across 18 routers — addresses (4), auth (8), auth-2fa (4), cart (6), catalog (10), coupons (2), messages (6), notifications (2), orders (3), payments (5), refunds (1), reviews (2), seller (16), shipping (1), stats (1), store-followers (3), wishlist (3), admin (14), plus the two top-level health endpoints `/api/health` and `/api/ready` defined inline in [`app/server/index.ts:171-201`](../../app/server/index.ts).
 
 Every authenticated endpoint returns `401 AUTH_REQUIRED` for missing/invalid session, `403 AUTH_FORBIDDEN` for wrong role.
 

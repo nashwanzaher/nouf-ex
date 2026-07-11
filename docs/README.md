@@ -362,23 +362,25 @@ From inside the container, `localhost` is the container itself, so `docker-compo
 
 ## §2.6 Monitoring & observability
 
-The API logs to **stdout** as one structured JSON line per request:
+The API logs to **stdout** as one structured JSON line per request (see [`app/server/middleware.ts:230-247`](../../app/server/middleware.ts)):
 
 ```json
-{"ts":"2026-07-11T12:34:56.789Z","level":"info","request_id":"…","msg":"request_completed","status":200,"duration_ms":42}
+{"ts":"2026-07-11T12:34:56.789Z","level":"info","request_id":"…","msg":"request","method":"GET","path":"/api/products/42","status":200,"duration_ms":42,"user_id":2}
 ```
 
-Every response carries `x-request-id`. To correlate a user-reported failure with the server log, ask for the request ID.
+> Note: the `msg` field is literally **`"request"`** (not `request_completed`); `request_id`, `method`, `path`, `status`, `duration_ms`, and `user_id` are the standard fields emitted on every request completion.
+
+Every response carries `x-request-id` (lowercase) — set by [`app/server/middleware.ts:38-44`](../../app/server/middleware.ts). To correlate a user-reported failure with the server log, ask for the request ID.
 
 | What | Where |
 |---|---|
-| Liveness | `GET /api/health` (always 200 if the process is up) |
-| Readiness | `GET /api/ready` (200 only when DB connection works) |
-| Metrics | Open Prometheus scrape at `/metrics` (planned) |
-| Audit log | `admin_audit_log` table — actor, target, IP, UA, before/after diff |
+| Liveness | `GET /api/health` → `{status:"ok",uptime_s:N,ts:"…"}` always 200 if the process is up |
+| Readiness | `GET /api/ready` → 200 `{status:"ready",uptime_s,checks:{db:{ok,ms}}}` or 503 `{status:"degraded",…}` when DB connection fails |
+| Metrics | Open Prometheus scrape at `/metrics` (**planned**, not yet implemented) |
+| Audit log | `admin_audit_log` table — actor, target, IP, UA, before/after diff; redacted per `REDACT_KEYS` (17 keys, [`app/server/lib/audit.ts`](../../app/server/lib/audit.ts)) |
 
 **RED metrics** (recommended per [Google SRE Book](https://sre.google/sre-book/monitoring-distributed-systems/)):
-- **R**ate — `requests_per_second` by `route`
+- **R**ate — `requests_per_second` by `route` (derivable from `requestLogger`)
 - **E**rrors — `error_ratio = 5xx / total` (alert > 1%)
 - **D**uration — p50 / p95 / p99 latency by `route`
 

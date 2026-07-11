@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - CI: GitHub Actions — lint · typecheck · Vitest · build · axe a11y · DB integration · server-boot.
 
 ### Changed
-- Migrated DB schema through 24 incremental migrations; consolidated SSOT.
+- Migrated DB schema through 30 incremental migrations (0001 → 0030); consolidated SSOT.
 - Adopted Diátaxis for documentation, OWASP API Top 10 for security posture, OWASP ASVS 4.0.3 as verifier checklist, IEEE 829 + ISO/IEC/IEEE 29119 + ISTQB CTFL for test documentation.
 
 [Unreleased]: https://github.com/nashwanzaher/nouf-ex/compare/v0.1.0...HEAD

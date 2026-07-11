@@ -77,7 +77,7 @@ npm install
 npm run db:setup                     # idempotent: applies database/*.sql + migrations
 ```
 
-This creates the `noufex_db` database, the four roles (`noufex_owner`, `noufex_app`, `noufex_readonly`), the 32 tables, 32 triggers, 4 views, and seeds demo users.
+This creates the `noufex_db` database, the 4 roles (`postgres`, `noufex_owner`, `noufex_app`, `noufex_readonly`), the 32 tables, 32 triggers, 4 views, and seeds demo users.
 
 ### 1.1.3 Run the API + SPA
 
@@ -156,7 +156,7 @@ curl -fsS -b cookies.txt http://localhost:3000/api/orders
 
 - Auth (HttpOnly cookie), RBAC (3 roles), ownership-by-WHERE
 - Cart / Wishlist / Order state machine (`trg_orders_state_machine`)
-- 32 DB triggers, idempotent webhook dedup, audit log redaction
+- 32 DB triggers (incl. `trg_orders_a_state_machine`, `trg_orders_append_timeline`), idempotent webhook dedup via `webhook_events`, audit log redaction
 - i18n (Arabic default RTL, English, Chinese)
 
 If a step fails unexpectedly, run `npm run typecheck && npm run test:unit` from `app/` — the failure is usually caught there.
@@ -486,18 +486,33 @@ The `postgres` superuser is used **only** for the one-time `npm run db:setup` (c
 
 | File | Contents |
 |---|---|
-| `database/schema.sql` | 16 base tables |
-| `database/schema-extra.sql` | 9 extra tables (payments, coupons, refunds, …) |
+| `database/schema.sql` | 16 base tables (users, categories, stores, products, …) |
+| `database/schema-extra.sql` | 10 extra tables (payments, coupons, refunds, transactions, …) |
 | `database/views.sql` | 4 read-only views (`security_invoker`) |
 | `database/functions.sql` | PL/pgSQL trigger functions + cleanup helpers |
-| `database/triggers.sql` | 32 business-logic triggers |
+| `database/triggers.sql` | 18 business-logic triggers |
 | `database/roles.sql` | 4 roles + GRANTs |
 | `database/seed.sql` | Idempotent demo data, gated by `noufex.allow_seed` |
-| `database/migrations/0001…0024` | 24 applied incremental migrations (idempotent) |
+| `database/migrations/0001…0030` | 30 applied incremental migrations (idempotent, `IF NOT EXISTS`/`OR REPLACE`) |
 
 ### Tables (32)
 
-`users`, `addresses`, `categories`, `stores`, `products`, `product_variants`, `product_images`, `orders`, `order_items`, `cart_items`, `wishlist`, `reviews`, `notifications`, `disputes`, `messages`, `subscriptions`, `payments`, `payment_methods`, `refunds`, `coupons`, `coupon_redemptions`, `webhook_events`, `app_settings`, `used_jtis`, `rate_limit_buckets`, `admin_audit_log`, `inventory_log`, `transactions`, `store_balance`, `store_followers`, `search_logs`, `shipping_methods`.
+**16 in `schema.sql`:** `users`, `addresses`, `categories`, `stores`, `products`, `product_variants`, `product_images`, `orders`, `order_items`, `cart_items`, `wishlist`, `reviews`, `notifications`, `disputes`, `messages`, `subscriptions`.
+
+**10 in `schema-extra.sql`:** `payments`, `coupons`, `coupon_usage`, `refunds`, `store_balance`, `store_followers`, `inventory_log`, `shipping_methods`, `transactions`, `admin_audit_log`.
+
+**6 in `migrations/`:** `schema_migrations` (0001), `rate_limit_buckets` (0004), `search_logs` (0009), `used_jtis` (0010), `webhook_events` (0020), `app_settings` (0023).
+
+### Triggers (32 total)
+
+- **18 in `triggers.sql`:** `trg_orders_a_state_machine`, `trg_orders_append_timeline`, `trg_order_items_decrement_stock`, 3 × reviews-refresh-rating (ins/upd/del), 3 × products-refresh-store-count (ins/upd/del), 3 × reviews-refresh-store-stats (ins/upd/del), `trg_refunds_resolve_payments`, 3 × followers-refresh-count (ins/upd/del), `trg_orders_refresh_store_sales`, plus the dynamic `trg_<table>_set_updated_at` attached per table that has an `updated_at` column.
+- **3 in migration 0022:** `trg_coupon_usage_enforce_limits`, `trg_coupon_usage_decrement_count`, `trg_orders_release_coupon_on_cancel`.
+- **1 in migration 0024:** `trg_sync_users_two_factor_enabled`.
+- **1 in migration 0028:** `trg_transactions_balance_after`.
+- **3 in migration 0030:** `trg_product_images_set_updated_at`, `trg_order_items_set_updated_at`, `trg_rate_limit_buckets_set_updated_at`.
+- The 6 triggers re-declared in migration 0025 (`trg_reviews_refresh_store_stats_*`, `trg_followers_refresh_count_ins/del`, `trg_orders_refresh_store_sales`) over-write the ones from `triggers.sql`; they are **not double-counted**.
+
+> Note: the **dynamic `trg_<table>_set_updated_at`** loop in `triggers.sql` creates one trigger per `updated_at` column. The exact count depends on the live schema; the `32 total` figure counts the static definitions.
 
 ### Migration conventions
 
@@ -564,17 +579,21 @@ users ─< notifications
 users ─< subscriptions >─ stores
 users ─< messages >─ stores, products
 users ─< store_followers >─ stores
+users ─< used_jtis, search_logs
 
 stores ─< products
 stores ─< product_images
 stores ─< store_balance
 stores ─< transactions
+stores ─< inventory_log
 
 orders ─< payments, refunds, disputes
-products ─< coupons ─< coupon_redemptions
+products ─< coupons ─< coupon_usage
+payments ─< webhook_events (dedup)
+app_settings (single-row config: DEFAULT_CURRENCY, etc.)
 ```
 
-See `database/er-diagram.md` in git history (consolidated here 2026-07-11) for the full Mermaid ER.
+The full Mermaid ER was previously rendered in `docs/architecture/er-diagram.md` (consolidated here 2026-07-11).
 
 ## §3.5 Testing strategy & standards
 
@@ -628,7 +647,7 @@ A single Node/Express API talks to one external PostgreSQL database, and a React
        │   │  Express 5 (server/index.ts, :3000)   │   │
        │   │  ├── REST endpoints (/api/*)          │   │
        │   │  ├── Static SPA fallback (dist/)      │   │
-       │   │  └── PgDb wrapper (db/pg-wrapper.cts) │   │
+        │   │  └── PgDb wrapper (db/pg-wrapper.ts)  │   │
        │   └───────────────┬────────────────────────┘   │
        │   ┌───────────────┴────────────────────────┐   │
        │   │  Vite-built SPA (dist/)                │   │
@@ -649,11 +668,11 @@ A single Node/Express API talks to one external PostgreSQL database, and a React
 |---|---|---|
 | HTTP entry | `app/server/index.ts` | Express bootstrap, middleware chain, route mounting |
 | Security headers | `app/server/middleware.ts` | CSP nonced, HSTS, frame-options, referrer-policy |
-| Auth | `app/server/middleware.ts:421-468` | HttpOnly cookie, HMAC verify, `token_version` revocation |
-| Validation | `app/server/lib/validation.ts` | 29 Zod schemas (26 `.strict()`) |
-| DB wrapper | `app/server/db/pg-wrapper.cts` | async `pg.Pool`, prepared statements |
+| Auth | `app/server/middleware.ts` (`setAuthCookie` @ 421 · `extractAuthToken` @ 450 · `clearAuthCookie` @ 439) | HttpOnly cookie, HMAC verify, `token_version` revocation |
+| Validation | `app/server/lib/validation.ts` | 32 Zod schemas (20 `.strict()` in production; rest are sub-schemas) |
+| DB wrapper | `app/server/db/pg-wrapper.ts` | async `pg.Pool`, prepared statements |
 | Audit | `app/server/lib/audit.ts` | Redaction + retry/backoff DLQ |
-| Rate limit | `database/migrations/0004_rate_limit_buckets.sql` | Atomic UPSERT |
+| Rate limit | `database/migrations/0004_rate_limit_buckets.sql` + `app/server/lib/ratelimit.ts` | Atomic UPSERT |
 | SPA entry | `app/src/main.tsx` → `App.tsx` | React Router 7, lazy routes, `ProtectedRoute` |
 
 ## §4.2 Tech stack
@@ -776,7 +795,7 @@ We use a simplified **STRIDE** model.
 | Performance efficiency | B | Bundle 117 kB gzip; hot paths OK at current scale |
 | Compatibility | A | PG 17 standard SQL only |
 | Usability (dev/operator) | B | Excellent DX; some migration-journal drift in git history |
-| Reliability | B | 32 DB triggers enforce invariants; one racy trigger tracked in §5.2 |
+| Reliability | B | 32 DB triggers enforce invariants (incl. order state machine, atomic coupon redemption, transactions balance); one racy trigger tracked in §5.2 (G-15) |
 | Security | B+ | HttpOnly cookies, CSP nonced, audit redaction |
 | Maintainability | B- | Strict TS, lint clean, ADR trail |
 | Portability | A | Linux + Postgres 17, no platform-specific code |

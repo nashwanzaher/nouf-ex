@@ -18,7 +18,7 @@ A single Node/Express API talks to one external PostgreSQL database, and a React
 
 | Layer | Tech |
 |---|---|
-| Database | PostgreSQL 17 (external, database `noufex_db`) — 32 tables, 32 triggers |
+| Database | PostgreSQL 17 (external, database `noufex_db`) — 32 tables (16 + 10 + 6 in migrations), 32 triggers (18 + 14 in migrations) |
 | API | Node 20 + Express 5 + `pg`, scrypt, HMAC-SHA256, Zod |
 | Frontend | React 19 + React Router 7 + Vite 7 + Tailwind 3 + shadcn/ui |
 | i18n | i18next — Arabic (RTL default) / English / Chinese |

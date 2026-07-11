@@ -29,17 +29,12 @@ interface AppState {
 	lang: Lang;
 	dir: 'rtl' | 'ltr';
 	user: User | null;
-	/** Bearer token from the API (HMAC-signed). Stored in localStorage so
-	 *  that the `apiRequest` wrapper can attach it to outgoing requests
-	 *  without going through React context. */
-	token: string | null;
 	toasts: Toast[];
 }
 
 type Action =
 	| { type: 'SET_LANG'; payload: Lang }
 	| { type: 'SET_USER'; payload: User | null }
-	| { type: 'SET_TOKEN'; payload: string | null }
 	| { type: 'ADD_TOAST'; payload: Toast }
 	| { type: 'REMOVE_TOAST'; payload: string };
 
@@ -67,17 +62,6 @@ function loadInitialUser(): User | null {
 	}
 }
 
-/** Load the auth token lazily. Kept in localStorage so it survives a page
- *  reload and so the non-React `apiRequest` wrapper can read it. */
-function loadInitialToken(): string | null {
-	try {
-		const v = localStorage.getItem('noufex_token');
-		return v && v.length > 0 ? v : null;
-	} catch {
-		return null;
-	}
-}
-
 // C5 fix: pass the initial state as a lazy initializer to useReducer so that
 // localStorage is read at *component mount* time, not at module-load time.
 // Otherwise a user who logs in or changes language in another tab would never
@@ -88,7 +72,6 @@ const initialStateFactory = (): AppState => {
 		lang,
 		dir: lang === 'ar' ? 'rtl' : 'ltr',
 		user: loadInitialUser(),
-		token: loadInitialToken(),
 		toasts: [],
 	};
 };
@@ -101,9 +84,6 @@ function appReducer(state: AppState, action: Action): AppState {
 		}
 		case 'SET_USER': {
 			return { ...state, user: action.payload };
-		}
-		case 'SET_TOKEN': {
-			return { ...state, token: action.payload };
 		}
 		case 'ADD_TOAST':
 			return { ...state, toasts: [...state.toasts, action.payload] };
@@ -118,7 +98,6 @@ const AppContext = createContext<{
 	state: AppState;
 	dispatch: React.Dispatch<Action>;
 	setUser: (user: User | null) => void;
-	setToken: (token: string | null) => void;
 	addToast: (toast: Omit<Toast, 'id'>) => void;
 	removeToast: (id: string) => void;
 } | null>(null);
@@ -133,26 +112,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 		document.documentElement.dir = state.dir;
 	}, [state.lang, state.dir]);
 
-	// Persist user and token to localStorage (side effects outside reducer).
+	// Persist user to localStorage (side effects outside reducer).
+	// Note: Auth token is now stored in HttpOnly cookie (set by server),
+	// not in localStorage. This prevents XSS attacks from stealing tokens.
 	useEffect(() => {
 		if (typeof localStorage === 'undefined') return;
 		if (state.user) localStorage.setItem('noufex_user', JSON.stringify(state.user));
 		else localStorage.removeItem('noufex_user');
 	}, [state.user]);
-	useEffect(() => {
-		if (typeof localStorage === 'undefined') return;
-		if (state.token) localStorage.setItem('noufex_token', state.token);
-		else localStorage.removeItem('noufex_token');
-	}, [state.token]);
 
 	/** Imperative helpers — wrap the dispatch cases for convenience and
 	 *  so pages don't need to know the action shape. */
 	const setUser = useCallback(
 		(user: User | null) => dispatch({ type: 'SET_USER', payload: user }),
-		[],
-	);
-	const setToken = useCallback(
-		(token: string | null) => dispatch({ type: 'SET_TOKEN', payload: token }),
 		[],
 	);
 	const addToast = useCallback(
@@ -177,8 +149,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 	// busted the React.memo / shouldComponentUpdate optimizations in
 	// every component that calls useApp() or useAuth().
 	const value = useMemo(
-		() => ({ state, dispatch, setUser, setToken, addToast, removeToast }),
-		[state, setUser, setToken, addToast, removeToast],
+		() => ({ state, dispatch, setUser, addToast, removeToast }),
+		[state, setUser, addToast, removeToast],
 	);
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
@@ -194,52 +166,45 @@ export function useApp() {
  * Cart synchronization is now owned by `CartProvider`: it detects the
  * authenticated user, pushes any anonymous local cart to the server,
  * and hydrates the UI from the server cart. `login` only writes the
- * auth credentials so the API client can attach the bearer token.
+ * user info so the UI can display it. The auth token is managed by
+ * the server via HttpOnly cookie (not accessible from JavaScript).
  * `logout` clears the local cart synchronously (the server cart is
  * left intact — the user may sign back in from another device and
  * expect their items).
  */
 export function useAuth() {
-	const { state, setUser, setToken, addToast } = useApp();
-	const isAuthenticated = Boolean(state.user && state.token);
+	const { state, setUser, addToast } = useApp();
+	// Auth token is now in HttpOnly cookie, so we check user presence
+	// The actual auth check happens server-side on each request
+	const isAuthenticated = Boolean(state.user);
 	const login = useCallback(
-		async (user: User, token: string): Promise<void> => {
-			// Write the token + user to localStorage IMMEDIATELY (and
-			// synchronously) so the API client (`apiRequest`) can read
-			// them on the very next fetch. Without this, React 18 may
-			// batch the reducer runs and the subsequent fetch fires
-			// before localStorage is populated, producing a 401 race
-			// even though the user is already "logged in" by every
-			// other measure.
+		async (user: User): Promise<void> => {
+			// Write user info to localStorage for UI state persistence.
+			// Auth token is set by server as HttpOnly cookie automatically.
 			try {
 				localStorage.setItem('noufex_user', JSON.stringify(user));
-				localStorage.setItem('noufex_token', token);
 			} catch {
 				/* localStorage may be unavailable in private mode */
 			}
 			setUser(user);
-			setToken(token);
 		},
-		[setUser, setToken],
+		[setUser],
 	);
 	const logout = useCallback(() => {
-		// Same race-prevention as `login`: clear localStorage first
-		// so any concurrent fetch sees the post-logout state.
+		// Clear user state from localStorage
 		try {
 			localStorage.removeItem('noufex_user');
-			localStorage.removeItem('noufex_token');
 		} catch {
 			/* noop */
 		}
 		setUser(null);
-		setToken(null);
 		// Local cart belongs to the (now-gone) user; clear it so the
 		// next anonymous visitor starts with an empty cart. The server
 		// cart is left intact — the user may sign back in from
 		// another device.
 		clearLocalCart();
-	}, [setUser, setToken]);
-	return { user: state.user, token: state.token, isAuthenticated, login, logout, addToast };
+	}, [setUser]);
+	return { user: state.user, isAuthenticated, login, logout, addToast };
 }
 
 export type { Lang, Role, Toast, User };

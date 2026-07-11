@@ -1,62 +1,56 @@
 ---
-name: Bug report
-about: Report a bug to help us improve
-title: "[BUG] "
-labels: bug, needs-triage
-assignees: ''
+name: 🐛 Bug report
+about: Something is broken or behaves unexpectedly
+title: "[bug] "
+labels: bug
+assignees: ""
 ---
 
-## Summary
+## Describe the bug
 
-<!-- One-sentence summary of the bug. -->
-
-## Environment
-
-- **Affected page / endpoint:** (e.g. `/api/products`, `/checkout`, `SearchResults.tsx`)
-- **Browser (if frontend):** (e.g. Chrome 124 on macOS 14.5)
-- **Account role:** (customer / merchant / admin / anonymous)
-- **Git commit / version:** (run `git log -1 --oneline` or check the footer)
-- **Environment:** (local dev / staging / production)
+A clear and concise description of what the bug is.
 
 ## Steps to reproduce
 
-1. Go to '...'
-2. Click on '...'
-3. Enter '...'
+1. Go to '…'
+2. Click on '…'
+3. Scroll down to '…'
 4. See error
 
-## Expected behavior
+## Expected behaviour
 
-<!-- What did you expect to happen? -->
+What you expected to happen.
 
-## Actual behavior
+## Actual behaviour
 
-<!-- What actually happened? Include screenshots / error messages. -->
+What actually happens. Include the error message, screenshot, or network-tab screenshot.
 
-## Screenshots / logs
+## Environment
 
-<!-- Drag-and-drop or paste screenshots / curl output / browser console -->
+- **App version / commit:** (run `git rev-parse HEAD`)
+- **Node version:** (run `node -v`)
+- **Browser:** (Chrome 124 / Firefox 125 / Safari 17 / …)
+- **OS:** (macOS 14 / Windows 11 / Ubuntu 24.04 / …)
+- **Auth state:** (anonymous / customer / merchant / admin)
+- **Locale:** (ar / en / zh)
 
-```text
-# Paste relevant log output here
+## Logs / request ID
+
+If you have a `request_id` from a failed request, paste it here. It correlates with the server log.
+
 ```
-
-## Possible fix
-
-<!-- Optional: if you can identify the root cause, link to the relevant file / line -->
-
-- [ ] I have searched existing issues to avoid duplicates
-- [ ] I have reproduced the bug locally
-- [ ] I have checked the docs (README, deployment.md, ci-cd.md) for known issues
+request_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
 
 ## Severity
 
-- [ ] Blocker — production unusable
-- [ ] Critical — major feature broken
-- [ ] Major — degraded but workaround exists
-- [ ] Minor — cosmetic / small impact
-- [ ] Question — clarification needed, not a bug
+How bad is this?
 
-## Impact
+- [ ] 🔴 Blocker — main flow broken for everyone
+- [ ] 🟠 High — main flow broken for some users
+- [ ] 🟡 Medium — feature degraded
+- [ ] 🟢 Low — cosmetic / minor
 
-<!-- How many users does this affect? Is there a workaround? -->
+## Additional context
+
+Anything else relevant (related issues, PRs, screenshots, etc.).

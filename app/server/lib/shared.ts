@@ -30,6 +30,7 @@ export type { AuthRole, TokenPayload } from './types.js';
 // from `./auth.ts` (extracted 2026-07-03 to break the god object).
 export { hashPassword, verifyPassword } from './auth.js';
 export { HttpError, log, requireAuth, requireRole, sendError, sendSuccess };
+export { ErrorCodes } from './error-codes.js';
 
 // Re-export the pg-wrapper connection so route files have a single
 // import surface for "everything I need to talk to the DB".
@@ -114,7 +115,7 @@ export {
     addressSchema, adminDisputeUpdateSchema, adminOrderStatusSchema,
     adminProductUpdateSchema, adminStoreUpdateSchema, adminUserUpdateSchema, cartAddSchema,
     cartItemIdParamSchema,
-    cartItemUpdateSchema, COUPON_COLUMNS, couponRedeemSchema, emailSchema, evaluatePasswordStrength, loginSchema, notificationIdParamSchema, orderItemSchema, orderSchema, paginationSchema, passwordChangeSchema, passwordSchema, paymentCreateSchema, profileUpdateSchema, refundCreateSchema, registerSchema, resolveOrderStoreId, reviewSchema, sellerOrderStatusUpdateSchema, sellerProductCreateSchema, sellerProductIdParamSchema, sellerProductImageAddSchema, sellerProductUpdateSchema, sellerStoreUpdateSchema, wishlistAddSchema,
+    cartItemUpdateSchema, COUPON_COLUMNS, couponRedeemSchema, emailSchema, evaluatePasswordStrength, loginSchema, notificationIdParamSchema, orderItemSchema, orderSchema, paginationSchema, passwordChangeSchema, passwordSchema, paymentCreateSchema, profileUpdateSchema, refundCreateSchema, registerSchema, resolveOrderStoreId, reviewSchema, sellerOrderStatusUpdateSchema, sellerProductCreateSchema, sellerProductIdParamSchema, sellerProductImageAddSchema, sellerProductUpdateSchema, sellerStoreCreateSchema, sellerStoreUpdateSchema, wishlistAddSchema,
     wishlistItemIdParamSchema, type CouponRow, type OrderProductRow, type ResolveStoreIdResult
 } from './validation.js';
 

@@ -30,10 +30,13 @@ import {
 	sellerProductCreateSchema,
 	sellerProductUpdateSchema,
 	sellerProductIdParamSchema,
+	sellerStoreCreateSchema,
 	sellerStoreUpdateSchema,
 	sellerOrderStatusUpdateSchema,
 	sellerProductImageAddSchema,
 	paginationSchema,
+	HttpError,
+	ErrorCodes,
 } from '../lib/shared.ts';
 
 export const sellerRouter = Router();
@@ -72,6 +75,104 @@ sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response
 		if (!row) return sendError(res, 'Store not found', 404);
 		return sendSuccess(res, row);
 	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/**
+ * POST /api/seller/stores — G2 fix 2026-07-11.
+ *
+ * Creates the caller's first store. The endpoint is the missing
+ * piece in the seller onboarding chain:
+ *   - A user with `role='merchant'` (created at registration, see
+ *     /api/auth/register G1 fix) hits this once to spin up their
+ *     store row.
+ *   - All other seller endpoints look up the store via
+ *     `stores.owner_id = req.user.id`, so the row MUST exist before
+ *     any other call returns 200.
+ *
+ * Ownership is the entire security model: this route is open to any
+ * authenticated user with role 'merchant' (or 'admin'). The merchant
+ * is always the owner — `owner_id` is taken from `req.user.id`, never
+ * from the request body.
+ *
+ * Idempotency: a second call by the same user returns 409 with code
+ * ALREADY_EXISTS so the client can detect the existing store.
+ */
+sellerRouter.post('/stores', ...sellerAuth, async (req: Request, res: Response) => {
+	try {
+		const v = validate(sellerStoreCreateSchema, req.body);
+		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
+		const data = v.data;
+
+		const userId = req.user!.id;
+		const existing = (await db
+			.prepare('SELECT id FROM stores WHERE owner_id = $1 LIMIT 1')
+			.get(userId)) as { id: number } | undefined;
+		if (existing) {
+			return sendError(
+				res,
+				'You already have a store. Use PATCH /api/seller/stores/:id to update it.',
+				409,
+				ErrorCodes.CONFLICT,
+			);
+		}
+
+		// Slug: lowercase, ASCII-only, unique. We append the user id so
+		// two merchants with the same store_name never collide.
+		const baseSlug = (data.store_name ?? '')
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 60) || 'store';
+		const slug = `${baseSlug}-${userId}`;
+
+		const inserted = (await db
+			.prepare(
+				`INSERT INTO stores (
+					owner_id, store_name, slug, description, governorate, city,
+					trust_level, is_active, is_verified, since_year, created_at, updated_at
+				) VALUES (?, ?, ?, ?, ?, ?, 'verified', TRUE, FALSE, EXTRACT(YEAR FROM NOW())::int, NOW(), NOW())
+				RETURNING id, owner_id, store_name, slug, description, governorate, city,
+					trust_level, is_active, is_verified, since_year, created_at, updated_at`,
+			)
+			.get(
+				userId,
+				data.store_name,
+				slug,
+				data.description ?? null,
+				data.governorate ?? null,
+				data.city ?? null,
+			)) as Record<string, unknown> | undefined;
+		if (!inserted) {
+			throw new HttpError(500, 'Failed to create store', { code: ErrorCodes.INSERT_FAILED });
+		}
+
+		// Update the user's role to 'merchant' if they were still a
+		// 'customer' who upgraded via this endpoint. This lets a
+		// customer who already has an account become a merchant
+		// without admin intervention. We do NOT downgrade admins.
+		if (req.user!.role === 'customer') {
+			await db
+				.prepare("UPDATE users SET role = 'merchant', updated_at = NOW() WHERE id = $1")
+				.run(userId)
+				.catch(() => undefined);
+		}
+
+		await writeAuditLog(req, 'store.create', 'stores', Number(inserted.id), null, {
+			store_name: data.store_name,
+		});
+		return sendSuccess(res, inserted, 201, 'Store created');
+	} catch (err) {
+		const pg = err as { code?: string };
+		if (pg?.code === '23505') {
+			return sendError(
+				res,
+				'A store with this name already exists for your account.',
+				409,
+				ErrorCodes.DUPLICATE,
+			);
+		}
 		return sendError(res, err);
 	}
 });

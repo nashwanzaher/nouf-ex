@@ -39,7 +39,7 @@ import { ErrorCodes } from '../lib/error-codes.ts';
 import { verifyPartialToken } from '../lib/partial-token.ts';
 import { db, HttpError, log, requireAuth, sendError, sendSuccess, verifyPassword } from '../lib/shared.ts';
 import { generateSecret, otpauthUrl, verifyTotp } from '../lib/totp.ts';
-import { signAuthToken } from '../middleware.ts';
+import { signAuthToken, setAuthCookie } from '../middleware.ts';
 
 export const auth2faRouter = Router();
 
@@ -416,9 +416,12 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 			role: user.role,
 			ver: versionRow?.token_version ?? 0,
 		});
+		// SECURITY: Set token as HttpOnly cookie (XSS protection)
+		setAuthCookie(res, token);
+		// Token is sent via HttpOnly cookie, not in response body
 		sendSuccess(
 			res,
-			{ token, user: publicUser(user), method: totpOk ? 'totp' : 'backup_code' },
+			{ user: publicUser(user), method: totpOk ? 'totp' : 'backup_code' },
 			200,
 			'2FA verified',
 		);

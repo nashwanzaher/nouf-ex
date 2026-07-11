@@ -3,10 +3,22 @@
  */
 
 import { apiRequest } from './client';
-import type { Product, ProductWithDetails, SellerAnalytics, SellerBalance, SellerDashboard, SellerInventoryItem, SellerOrder, SellerOrderWithItems, SellerPayout, SellerProductCreate, SellerStore, SellerStoreUpdate } from './types';
+import type { Product, ProductWithDetails, SellerAnalytics, SellerBalance, SellerDashboard, SellerInventoryItem, SellerOrder, SellerOrderWithItems, SellerPayout, SellerProductCreate, SellerStore, SellerStoreCreate, SellerStoreUpdate } from './types';
 
 export async function getSellerStoreMe(): Promise<SellerStore> {
 	return apiRequest('/seller/stores/me');
+}
+
+/**
+ * G4 fix 2026-07-11: create the caller's first store.
+ * Throws on 409 if a store already exists (use `getSellerStoreMe` /
+ * `updateSellerStore` to manage it instead).
+ */
+export async function createSellerStore(body: SellerStoreCreate): Promise<SellerStore> {
+	return apiRequest('/seller/stores', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
 }
 
 export async function updateSellerStore(id: number, body: SellerStoreUpdate): Promise<SellerStore> {

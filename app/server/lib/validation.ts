@@ -229,6 +229,10 @@ export const registerSchema = z
 		email: emailSchema,
 		password: passwordSchema,
 		name: z.string().trim().min(2).max(100),
+		// G1 fix 2026-07-11: clients can request a 'merchant' role at
+		// signup. Anything other than 'customer' or 'merchant' is
+		// silently coerced to 'customer' (admin is never self-service).
+		role: z.enum(['customer', 'merchant']).optional(),
 	})
 	.refine((data) => evaluatePasswordStrength(data.password, data.email) === null, {
 		message: 'Password does not meet strength requirements.',
@@ -421,7 +425,6 @@ export const refundCreateSchema = z.object({
 
 export const couponRedeemSchema = z.object({
 	code: z.string().trim().min(1).max(50),
-	user_id: z.number().int().positive(),
 	order_subtotal: z.number().nonnegative(),
 });
 
@@ -622,6 +625,22 @@ export const sellerStoreUpdateSchema = z
 		phone: z.string().trim().min(5).max(20).optional(),
 		city: z.string().trim().min(1).max(50).optional(),
 		governorate: z.string().trim().min(2).max(50).optional(),
+	})
+	.strict();
+
+/**
+ * Body for POST /api/seller/stores — G2 fix 2026-07-11.
+ * A freshly-registered merchant (or a customer who wants to upgrade)
+ * creates their first store through this endpoint. The server stamps
+ * `owner_id = req.user.id`; the slug is derived from the store name
+ * so two stores with the same name never collide.
+ */
+export const sellerStoreCreateSchema = z
+	.object({
+		store_name: z.string().trim().min(2).max(100),
+		description: z.string().trim().max(4000).optional(),
+		governorate: z.string().trim().min(2).max(50).optional(),
+		city: z.string().trim().min(1).max(50).optional(),
 	})
 	.strict();
 

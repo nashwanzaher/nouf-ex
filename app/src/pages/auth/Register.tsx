@@ -67,13 +67,15 @@ export default function Register() {
 		if (!validate()) return;
 		setIsLoading(true);
 		try {
-			// The server always creates a 'customer' account (it is the only
-			// self-service role). The buyer/seller split is captured later in
-			// the merchant onboarding flow.
+			// G5 fix 2026-07-11: forward the buyer/seller tab choice to
+			// the server. The server coerces anything other than
+			// 'customer' or 'merchant' (notably 'admin') back to
+			// 'customer', so this is safe to pass straight through.
 			const result = await register({
 				email: email.trim(),
 				password,
 				name: email.trim().split('@')[0] || email.trim(),
+				role: accountType === 'seller' ? 'merchant' : 'customer',
 			});
 			const authUser = {
 				id: String(result.user.id),
@@ -83,12 +85,19 @@ export default function Register() {
 					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
-			authLogin(authUser, result.token);
+			// Auth token is set by server as HttpOnly cookie automatically.
+			authLogin(authUser);
 			addToast({
 				message: t('authRegister.accountCreated', 'Account created successfully'),
 				type: 'success',
 			});
-			navigate('/customer', { replace: true });
+			// G5 fix 2026-07-11: route to the role-appropriate landing
+			// page instead of always /customer. New merchants go to
+			// the onboarding wizard which creates their first store;
+			// everyone else lands on the customer dashboard.
+			const destination =
+				authUser.role === 'merchant' ? '/seller/onboarding' : '/customer';
+			navigate(destination, { replace: true });
 		} catch (err) {
 			const message =
 				err instanceof ApiError

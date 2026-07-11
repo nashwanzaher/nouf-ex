@@ -106,11 +106,13 @@ export default function AdminOrders() {
 			offset: number;
 			status?: string;
 			payment_status?: string;
+			search?: string;
 		} = { limit: pageSize, offset: (currentPage - 1) * pageSize };
 		if (statusFilter !== 'all') p.status = statusFilter;
 		if (paymentFilter) p.payment_status = paymentFilter;
+		if (search.trim()) p.search = search.trim();
 		return p;
-	}, [statusFilter, paymentFilter, currentPage]);
+	}, [statusFilter, paymentFilter, currentPage, search]);
 
 	const {
 		data: response,
@@ -128,17 +130,14 @@ export default function AdminOrders() {
 	const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
 	const filtered = useMemo(() => {
-		if (!search.trim()) return orders;
-		const needle = search.toLowerCase();
+		// Search is now handled server-side via apiParams.search
+		// Client-side filtering is only needed for payment status
+		// which is not yet supported by the API
+		if (!paymentFilter) return orders;
 		return orders.filter(
-			(o) =>
-				String(o.id).includes(needle) ||
-				String(o.order_number ?? '')
-					.toLowerCase()
-					.includes(needle) ||
-				String(o.customer_id).includes(needle),
+			(o) => String(o.payment_status ?? '') === paymentFilter,
 		);
-	}, [orders, search]);
+	}, [orders, paymentFilter]);
 
 	const handleSetStatus = useCallback(
 		async (

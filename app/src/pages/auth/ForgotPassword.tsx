@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from './AuthLayout';
+import { forgotPassword, ApiError } from '@/lib/api';
 
 export default function ForgotPassword() {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	const [email, setEmail] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
@@ -23,9 +25,13 @@ export default function ForgotPassword() {
 		};
 	}, []);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setError('');
+	/**
+	 * G7 fix 2026-07-11: real backend call. The server always returns
+	 * 200 with `{ ok: true }` (no enumeration). In non-production the
+	 * response includes `reset_token`; we drive the user straight to
+	 * the reset page so the flow works without SMTP set up.
+	 */
+	const requestReset = async () => {
 		if (!email.trim()) {
 			setError(t('authCommon.fieldRequired', 'This field is required'));
 			return;
@@ -35,12 +41,34 @@ export default function ForgotPassword() {
 			return;
 		}
 		setIsLoading(true);
-		await new Promise((r) => setTimeout(r, 1500));
-		setIsLoading(false);
-		setSubmitted(true);
+		try {
+			const result = await forgotPassword(email.trim());
+			setSubmitted(true);
+			startCountdown();
+			// In non-production environments the server includes the
+			// token in the response. Forward the user to the reset page
+			// pre-filled. In production this branch is dead — the token
+			// arrives by email.
+			if (result.reset_token) {
+				const expiresAt = result.expires_at ?? '';
+				const qs = new URLSearchParams({ token: result.reset_token });
+				if (expiresAt) qs.set('expires_at', expiresAt);
+				navigate(`/auth/reset-password?${qs.toString()}`, { replace: true });
+			}
+		} catch (err) {
+			const message =
+				err instanceof ApiError
+					? err.message
+					: t('authForgot.sendError', 'Could not send reset link. Try again.');
+			setError(message);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-		// Start countdown
+	const startCountdown = () => {
 		let seconds = 60;
+		setCountdown(seconds);
 		if (timerRef.current) clearInterval(timerRef.current);
 		timerRef.current = setInterval(() => {
 			seconds--;
@@ -52,21 +80,14 @@ export default function ForgotPassword() {
 		}, 1000);
 	};
 
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setError('');
+		await requestReset();
+	};
+
 	const handleResend = async () => {
-		setCountdown(60);
-		setIsLoading(true);
-		await new Promise((r) => setTimeout(r, 1000));
-		setIsLoading(false);
-		let seconds = 60;
-		if (timerRef.current) clearInterval(timerRef.current);
-		timerRef.current = setInterval(() => {
-			seconds--;
-			setCountdown(seconds);
-			if (seconds <= 0) {
-				clearInterval(timerRef.current!);
-				timerRef.current = null;
-			}
-		}, 1000);
+		await requestReset();
 	};
 
 	return (

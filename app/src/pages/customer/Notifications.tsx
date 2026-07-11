@@ -169,7 +169,7 @@ type FilterKey = (typeof filterTabs)[number]['key'];
 export default function Notifications() {
 	const { state } = useApp();
 	const { t, i18n } = useTranslation();
-	const isAuthenticated = Boolean(state.user && state.token);
+	const isAuthenticated = Boolean(state.user);
 	const isRTL = i18n.language === 'ar';
 
 	const { data, loading, error, refetch } = useNotifications();

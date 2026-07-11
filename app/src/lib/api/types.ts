@@ -293,7 +293,12 @@ export interface HomeStats {
 
 export interface AuthResponse {
 	user: User;
-	token: string;
+	/** Optional. Legacy/local-mirror of the auth token for callers that
+	 *  still want it in JS. The server's authoritative token is set as
+	 *  an HttpOnly cookie and is not accessible from the browser — this
+	 *  field may be absent (or still present for backward-compat with
+	 *  older server builds) depending on the deployment. */
+	token?: string;
 }
 
 export interface UpdateProfileBody {
@@ -523,6 +528,19 @@ export interface SellerStoreUpdate {
 	phone?: string;
 	city?: string;
 	governorate?: string;
+}
+
+/**
+ * Body for POST /api/seller/stores — G4 fix 2026-07-11.
+ * A merchant creates their first store. All fields except `store_name`
+ * are optional; the server stamps `owner_id`, `slug`, `trust_level`,
+ * and `since_year` automatically.
+ */
+export interface SellerStoreCreate {
+	store_name: string;
+	description?: string;
+	governorate?: string;
+	city?: string;
 }
 
 // ─── Admin ──────────────────────────────────────────────────

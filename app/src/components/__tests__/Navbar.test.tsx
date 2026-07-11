@@ -30,19 +30,16 @@ vi.mock('@/context/CartContext', () => ({
 // Mock the auth slice of AppContext for the user-menu link.
 const mockAuth = {
 	user: null as { name: string; email: string; role: string } | null,
-	token: null as string | null,
 };
 vi.mock('@/context/AppContext', () => ({
 	useApp: () => ({
-		state: { lang: 'en', user: mockAuth.user, token: mockAuth.token, toasts: [] },
+		state: { lang: 'en', user: mockAuth.user, toasts: [] },
 		dispatch: vi.fn(),
 		setUser: vi.fn(),
-		setToken: vi.fn(),
 	}),
 	useAuth: () => ({
 		user: mockAuth.user,
-		token: mockAuth.token,
-		isAuthenticated: Boolean(mockAuth.user && mockAuth.token),
+		isAuthenticated: Boolean(mockAuth.user),
 		login: vi.fn(),
 		logout: vi.fn(),
 		addToast: vi.fn(),
@@ -75,7 +72,6 @@ describe('Navbar', () => {
 	beforeEach(() => {
 		navigateMock.mockReset();
 		mockAuth.user = null;
-		mockAuth.token = null;
 	});
 	afterEach(() => cleanup());
 

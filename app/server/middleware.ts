@@ -410,6 +410,63 @@ export const notFoundHandler: RequestHandler = (req, res) => {
 import type { AuthRole, TokenPayload } from './lib/types.js';
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const AUTH_COOKIE_NAME = 'noufex_token';
+
+/**
+ * SECURITY: Set the auth token as an HttpOnly cookie.
+ * HttpOnly prevents JavaScript access (XSS protection).
+ * Secure ensures cookie is only sent over HTTPS.
+ * SameSite=Strict prevents CSRF attacks.
+ */
+export function setAuthCookie(res: Response, token: string): void {
+	const isProd = process.env.NODE_ENV === 'production';
+	const cookieOptions = [
+		`${AUTH_COOKIE_NAME}=${token}`,
+		'HttpOnly',
+		'SameSite=Strict',
+		`Path=/`,
+		`Max-Age=${TOKEN_TTL_SECONDS}`,
+	];
+	if (isProd) {
+		cookieOptions.push('Secure');
+	}
+	res.setHeader('Set-Cookie', cookieOptions.join('; '));
+}
+
+/**
+ * SECURITY: Clear the auth cookie on logout.
+ */
+export function clearAuthCookie(res: Response): void {
+	res.setHeader(
+		'Set-Cookie',
+		`${AUTH_COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`,
+	);
+}
+
+/**
+ * Extract auth token from cookie or Authorization header.
+ * Cookie takes precedence for security (HttpOnly).
+ */
+export function extractAuthToken(req: Request): string | null {
+	// Try cookie first (HttpOnly, more secure)
+	const cookieHeader = req.headers.cookie;
+	if (cookieHeader) {
+		const cookies = cookieHeader.split(';').reduce<Record<string, string>>((acc, cookie) => {
+			const [key, value] = cookie.trim().split('=');
+			if (key && value) acc[key] = value;
+			return acc;
+		}, {});
+		if (cookies[AUTH_COOKIE_NAME]) {
+			return cookies[AUTH_COOKIE_NAME];
+		}
+	}
+	// Fallback to Authorization header (for backward compatibility)
+	const header = req.header('authorization') || req.header('Authorization');
+	if (header && /^Bearer\s+/i.test(header)) {
+		return header.replace(/^Bearer\s+/i, '').trim();
+	}
+	return null;
+}
 
 function base64url(buf: Buffer): string {
 	return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -589,9 +646,8 @@ export function invalidateTokenVersionCache(userId: number): void {
  *  its version matches the DB AND the cached role is current,
  *  otherwise continues. */
 export const optionalAuth: RequestHandler = async (req, _res, next) => {
-	const header = req.header('authorization') || req.header('Authorization');
-	if (header && /^Bearer\s+/i.test(header)) {
-		const token = header.replace(/^Bearer\s+/i, '').trim();
+	const token = extractAuthToken(req);
+	if (token) {
 		const payload = verifyAuthToken(token);
 		if (payload) {
 			const auth = await fetchUserAuth(payload.sub);
@@ -613,8 +669,8 @@ export const optionalAuth: RequestHandler = async (req, _res, next) => {
 /** Required auth — 401 if no valid token, version mismatch, or
  *  cached role mismatch. */
 export const requireAuth: RequestHandler = async (req, res, next) => {
-	const header = req.header('authorization') || req.header('Authorization');
-	if (!header || !/^Bearer\s+/i.test(header)) {
+	const token = extractAuthToken(req);
+	if (!token) {
 		return res.status(401).json({
 			success: false,
 			error: 'Authentication required.',
@@ -622,7 +678,6 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
 			request_id: req.id,
 		});
 	}
-	const token = header.replace(/^Bearer\s+/i, '').trim();
 	const payload = verifyAuthToken(token);
 	if (!payload) {
 		return res.status(401).json({

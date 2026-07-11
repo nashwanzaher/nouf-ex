@@ -116,14 +116,15 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// `total` are intentionally NOT read from `v.data`; the server
 		// recomputes them below.
 		const productIds = items.map((i) => i.productId);
+		const placeholders = productIds.map((_, i) => `$${i + 1}`).join(',');
 		const productRows = (await db
 			.prepare(
 				`SELECT id, store_id, is_active, deleted_at, price, currency, stock, name_en, name_ar
 				   FROM products
-				  WHERE id = ANY(?)
+				  WHERE id IN (${placeholders})
 				  ORDER BY id`,
 			)
-			.all(productIds)) as Array<{
+			.all(...productIds)) as Array<{
 			id: number;
 			store_id: number;
 			is_active: boolean;
@@ -286,10 +287,13 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			);
 
 			const orderNumber = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
+			// NOTE: both `discount` and `discount_amount` columns store the same value.
+			// This is a schema redundancy (both columns exist in orders table).
+			// We set both to finalDiscount for backward compatibility.
 			const result = (await txDb
 				.prepare(
 					`INSERT INTO orders
-			        (customer_id, store_id, order_number, status, payment_method,
+				(customer_id, store_id, order_number, status, payment_method,
 			         payment_status, subtotal, shipping_cost, discount,
 			         coupon_code, discount_amount, total, currency,
 			         shipping_address, notes)

@@ -84,10 +84,11 @@ export default function AdminAuditLog() {
 		() => ({
 			action: actionFilter || undefined,
 			entity_type: entityFilter || undefined,
+			search: search.trim() || undefined,
 			limit: pageSize,
 			offset: (currentPage - 1) * pageSize,
 		}),
-		[actionFilter, entityFilter, currentPage],
+		[actionFilter, entityFilter, search, currentPage],
 	);
 
 	const { data: response, loading, error, refetch } = useAdminAuditLog(apiParams);
@@ -99,19 +100,9 @@ export default function AdminAuditLog() {
 	const totalCount = response?.total ?? 0;
 	const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-	// The server doesn't search by text yet, so we filter on the
-	// client. Cheap because pageSize is bounded (25 rows).
-	const filteredEntries = useMemo(() => {
-		if (!search.trim()) return entries;
-		const needle = search.toLowerCase();
-		return entries.filter(
-			(e) =>
-				e.action.toLowerCase().includes(needle) ||
-				e.entity_type.toLowerCase().includes(needle) ||
-				(e.entity_id ?? '').toLowerCase().includes(needle) ||
-				String(e.user_id ?? '').includes(needle),
-		);
-	}, [entries, search]);
+	// Search is now handled server-side via apiParams.search
+	// No client-side filtering needed
+	const filteredEntries = entries;
 
 	const formatTime = useCallback((iso: string) => {
 		try {

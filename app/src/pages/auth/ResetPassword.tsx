@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from './AuthLayout';
+import { resetPassword, ApiError } from '@/lib/api';
 
 function PasswordStrength({ password, t }: { password: string; t: TFunction }) {
 	let score = 0;
@@ -53,6 +54,13 @@ function PasswordStrength({ password, t }: { password: string; t: TFunction }) {
 
 export default function ResetPassword() {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+	// G7 fix 2026-07-11: read the token from the URL. In dev, the
+	// forgot-password page navigates straight here with the token in
+	// the query string; in production the user arrives via the email
+	// link with the same shape.
+	const tokenFromUrl = searchParams.get('token') ?? '';
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
@@ -78,11 +86,35 @@ export default function ResetPassword() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setErrors({});
+		if (!tokenFromUrl) {
+			setErrors({
+				form: t(
+					'authReset.missingToken',
+					'Reset link is invalid. Request a new one from the forgot-password page.',
+				),
+			});
+			return;
+		}
 		if (!validate()) return;
 		setIsLoading(true);
-		await new Promise((r) => setTimeout(r, 1500));
-		setIsLoading(false);
-		setSuccess(true);
+		try {
+			await resetPassword(tokenFromUrl, password);
+			setSuccess(true);
+		} catch (err) {
+			const message =
+				err instanceof ApiError
+					? err.message
+					: t('authReset.submitError', 'Could not reset the password. Try again.');
+			setErrors({ form: message });
+			// Invalid / expired token → bounce the user back to
+			// forgot-password so they can request a fresh link.
+			if (err instanceof ApiError && (err.code === 'PARTIAL_INVALID' || err.status === 400)) {
+				setTimeout(() => navigate('/auth/forgot-password', { replace: true }), 1500);
+			}
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	if (success) {

@@ -1,6 +1,6 @@
 # Branch Protection Rules — `main`
 
-> **D.3 in MASTER_PLAN.md** — required status checks for `main`.
+> Required status checks for `main`.
 > **Last reviewed:** 2026-06-28
 > **Standard:** [GitHub — About protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
 

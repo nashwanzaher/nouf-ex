@@ -244,9 +244,20 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 SET search_path = pg_catalog, public
 AS $$
+DECLARE
+    v_payment_status VARCHAR(20);
 BEGIN
     IF NEW.status = 'processed'
        AND COALESCE(OLD.status, '') IS DISTINCT FROM 'processed' THEN
+        -- SECURITY: verify the order was actually paid before processing refund
+        SELECT payment_status INTO v_payment_status
+          FROM orders WHERE id = NEW.order_id;
+
+        IF v_payment_status <> 'paid' THEN
+            RAISE EXCEPTION 'Cannot process refund for unpaid order (payment_status=%)', v_payment_status
+                USING ERRCODE = 'check_violation';
+        END IF;
+
         IF TG_OP = 'UPDATE' THEN
             NEW.resolved_at := now();
         END IF;

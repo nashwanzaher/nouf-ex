@@ -4,13 +4,13 @@
 >
 > **Before performing ANY action in this repository, the agent MUST consult and adhere to:**
 >
-> 📜 **[`docs/architecture/SKILLS_MINDMAP.md`](../docs/architecture/SKILLS_MINDMAP.md) — *Nouf-ex End-to-End Developer Skills Mind Map* (v1.0.0)**
+> 📜 **[`docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md`](../docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md) — *Conformance audit (OWASP API Top 10 + ISO/IEC 25010 + NIST SSDF)* (v1.0, 2026-07-11)**
 >
-> This mind map is the **canonical, mandatory reference** for all work on Nouf-ex. It defines:
-> - The 9 required skill domains (Frontend, Backend, Database, Security, Quality, DevOps, Documentation, AI Agents, Project Mgmt)
-> - The academic standards enforced (ISO/IEC/IEEE 12207, ISO/IEC 25010, IEEE 829, ISO/IEC/IEEE 29119, OWASP API Top 10 2023, WCAG 2.1 Level AA, Diátaxis, Keep a Changelog, Conventional Commits, SemVer)
-> - The skill-level matrix (Junior / Mid / Senior) with promotion criteria
-> - The cross-cutting concerns that span domains
+> This audit is the **canonical reference** for the security and quality conformance baseline adopted by [ADR-0007](../docs/planning/adr/0007-owasp-iso25010-nist-ssdf-baseline.md). It defines:
+> - The 30 gap findings (`G-1` … `G-30`) tracked in the Q3 roadmap
+> - The standards enforced (OWASP API Top 10 2023, OWASP ASVS 4.0.3, ISO/IEC 25010:2011, NIST SP 800-218 SSDF v1.1, NIST SP 800-53 Rev.5)
+> - The P0/P1/P2 SLO commitments (7/30/90 days) in [`docs/planning/REMEDIATION_ROADMAP_2026-Q3.md`](../docs/planning/REMEDIATION_ROADMAP_2026-Q3.md)
+> - The cross-cutting concerns that span auth, DB, frontend, and operations
 > - The self-audit checklist that must pass before any PR
 > - The compliance verification process
 >
@@ -1765,12 +1765,12 @@ Vite (Prod)     3000  (served by API)
 
 ---
 
-## 📜 MANDATORY MIND MAP COMPLIANCE (v1.0.0)
+## 📜 MANDATORY CONFORMANCE COMPLIANCE (v1.0, 2026-07-11)
 
 > **Authority:** This section is incorporated by reference from
-> [`docs/architecture/SKILLS_MINDMAP.md`](../docs/architecture/SKILLS_MINDMAP.md) (Nouf-ex End-to-End Developer Skills Mind Map, v1.0.0).
-> The mind map is the **canonical, mandatory reference** for all skills, standards, and compliance rules governing this repository.
-> **Adopted global standards:** ISO/IEC/IEEE 12207:2017, ISO/IEC 25010:2011, IEEE 829-2008, ISO/IEC/IEEE 29119, OWASP API Security Top 10 (2023), WCAG 2.1 Level AA, Diátaxis, Keep a Changelog 1.1.0, Conventional Commits 1.0.0, Semantic Versioning 2.0.0.
+> [`docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md`](../docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md) and [ADR-0007](../docs/planning/adr/0007-owasp-iso25010-nist-ssdf-baseline.md).
+> The audit + roadmap pair is the **canonical, mandatory reference** for all security and quality compliance rules governing this repository.
+> **Adopted standards:** OWASP API Security Top 10 (2023), OWASP ASVS 4.0.3, ISO/IEC 25010:2011, NIST SP 800-218 SSDF v1.1, NIST SP 800-53 Rev.5, IEEE 829-2008, ISO/IEC/IEEE 29119, WCAG 2.1 Level AA, Diátaxis, Keep a Changelog 1.1.0, Conventional Commits 1.0.0, Semantic Versioning 2.0.0.
 
 ### Mind Map Enforcement Rules (NON-NEGOTIABLE)
 
@@ -1815,7 +1815,7 @@ The agent MUST follow these rules for EVERY action on this repository:
 6. **Documentation Discipline** — every change to behavior must update:
    - `CHANGELOG.md` (Keep a Changelog format)
    - `docs/STRUCTURE.md` if structure changed
-   - `docs/MASTER_PLAN.md` if roadmap changed
+   - `docs/planning/REMEDIATION_ROADMAP_2026-Q3.md` if roadmap changed
    - Relevant `docs/architecture/*.md` if architecture changed
    - `docs/planning/adr/NNNN-*.md` for significant decisions
 
@@ -1830,7 +1830,7 @@ Any commit that violates the mind map's standards MUST be reverted or remediated
 ### Mind Map Self-Reference
 
 For the complete mind map (9 domains × 9 sub-domains × 4 levels = ~150 skill entries), refer to:
-- **File:** `docs/architecture/SKILLS_MINDMAP.md`
+- **File:** `docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md`
 - **Version:** 1.0.0 (2026-07-03)
 - **Owner:** @architect (with @reviewer quarterly audit)
 - **Update procedure:** PR with rationale → @architect + Senior review → CHANGELOG entry → propagate to this file
@@ -1859,7 +1859,7 @@ The mind map MUST be updated when:
 ### Acceptance Criteria for This Section
 
 This section is complete when:
-- [ ] The mind map file exists at `docs/architecture/SKILLS_MINDMAP.md`
+- [ ] The audit file exists at `docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md`
 - [ ] The mind map covers all 9 skill domains
 - [ ] The mind map cites at least 10 academic standards
 - [ ] The mind map is referenced from this file (copilot-instructions.md)
@@ -2110,7 +2110,7 @@ Testing:
   Coverage: 80%+ target
 ```
 
-### Competitive Position (from docs/planning/competitive-analysis.md)
+### Competitive Position (from the latest audit + risk register)
 
 ```yaml
 Current Readiness: 65%
@@ -2297,7 +2297,6 @@ Error Analysis:
 - [MCP Documentation](https://modelcontextprotocol.io)
 - [markdownlint Documentation](https://github.com/DavidAnson/markdownlint)
 - [Project Wiki](./docs)
-- [Master Plan](./docs/MASTER_PLAN.md)
-- [Competitive Analysis](./docs/planning/competitive-analysis.md)
-- [Architecture Overview](./docs/architecture/overview.md)
-- [Roadmap](./docs/planning/roadmap.md)
+- [Remediation roadmap](./docs/planning/REMEDIATION_ROADMAP_2026-Q3.md)
+- [Risk register](./docs/planning/risks.md)
+- [Latest audit](./docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md)

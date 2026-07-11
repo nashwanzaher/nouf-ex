@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AppContext';
-import { login, ApiError } from '@/lib/api';
+import { login, ApiError, verify2FA, getCurrentUser } from '@/lib/api';
 import styles from './Login.module.css';
 
 export default function Login() {
@@ -21,6 +21,15 @@ export default function Login() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	// G6 fix 2026-07-11: a server that requires 2FA returns a partial
+	// token instead of a full auth cookie. We capture it in local
+	// state and render an inline 2FA code field rather than dead-ending
+	// the user with a confusing 401.
+	const [twoFactorPending, setTwoFactorPending] = useState<
+		{ partial_token: string; user_id: number } | null
+	>(null);
+	const [twoFactorCode, setTwoFactorCode] = useState('');
 
 	const validate = () => {
 		const errs: Record<string, string> = {};
@@ -36,12 +45,40 @@ export default function Login() {
 		return Object.keys(errs).length === 0;
 	};
 
+	/**
+	 * Pick the right landing page based on the authenticated role
+	 * instead of always defaulting to `/customer`. An admin who logs
+	 * in lands on `/admin`, a merchant on `/seller`, a customer on
+	 * `/customer`. `from` still wins for explicit redirects.
+	 */
+	const landingForRole = (role: string): string => {
+		if (role === 'admin') return '/admin';
+		if (role === 'merchant') return '/seller';
+		return '/customer';
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
 		setIsLoading(true);
 		try {
 			const result = await login({ email: email.trim(), password });
+			if (result.kind === '2fa_required') {
+				// Don't write to AppContext yet — the cookie hasn't been
+				// set. Switch into the 2FA code-entry subform instead.
+				setTwoFactorPending({
+					partial_token: result.partial_token,
+					user_id: result.user_id,
+				});
+				addToast({
+					message: t(
+						'authLogin.twoFactorRequired',
+						'Enter the 6-digit code from your authenticator app.',
+					),
+					type: 'info',
+				});
+				return;
+			}
 			// Map the API `User` shape to the AppContext `User` shape (id is
 			// already a number on the server, and the context uses a string).
 			const authUser = {
@@ -52,20 +89,23 @@ export default function Login() {
 					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
-			// authLogin is async (P0-1: it syncs the local cart to the
-			// server). We await it so the cart-sync toast appears
-			// before the navigation completes, but we don't block the
-			// "signed in" toast — that's the more important signal.
-			await authLogin(authUser, result.token);
+			// Auth token is set by server as HttpOnly cookie automatically.
+			// Cart sync after login is owned by `CartProvider`, which reacts
+			// to the new user and pushes the anonymous local cart up. We
+			// don't need to coordinate the order of auth and toast here.
+			authLogin(authUser);
 			addToast({
 				message: t('authLogin.signInSuccess', 'Signed in successfully'),
 				type: 'success',
 			});
-			// Send the user to where they came from, or to the customer dashboard.
-			const from = (location.state as { from?: string } | null)?.from
-				?? new URLSearchParams(location.search).get('redirect')
-				?? '/customer';
-			navigate(from, { replace: true });
+			// G8 fix 2026-07-11: respect an explicit ?redirect= or
+			// location.state.from, but otherwise route to the dashboard
+			// that matches the user's role.
+			const explicit =
+				(location.state as { from?: string } | null)?.from ??
+				new URLSearchParams(location.search).get('redirect');
+			const destination = explicit ?? landingForRole(authUser.role);
+			navigate(destination, { replace: true });
 		} catch (err) {
 			const message =
 				err instanceof ApiError
@@ -73,6 +113,54 @@ export default function Login() {
 					: t('authLogin.signInError', 'Could not sign in. Please try again.');
 			setErrors({ form: message });
 			addToast({ message, type: 'error' });
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// G6 fix 2026-07-11: 2FA verification step. Renders below the
+	// password form once `twoFactorPending` is set.
+	const handleVerifyTwoFactor = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!twoFactorPending) return;
+		if (!/^\d{6}$/.test(twoFactorCode.trim())) {
+			setErrors({ form: t('authLogin.twoFactorInvalid', 'Enter the 6-digit code.') });
+			return;
+		}
+		setIsLoading(true);
+		try {
+			await verify2FA({
+				partial_token: twoFactorPending.partial_token,
+				code: twoFactorCode.trim(),
+			});
+			// Server sets the auth cookie via Set-Cookie on the 2FA
+			// verify response. We need to fetch the user shape from
+			// /me to populate AppContext (the verify response only
+			// echoes `{ token, partial_token }` — it has no user
+			// payload by design).
+			const userPayload = await getCurrentUser();
+			const authUser = {
+				id: String(userPayload.id),
+				name: userPayload.full_name,
+				email: userPayload.email,
+				role:
+					(userPayload.role as 'customer' | 'merchant' | 'admin' | 'guest') ||
+					'customer',
+				avatar: userPayload.avatar ?? undefined,
+			};
+			authLogin(authUser);
+			addToast({
+				message: t('authLogin.signInSuccess', 'Signed in successfully'),
+				type: 'success',
+			});
+			const destination = landingForRole(authUser.role);
+			navigate(destination, { replace: true });
+		} catch (err) {
+			const message =
+				err instanceof ApiError
+					? err.message
+					: t('authLogin.signInError', 'Could not sign in. Please try again.');
+			setErrors({ form: message });
 		} finally {
 			setIsLoading(false);
 		}
@@ -178,6 +266,60 @@ export default function Login() {
 										className={`text-sm p-3 rounded ${styles.formAlert}`}
 									>
 										{errors.form}
+									</div>
+								)}
+								{/* G6 fix 2026-07-11: inline 2FA subform. Shown when the
+								    server replied with `requires_2fa: true` from
+								    /api/auth/login. */}
+								{twoFactorPending && (
+									<div className="space-y-3 rounded-lg border border-aliOrange/40 bg-orange-50/40 p-4">
+										<div className="flex items-center justify-between">
+											<p className="text-sm font-semibold text-aliText">
+												{t('authLogin.twoFactorTitle', 'Two-factor code')}
+											</p>
+											<button
+												type="button"
+												className="text-xs text-aliTextMute hover:text-aliOrange"
+												onClick={() => {
+													setTwoFactorPending(null);
+													setTwoFactorCode('');
+													setErrors({});
+												}}
+											>
+												{t('common.cancel', 'Cancel')}
+											</button>
+										</div>
+										<p className="text-xs text-aliTextSec">
+											{t(
+												'authLogin.twoFactorHelp',
+												'Open your authenticator app and enter the 6-digit code.',
+											)}
+										</p>
+										<Input
+											inputMode="numeric"
+											autoComplete="one-time-code"
+											maxLength={6}
+											value={twoFactorCode}
+											onChange={(e) => {
+												setTwoFactorCode(e.target.value.replace(/\D/g, ''));
+												setErrors((p) => ({ ...p, form: '' }));
+											}}
+											placeholder="123456"
+											className={`h-12 text-center font-mono text-lg tracking-widest ${styles.input}`}
+											aria-label={t('authLogin.twoFactorTitle', 'Two-factor code')}
+										/>
+										<Button
+											type="button"
+											disabled={isLoading || twoFactorCode.length !== 6}
+											onClick={(e) => void handleVerifyTwoFactor(e)}
+											className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}
+										>
+											{isLoading ? (
+												<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+											) : (
+												t('authLogin.verify', 'Verify')
+											)}
+										</Button>
 									</div>
 								)}
 								{/* Account */}

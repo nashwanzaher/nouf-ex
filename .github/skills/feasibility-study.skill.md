@@ -34,7 +34,7 @@ verification:
 
 > 🚨 **NON-NEGOTIABLE** — every action this agent/skill takes must align with the
 > 9-domain End-to-End Developer Skills Mind Map:
-> [docs/architecture/SKILLS_MINDMAP.md](../../../docs/architecture/SKILLS_MINDMAP.md) (v1.0.0)
+> [docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md](../../../docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md) (v1.0)
 >
 > Adopted standards: ISO/IEC/IEEE 12207, ISO/IEC 25010, IEEE 829, ISO/IEC/IEEE 29119,
 > OWASP API Top 10 (2023), WCAG 2.1 AA, Diátaxis, Keep a Changelog, Conventional
@@ -483,7 +483,7 @@ Decision Framework:
 
 ## Nouf-ex Project Context
 
-Based on `docs/MASTER_PLAN.md`, `docs/planning/competitive-analysis.md`, and project documentation:
+Based on `docs/planning/REMEDIATION_ROADMAP_2026-Q3.md`, `docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md`, and project documentation:
 
 ```yaml
 Current State (2026-07-02):
@@ -519,7 +519,7 @@ Current State (2026-07-02):
     - 5 orphaned admin pages
     - 6 Phase K gap remediation tasks
 
-Competitive Position (from docs/planning/competitive-analysis.md):
+Competitive Position (assess against current audit + roadmap):
   - vs Alibaba/Amazon/Shopify: 65% ready (need XL investment)
   - vs Saleor/Medusa: can reach 85% in 12 months
   - Differentiators: Arabic i18n, COD integration, Yemen market

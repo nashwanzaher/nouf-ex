@@ -195,7 +195,6 @@ nav:
       - testing/standards/ISO-29119.md
       - testing/standards/ISTQB-CTFL.md
       - testing/standards/google-style.md
-      - testing/PHASE_TEST_TASKS.md
     - Test design specs:
       - "phase00 · health & auth": testing/phases/PHASE_00_HEALTH_AUTH.md
       - "phase01 · profile & addresses": testing/phases/PHASE_01_PROFILE_ADDRESSES.md
@@ -220,12 +219,21 @@ nav:
       - testing/templates/PS_TESTHELPERS_REFERENCE.md
     - Project map:
       - STRUCTURE.md
-      - MASTER_PLAN.md
 
   - Planning:
-    - Roadmap: planning/roadmap.md
-    - Competitive analysis: planning/competitive-analysis.md
-    - Risk register: planning/risks.md
+    - "Risk register": planning/risks.md
+    - "Remediation roadmap — 2026 Q3": planning/REMEDIATION_ROADMAP_2026-Q3.md
+    - Conformance audits:
+      - "2026-07-11 · OWASP / ISO 25010 / NIST SSDF": audits/2026-07-11-owasp-iso25010-nist-ssdf.md
+    - Architecture decisions:
+      - planning/adr/README.md
+      - planning/adr/0001-mkdocs-and-release-please.md
+      - planning/adr/0002-vitest-axe-a11y.md
+      - planning/adr/0003-ssot-production-monolith.md
+      - planning/adr/0004-production-hardening-0024.md
+      - planning/adr/0005-tsconfig-project-references.md
+      - planning/adr/0006-httponly-cookie-auth.md
+      - planning/adr/0007-owasp-iso25010-nist-ssdf-baseline.md
 
   - About:
     - Changelog: ../CHANGELOG.md

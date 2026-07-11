@@ -1,176 +1,97 @@
 # Nouf-ex
 
-> B2B/B2C e-commerce platform targeting Yemen and the Middle East, modelled on
-> Alibaba/Taobao. React + Vite front-end, Express + PostgreSQL back-end.
+> B2B/B2C e-commerce marketplace targeting Yemen and the Middle East, modelled on Alibaba/Taobao. React + Vite front-end, Express + PostgreSQL back-end.
 
-[![Docs status](https://img.shields.io/badge/docs-passing-teal)](docs/BUILD.md)
-[![CHANGELOG](https://img.shields.io/badge/keep--a--changelog-1.1.0-blue)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Diátaxis](https://img.shields.io/badge/Diátaxis-compliant-purple)](https://diataxis.fr/)
-[![Last commit](https://img.shields.io/github/last-commit/nashwanzaher/nouf-ex/main)](../../commits/main)
+[![Changelog](https://img.shields.io/badge/keep--a--changelog-1.1.0-blue)](CHANGELOG.md)
+[![Code of Conduct](https://img.shields.io/badge/contributor--covenant-3.0-purple)](.github/CODE_OF_CONDUCT.md)
+[![Conventional Commits](https://img.shields.io/badge/conventional--commits-1.0.0-blue)](https://www.conventionalcommits.org/)
+[![Diátaxis](https://img.shields.io/badge/Di%C3%A1taxis-compliant-purple)](https://diataxis.fr/)
 
-**Live docs:** <https://nashwanzaher.github.io/nouf-ex/> (built from `docs/` by MkDocs, see [`docs/BUILD.md`](docs/BUILD.md))
-· [Local index](docs/README.md) · [Getting started](docs/development/getting-started.md) ·
-[Architecture](docs/architecture/overview.md) · [Roadmap](docs/planning/roadmap.md)
+**[Full documentation →](docs/README.md)** · [Contributing →](.github/CONTRIBUTING.md) · [Security →](.github/SECURITY.md) · [Changelog →](CHANGELOG.md)
 
 ---
 
-## What's in this repo
+## What it is
 
-```
-.
-├── app/                          # Single npm package: frontend + backend
-│   ├── src/                      # React 19 + Vite 7 frontend
-│   │   ├── components/           # Layout, Navbar, Footer, … + ui/ (shadcn)
-│   │   ├── context/              # AppContext (i18n + auth), CartContext
-│   │   ├── hooks/                # useApi, use-mobile
-│   │   ├── i18n/                 # locales/ar|en|zh.json + i18next setup
-│   │   ├── lib/                  # api.ts (client), utils.ts
-│   │   └── pages/                # Home, Search, ProductDetail, StorePage, …
-│   │       ├── admin/  auth/  customer/  seller/  Home/
-│   ├── server/                   # Express 5 API (extracted from app/)
-│   │   ├── index.ts              # Express entrypoint
-│   │   ├── db/pg-wrapper.cts     # async pg.Pool wrapper
-│   │   └── tests/                # api-server.test.ts, schema.test.ts
-│   ├── tests/                    # Frontend setup + MSW mocks
-│   ├── public/                   # Static assets + JSON snapshots
-│   └── package.json, vite/vitest configs, eslint, tsconfig, …
-│
-├── database/                     # PostgreSQL 17 schema + seed (host-side)
-│   ├── README.md
-│   ├── schema.sql                # 16 base tables
-│   ├── schema-extra.sql          # 9 extra tables (payments, coupons, refunds, …)
-│   ├── views.sql                 # 4 read-only views (security_invoker)
-│   ├── functions.sql             # PL/pgSQL trigger functions + cleanup helpers
-│   ├── triggers.sql              # business-logic triggers (32 total in DB)
-│   ├── roles.sql                 # 4 PostgreSQL roles + GRANTs (postgres, noufex_app, noufex_owner, noufex_readonly)
-│   ├── seed.sql                  # Idempotent demo data (real scrypt hashes, gated by `noufex.allow_seed`)
-│   └── migrations/               # incremental schema changes (0001→0024; 25 applied versions)
-│
-├── scripts/                      # Project-level helpers
-│   ├── README.md
-│   ├── db-setup.cjs              # Applies the 8-file pipeline + migrations
-│   ├── gen-seed-hashes.cjs       # Generates scrypt hashes for seed users
-│   └── test-summary.cjs          # Clean vitest summary
-│
-├── docker/
-│   └── entrypoint.sh             # Runs the API inside the container
-│
-├── docs/                         # All documentation (start with docs/README.md)
-│
-├── Dockerfile                    # API image (Postgres is external)
-├── docker-compose.yml            # Single service: Nouf-ex
-├── .env.example                  # DATABASE_URL template (uses CHANGE_ME placeholders)
-└── .vscode/                      # Editor config (extensions, settings, tasks, launch)
-```
+A single Node/Express API talks to one external PostgreSQL database, and a React/Vite SPA talks to that API. The whole thing runs as one Docker image when deployed.
 
-## Stack
+| Layer | Tech |
+|---|---|
+| Database | PostgreSQL 17 (external, database `noufex_db`) — 32 tables, 32 triggers |
+| API | Node 20 + Express 5 + `pg`, scrypt, HMAC-SHA256, Zod |
+| Frontend | React 19 + React Router 7 + Vite 7 + Tailwind 3 + shadcn/ui |
+| i18n | i18next — Arabic (RTL default) / English / Chinese |
+| Auth | HttpOnly-cookie session + scrypt + optional TOTP 2FA |
+| Container | `node:20-alpine` + tini PID 1 |
 
-| Layer        | Tech                                                                                |
-| ------------ | ----------------------------------------------------------------------------------- |
-| Database     | PostgreSQL 17 (external, database `noufex_db`) — 32 tables, 32 triggers, 4 views  |
-| API          | Node 20 + Express 5 + `pg`, scrypt hashing, zod validation, DB-backed rate limiting |
-| Frontend     | React 19 + React Router 7 + Vite 7 + Tailwind 3 + shadcn/ui                         |
-| i18n         | i18next — Arabic (default, RTL) / English / Chinese                                 |
-| Tests        | Vitest 4 + supertest + axe-core + MSW; `pg` is mocked globally                      |
-| Container    | `node:20-alpine` + tini PID 1                                                       |
-| Migrations   | 25 applied (0001 baseline → 0024_production_hardening; idempotent, all use IF NOT EXISTS/OR REPLACE)|
-
-## Quick start (4 commands)
+## Quick start
 
 ```sh
-cp .env.example .env             # then fill in your DB password
+cp .env.example .env             # fill in your DB password
 cd app && npm install
-npm run db:setup                 # applies database/*.sql to the external Postgres
-docker compose up -d --build     # API image; connects via host.docker.internal
+npm run db:setup                 # applies database/*.sql
+docker compose up -d --build     # API image
 ```
 
 → open `http://localhost:3000`.
 
 Without Docker:
-
 ```sh
-cp .env.example .env
-cd app && npm install && npm run db:setup
-
-# Terminal 1
-
-npm run api                      # Express on :3000
-
-# Terminal 2
-
-npm run dev                      # Vite on :5173
+cd app && npm run api            # Express on :3000
+cd app && npm run dev            # Vite on :5173 (separate terminal)
 ```
 
-Full instructions in [docs/getting-started.md](docs/getting-started.md).
+Full guide: [docs/README.md → Getting started](docs/README.md#1-tutorials-learning-oriented).
 
 ## Documentation map
 
-> **The full rendered site lives at
-> <https://nashwanzaher.github.io/nouf-ex/>.**
-> Source files live in `docs/` and are organised by [Diátaxis](https://diataxis.fr/).
-> The site is rebuilt on every push to `main` (see
-> [`.github/workflows/docs.yml`](.github/workflows/docs.yml)).
-
-| I want to …                              | Read                                                            |
-| ---------------------------------------- | --------------------------------------------------------------- |
-| Understand the project structure         | [docs/STRUCTURE.md](docs/STRUCTURE.md)                          |
-| Get the project running                  | [docs/development/getting-started.md](docs/development/getting-started.md) |
-| Run an order end-to-end (tutorial)       | [docs/tutorials/run-an-order-end-to-end.md](docs/tutorials/run-an-order-end-to-end.md) |
-| Understand the architecture              | [docs/architecture/overview.md](docs/architecture/overview.md) |
-| Look up an endpoint                      | [docs/architecture/api.md](docs/architecture/api.md)            |
-| Set up or update the database            | [docs/architecture/database.md](docs/architecture/database.md)  |
-| Read the threat model / OWASP coverage   | [docs/architecture/security.md](docs/architecture/security.md)  |
-| Work with Docker                         | [docs/operations/docker.md](docs/operations/docker.md)          |
-| Deploy / monitor / back up               | [docs/operations/](docs/operations/)                            |
-| Write or run tests                       | [docs/testing/README.md](docs/testing/README.md)                |
-| Day-to-day dev workflow                  | [docs/development/workflow.md](docs/development/workflow.md)    |
-| Code style / i18n / git workflow         | [docs/development/conventions.md](docs/development/conventions.md) |
-| Build the docs site                      | [docs/BUILD.md](docs/BUILD.md)                                   |
-| See the canonical execution plan         | [docs/planning/MIGRATION_EXECUTION_PLAN.md](docs/planning/MIGRATION_EXECUTION_PLAN.md) |
-| Read the risk register / ADRs            | [docs/planning/risks.md](docs/planning/risks.md) · [docs/planning/adr/](docs/planning/adr/) |
-| Browse historical audits / research     | Git history on GitHub (see [docs/README.md §History](docs/README.md#-history)) |
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). TL;DR: one concern per PR,
-Conventional Commits, link to a MASTER_PLAN ID, run `npm run lint` and
-`npm test` from `app/` before pushing.
-
-## Standards
-
-This project aligns with:
-
-- **[IEEE 829-2008](https://standards.ieee.org/ieee/829/4987/)** — test
-  documentation structure
-- **[ISO/IEC/IEEE 29119](https://www.iso.org/standard/81291.html)** —
-  software testing standards
-- **[ISTQB CTFL v4.0](https://www.istqb.org/)** — test techniques
-- **[Diátaxis](https://diataxis.fr/)** — documentation framework
-- **[Keep a Changelog](https://keepachangelog.com/)** — CHANGELOG format
-- **[Semantic Versioning](https://semver.org/)** — version numbers
-- **[Conventional Commits](https://www.conventionalcommits.org/)** —
-  commit messages
-- **[Microsoft Docs](https://learn.microsoft.com/en-us/azure/devops/pipelines/)** —
-  pipeline + architecture guidance
-
-See [ADR-0001](docs/planning/adr/0001-mkdocs-and-release-please.md) for
-the rationale behind the MkDocs + release-please stack.
+| I want to… | Read |
+|---|---|
+| Get the project running | [docs/README.md §1](docs/README.md#1-tutorials-learning-oriented) |
+| Learn the architecture | [docs/README.md §3 — Reference](docs/README.md#3-reference-information-oriented) |
+| Deploy to production | [docs/README.md §2.4 — Deployment](docs/README.md#24-deployment) |
+| Find an API endpoint | [docs/README.md §3.1 — API](docs/README.md#31-api-reference) |
+| Read the security model | [docs/README.md §3.3 — Security](docs/README.md#33-security-model) |
+| Understand a design decision | [docs/README.md §4 — Architecture decisions](docs/README.md#4-explanation-understanding-oriented) |
+| See the active backlog | [docs/README.md §5.2 — Roadmap](docs/README.md#52-roadmap) |
+| Report a vulnerability | [.github/SECURITY.md](.github/SECURITY.md) |
+| Contribute code | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) |
 
 ## License
 
-[MIT](LICENSE) — see [`LICENSE`](LICENSE) for the full text and the
-academic-citation block. Third-party notices are listed inline in the
-license file (React, Vite, Express, PostgreSQL, Vitest, Material for
-MkDocs, Tailwind).
+[MIT](LICENSE) — see the file for the full text.
 
-## Contributing & community
+---
 
-- [Contributing guide](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Security policy](SECURITY.md)
-- [Changelog](CHANGELOG.md) — Keep-a-Changelog v1.1.0, automated by
-  [`release-please`](release-please-config.json)
-- [Master execution plan](docs/MASTER_PLAN.md)
-- [Architecture decision records](docs/planning/adr/README.md) — every
-  significant decision traced back to its context, options, and consequences
+<!-- Schema.org structured data for search-engine crawlers -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Nouf-ex",
+  "alternateName": "noufex",
+  "description": "B2B/B2C e-commerce marketplace platform for Yemen and the Middle East. React 19 + Vite 7 + Express 5 + PostgreSQL 17.",
+  "url": "https://github.com/nashwanzaher/nouf-ex",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "E-commerce Marketplace",
+  "operatingSystem": "Cross-platform (Node.js 20.18+, PostgreSQL 17)",
+  "softwareRequirements": "Node.js >= 20.18.0, npm >= 10.0.0, PostgreSQL 17",
+  "programmingLanguage": ["TypeScript", "SQL", "PL/pgSQL"],
+  "runtimePlatform": ["Node.js", "Vite", "Express"],
+  "license": "https://github.com/nashwanzaher/nouf-ex/blob/main/LICENSE",
+  "codeRepository": "https://github.com/nashwanzaher/nouf-ex",
+  "issueTracker": "https://github.com/nashwanzaher/nouf-ex/issues",
+  "documentation": "https://github.com/nashwanzaher/nouf-ex/blob/main/docs/README.md",
+  "datePublished": "2026-06-01",
+  "dateModified": "2026-07-11",
+  "author": {"@type": "Organization", "name": "Nouf-ex Team", "url": "https://github.com/nashwanzaher/nouf-ex"},
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
+  "keywords": "ecommerce, marketplace, b2b, b2c, yemen, middle-east, react, express, postgresql, i18n, arabic, rtl",
+  "inLanguage": ["ar", "en", "zh"]
+}
+</script>
+
+<meta name="description" content="Nouf-ex — open-source B2B/B2C e-commerce marketplace reference implementation for Yemen and the Middle East. React 19 + Vite 7 + Express 5 + PostgreSQL 17.">
+<meta name="keywords" content="ecommerce, marketplace, b2b, b2c, yemen, middle-east, react, vite, express, postgresql, typescript, i18n, arabic, rtl">
+<meta name="robots" content="index, follow">

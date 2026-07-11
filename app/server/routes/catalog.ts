@@ -215,15 +215,19 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 			.get(product.store_id as number)) as Record<string, unknown> | undefined;
 
 		// Get reviews (only visible — hidden/spam reviews are not exposed)
+		// Paginated to avoid unbounded responses for products with many reviews.
+		const reviewLimit = Math.max(1, Math.min(50, Number(req.query.reviewLimit) || 20));
+		const reviewOffset = Math.max(0, Number(req.query.reviewOffset) || 0);
 		const reviews = (await db
 			.prepare(
 				`SELECT r.*, u.full_name as customer_name, u.avatar as customer_avatar
          FROM reviews r
          LEFT JOIN users u ON r.customer_id = u.id
          WHERE r.product_id = ? AND r.is_visible = TRUE
-         ORDER BY r.created_at DESC`,
+         ORDER BY r.created_at DESC
+         LIMIT ? OFFSET ?`,
 			)
-			.all(Number(id))) as Record<string, unknown>[];
+			.all(Number(id), reviewLimit, reviewOffset)) as Record<string, unknown>[];
 
 		// Get images
 		const images = await getProductImages(Number(id));

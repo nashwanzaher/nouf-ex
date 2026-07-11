@@ -1,70 +1,52 @@
 ---
-name: Feature request
-about: Suggest a new feature for the Nouf-ex platform
-title: "[FEAT] "
-labels: enhancement, needs-triage
-assignees: ''
+name: ✨ Feature request
+about: Propose a new feature or enhancement
+title: "[feat] "
+labels: enhancement
+assignees: ""
 ---
 
-## Summary
+## Problem statement
 
-<!-- One-sentence summary of the feature. -->
+What problem are you trying to solve? **Why** does it matter?
 
-## Problem / motivation
-
-<!-- What user pain-point does this solve? Why is it worth doing? -->
+> A good problem statement focuses on the user's need, not the proposed solution.
 
 ## Proposed solution
 
-<!-- Describe the desired behavior in concrete terms. -->
-
-### User stories
-
-- As a **<role>**, I want to **<action>**, so that **<benefit>**.
-
-### Acceptance criteria
-
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
+A clear and concise description of what you want to happen.
 
 ## Alternatives considered
 
-- **Option A:** <description> — pros / cons
-- **Option B:** <description> — pros / cons
-- **Status quo:** do nothing — pros / cons
+What other approaches did you consider, and why is your proposal better?
 
-## Out of scope
+## Acceptance criteria
 
-<!-- What is NOT part of this request? -->
+- [ ] User-visible behaviour 1
+- [ ] User-visible behaviour 2
+- [ ] Edge case X is handled
+- [ ] Documentation updated in [docs/README.md](../docs/README.md)
 
-## Affected components
+## Roadmap link
 
-- [ ] Frontend (`app/src/`)
-- [ ] API (`app/server/`)
-- [ ] Database schema (`database/`)
-- [ ] mcp-server (`mcp-server/`)
-- [ ] CI / deployment (`.github/`, `Dockerfile`)
-- [ ] Documentation (`docs/`)
+If this maps to an existing backlog item: **G-_** (see [docs/README.md §5.2](../docs/README.md#52-roadmap))
 
-## Related
+If it doesn't, say so — we'll triage.
 
-<!-- Link to related issues, PHASE specs, or docs. -->
+## Effort estimate
 
-- Closes roadmap item: `docs/planning/roadmap.md` (P0–P3)
-- Related: `docs/testing/PHASE_TEST_TASKS.md` (if it intersects a test plan)
+Your guess is fine:
 
-## Willingness to contribute
+- [ ] XS (< 1 day)
+- [ ] S (1–3 days)
+- [ ] M (3–7 days)
+- [ ] L (1–2 weeks)
+- [ ] XL (> 2 weeks)
 
-- [ ] I can implement this myself (open a PR)
-- [ ] I can write the spec / design doc
-- [ ] I can test the change
-- [ ] I can NOT contribute but I can sponsor ($$$ / GitHub Sponsors)
-- [ ] I just want to track the idea
+## Impact
 
-## Priority
+Who benefits? How many users / merchants / orders per day?
 
-- [ ] P0 — critical, blocking
-- [ ] P1 — high, this quarter
-- [ ] P2 — medium, this half
-- [ ] P3 — low, someday
+## Additional context
+
+Mockups, competitor references, related issues, prior art — anything that helps review.

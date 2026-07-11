@@ -5,6 +5,10 @@
  * by every domain-specific file (products.ts, orders.ts, etc.). Do NOT
  * import from this file directly — import from `./index.ts` (the public
  * surface) or from the domain file you need.
+ *
+ * SECURITY: Auth token is stored in HttpOnly cookie (set by server),
+ * not in localStorage. This prevents XSS attacks from stealing tokens.
+ * We send `credentials: 'include'` to automatically include the cookie.
  */
 
 const API_BASE: string =
@@ -54,18 +58,8 @@ export class ApiError extends Error {
 	}
 }
 
-function readAuthToken(): string | null {
-	if (typeof window === 'undefined') return null;
-	try {
-		return window.localStorage.getItem('noufex_token');
-	} catch {
-		return null;
-	}
-}
-
 export async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
 	const url = `${API_BASE}${endpoint}`;
-	const token = readAuthToken();
 	// Set up a default timeout so the UI doesn't hang forever on a
 	// stuck connection. If the caller already passed a signal, attach
 	// both so either timeout can cancel the request.
@@ -78,14 +72,15 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 		else callerSignal.addEventListener('abort', onCallerAbort);
 	}
 	// Destructure headers out of options before spreading to prevent
-	// caller headers from silently overriding Content-Type and Authorization.
+	// caller headers from silently overriding Content-Type.
 	const { headers: callerHeaders, ...restOptions } = options || {};
 	// Filter out sensitive headers from caller to prevent override attacks
 	const safeCallerHeaders: Record<string, string> = {};
 	if (callerHeaders) {
 		for (const [key, value] of Object.entries(callerHeaders)) {
 			const lk = key.toLowerCase();
-			if (lk !== 'authorization' && lk !== 'content-type' && value != null) {
+			// Allow Authorization header for backward compatibility (Bearer token)
+			if (lk !== 'content-type' && value != null) {
 				safeCallerHeaders[key] = String(value);
 			}
 		}
@@ -93,9 +88,10 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 	const config: RequestInit = {
 		headers: {
 			'Content-Type': 'application/json',
-			...(token ? { Authorization: `Bearer ${token}` } : {}),
 			...safeCallerHeaders,
 		},
+		// SECURITY: Include HttpOnly auth cookie automatically
+		credentials: 'include',
 		...restOptions,
 		signal: controller.signal,
 	};
@@ -110,6 +106,30 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 		// Clean up the caller signal listener to avoid leaking it on
 		// long-lived components that issue many requests.
 		if (callerSignal) callerSignal.removeEventListener('abort', onCallerAbort);
+	}
+
+	// Check for non-2xx responses first (e.g. 502 from reverse proxy)
+	if (!response.ok) {
+		// Try to parse error response from server
+		let errorData: ApiResponse<T> | null = null;
+		try {
+			errorData = (await response.json()) as ApiResponse<T>;
+		} catch {
+			// No JSON body (e.g. reverse proxy HTML error)
+		}
+		if (errorData && !errorData.success) {
+			throw new ApiError(
+				errorData.error || 'Request failed',
+				response.status,
+				errorData.code,
+				errorData.request_id,
+				errorData.details,
+			);
+		}
+		throw new ApiError(
+			`Server returned ${response.status} ${response.statusText}`,
+			response.status,
+		);
 	}
 
 	// Handle non-JSON responses (e.g. 502 from reverse proxy returning HTML)

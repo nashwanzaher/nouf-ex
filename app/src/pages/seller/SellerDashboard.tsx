@@ -85,19 +85,30 @@ export default function SellerDashboard() {
 				</div>
 			)}
 
-			{/* No store state */}
+			{/* No store state — G10 fix 2026-07-11: turn the empty
+			    state into a CTA that drives the merchant to the
+			    /seller/onboarding wizard. The old copy ("Contact an
+			    admin…") was the symptom of the missing onboarding
+			    route — now that the wizard exists, surface it. */}
 			{!isLoading && dashboard.data === null && dashboard.error == null && (
 				<div className={styles.emptyState}>
 					<Package size={48} className="text-aliTextMute" />
 					<h2 className="text-lg font-bold mt-4">
 						{t('seller.dashboard.noStore', 'You do not have a store yet')}
 					</h2>
-					<p className="text-aliTextMute text-sm mt-1">
+					<p className="text-aliTextMute text-sm mt-1 mb-4">
 						{t(
 							'seller.dashboard.noStoreHint',
-							'Contact an admin to set up your store, or apply for merchant status.',
+							'Open your store in under a minute — just a name and a location.',
 						)}
 					</p>
+					<Link
+						to="/seller/onboarding"
+						className={cn(styles.btn, styles.btnPrimary, 'inline-flex items-center gap-2')}
+					>
+						<Plus size={16} />
+						{t('seller.dashboard.noStoreCta', 'Open my store')}
+					</Link>
 				</div>
 			)}
 

@@ -645,7 +645,7 @@ export default function SellerOrders() {
 		});
 	}, [ordersResp]);
 
-	const dataOrders = apiOrders.length > 0 ? apiOrders : mockOrders;
+	const dataOrders = apiOrders;
 
 	const filtered = dataOrders.filter((o) => {
 		const matchesSearch =
@@ -962,12 +962,26 @@ export default function SellerOrders() {
 						order={selectedOrder}
 						onClose={() => setSelectedOrder(null)}
 						onChangeStatus={async (status) => {
-							// Update the underlying order object so the drawer
-							// reflects the new status, then persist via API.
-							setSelectedOrder((prev) =>
-								prev ? { ...prev, status, statusLabel: status } : prev,
-							);
-							await advanceStatus({ ...selectedOrder, status });
+							// Use the status selected by the user directly
+							const orderNum = String((selectedOrder.id ?? '').replace(/^#/, ''));
+							try {
+								await updateSellerOrderStatus(Number(orderNum) || 0, { status });
+								addToast({
+									type: 'success',
+									message: t('seller.orderUpdated', 'تم تحديث الطلب {{orderNum}}', { orderNum }),
+								});
+								// Update local state to reflect the change immediately
+								setSelectedOrder((prev) =>
+									prev ? { ...prev, status, statusLabel: status } : prev,
+								);
+								await refetch();
+							} catch (err) {
+								const msg = err instanceof Error ? err.message : String(err);
+								addToast({
+									type: 'error',
+									message: t('seller.orderUpdateFailed', 'فشل تحديث الطلب: {{msg}}', { msg }),
+								});
+							}
 						}}
 						detailLoading={detailLoading}
 						detailError={detailError}

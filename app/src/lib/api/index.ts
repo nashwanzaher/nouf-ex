@@ -82,6 +82,7 @@ export type {
 	SellerPayout,
 	SellerProductCreate,
 	SellerStore,
+	SellerStoreCreate,
 	SellerStoreUpdate,
 	ShippingMethod,
 	Store,
@@ -96,6 +97,9 @@ export type {
 	User,
 	WishlistItem,
 } from './types';
+
+// ─── Auth body / result types (G6/G7 fix 2026-07-11) ───────
+export type { AuthLoginResult, ForgotPasswordResult } from './auth';
 
 // ─── Body types ─────────────────────────────────────────────
 export type { CreateAddressBody } from './addresses';
@@ -143,10 +147,12 @@ export {
 	changePassword,
 	disable2FA,
 	enable2FA,
+	forgotPassword,
 	getCurrentUser,
 	login,
 	regenerateBackupCodes,
 	register,
+	resetPassword,
 	setup2FA,
 	updateProfile,
 	verify2FA,
@@ -191,6 +197,7 @@ export { getHomeStats, getSystemHealth } from './system';
 export {
 	addSellerProductImage,
 	createSellerProduct,
+	createSellerStore,
 	deleteSellerProduct,
 	getSellerAnalytics,
 	getSellerDashboard,

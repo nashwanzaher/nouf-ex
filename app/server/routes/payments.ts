@@ -190,6 +190,12 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 			return sendError(res, 'Forbidden', 403);
 		}
 
+		// SECURITY: verify amount matches order total to prevent underpayment
+		const orderTotal = Number(order.total);
+		if (amount < orderTotal * 0.99) {
+			return sendError(res, `Payment amount (${amount}) is less than order total (${orderTotal})`, 400, 'AMOUNT_MISMATCH');
+		}
+
 		const existing = (await db
 			.prepare('SELECT id, status FROM payments WHERE order_id = ? AND method = ?')
 			.get(order_id, method)) as { id: number; status: string } | undefined;

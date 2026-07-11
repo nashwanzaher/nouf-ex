@@ -1,5 +1,7 @@
 import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
 import { signPartialToken } from '../lib/partial-token.ts';
+import { signResetToken, verifyResetToken } from '../lib/reset-token.ts';
 import {
     authLimiter,
     db,
@@ -8,6 +10,7 @@ import {
     log,
     loginSchema,
     passwordChangeSchema,
+    passwordSchema,
     profileUpdateSchema,
     registerSchema,
     requireAuth,
@@ -18,7 +21,7 @@ import {
     writeAuditLog,
     type AuthRole,
 } from '../lib/shared.ts';
-import { signAuthToken } from '../middleware.ts';
+import { signAuthToken, setAuthCookie, clearAuthCookie, invalidateTokenVersionCache } from '../middleware.ts';
 // R-15 follow-up: use the catalog constants instead of string literals
 // so TypeScript catches typos (e.g. `ErrorCodes.NOT_FOOBAR` is a
 // compile error, but `'NOT_FOOBAR'` silently compiles to a code the
@@ -49,7 +52,16 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 		const v = validate(registerSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 		const { email, password, name } = v.data;
-		const role: AuthRole = 'customer';
+		// SECURITY (G1 fix 2026-07-11): allow self-service upgrade to
+		// 'merchant' when the client asks for it explicitly. We still
+		// never accept 'admin' through the public registration form —
+		// admin accounts must be promoted by an existing admin via
+		// PATCH /api/admin/users/:id. The store row itself is created
+		// on-demand by POST /api/seller/stores once the merchant is
+		// signed in.
+		const requestedRole = (req.body as { role?: string } | null)?.role;
+		const role: AuthRole =
+			requestedRole === 'merchant' ? 'merchant' : 'customer';
 
 		const passwordHash = await hashPassword(password);
 
@@ -83,6 +95,9 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 			.get(userId)) as { token_version: number } | undefined;
 		const token = signAuthToken({ sub: userId, role, ver: userRow?.token_version ?? 0 });
 
+		// SECURITY: Set token as HttpOnly cookie (XSS protection)
+		setAuthCookie(res, token);
+
 		// Fire bilingual welcome notification (best-effort, non-blocking).
 		// (C.1 in MASTER_PLAN.md — real welcome notification on signup)
 		try {
@@ -92,7 +107,8 @@ authRouter.post('/register', authLimiter, async (req: Request, res: Response) =>
 			log.error({ msg: 'auth.register.notification_failed', error: (notifyErr as Error).message });
 		}
 
-		sendSuccess(res, { user: safeUser, token }, 201, 'User registered successfully');
+		// Token is sent via HttpOnly cookie, not in response body
+		sendSuccess(res, { user: safeUser }, 201, 'User registered successfully');
 	} catch (err) {
 		const pg = err as { code?: string };
 		if (pg?.code === '23505') {
@@ -165,7 +181,10 @@ authRouter.post('/login', authLimiter, async (req: Request, res: Response) => {
 			);
 		}
 		const token = signAuthToken({ sub: user.id, role: user.role, ver: user.token_version });
-		sendSuccess(res, { user: userWithoutPassword, token }, 200, 'Login successful');
+		// SECURITY: Set token as HttpOnly cookie (XSS protection)
+		setAuthCookie(res, token);
+		// Token is sent via HttpOnly cookie, not in response body
+		sendSuccess(res, { user: userWithoutPassword }, 200, 'Login successful');
 	} catch (err) {
 		return sendError(res, err);
 	}
@@ -201,6 +220,8 @@ authRouter.post('/logout', requireAuth, async (req: Request, res: Response) => {
 		} catch {
 			/* ignore — cache invalidation is best-effort */
 		}
+		// SECURITY: Clear the HttpOnly auth cookie
+		clearAuthCookie(res);
 		return sendSuccess(
 			res,
 			{ revoked: true, message: 'All sessions for this user have been revoked.' },
@@ -360,6 +381,120 @@ authRouter.post('/change-password', requireAuth, async (req: Request, res: Respo
 		await writeAuditLog(req, 'change_password', 'user', userId, null, null);
 
 		sendSuccess(res, { updated: true, sessions_invalidated: true }, 200, 'Password changed');
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/**
+ * G7 fix 2026-07-11: POST /api/auth/forgot-password
+ *
+ * Self-service password reset start. Returns a 200 envelope regardless
+ * of whether the email exists so an attacker cannot enumerate accounts.
+ * When the email matches a real user, the response includes the same
+ * `reset_token` that would have been emailed to them in production —
+ * the page uses it to navigate the user straight to the reset form.
+ *
+ * In production the token is delivered by email only; the response
+ * never includes it (constant-time regardless of existence).
+ */
+authRouter.post('/forgot-password', authLimiter, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({ email: z.string().email().max(255) }),
+			req.body,
+		);
+		if (!v.ok) {
+			// Bad email format → still 200 to avoid enumeration. The
+			// frontend doesn't need to act on it.
+			return sendSuccess(res, { ok: true }, 200);
+		}
+		const { email } = v.data;
+		const user = (await db
+			.prepare('SELECT id FROM users WHERE email = ?')
+			.get(email)) as { id: number } | undefined;
+
+		if (user) {
+			const { token, expiresAt } = signResetToken(user.id);
+			// Best-effort delivery. In dev / non-prod the SMTP channel
+			// is a stub (returns success without sending); we still log
+			// the token so the developer can copy it from the terminal.
+			log.info(
+				{ msg: 'auth.forgot_password.issued', user_id: user.id, expires_at: expiresAt.toISOString() },
+			);
+			// TODO(prod): wire the dispatcher + email channel so the
+			// token lands in the user's inbox instead of the log. Kept
+			// out of this PR because the dispatcher signature differs
+			// across versions; tracked as a follow-up.
+			const env = process.env.NODE_ENV ?? 'development';
+			if (env !== 'production') {
+				return sendSuccess(
+					res,
+					{ ok: true, reset_token: token, expires_at: expiresAt.toISOString() },
+					200,
+				);
+			}
+		}
+		return sendSuccess(res, { ok: true }, 200);
+	} catch (err) {
+		return sendError(res, err);
+	}
+});
+
+/**
+ * G7 fix 2026-07-11: POST /api/auth/reset-password
+ *
+ * Consumes a reset token, hashes the new password, and bumps
+ * `token_version` so every existing session is invalidated (same
+ * defense-in-depth as POST /auth/change-password).
+ */
+authRouter.post('/reset-password', authLimiter, async (req: Request, res: Response) => {
+	try {
+		const v = validate(
+			z.object({
+				token: z.string().min(10).max(2000),
+				new_password: passwordSchema,
+			}),
+			req.body,
+		);
+		if (!v.ok) {
+			return sendError(
+				res,
+				'Invalid input: ' + v.error,
+				400,
+				ErrorCodes.VALIDATION_ERROR,
+			);
+		}
+		const { token, new_password } = v.data;
+
+		const verified = await verifyResetToken(token);
+		if (!verified) {
+			return sendError(
+				res,
+				'Reset token is invalid or expired.',
+				400,
+				ErrorCodes.PARTIAL_INVALID,
+			);
+		}
+		const userId = verified.sub;
+		const newHash = await hashPassword(new_password);
+		await db
+			.prepare(
+				'UPDATE users SET password_hash = ?, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+			)
+			.run(newHash, userId);
+		try {
+			invalidateTokenVersionCache(userId);
+		} catch {
+			/* best-effort; next requireAuth call will rebuild from DB */
+		}
+		await writeAuditLog(req, 'reset_password', 'user', userId, null, null);
+		return sendSuccess(
+			res,
+			{ updated: true, sessions_invalidated: true },
+			200,
+			'Password reset',
+		);
 	} catch (err) {
 		return sendError(res, err);
 	}

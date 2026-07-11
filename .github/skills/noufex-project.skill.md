@@ -26,7 +26,7 @@ verification:
 
 > 🚨 **NON-NEGOTIABLE** — every action this agent/skill takes must align with the
 > 9-domain End-to-End Developer Skills Mind Map:
-> [docs/architecture/SKILLS_MINDMAP.md](../../../docs/architecture/SKILLS_MINDMAP.md) (v1.0.0)
+> [docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md](../../../docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md) (v1.0)
 >
 > Adopted standards: ISO/IEC/IEEE 12207, ISO/IEC 25010, IEEE 829, ISO/IEC/IEEE 29119,
 > OWASP API Top 10 (2023), WCAG 2.1 AA, Diátaxis, Keep a Changelog, Conventional
@@ -137,9 +137,10 @@ nouf-ex/
 │   ├── planning/                 # Roadmap, risks, competitive analysis
 │   ├── testing/                  # Test docs
 │   ├── tutorials/                # How-tos
-│   ├── workflows/                # Process docs
+│   ├── workflows/                # Process docs (was: n8n — removed 2026-07-11)
 │   ├── architecture/             # Architecture docs
-│   └── MASTER_PLAN.md            # Master plan (41 markdown files)
+│   ├── audits/                   # Periodic conformance audits
+│   └── planning/REMEDIATION_ROADMAP_2026-Q3.md   # Active P0–P3 backlog
 
 ├── scripts/                      # Build/utility scripts
 ├── docker/                       # Docker support
@@ -361,10 +362,9 @@ Known Issues:
 ```yaml
 Internal:
   - docs/STRUCTURE.md (canonical map)
-  - docs/MASTER_PLAN.md (execution roadmap)
-  - docs/planning/competitive-analysis.md (market analysis)
+  - docs/planning/REMEDIATION_ROADMAP_2026-Q3.md (active P0–P3 backlog)
   - docs/planning/risks.md (risk register)
-  - docs/planning/roadmap.md (development roadmap)
+  - docs/audits/2026-07-11-owasp-iso25010-nist-ssdf.md (latest conformance audit)
   - .github/copilot-instructions.md (agent instructions)
   - .github/STANDARDS.md (engineering standards)
   - .github/agents/*.md (12 expert agents)

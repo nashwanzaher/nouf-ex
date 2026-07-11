@@ -64,16 +64,14 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 
 ### المرحلة 5 — الجودة والمخاطر (10 دقائق)
 
-- اقرأ [docs/testing.md](../../docs/testing.md) و [docs/conventions.md](../../docs/conventions.md).
-- Historical audits/review notes are no longer in the repo — refer to git history on GitHub for prior audit reports (e.g. `code-audit-2026-06-21.md`, `review-code.md`, etc.).
-- اقرأ [docs/roadmap.md](../../docs/roadmap.md) و [docs/competitive-analysis-2026.md](../../docs/competitive-analysis-2026.md).
+- اقرأ [docs/testing/README.md](../../docs/testing/README.md) و [docs/development/conventions.md](../../docs/development/conventions.md).
+- اقرأ [docs/planning/REMEDIATION_ROADMAP_2026-Q3.md](../../docs/planning/REMEDIATION_ROADMAP_2026-Q3.md) و [docs/planning/risks.md](../../docs/planning/risks.md).
 - ابحث في الكود عن: `TODO`, `FIXME`, `HACK`, `XXX`, `console.log`, `mockData`, `dummyData`, `placeholder`.
-- افحص ملف `app/src/pages/customer/Notifications.tsx` (مثال على بيانات وهمية في P1-7).
 - راجع تغطية الاختبارات من [app/coverage/](../../app/coverage/).
 
 ### المرحلة 6 — الفجوات والفرز (5 دقائق)
 
-- قارن ما هو موثّق في `docs/roadmap.md` بالكود الفعلي.
+- قارن ما هو موثّق في [`docs/planning/REMEDIATION_ROADMAP_2026-Q3.md`](../../docs/planning/REMEDIATION_ROADMAP_2026-Q3.md) بالكود الفعلي.
 - صنّف الفجوات حسب: حرجة (تؤثر على الإنتاج) / مهمة / تحسينية.
 - حدد أول 3–5 مهام حسب **التأثير/الجهد**.
 
@@ -135,7 +133,7 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 | Schema كامل       | [database/schema.sql](../../database/schema.sql)             |
 | Schema إضافي      | [database/schema-extra.sql](../../database/schema-extra.sql) |
 | Middleware        | [app/server/middleware.ts](../../app/server/middleware.ts)   |
-| API client        | [app/src/lib/api.ts](../../app/src/lib/api.ts)               |
-| Roadmap           | [docs/roadmap.md](../../docs/roadmap.md)                     |
-| معمارية           | [docs/architecture.md](../../docs/architecture.md)           |
-| اختبارات          | [docs/testing.md](../../docs/testing.md)                     |
+| API client        | [app/src/lib/api/client.ts](../../app/src/lib/api/client.ts) |
+| Roadmap           | [docs/planning/REMEDIATION_ROADMAP_2026-Q3.md](../../docs/planning/REMEDIATION_ROADMAP_2026-Q3.md) |
+| معمارية           | [docs/architecture/overview.md](../../docs/architecture/overview.md) |
+| اختبارات          | [docs/testing/README.md](../../docs/testing/README.md) |

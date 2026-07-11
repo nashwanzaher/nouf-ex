@@ -67,6 +67,11 @@ const SellerDashboard = lazyPage(() => import('./pages/seller/SellerDashboard'))
 const SellerProducts = lazyPage(() => import('./pages/seller/SellerProducts'));
 const SellerOrders = lazyPage(() => import('./pages/seller/SellerOrders'));
 const SellerAnalytics = lazyPage(() => import('./pages/seller/SellerAnalytics'));
+// G10 fix 2026-07-11: dedicated onboarding page for first-time
+// merchants. The store-creation call needs a logged-in merchant
+// before it can succeed; we route freshly-registered merchants here
+// from Register.tsx, then onward to /seller.
+const SellerOnboarding = lazyPage(() => import('./pages/seller/SellerOnboarding'));
 
 // Admin — biggest bundle (recharts, full data tables); isolated so
 // the 99% of visitors who never visit /admin never download it.
@@ -129,6 +134,12 @@ export default function App() {
 									path="/seller/analytics"
 									element={guard(['merchant', 'admin'], SellerAnalytics)}
 								/>
+								{/* G10 fix 2026-07-11: onboarding wizard — the
+									    first-time-merchant flow ends here. */}
+								<Route
+									path="/seller/onboarding"
+									element={guard(['merchant', 'admin'], SellerOnboarding)}
+								/>
 								<Route
 									path="/customer"
 									element={guard(
@@ -166,38 +177,74 @@ export default function App() {
 								 *  with <Outlet />; nested routes render inside it.
 								 *  `/admin` (no sub-path) redirects to `/admin/overview`. */}
 								<Route path="/admin" element={guard(['admin'], AdminDashboard)}>
-									<Route index element={<AdminOverview />} />
+									<Route index element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminOverview />
+											</Suspense>
+										} />
 									<Route
 										path="overview"
-										element={guard(['admin'], AdminOverview)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminOverview />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="users"
-										element={guard(['admin'], UsersManagement)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<UsersManagement />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="stores"
-										element={guard(['admin'], StoresManagement)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<StoresManagement />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="disputes"
-										element={guard(['admin'], DisputesManagement)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<DisputesManagement />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="reports"
-										element={guard(['admin'], ReportsAnalytics)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<ReportsAnalytics />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="audit-log"
-										element={guard(['admin'], AdminAuditLog)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminAuditLog />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="all-products"
-										element={guard(['admin'], AdminProducts)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminProducts />
+											</Suspense>
+										}
 									/>
 									<Route
 										path="all-orders"
-										element={guard(['admin'], AdminOrders)}
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminOrders />
+											</Suspense>
+										}
 									/>
 								</Route>
 								<Route

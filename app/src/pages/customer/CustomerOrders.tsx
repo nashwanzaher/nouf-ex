@@ -106,13 +106,13 @@ function OrderTimeline({ status, t }: { status: OrderStatus; t: TFunction }) {
 	);
 }
 
-/** Format an ISO timestamp into the Arabic date label used by the
- *  previous design. Falls back to a dash on parse failure. */
-function formatDate(iso: string): string {
+/** Format an ISO timestamp into a localized date label.
+ *  Falls back to a dash on parse failure. */
+function formatDate(iso: string, lang: string): string {
 	try {
 		const d = new Date(iso);
 		if (Number.isNaN(d.getTime())) return '—';
-		const months = [
+		const monthsAr = [
 			'يناير',
 			'فبراير',
 			'مارس',
@@ -126,6 +126,35 @@ function formatDate(iso: string): string {
 			'نوفمبر',
 			'ديسمبر',
 		];
+		const monthsEn = [
+			'January',
+			'February',
+			'March',
+			'April',
+			'May',
+			'June',
+			'July',
+			'August',
+			'September',
+			'October',
+			'November',
+			'December',
+		];
+		const monthsZh = [
+			'一月',
+			'二月',
+			'三月',
+			'四月',
+			'五月',
+			'六月',
+			'七月',
+			'八月',
+			'九月',
+			'十月',
+			'十一月',
+			'十二月',
+		];
+		const months = lang === 'en' ? monthsEn : lang === 'zh' ? monthsZh : monthsAr;
 		return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 	} catch {
 		return '—';
@@ -191,7 +220,7 @@ export default function CustomerOrders() {
 
 	if (!isAuthenticated) {
 		return (
-			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh] flex items-center justify-center p-6">
 					<div className="bg-white rounded-2xl p-10 text-center shadow-sm max-w-md">
@@ -209,7 +238,7 @@ export default function CustomerOrders() {
 							asChild
 							className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 						>
-							<Link to="/auth/login?next=/customer/orders">تسجيل الدخول</Link>
+							<Link to="/auth/login?next=/customer/orders">{t('auth.login', 'تسجيل الدخول')}</Link>
 						</Button>
 					</div>
 				</div>
@@ -218,7 +247,7 @@ export default function CustomerOrders() {
 	}
 
 	return (
-		<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+		<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
 			<CustomerSidebar />
 
 			<div className="md:mr-60 min-h-[100dvh]">
@@ -344,7 +373,7 @@ export default function CustomerOrders() {
 															</span>
 														</div>
 														<p className="text-xs text-[#6B6B6B] font-cairo mt-0.5">
-															{formatDate(order.created_at)} ·{' '}
+															{formatDate(order.created_at, i18n.language)} ·{' '}
 															{t(
 																'orders.itemsCount',
 																'{count} product',

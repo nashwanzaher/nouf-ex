@@ -1296,7 +1296,68 @@
 	},
 	"errors": {
 		"notFound": {
-			"desc": "The page you are looking for does not exist or has been moved.",
+			"desc": "The page you are looking for does not exist or has been moved."
+		}
+	},
+	"notifications": {
+		"title": "通知",
+		"loginRequired": "请登录",
+		"loginMessage": "登录以查看您的通知并获取最新更新。",
+		"loadError": "加载通知失败",
+		"newCount": "您有 {{count}} 条新通知",
+		"noNew": "没有新通知",
+		"markAllRead": "全部标记为已读",
+		"filterAll": "全部",
+		"filterUnread": "未读",
+		"filterOrders": "订单",
+		"filterPromos": "促销",
+		"empty": "没有新通知",
+		"emptyMessage": "您的新通知将显示在这里"
+	},
+	"time": {
+		"now": "刚刚",
+		"minutesAgo": "{{count}} 分钟前",
+		"hoursAgo": "{{count}} 小时前",
+		"daysAgo": "{{count}} 天前",
+		"weeksAgo": "{{count}} 周前",
+		"monthsAgo": "{{count}} 个月前",
+		"yearsAgo": "{{count}} 年前"
+	},
+	"common": {
+		"loading": "加载中…",
+		"retry": "重试",
+		"updating": "更新中…"
+	},
+	"customer": {
+		"orders": "我的订单",
+		"wishlist": "收藏夹",
+		"reviews": "我的评价",
+		"addresses": "地址",
+		"notifications": "通知",
+		"backToHome": "返回首页",
+		"guest": "访客"
+	},
+	"store": {
+		"badgeFastShipping": "快速配送",
+		"badgeEasyReturns": "轻松退货"
+	},
+	"wishlist": {
+		"title": "收藏夹",
+		"subtitle": "您保存的商品",
+		"itemCount": "{{count}} 件商品",
+		"loginRequired": "登录查看收藏夹",
+		"loginMessage": "登录以将商品保存到您的个人列表。",
+		"loadError": "加载收藏夹失败",
+		"empty": "您的收藏夹为空",
+		"emptyMessage": "购物时点击心形图标将商品保存在这里",
+		"explore": "浏览商品",
+		"addToCart": "加入购物车",
+		"added": "已添加！",
+		"discount": "{{percent}}% 折扣",
+		"removeError": "删除商品失败。请重试。",
+		"moveToCartError": "将商品移至购物车失败。请重试。"
+	}
+},
 			"title": "Page not found"
 		}
 	}

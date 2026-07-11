@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import {
 	Bell,
 	ShoppingBag,
@@ -57,35 +58,33 @@ interface NotificationView {
 // ─── Helpers ─────────────────────────────────────────────────
 
 /**
- * Format an ISO timestamp as a short relative-time string in Arabic.
- * Used instead of pulling in a date-fns locale bundle just for one
- * string — the granularity we render (now / minutes / hours / days /
- * weeks / months / years) is enough for the notification list.
+ * Format an ISO timestamp as a short relative-time string using i18n.
+ * Uses translation keys for proper localization across all supported languages.
  */
-function formatRelativeTime(iso: string): string {
+function formatRelativeTime(iso: string, t: (key: string, fallback: string, options?: Record<string, unknown>) => string): string {
 	const then = new Date(iso).getTime();
 	if (Number.isNaN(then)) return '';
 	const diffMs = Date.now() - then;
-	if (diffMs < 0) return 'الآن';
+	if (diffMs < 0) return t('time.now', 'الآن');
 
 	const mins = Math.floor(diffMs / 60_000);
-	if (mins < 1) return 'الآن';
-	if (mins < 60) return `منذ ${mins} دقيقة`;
+	if (mins < 1) return t('time.now', 'الآن');
+	if (mins < 60) return t('time.minutesAgo', 'منذ {{count}} دقيقة', { count: mins });
 
 	const hours = Math.floor(mins / 60);
-	if (hours < 24) return `منذ ${hours} ساعة`;
+	if (hours < 24) return t('time.hoursAgo', 'منذ {{count}} ساعة', { count: hours });
 
 	const days = Math.floor(hours / 24);
-	if (days < 7) return `منذ ${days} ${days === 1 ? 'يوم' : 'أيام'}`;
+	if (days < 7) return t('time.daysAgo', 'منذ {{count}} يوم', { count: days });
 
 	const weeks = Math.floor(days / 7);
-	if (weeks < 5) return `منذ ${weeks} ${weeks === 1 ? 'أسبوع' : 'أسابيع'}`;
+	if (weeks < 5) return t('time.weeksAgo', 'منذ {{count}} أسبوع', { count: weeks });
 
 	const months = Math.floor(days / 30);
-	if (months < 12) return `منذ ${months} ${months === 1 ? 'شهر' : 'أشهر'}`;
+	if (months < 12) return t('time.monthsAgo', 'منذ {{count}} شهر', { count: months });
 
 	const years = Math.floor(days / 365);
-	return `منذ ${years} ${years === 1 ? 'سنة' : 'سنوات'}`;
+	return t('time.yearsAgo', 'منذ {{count}} سنة', { count: years });
 }
 
 /**
@@ -102,7 +101,7 @@ function mapNotification(row: {
 	data: string | unknown;
 	is_read: number | boolean;
 	created_at: string;
-}): NotificationView {
+}, t: (key: string, fallback: string, options?: Record<string, unknown>) => string): NotificationView {
 	const allowed: NotificationType[] = [
 		'order',
 		'message',
@@ -135,7 +134,7 @@ function mapNotification(row: {
 		type,
 		title: row.title,
 		message: row.body ?? '',
-		time: formatRelativeTime(row.created_at),
+		time: formatRelativeTime(row.created_at, t),
 		read: Boolean(row.is_read),
 		link,
 	};
@@ -157,10 +156,10 @@ const typeConfig: Record<
 };
 
 const filterTabs = [
-	{ key: 'all', label: 'الكل' },
-	{ key: 'unread', label: 'غير مقروء' },
-	{ key: 'order', label: 'طلبات' },
-	{ key: 'promo', label: 'عروض' },
+	{ key: 'all', labelKey: 'notifications.filterAll', label: 'الكل' },
+	{ key: 'unread', labelKey: 'notifications.filterUnread', label: 'غير مقروء' },
+	{ key: 'order', labelKey: 'notifications.filterOrders', label: 'طلبات' },
+	{ key: 'promo', labelKey: 'notifications.filterPromos', label: 'عروض' },
 ] as const;
 
 type FilterKey = (typeof filterTabs)[number]['key'];
@@ -169,13 +168,15 @@ type FilterKey = (typeof filterTabs)[number]['key'];
 
 export default function Notifications() {
 	const { state } = useApp();
+	const { t, i18n } = useTranslation();
 	const isAuthenticated = Boolean(state.user && state.token);
+	const isRTL = i18n.language === 'ar';
 
 	const { data, loading, error, refetch } = useNotifications();
 
 	const notifications: NotificationView[] = useMemo(
-		() => (data ?? []).map(mapNotification),
-		[data],
+		() => (data ?? []).map((row) => mapNotification(row, t)),
+		[data, t],
 	);
 
 	const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
@@ -219,22 +220,22 @@ export default function Notifications() {
 	// ── Not signed in ─────────────────────────────────────────
 	if (!isAuthenticated) {
 		return (
-			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={isRTL ? 'rtl' : 'ltr'}>
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh] flex items-center justify-center p-6">
 					<div className="bg-white rounded-2xl p-12 text-center shadow-sm max-w-md w-full">
 						<Bell className="w-16 h-16 text-[#AAAAAA] mx-auto mb-4" strokeWidth={1} />
 						<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-							يرجى تسجيل الدخول
+							{t('notifications.loginRequired', 'يرجى تسجيل الدخول')}
 						</h3>
 						<p className="text-[#6B6B6B] font-cairo text-sm mb-6">
-							سجّل دخولك لعرض إشعاراتك ومتابعة آخر التحديثات.
+							{t('notifications.loginMessage', 'سجّل دخولك لعرض إشعاراتك ومتابعة آخر التحديثات.')}
 						</p>
 						<Button
 							asChild
 							className="bg-[#D4A853] hover:bg-[#c49a48] text-[#1A1612] rounded-xl font-cairo"
 						>
-							<Link to="/auth/login">تسجيل الدخول</Link>
+							<Link to="/auth/login">{t('auth.login', 'تسجيل الدخول')}</Link>
 						</Button>
 					</div>
 				</div>
@@ -245,12 +246,12 @@ export default function Notifications() {
 	// ── Initial loading ───────────────────────────────────────
 	if (loading && notifications.length === 0) {
 		return (
-			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={isRTL ? 'rtl' : 'ltr'}>
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh]">
 					<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30">
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">الإشعارات</h1>
-						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">جاري التحميل…</p>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">{t('notifications.title', 'الإشعارات')}</h1>
+						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">{t('common.loading', 'جاري التحميل…')}</p>
 					</div>
 					<div className="p-6 max-w-3xl mx-auto">
 						<ProductGridSkeleton count={4} />
@@ -263,7 +264,7 @@ export default function Notifications() {
 	// ── Error state (with retry) ──────────────────────────────
 	if (error && notifications.length === 0) {
 		return (
-			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={isRTL ? 'rtl' : 'ltr'}>
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh] flex items-center justify-center p-6">
 					<div className="bg-white rounded-2xl p-12 text-center shadow-sm max-w-md w-full">
@@ -272,7 +273,7 @@ export default function Notifications() {
 							strokeWidth={1}
 						/>
 						<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-							تعذّر تحميل الإشعارات
+							{t('notifications.loadError', 'تعذّر تحميل الإشعارات')}
 						</h3>
 						<p className="text-[#6B6B6B] font-cairo text-sm mb-6">{error}</p>
 						<Button
@@ -280,7 +281,7 @@ export default function Notifications() {
 							className="bg-[#D4A853] hover:bg-[#c49a48] text-[#1A1612] rounded-xl font-cairo"
 						>
 							<RefreshCw className="w-4 h-4 ml-1" />
-							إعادة المحاولة
+							{t('common.retry', 'إعادة المحاولة')}
 						</Button>
 					</div>
 				</div>
@@ -290,17 +291,17 @@ export default function Notifications() {
 
 	// ── Main render ──────────────────────────────────────────
 	return (
-		<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+		<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={isRTL ? 'rtl' : 'ltr'}>
 			<CustomerSidebar />
 
 			<div className="md:mr-60 min-h-[100dvh]">
 				<div className="bg-white border-b border-[#F3EDE4] px-6 py-4 sticky top-0 z-30 flex items-center justify-between">
 					<div>
-						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">الإشعارات</h1>
+						<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">{t('notifications.title', 'الإشعارات')}</h1>
 						<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
 							{unreadCount > 0
-								? `لديك ${unreadCount} إشعارات جديدة`
-								: 'لا توجد إشعارات جديدة'}
+								? t('notifications.newCount', 'لديك {{count}} إشعارات جديدة', { count: unreadCount })
+								: t('notifications.noNew', 'لا توجد إشعارات جديدة')}
 						</p>
 					</div>
 					{unreadCount > 0 && (
@@ -311,7 +312,7 @@ export default function Notifications() {
 							className="font-cairo text-sm text-[#D4A853] hover:text-[#c49a48] hover:bg-[#F3EDE4] rounded-xl disabled:opacity-50"
 						>
 							<CheckCheck className="w-4 h-4 ml-1" strokeWidth={1.5} />
-							{marking ? 'جارٍ التحديث…' : 'تعيين الكل كمقروء'}
+							{marking ? t('common.updating', 'جارٍ التحديث…') : t('notifications.markAllRead', 'تعيين الكل كمقروء')}
 						</Button>
 					)}
 				</div>
@@ -329,10 +330,10 @@ export default function Notifications() {
 										: 'bg-white text-[#6B6B6B] hover:bg-[#F3EDE4]'
 								}`}
 							>
-								{f.key === 'all' && `الكل (${notifications.length})`}
-								{f.key === 'unread' && `غير مقروء (${unreadCount})`}
-								{f.key === 'order' && 'طلبات'}
-								{f.key === 'promo' && 'عروض'}
+								{f.key === 'all' && `${t(f.labelKey, f.label)} (${notifications.length})`}
+								{f.key === 'unread' && `${t(f.labelKey, f.label)} (${unreadCount})`}
+								{f.key === 'order' && t(f.labelKey, f.label)}
+								{f.key === 'promo' && t(f.labelKey, f.label)}
 							</button>
 						))}
 					</div>
@@ -345,10 +346,10 @@ export default function Notifications() {
 								strokeWidth={1}
 							/>
 							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-								لا إشعارات جديدة
+								{t('notifications.empty', 'لا إشعارات جديدة')}
 							</h3>
 							<p className="text-[#6B6B6B] font-cairo text-sm">
-								ستظهر إشعاراتك الجديدة هنا
+								{t('notifications.emptyMessage', 'ستظهر إشعاراتك الجديدة هنا')}
 							</p>
 						</div>
 					) : (

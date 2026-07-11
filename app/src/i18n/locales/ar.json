@@ -1296,7 +1296,68 @@
 	},
 	"errors": {
 		"notFound": {
-			"desc": "The page you are looking for does not exist or has been moved.",
+			"desc": "The page you are looking for does not exist or has been moved."
+		}
+	},
+	"notifications": {
+		"title": "الإشعارات",
+		"loginRequired": "يرجى تسجيل الدخول",
+		"loginMessage": "سجّل دخولك لعرض إشعاراتك ومتابعة آخر التحديثات.",
+		"loadError": "تعذّر تحميل الإشعارات",
+		"newCount": "لديك {{count}} إشعارات جديدة",
+		"noNew": "لا توجد إشعارات جديدة",
+		"markAllRead": "تعيين الكل كمقروء",
+		"filterAll": "الكل",
+		"filterUnread": "غير مقروء",
+		"filterOrders": "طلبات",
+		"filterPromos": "عروض",
+		"empty": "لا إشعارات جديدة",
+		"emptyMessage": "ستظهر إشعاراتك الجديدة هنا"
+	},
+	"time": {
+		"now": "الآن",
+		"minutesAgo": "منذ {{count}} دقيقة",
+		"hoursAgo": "منذ {{count}} ساعة",
+		"daysAgo": "منذ {{count}} يوم",
+		"weeksAgo": "منذ {{count}} أسبوع",
+		"monthsAgo": "منذ {{count}} شهر",
+		"yearsAgo": "منذ {{count}} سنة"
+	},
+	"common": {
+		"loading": "جاري التحميل…",
+		"retry": "إعادة المحاولة",
+		"updating": "جارٍ التحديث…"
+	},
+	"customer": {
+		"orders": "طلباتي",
+		"wishlist": "المفضلة",
+		"reviews": "تقييماتي",
+		"addresses": "العناوين",
+		"notifications": "الإشعارات",
+		"backToHome": "العودة للرئيسية",
+		"guest": "ضيف"
+	},
+	"store": {
+		"badgeFastShipping": "شحن سريع",
+		"badgeEasyReturns": "إرجاع سهل"
+	},
+	"wishlist": {
+		"title": "المفضلة",
+		"subtitle": "المنتجات التي حفظتها",
+		"itemCount": "{{count}} منتج",
+		"loginRequired": "سجّل الدخول لعرض المفضلة",
+		"loginMessage": "سجّل الدخول لحفظ المنتجات في قائمتك الشخصية.",
+		"loadError": "تعذّر تحميل المفضلة",
+		"empty": "قائمة المفضلة فارغة",
+		"emptyMessage": "اضغط على أيقونة القلب أثناء التسوق لحفظ المنتجات هنا",
+		"explore": "استكشف المنتجات",
+		"addToCart": "أضف إلى السلة",
+		"added": "تمت الإضافة",
+		"discount": "{{percent}}% خصم",
+		"removeError": "تعذّر حذف المنتج. حاول مرة أخرى.",
+		"moveToCartError": "تعذّر نقل المنتج إلى السلة. حاول مرة أخرى."
+	}
+},
 			"title": "Page not found"
 		}
 	}

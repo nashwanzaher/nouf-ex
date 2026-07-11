@@ -1296,7 +1296,68 @@
 	},
 	"errors": {
 		"notFound": {
-			"desc": "The page you are looking for does not exist or has been moved.",
+			"desc": "The page you are looking for does not exist or has been moved."
+		}
+	},
+	"notifications": {
+		"title": "Notifications",
+		"loginRequired": "Please sign in",
+		"loginMessage": "Sign in to view your notifications and stay updated.",
+		"loadError": "Failed to load notifications",
+		"newCount": "You have {{count}} new notifications",
+		"noNew": "No new notifications",
+		"markAllRead": "Mark all as read",
+		"filterAll": "All",
+		"filterUnread": "Unread",
+		"filterOrders": "Orders",
+		"filterPromos": "Promos",
+		"empty": "No new notifications",
+		"emptyMessage": "Your new notifications will appear here"
+	},
+	"time": {
+		"now": "Now",
+		"minutesAgo": "{{count}} minutes ago",
+		"hoursAgo": "{{count}} hours ago",
+		"daysAgo": "{{count}} days ago",
+		"weeksAgo": "{{count}} weeks ago",
+		"monthsAgo": "{{count}} months ago",
+		"yearsAgo": "{{count}} years ago"
+	},
+	"common": {
+		"loading": "Loading…",
+		"retry": "Retry",
+		"updating": "Updating…"
+	},
+	"customer": {
+		"orders": "My Orders",
+		"wishlist": "Wishlist",
+		"reviews": "My Reviews",
+		"addresses": "Addresses",
+		"notifications": "Notifications",
+		"backToHome": "Back to Home",
+		"guest": "Guest"
+	},
+	"store": {
+		"badgeFastShipping": "Fast Shipping",
+		"badgeEasyReturns": "Easy Returns"
+	},
+	"wishlist": {
+		"title": "Wishlist",
+		"subtitle": "Products you saved",
+		"itemCount": "{{count}} items",
+		"loginRequired": "Sign in to view your wishlist",
+		"loginMessage": "Sign in to save products to your personal list.",
+		"loadError": "Failed to load wishlist",
+		"empty": "Your wishlist is empty",
+		"emptyMessage": "Click the heart icon while shopping to save products here",
+		"explore": "Explore products",
+		"addToCart": "Add to cart",
+		"added": "Added!",
+		"discount": "{{percent}}% off",
+		"removeError": "Failed to remove product. Please try again.",
+		"moveToCartError": "Failed to move product to cart. Please try again."
+	}
+},
 			"title": "Page not found"
 		}
 	}

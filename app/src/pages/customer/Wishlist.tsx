@@ -66,12 +66,12 @@ export default function Wishlist() {
 				await apiRemoveFromWishlist(id);
 				refetch(); // re-fetch from server to keep state in sync
 			} catch {
-				setActionError('تعذّر حذف المنتج. حاول مرة أخرى.');
+				setActionError(t('wishlist.removeError', 'تعذّر حذف المنتج. حاول مرة أخرى.'));
 			} finally {
 				setRemovingId(null);
 			}
 		},
-		[refetch],
+		[refetch, t],
 	);
 
 	// ── Move to cart (real API) ────────────────────────────────────
@@ -88,18 +88,18 @@ export default function Wishlist() {
 				await apiRemoveFromWishlist(item.id);
 				refetch();
 			} catch {
-				setActionError('تعذّر نقل المنتج إلى السلة. حاول مرة أخرى.');
+				setActionError(t('wishlist.moveToCartError', 'تعذّر نقل المنتج إلى السلة. حاول مرة أخرى.'));
 			} finally {
 				setAddedToCart(null);
 			}
 		},
-		[userId, refetch],
+		[userId, refetch, t],
 	);
 
 	// ── Not authenticated ───────────────────────────────────────────
 	if (!isAuthenticated) {
 		return (
-			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
 				<CustomerSidebar />
 				<div className="md:mr-60 min-h-[100dvh] flex items-center justify-center p-6">
 					<div className="bg-white rounded-2xl p-10 text-center shadow-sm max-w-md">
@@ -108,16 +108,16 @@ export default function Wishlist() {
 							strokeWidth={1.5}
 						/>
 						<h2 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-							سجّل الدخول لعرض المفضلة
+							{t('wishlist.loginRequired', 'سجّل الدخول لعرض المفضلة')}
 						</h2>
 						<p className="text-sm text-[#6B6B6B] font-cairo mb-4">
-							سجّل الدخول لحفظ المنتجات في قائمتك الشخصية.
+							{t('wishlist.loginMessage', 'سجّل الدخول لحفظ المنتجات في قائمتك الشخصية.')}
 						</p>
 						<Button
 							asChild
 							className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 						>
-							<Link to="/auth/login?next=/customer/wishlist">تسجيل الدخول</Link>
+							<Link to="/auth/login?next=/customer/wishlist">{t('auth.login', 'تسجيل الدخول')}</Link>
 						</Button>
 					</div>
 				</div>
@@ -126,7 +126,7 @@ export default function Wishlist() {
 	}
 
 	return (
-		<div className="min-h-[100dvh] bg-[#F8F8F8]" dir="rtl">
+		<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
 			<CustomerSidebar />
 
 			<div className="md:mr-60 min-h-[100dvh]">
@@ -135,14 +135,14 @@ export default function Wishlist() {
 					<div className="flex items-center justify-between">
 						<div>
 							<h1 className="text-2xl font-amiri font-bold text-[#1A1612]">
-								المفضلة
+								{t('wishlist.title', 'المفضلة')}
 							</h1>
 							<p className="text-sm text-[#6B6B6B] font-cairo mt-1">
-								المنتجات التي حفظتها
+								{t('wishlist.subtitle', 'المنتجات التي حفظتها')}
 							</p>
 						</div>
 						<span className="text-sm text-[#6B6B6B] font-cairo bg-[#F3EDE4] px-3 py-1 rounded-full">
-							{items.length} منتج
+							{t('wishlist.itemCount', '{{count}} منتج', { count: items.length })}
 						</span>
 					</div>
 				</div>
@@ -152,7 +152,7 @@ export default function Wishlist() {
 					{loading && (
 						<div className="bg-white rounded-2xl p-10 text-center shadow-sm">
 							<Loader2 className="w-8 h-8 mx-auto text-[#D4A853] animate-spin mb-3" />
-							<p className="text-sm text-[#6B6B6B] font-cairo">جاري التحميل…</p>
+							<p className="text-sm text-[#6B6B6B] font-cairo">{t('common.loading', 'جاري التحميل…')}</p>
 						</div>
 					)}
 
@@ -164,14 +164,14 @@ export default function Wishlist() {
 								strokeWidth={1.5}
 							/>
 							<h3 className="text-lg font-amiri font-bold text-[#1A1612] mb-2">
-								تعذّر تحميل المفضلة
+								{t('wishlist.loadError', 'تعذّر تحميل المفضلة')}
 							</h3>
 							<p className="text-sm text-[#6B6B6B] font-cairo mb-4">{error}</p>
 							<Button
 								onClick={() => refetch()}
 								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 							>
-								حاول مرة أخرى
+								{t('common.retry', 'حاول مرة أخرى')}
 							</Button>
 						</div>
 					)}
@@ -192,21 +192,16 @@ export default function Wishlist() {
 								strokeWidth={1}
 							/>
 							<h3 className="text-xl font-amiri font-bold text-[#1A1612] mb-2">
-								قائمة المفضلة فارغة
+								{t('wishlist.empty', 'قائمة المفضلة فارغة')}
 							</h3>
 							<p className="text-[#6B6B6B] font-cairo text-sm mb-6">
-								اضغط على{' '}
-								<Heart
-									className="w-4 h-4 inline text-[#AAAAAA]"
-									strokeWidth={1.5}
-								/>{' '}
-								أثناء التسوق لحفظ المنتجات هنا
+								{t('wishlist.emptyMessage', 'اضغط على أيقونة القلب أثناء التسوق لحفظ المنتجات هنا')}
 							</p>
 							<Button
 								asChild
 								className="bg-[#D4A853] text-[#1A1612] hover:bg-[#c49a48] font-cairo rounded-xl"
 							>
-								<Link to="/">استكشف المنتجات</Link>
+								<Link to="/">{t('wishlist.explore', 'استكشف المنتجات')}</Link>
 							</Button>
 						</div>
 					)}
@@ -260,7 +255,7 @@ export default function Wishlist() {
 											{/* Discount badge */}
 											{hasDiscount && (
 												<span className="absolute top-3 right-3 bg-[#EF4444] text-white text-[10px] font-cairo font-semibold px-2 py-1 rounded-full">
-													{discountPct}% خصم
+													{t('wishlist.discount', '{{percent}}% خصم', { percent: discountPct })}
 												</span>
 											)}
 
@@ -270,7 +265,7 @@ export default function Wishlist() {
 													<div className="text-center">
 														<CheckIcon />
 														<p className="text-white font-cairo font-semibold text-sm mt-2">
-															تمت الإضافة
+															{t('wishlist.added', 'تمت الإضافة')}
 														</p>
 													</div>
 												</div>
@@ -280,7 +275,7 @@ export default function Wishlist() {
 										{/* Content */}
 										<div className="p-4">
 											<h3 className="font-cairo font-medium text-sm text-[#111111] line-clamp-2 min-h-[2.5rem]">
-												{getName(item, 'ar')}
+												{getName(item, i18n.language)}
 											</h3>
 											{item.store_name && (
 												<p className="text-[11px] text-[#6B6B6B] font-cairo mt-1">
@@ -323,7 +318,7 @@ export default function Wishlist() {
 															className="w-4 h-4 ml-1"
 															strokeWidth={1.5}
 														/>
-														أضف إلى السلة
+														{t('wishlist.addToCart', 'أضف إلى السلة')}
 													</>
 												)}
 											</Button>

@@ -30,8 +30,7 @@ export function ProductImage({
 	className = '',
 	kind = 'product',
 }: ProductImageProps) {
-	const initialSrc = safeImageUrl(src, { fallback: FALLBACK, kind });
-	const [currentSrc, setCurrentSrc] = useState(initialSrc);
+	const [currentSrc, setCurrentSrc] = useState(() => safeImageUrl(src, { fallback: FALLBACK, kind }));
 	const [isLoading, setIsLoading] = useState(true);
 	const [hasErrored, setHasErrored] = useState(false);
 

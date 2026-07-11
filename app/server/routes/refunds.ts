@@ -28,14 +28,42 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		if (order.payment_status !== 'paid') {
 			return sendError(res, 'Only paid orders are eligible for refund', 400);
 		}
-		if (amount > order.total) {
-			return sendError(res, 'Refund amount exceeds order total', 400);
+
+		// Check for existing pending/processed refunds for this order
+		const existingRefund = (await db
+			.prepare(
+				`SELECT id, status, amount FROM refunds
+				 WHERE order_id = ? AND status IN ('requested', 'processed')
+				 LIMIT 1`,
+			)
+			.get(order_id)) as { id: number; status: string; amount: number } | undefined;
+		if (existingRefund) {
+			return sendError(res, 'A refund request already exists for this order', 409, 'DUPLICATE_REFUND');
+		}
+
+		// Calculate remaining refundable balance (order total minus already refunded)
+		const refundedRow = (await db
+			.prepare(
+				`SELECT COALESCE(SUM(amount), 0) as total_refunded
+				 FROM refunds
+				 WHERE order_id = ? AND status = 'processed'`,
+			)
+			.get(order_id)) as { total_refunded: number } | undefined;
+		const totalRefunded = Number(refundedRow?.total_refunded ?? 0);
+		const remainingRefundable = order.total - totalRefunded;
+
+		if (amount > remainingRefundable) {
+			return sendError(
+				res,
+				`Refund amount exceeds remaining refundable balance (${remainingRefundable})`,
+				400,
+			);
 		}
 
 		const result = (await db
 			.prepare(
 				`INSERT INTO refunds (order_id, user_id, amount, reason, status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'requested', NOW(), NOW()) RETURNING id`,
+				 VALUES (?, ?, ?, ?, 'requested', NOW(), NOW()) RETURNING id`,
 			)
 			.get(order_id, userId, amount, reason)) as { id: number };
 
@@ -102,59 +130,58 @@ refundsRouter.post(
 				{ order_id: number; amount: number } | undefined;
 			if (!result) return sendError(res, 'Refund not found or already resolved', 404);
 
-			if (finalStatus === 'processed') {
-				await db
-					.prepare(
-						`UPDATE payments SET status = 'refunded', updated_at = NOW()
-            WHERE order_id = ? AND status = 'completed'`,
-					)
-					.run(result.order_id);
-				const order = (await db
-					.prepare('SELECT store_id, currency FROM orders WHERE id = ?')
-					.get(result.order_id)) as
-					{ store_id: number | null; currency: string } | undefined;
-				if (order?.store_id) {
-					// Append-only ledger: balance_after must equal previous + amount.
-					// Fetch the latest recorded balance for this store, defaulting to 0.
-					const previousTx = (await db
+if (finalStatus === 'processed') {
+				// Wrap all refund processing in a transaction for atomicity
+				await db.tx(async (txDb) => {
+					await txDb
 						.prepare(
-							`SELECT balance_after FROM transactions
-							  WHERE store_id = ?
-							  ORDER BY created_at DESC, id DESC
-							  LIMIT 1`,
+							`UPDATE payments SET status = 'refunded', updated_at = NOW()
+							 WHERE order_id = ? AND status = 'completed'`,
 						)
-						.get(order.store_id)) as { balance_after: number } | undefined;
-					const previousBalance = previousTx ? Number(previousTx.balance_after) : 0;
-					const refundAmount = -Number(result.amount);
-					const newBalance = Math.round((previousBalance + refundAmount) * 100) / 100;
+						.run(result.order_id);
+					const order = (await txDb
+						.prepare('SELECT store_id, currency FROM orders WHERE id = ?')
+						.get(result.order_id)) as
+						{ store_id: number | null; currency: string } | undefined;
+					if (order?.store_id) {
+						const previousTx = (await txDb
+							.prepare(
+								`SELECT balance_after FROM transactions
+								  WHERE store_id = ?
+								  ORDER BY created_at DESC, id DESC
+								  LIMIT 1`,
+							)
+							.get(order.store_id)) as { balance_after: number } | undefined;
+						const previousBalance = previousTx ? Number(previousTx.balance_after) : 0;
+						const refundAmount = -Number(result.amount);
+						const newBalance = Math.round((previousBalance + refundAmount) * 100) / 100;
 
-					await db
-						.prepare(
-							`INSERT INTO transactions (store_id, type, amount, balance_after, currency, reference_type, reference_id, description, created_at)
-             VALUES (?, 'refund', ?, ?, ?, 'refund', ?, ?, NOW())`,
-						)
-						.run(
-							order.store_id,
-							refundAmount,
-							newBalance,
-							order.currency,
-							id,
-							`Refund #${id} for order ${result.order_id}`,
-						);
+						await txDb
+							.prepare(
+								`INSERT INTO transactions (store_id, type, amount, balance_after, currency, reference_type, reference_id, description, created_at)
+								 VALUES (?, 'refund', ?, ?, ?, 'refund', ?, ?, NOW())`,
+							)
+							.run(
+								order.store_id,
+								refundAmount,
+								newBalance,
+								order.currency,
+								id,
+								`Refund #${id} for order ${result.order_id}`,
+							);
 
-					// Keep the denormalized store_balance in sync so the merchant
-					// dashboard reflects the deduction immediately.
-					await db
-						.prepare(
-							`INSERT INTO store_balance (store_id, available, currency)
-             VALUES (?, GREATEST(0, 0 - ?), ?)
-             ON CONFLICT (store_id)
-             DO UPDATE SET available = GREATEST(0, store_balance.available + ?),
-                           currency = EXCLUDED.currency,
-                           updated_at = NOW()`,
-						)
-						.run(order.store_id, result.amount, order.currency, refundAmount);
-				}
+						await txDb
+							.prepare(
+								`INSERT INTO store_balance (store_id, available, currency)
+								 VALUES (?, GREATEST(0, ?), ?)
+								 ON CONFLICT (store_id)
+								 DO UPDATE SET available = GREATEST(0, store_balance.available + ?),
+											   currency = EXCLUDED.currency,
+											   updated_at = NOW()`,
+							)
+							.run(order.store_id, refundAmount, order.currency, refundAmount);
+					}
+				});
 			}
 
 			// Fire bilingual i18n notification to the customer (best-effort).

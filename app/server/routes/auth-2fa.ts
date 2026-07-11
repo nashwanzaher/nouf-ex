@@ -378,18 +378,26 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 		if (!totpOk && backupIdx < 0) {
 			return sendError(res, 'Invalid 2FA code.', 401, 'CODE_INVALID');
 		}
-		// If a backup code was used, drop it from the array. We
-		// use arrayLiteral to format the new array (preserves
-		// ordering + escaping).
+		// If a backup code was used, drop it from the array atomically
+		// within a transaction to prevent race conditions.
 		if (!totpOk && backupIdx >= 0 && user.totp_backup_codes) {
-			const remaining = user.totp_backup_codes.filter((_, i) => i !== backupIdx);
-			await db
-				.prepare('UPDATE users SET totp_backup_codes = ?::text[] WHERE id = ?')
-				.run(arrayLiteral(remaining), user.id);
-			log.info({
-				msg: 'backup_code_used',
-				user_id: user.id,
-				remaining: remaining.length,
+			await db.tx(async (txDb) => {
+				// Re-verify the backup code exists within the transaction
+				const freshUser = (await txDb
+					.prepare('SELECT totp_backup_codes FROM users WHERE id = ?')
+					.get(user.id)) as { totp_backup_codes: string[] | null } | undefined;
+				if (!freshUser?.totp_backup_codes) return;
+				const freshIdx = await findBackupCode(code, freshUser.totp_backup_codes);
+				if (freshIdx < 0) return; // Already consumed by another request
+				const remaining = freshUser.totp_backup_codes.filter((_, i) => i !== freshIdx);
+				await txDb
+					.prepare('UPDATE users SET totp_backup_codes = ?::text[] WHERE id = ?')
+					.run(arrayLiteral(remaining), user.id);
+				log.info({
+					msg: 'backup_code_used',
+					user_id: user.id,
+					remaining: remaining.length,
+				});
 			});
 		}
 		// Update last_login (best effort).

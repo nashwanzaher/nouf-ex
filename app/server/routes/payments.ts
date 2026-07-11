@@ -346,10 +346,13 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid payment id', 400);
 
-		const payment = (await db.prepare('SELECT order_id FROM payments WHERE id = ?').get(id)) as
-			| { order_id: number }
-			| undefined;
+		const payment = (await db
+			.prepare('SELECT order_id, status FROM payments WHERE id = ?')
+			.get(id)) as { order_id: number; status: string } | undefined;
 		if (!payment) return sendError(res, 'Payment not found', 404);
+		if (payment.status === 'completed') {
+			return sendError(res, 'Payment already confirmed', 409, 'ALREADY_CONFIRMED');
+		}
 		const order = (await db
 			.prepare('SELECT customer_id FROM orders WHERE id = ?')
 			.get(payment.order_id)) as { customer_id: number } | undefined;
@@ -362,7 +365,7 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 		const result = (await db
 			.prepare(
 				`UPDATE payments SET status = 'completed', paid_at = NOW(), updated_at = NOW()
-          WHERE id = ? RETURNING order_id, amount`,
+				 WHERE id = ? AND status != 'completed' RETURNING order_id, amount`,
 			)
 			.get(id)) as { order_id: number; amount: number } | undefined;
 		if (!result) {

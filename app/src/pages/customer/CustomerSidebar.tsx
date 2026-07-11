@@ -1,13 +1,15 @@
 import { Link, useLocation } from 'react-router';
 import { ShoppingBag, Heart, Star, MapPin, Bell, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useApp } from '../../context/AppContext';
+import { useTranslation } from 'react-i18next';
 
 const navItems = [
-	{ icon: ShoppingBag, label: 'طلباتي', path: '/customer/orders' },
-	{ icon: Heart, label: 'المفضلة', path: '/customer/wishlist' },
-	{ icon: Star, label: 'تقييماتي', path: '/customer/reviews' },
-	{ icon: MapPin, label: 'العناوين', path: '/customer/addresses' },
-	{ icon: Bell, label: 'الإشعارات', path: '/customer/notifications' },
+	{ icon: ShoppingBag, labelKey: 'customer.orders', label: 'طلباتي', path: '/customer/orders' },
+	{ icon: Heart, labelKey: 'customer.wishlist', label: 'المفضلة', path: '/customer/wishlist' },
+	{ icon: Star, labelKey: 'customer.reviews', label: 'تقييماتي', path: '/customer/reviews' },
+	{ icon: MapPin, labelKey: 'customer.addresses', label: 'العناوين', path: '/customer/addresses' },
+	{ icon: Bell, labelKey: 'customer.notifications', label: 'الإشعارات', path: '/customer/notifications' },
 	// 'Profile' removed 2026-06-29: the /customer/profile route never
 	// existed — it pointed to NotFound. Profile info is accessible via
 	// the existing /customer dashboard (CustomerDashboard.tsx renders
@@ -17,6 +19,9 @@ const navItems = [
 export default function CustomerSidebar() {
 	const location = useLocation();
 	const [mobileOpen, setMobileOpen] = useState(false);
+	const { state } = useApp();
+	const { t } = useTranslation();
+	const user = state.user;
 
 	const isActive = (path: string) => {
 		if (path === '/customer/orders' && location.pathname === '/customer') return true;
@@ -34,8 +39,8 @@ export default function CustomerSidebar() {
 						<User className="w-5 h-5 text-[#1A1612]" strokeWidth={1.5} />
 					</div>
 					<div className="text-right">
-						<p className="text-white font-cairo font-semibold text-sm">أحمد محمد</p>
-						<p className="text-[#AAAAAA] font-cairo text-xs">ahmed@example.com</p>
+						<p className="text-white font-cairo font-semibold text-sm">{user?.name ?? t('customer.guest', 'ضيف')}</p>
+						<p className="text-[#AAAAAA] font-cairo text-xs">{user?.email ?? ''}</p>
 					</div>
 				</div>
 			</div>
@@ -43,6 +48,7 @@ export default function CustomerSidebar() {
 			<nav className="flex-1 p-4 space-y-1 overflow-y-auto">
 				{navItems.map((item) => {
 					const active = isActive(item.path);
+					const label = t(item.labelKey, item.label);
 					return (
 						<Link
 							key={item.path}
@@ -55,7 +61,7 @@ export default function CustomerSidebar() {
 							}`}
 						>
 							<item.icon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
-							<span>{item.label}</span>
+							<span>{label}</span>
 							{item.icon === Bell && (
 								<span className="mr-auto w-2 h-2 bg-[#EF4444] rounded-full" />
 							)}
@@ -69,7 +75,7 @@ export default function CustomerSidebar() {
 					to="/"
 					className="flex items-center gap-3 px-4 py-3 rounded-xl text-[#AAAAAA] hover:bg-white/5 hover:text-white transition-colors font-cairo text-sm"
 				>
-					<span>العودة للرئيسية</span>
+					<span>{t('customer.backToHome', 'العودة للرئيسية')}</span>
 				</Link>
 			</div>
 		</div>

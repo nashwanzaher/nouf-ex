@@ -708,6 +708,10 @@ adminRouter.patch('/disputes/:id', ...adminAuth, async (req: Request, res: Respo
 			'closed',
 			'rejected',
 		]);
+		// Prevent re-opening a dispute from a terminal state
+		if (TERMINAL_STATUSES.has(current.status as string) && !TERMINAL_STATUSES.has(v.data.status)) {
+			return sendError(res, 'Cannot change status of a resolved dispute', 400, 'DISPUTE_ALREADY_RESOLVED');
+		}
 		const patch: Record<string, unknown> = { status: v.data.status };
 		if (v.data.resolution !== undefined) patch.resolution = v.data.resolution;
 		if (v.data.refund_amount !== undefined) patch.refund_amount = v.data.refund_amount;

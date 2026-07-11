@@ -19,27 +19,41 @@ export const reviewsRouter = Router();
 
 reviewsRouter.get('/', async (req: Request, res: Response) => {
 	try {
-		const { productId, storeId } = req.query;
+		const { productId, storeId, limit, offset } = req.query;
 
 		let sql = `SELECT r.*, u.full_name as customer_name, u.avatar as customer_avatar,
-                      p.name_en as product_name, s.store_name as store_name
-               FROM reviews r
-               LEFT JOIN users u ON r.customer_id = u.id
-               LEFT JOIN products p ON r.product_id = p.id
-               LEFT JOIN stores s ON r.store_id = s.id
-               WHERE r.is_visible = TRUE`;
-		const params: number[] = [];
+					  p.name_en as product_name, s.store_name as store_name
+			   FROM reviews r
+			   LEFT JOIN users u ON r.customer_id = u.id
+			   LEFT JOIN products p ON r.product_id = p.id
+			   LEFT JOIN stores s ON r.store_id = s.id
+			   WHERE r.is_visible = TRUE`;
+		const params: unknown[] = [];
 
 		if (productId) {
+			const pid = Number(productId);
+			if (!Number.isInteger(pid) || pid <= 0) {
+				return sendError(res, 'Invalid productId', 400);
+			}
 			sql += ' AND r.product_id = ?';
-			params.push(Number(productId));
+			params.push(pid);
 		}
 		if (storeId) {
+			const sid = Number(storeId);
+			if (!Number.isInteger(sid) || sid <= 0) {
+				return sendError(res, 'Invalid storeId', 400);
+			}
 			sql += ' AND r.store_id = ?';
-			params.push(Number(storeId));
+			params.push(sid);
 		}
 
 		sql += ' ORDER BY r.created_at DESC';
+
+		// Pagination with defaults
+		const lim = Math.min(Math.max(Number(limit) || 20, 1), 100);
+		const off = Math.max(Number(offset) || 0, 0);
+		sql += ' LIMIT ? OFFSET ?';
+		params.push(lim, off);
 
 		const reviews = await db.prepare(sql).all(...params);
 		sendSuccess(res, reviews);
@@ -56,13 +70,13 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Source of truth = authenticated user. Ignore customerId in body.
 		const customerId = req.user!.id;
 
-		// Verified-purchase guard: only order items count.
+	// Verified-purchase guard: only delivered order items count.
 		const purchased = (await db
 			.prepare(
 				`SELECT 1 AS found FROM order_items oi
-             JOIN orders o ON oi.order_id = o.id
-            WHERE o.customer_id = ? AND oi.product_id = ?
-            LIMIT 1`,
+				 JOIN orders o ON oi.order_id = o.id
+				WHERE o.customer_id = ? AND oi.product_id = ? AND o.status = 'delivered'
+				LIMIT 1`,
 			)
 			.get(customerId, productId)) as { found: 1 } | undefined;
 		const isVerified = Boolean(purchased);
@@ -89,13 +103,13 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			return sendError(res, 'storeId does not match product', 400, 'STORE_MISMATCH');
 		}
 
-		const result = (await db
+	const result = (await db
 			.prepare(
 				`INSERT INTO reviews (product_id, store_id, customer_id, rating, title, comment, helpful_count, is_verified, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-         RETURNING id`,
+				 VALUES (?, ?, ?, ?, ?, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+				 RETURNING id`,
 			)
-			.run(
+			.get(
 				productId,
 				resolvedStoreId,
 				customerId,
@@ -103,10 +117,8 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				title ?? null,
 				comment ?? null,
 				isVerified,
-			)) as {
-			lastInsertRowid: number | null;
-		};
-		if (result.lastInsertRowid == null) {
+			)) as { id: number } | undefined;
+		if (!result) {
 			return sendError(res, 'Failed to create review', 500, ErrorCodes.INSERT_FAILED);
 		}
 

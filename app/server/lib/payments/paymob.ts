@@ -52,7 +52,7 @@ export const paymobProvider: PaymentProvider = {
 		const token = await authToken();
 		const amountMinor = Math.round(input.amount * 100);
 		// 1. Create an "order" on Paymob.
-		const order = (await fetch(`${PAYMOB_API}/ecommerce/orders`, {
+		const orderRes = await fetch(`${PAYMOB_API}/ecommerce/orders`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -62,9 +62,14 @@ export const paymobProvider: PaymentProvider = {
 				currency: input.currency,
 				merchant_order_id: String(input.orderId),
 			}),
-		}).then((r) => r.json())) as { id: number };
+		});
+		if (!orderRes.ok) {
+			const errText = await orderRes.text().catch(() => 'Unknown error');
+			throw new Error(`Paymob order creation failed (${orderRes.status}): ${errText}`);
+		}
+		const order = (await orderRes.json()) as { id: number };
 		// 2. Get a payment key.
-		const paymentKey = (await fetch(`${PAYMOB_API}/acceptance/payment_keys`, {
+		const paymentKeyRes = await fetch(`${PAYMOB_API}/acceptance/payment_keys`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -87,7 +92,12 @@ export const paymobProvider: PaymentProvider = {
 				currency: input.currency,
 				integration_id: Number(process.env.PAYMOB_INTEGRATION_ID),
 			}),
-		}).then((r) => r.json())) as { token: string };
+		});
+		if (!paymentKeyRes.ok) {
+			const errText = await paymentKeyRes.text().catch(() => 'Unknown error');
+			throw new Error(`Paymob payment key creation failed (${paymentKeyRes.status}): ${errText}`);
+		}
+		const paymentKey = (await paymentKeyRes.json()) as { token: string };
 		const iframeId = process.env.PAYMOB_IFRAME_ID || '631568';
 		return {
 			accepted: true,

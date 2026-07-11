@@ -80,11 +80,21 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 	// Destructure headers out of options before spreading to prevent
 	// caller headers from silently overriding Content-Type and Authorization.
 	const { headers: callerHeaders, ...restOptions } = options || {};
+	// Filter out sensitive headers from caller to prevent override attacks
+	const safeCallerHeaders: Record<string, string> = {};
+	if (callerHeaders) {
+		for (const [key, value] of Object.entries(callerHeaders)) {
+			const lk = key.toLowerCase();
+			if (lk !== 'authorization' && lk !== 'content-type' && value != null) {
+				safeCallerHeaders[key] = String(value);
+			}
+		}
+	}
 	const config: RequestInit = {
 		headers: {
 			'Content-Type': 'application/json',
 			...(token ? { Authorization: `Bearer ${token}` } : {}),
-			...callerHeaders,
+			...safeCallerHeaders,
 		},
 		...restOptions,
 		signal: controller.signal,

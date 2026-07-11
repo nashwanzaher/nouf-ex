@@ -396,17 +396,18 @@ sellerRouter.post('/orders/:id/status', ...sellerAuth, async (req: Request, res:
 				'INVALID_STATE_TRANSITION',
 			);
 		}
-		const updated = (await db
+	const updated = (await db
 			.prepare(
 				`UPDATE orders
-                SET status = $1, updated_at = NOW(),
-                    timeline = COALESCE(timeline, '[]'::jsonb) || jsonb_build_array(
-                        jsonb_build_object('status', $1, 'note', $2, 'at', NOW()::text, 'by', $3)
-                    )
-              WHERE id = $4
-              RETURNING id, status, timeline, updated_at`,
+				 SET status = $1, updated_at = NOW(),
+					 tracking_number = COALESCE($2, tracking_number),
+					 timeline = COALESCE(timeline, '[]'::jsonb) || jsonb_build_array(
+						 jsonb_build_object('status', $1, 'note', $3, 'at', NOW()::text, 'by', $4)
+					 )
+			   WHERE id = $5
+			   RETURNING id, status, timeline, updated_at`,
 			)
-			.get(data.status, data.note ?? null, req.user!.id, id)) as
+			.get(data.status, data.tracking_number ?? null, data.note ?? null, req.user!.id, id)) as
 			Record<string, unknown> | undefined;
 		if (!updated) return sendError(res, 'Order not found', 404);
 		await writeAuditLog(

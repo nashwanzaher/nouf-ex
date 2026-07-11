@@ -183,7 +183,7 @@ export default function UsersManagement() {
 				await patchAdminUser(target.id, { status: next });
 				addAppToast({
 					type: 'success',
-					message: next === 'active' ? 'تم تفعيل الحساب' : 'تم تفعيل الحساب',
+					message: next === 'active' ? 'تم تفعيل الحساب' : 'تم تعطيل الحساب',
 				});
 				await refetchUsers();
 			} catch (err) {

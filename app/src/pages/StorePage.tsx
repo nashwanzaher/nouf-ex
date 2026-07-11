@@ -137,12 +137,12 @@ export default function StorePage() {
 		'fast-shipping': {
 			color: 'text-[#4CAF50]',
 			bg: 'bg-[#E8F5E9]',
-			label: t('store.badgeVerified', 'Verified'),
+			label: t('store.badgeFastShipping', 'Fast Shipping'),
 		},
 		'easy-returns': {
 			color: 'text-[#FF6A00]',
 			bg: 'bg-[#FFF3E0]',
-			label: t('store.badgeGold', 'Gold Supplier'),
+			label: t('store.badgeEasyReturns', 'Easy Returns'),
 		},
 	};
 

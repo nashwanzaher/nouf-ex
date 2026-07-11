@@ -1358,6 +1358,8 @@
 		"moveToCartError": "将商品移至购物车失败。请重试。"
 	}
 },
+	"errors": {
+		"notFound": {
 			"title": "Page not found"
 		}
 	}

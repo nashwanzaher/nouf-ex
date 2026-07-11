@@ -1358,6 +1358,8 @@
 		"moveToCartError": "تعذّر نقل المنتج إلى السلة. حاول مرة أخرى."
 	}
 },
+	"errors": {
+		"notFound": {
 			"title": "Page not found"
 		}
 	}

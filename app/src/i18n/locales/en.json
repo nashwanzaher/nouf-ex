@@ -1358,6 +1358,8 @@
 		"moveToCartError": "Failed to move product to cart. Please try again."
 	}
 },
+	"errors": {
+		"notFound": {
 			"title": "Page not found"
 		}
 	}

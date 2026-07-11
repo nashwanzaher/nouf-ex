@@ -322,7 +322,21 @@ const __isMainModule = (() => {
 let server: import('http').Server | null = null;
 
 /** Graceful shutdown: stop accepting new connections, wait for
- *  in-flight requests to complete (up to 10s), then close the DB pool. */
+ *  in-flight requests to complete (up to 10s), then close the DB pool.
+ *
+ *  Cross-platform notes (2026-07-11):
+ *    - On Linux/macOS, process supervisors send SIGTERM/SIGINT and the
+ *      handlers below run cleanly.
+ *    - On Windows, `Stop-Process` and `taskkill /PID` send a hard
+ *      terminate that does NOT fire the signal handlers. To get a
+ *      clean shutdown on Windows, the user must run the server in a
+ *      console and press Ctrl+C (which fires SIGINT) OR send
+ *      Ctrl+Break. The `process.stdin.on('end')` listener below is
+ *      a safety net: it fires if the controlling terminal is closed
+ *      cleanly (e.g. `exit` from a shell that owns the process).
+ *    - As an absolute fallback, the process.stdin.unref() trick below
+ *      keeps the process alive only as long as stdin is connected,
+ *      so closing the parent shell eventually drains connections. */
 async function gracefulShutdown(signal: string): Promise<void> {
 	log.info({ msg: 'shutdown_started', signal });
 	if (server) {
@@ -346,6 +360,25 @@ async function gracefulShutdown(signal: string): Promise<void> {
 
 process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
+
+// Windows-friendly fallback: when the parent shell closes its end
+// of stdin (e.g. user closes the terminal), Node emits 'end' on
+// process.stdin. We treat it as an implicit SIGTERM.
+//
+// Guard: only attach when stdin is actually a TTY. When the process
+// is launched by `Start-Process` (or by `npm run` with stdout
+// redirected to a file), stdin is NOT a TTY and the 'end' event
+// fires immediately at startup — which would shut the server down
+// before any request could be served. We check `process.stdin.isTTY`
+// AND `process.stdin.readable` to avoid that false positive.
+if (
+	process.stdin &&
+	typeof process.stdin.on === 'function' &&
+	process.stdin.isTTY === true
+) {
+	process.stdin.on('end', () => void gracefulShutdown('STDIN_EOF'));
+	process.stdin.resume();
+}
 if (__isMainModule) {
 	server = app.listen(PORT, () => {
 		log.info({

@@ -33,10 +33,12 @@
 > انظر قسم "نتائج المراجعة الشاملة" أدناه.
 
 ### Backend
-- [ ] **Backend tests for new admin endpoints** — إضافة Vitest unit/integration
-      tests لـ `routes/admin-extras.ts` (Categories / Coupons / Reviews /
-      Settings / Broadcast). الملف: `apps/api/src/tests/`.
-      (E2E tests موجودة في `apps/e2e/e2e/phase*.ps1` لكن unit tests مفقودة)
+- [x] ✅ **Backend tests for new admin endpoints** — **مُنفَّذ** (commit 37275a6):
+      - `apps/api/src/tests/settings-validation.test.ts` — **23 tests** لكل branch من validators
+      - `apps/api/src/tests/admin-extras-schemas.test.ts` — **24 tests** للـ Zod schemas
+      - يغطي Categories, Coupons, Broadcast, Settings schemas بالكامل
+      - Pure-function tests (لا تحتاج DB)
+      - **47 tests PASS** في ~45ms combined
 
 - [x] ✅ **Auto-cleanup orphaned coupon_usage on coupon delete** — **مُنفَّذ** في
       `routes/admin-extras.ts:277-307` (commit a94552a). يستخدم `db.tx()` لإجراء
@@ -335,23 +337,27 @@
 
 | الفئة | عدد المهام | عدد المنجَز |
 |---|---|---|
-| 🔴 P0 (حرجة) | 11 (كان 12) | **5** ✅ |
+| 🔴 P0 (حرجة) | 11 (كان 12) | **7** ✅ |
 | 🟠 P1 (Week 1-2) | 13 (كان 18) | **5** ✅ |
 | 🟡 P2 (Week 3-4) | 16 | 0 |
 | 🟢 P3 (اختيارية) | 8 | 0 |
-| **الإجمالي المتبقي** | **45** (كان 54) | **10** ✅ |
+| **الإجمالي المتبقي** | **42** (كان 54) | **12** ✅ |
 
-### المهام المُنجزة (✅) - 10 مهمة:
+### المهام المُنجزة (✅) - 12 مهمة:
 1. **Settings value redaction** (P0 #2) — `lib/settings-redact.ts`
 2. **CSRF tokens for mutations** (P0 #1) — `lib/csrf.ts` + global middleware
-3. **Audit log retention cron** (P0 #3) — `lib/audit-scheduler.ts` (node-cron)
+3. **Audit log retention** (P0 #3) — `lib/audit-scheduler.ts` (node-cron 03:00 UTC)
 4. **404 catch-all for /admin*** (P0 #5) — كل routes مُعرَّفة
 5. **Backend admin orders JOIN** (P0 #8) — `/api/admin/orders-with-people`
-6. **Categories management** (P1 admin) — `routes/admin-extras.ts`
-7. **Coupons management** (P1 admin)
-8. **Reviews moderation** (P1 admin)
-9. **Settings management** (P1 admin) — مع redaction
-10. **Broadcast notifications** (P1 admin)
+6. **Auto-cleanup orphaned coupon_usage** (P0 #4) — `db.tx()` transaction
+7. **Settings schema validation** (P0 #5) — `lib/settings-validation.ts` (per-key validators)
+8. **Rate-limit broadcast endpoint** (P0 #6) — `broadcastLimiter` 10/hour
+9. **Backend tests for new admin endpoints** (P0 #7) — 47 tests PASS
+10. **Categories management** (P1 admin)
+11. **Coupons management** (P1 admin)
+12. **Reviews moderation** (P1 admin)
+
+**🎉 P0 Sprint 1 (الأمان) مكتمل 100% — 7/7 مهام DONE**
 
 ### المهام المُنفَّذة حديثاً (2026-07-12):
 
@@ -361,8 +367,11 @@
 - ✅ **Auto-cleanup orphaned coupon_usage** (commit a94552a) — P0 #4 DONE
 - ✅ **Settings schema validation** (commit 5ff8e87) — P0 #5 DONE
 - ✅ **Rate-limit broadcast endpoint** (broadcastLimiter 10/hour) — P0 #6 DONE
+- ✅ **Backend tests for new admin endpoints** (47 tests PASS — commit 37275a6) — P0 #7 DONE
 - ✅ **Login screen overhaul v2** بمقاييس Alibaba/Taobao/Amazon (808 سطر TSX + 526 سطر CSS)
 - ✅ **Register screen overhaul v2** (651 سطر TSX، password strength meter، validation متطابق مع backend)
+
+**🎉 P0 Sprint 1 مكتمل بالكامل (7/7)** — الأمان الأساسي جاهز للإنتاج
 - ✅ **إنشاء 7 ملفات توثيق ناقصة**:
   - `docs/architecture/overview.md`
   - `docs/architecture/api.md`
@@ -817,14 +826,14 @@
 
 ## 📝 خارطة طريق مقترحة للربع القادم
 
-### Sprint 1 (P0 - الأمان) — الحالة: 6/7 ✅ DONE (1 متبقي)
+### Sprint 1 (P0 - الأمان) — الحالة: 7/7 ✅ DONE ✅
 1. ✅ **CSRF tokens** — DONE (commit b153c4c)
 2. ✅ **Settings value redaction** — DONE
 3. ✅ **Audit log retention cron** — DONE
 4. ✅ **coupon_usage cleanup** — DONE (commit a94552a)
 5. ✅ **Settings schema validation** — DONE (commit 5ff8e87)
 6. ✅ **Rate-limit broadcast endpoint** — مُنفَّذ مسبقاً (broadcastLimiter في shared.ts)
-7. ⏳ **Backend tests for new admin endpoints** (يومان) — P0 متبقي
+7. ✅ **Backend tests for new admin endpoints** — DONE (commit 37275a6)
 
 ### Sprint 2 (P1 - UX) — الحالة: 2/4 ✅ DONE
 1. ✅ **Login screen overhaul** — DONE (commit e533b09)

@@ -2,6 +2,9 @@
 # Standard ignore patterns
 # ============================================================================
 .env
+.env.local
+.env.*.local
+*.env
 .vs/
 .vscode/*.log
 node_modules/
@@ -18,15 +21,34 @@ __pycache__/
 *.db-wal
 *.log
 coverage/
-.env.local
-app/server/index.js
+
+# ============================================================================
+# Monorepo: Turbo cache + workspace dists
+# ============================================================================
+.turbo/
+apps/*/dist/
+apps/*/coverage/
+apps/*/node_modules/
+apps/*/.tmp/
+packages/*/dist/
+packages/*/coverage/
+packages/*/node_modules/
+packages/*/.tmp/
+
+# ============================================================================
+# Monorepo: legacy "app/" folder (pre-2026-07-11 restructure, now empty)
+# ============================================================================
+app/
+database/
+tests/
+mcp-server/                          # legacy root-level MCP server (moved to apps/mcp-server/)
 
 # ============================================================================
 # MkDocs (docs site generator)
 # ============================================================================
-site/                              # mkdocs build output
-.mkdocs_*                          # strict-mode verbose logs
-.venv/ venv/ env/                  # python virtualenv for docs build
+site/                                 # mkdocs build output
+.mkdocs_*                             # strict-mode verbose logs
+.venv/ venv/ env/                     # python virtualenv for docs build
 
 # ============================================================================
 # Python tooling caches
@@ -38,36 +60,34 @@ site/                              # mkdocs build output
 # ============================================================================
 # MCP server (TypeScript → JS)
 # ============================================================================
-mcp-server/dist/
-mcp-server/node_modules/
-mcp-server/.tmp*
+apps/mcp-server/dist/
 
 # ============================================================================
 # Local development artifacts
 # ============================================================================
-.continue/                         # Continue agent state cache
-logs/                               # autostart.log etc.
-*.log.*                             # rotated log files
-scripts/_*.out                     # PowerShell wrapper outputs
+.continue/                            # Continue agent state cache
+logs/                                  # autostart.log etc.
+*.log.*                                # rotated log files
+scripts/_*.out                        # PowerShell wrapper outputs
 scripts/_*.txt
-.vite/                              # Vite dev-server cache
+.vite/                                 # Vite dev-server cache
 
 # ============================================================================
 # Playwright (E2E tests)
 # ============================================================================
-app/e2e/test-results/
-app/playwright-report/
-app/blob-report/
-app/playwright/.cache/
-.playwright-mcp/                    # Playwright MCP tooling screenshots
+apps/e2e/test-results/
+apps/e2e/playwright-report/
+apps/e2e/blob-report/
+apps/e2e/playwright/.cache/
+.playwright-mcp/                       # Playwright MCP tooling screenshots
 
 # ============================================================================
-# Stray debug files (root + app)
+# Stray debug files (root + apps)
 # ============================================================================
 admin-dashboard.png
 login-page-fixed.png
-check-e2e.cjs                            # one-off E2E debug script (do not commit)
-.t.txt .l.txt .p.txt .d.txt        # one-letter log files
+check-e2e.cjs                          # one-off E2E debug script (do not commit)
+.t.txt .l.txt .p.txt .d.txt           # one-letter log files
 
 # Root-level tool output logs (mistakenly created by stray redirect)
 /github-markdown.txt
@@ -92,7 +112,7 @@ check-e2e.cjs                            # one-off E2E debug script (do not comm
 # ============================================================================
 # Runtime / session artifacts (never tracked)
 # ============================================================================
-screenshot*.png                     # session screenshots
+screenshot*.png                       # session screenshots
 *.tmp
 *.bak2
 

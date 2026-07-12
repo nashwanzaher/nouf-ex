@@ -72,7 +72,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ### 1.1.2 Install + apply database
 
 ```sh
-cd app
+# from repo root, all workspaces share the same node_modules
 npm install
 npm run db:setup                     # idempotent: applies database/*.sql + migrations
 ```
@@ -83,17 +83,18 @@ This creates the `noufex_db` database, the 4 roles (`postgres`, `noufex_owner`, 
 
 **Option A — Docker (single container, recommended):**
 ```sh
-cd ..                                # back to repo root
+# from repo root
 docker compose up -d --build
-# → API on http://localhost:3000
+# → API on http://localhost:3000 (and SPA at the same origin via SERVE_STATIC=true)
 ```
 
-**Option B — local Node, two terminals:**
+**Option B — local Node, two terminals (run from repo root):**
 ```sh
-# Terminal 1 (from app/)
-cd apps/web && npm run api                # Express on :3000
-# Terminal 2 (from app/)
-cd apps/web && npm run dev                # Vite on :5173 (proxies /api to :3000)
+# Terminal 1 — Express API on :3000
+npm run dev -w @noufex/api
+
+# Terminal 2 — Vite SPA on :8080 (proxies /api to :3000)
+npm run dev -w @noufex/web
 ```
 
 ### 1.1.4 Smoke test
@@ -114,7 +115,7 @@ Then open the SPA in a browser, sign in as a seed customer (e.g. `ahmed@gmail.co
 ### 1.1.5 Run the test suite
 
 ```sh
-cd app
+# from repo root, all workspaces share the same node_modules
 npm run lint           # 0 errors expected
 npm run typecheck      # tsc -b --noEmit
 npm run test:unit      # Vitest (pg mocked)
@@ -127,7 +128,7 @@ npm run test:a11y      # vitest-axe WCAG 2.1 AA
 |---|---|---|
 | `AUTH_SECRET env var is required` on startup | `.env` missing or secret too short | Set `AUTH_SECRET` to ≥ 32 random chars |
 | `ECONNREFUSED 127.0.0.1:5432` | Postgres not running or wrong host | `pg_isready -h localhost -p 5432`; on Windows-Docker use `host.docker.internal` |
-| `permission denied for table X` | Migrations not applied | `cd apps/web && npm run db:setup` |
+| `permission denied for table X` | Migrations not applied | `npm run db:setup   # from repo root` |
 | `npm run db:setup` fails with `noufex.allow_seed` | `NODE_ENV=production` blocks seed | Use a non-prod env or unset it for dev |
 
 ## §1.2 Tutorial: run an order end-to-end
@@ -178,9 +179,9 @@ If a step fails unexpectedly, run `npm run typecheck && npm run test:unit` from 
 ```sh
 # Quick reference — see CONTRIBUTING.md for the full process
 
-cd app
-npm run dev          # Vite on :5173 (HMR)
-npm run api          # Express on :3000 (no auto-restart; Ctrl-C + rerun)
+# from repo root, all workspaces share the same node_modules
+npm run dev -w @noufex/web   # Vite on :8080 (proxies /api to :3000) (HMR)
+npm run dev -w @noufex/api   # Express on :3000 (no auto-restart; Ctrl-C + rerun)
 npm run lint -- --fix
 npm run typecheck
 npm run test:unit -- --watch
@@ -257,7 +258,7 @@ GitHub Actions (`.github/workflows/`):
 
 **Local simulation:**
 ```sh
-cd app
+# from repo root, all workspaces share the same node_modules
 npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:a11y
 ```
 
@@ -435,7 +436,7 @@ pg_restore --no-owner --dbname=noufex_db "/backups/noufex_<TIMESTAMP>.dump"
 ### Apply schema + seed (only on first-time setup, NOT a restore path)
 
 ```sh
-cd apps/web && npm run db:setup
+npm run db:setup   # from repo root
 ```
 
 **Targets:** nightly full dump + WAL archive continuously. **DR RPO:** 15 min. **DR RTO:** 2 h.
@@ -447,7 +448,7 @@ cd apps/web && npm run db:setup
 | `AUTH_SECRET env var is required` on startup | `.env` missing or secret < 32 chars | Set `AUTH_SECRET` to ≥ 32 random chars |
 | Tests pass locally but fail in CI | Different Node version, timezone, port conflict, hidden env var | CI uses Node 20 — match `engines` in `package.json` |
 | `ECONNREFUSED 127.0.0.1:5432` in Docker | Wrong DB host | Use `host.docker.internal` |
-| `permission denied for table X` | Migrations not applied | `cd apps/web && npm run db:setup` |
+| `permission denied for table X` | Migrations not applied | `npm run db:setup   # from repo root` |
 | 429 on every request | Rate limiter triggered | Wait 15 min for the auth bucket, 1 min for the health bucket |
 | CSP blocks inline script | Missing nonce | Check that `index.html` (built by Vite) has the nonce injected by `securityHeaders` middleware |
 | Rate-limit cascade in tests | Test runner hammers `/api/health` faster than the IP-keyed limiter allows | Retry with a few seconds' delay or run against a fresh DB |
@@ -785,6 +786,38 @@ A single Node/Express API talks to one external PostgreSQL database, and a React
 | Rate limit | `database/migrations/0004_rate_limit_buckets.sql` + `apps/api/src/lib/ratelimit.ts` | Atomic UPSERT |
 | SPA entry | `apps/web/src/main.tsx` → `App.tsx` | React Router 7, lazy routes, `ProtectedRoute` |
 
+### Monorepo layout (npm workspaces + Turbo)
+
+As of 2026-07-11 the project is structured as an npm-workspaces monorepo. All workspaces share one hoisted `node_modules/` at the repo root; Turbo orchestrates the `build`, `typecheck`, `lint`, `test`, and `dev` tasks across them.
+
+```
+nouf-ex/
+├── apps/
+│   ├── web/           # React 19 + Vite 7 SPA
+│   ├── api/           # Express 5 REST API (esbuild → dist/index.js)
+│   ├── mcp-server/    # MCP server (stdio) for deep introspection
+│   └── e2e/           # PowerShell end-to-end phase scripts
+├── packages/
+│   ├── db/            # PostgreSQL schema, migrations, seed
+│   ├── shared/        # Shared types + constants
+│   ├── typescript-config/  # base/react/node tsconfig presets
+│   └── eslint-config/      # react/node eslint presets
+├── docker/
+│   └── mcp-gateway/   # Docker MCP Gateway catalog + Dockerfile
+├── scripts/           # db/, devops/, maintenance/, quality/
+├── turbo.json
+└── package.json       # workspaces + lint-staged + husky
+```
+
+**Conventions:**
+- Every workspace package has a name like `@noufex/<scope>`.
+- Frontend code lives under `apps/web/src/features/<domain>/` (feature-based, not folder-by-type).
+- Backend code lives under `apps/api/src/modules/<domain>/` with `routes.ts → controller.ts → service.ts → repository.ts` layering. `apps/api/src/routes/<domain>.ts` is a thin re-export shim.
+- `@/` path alias maps to `apps/web/src/`.
+- `@noufex/web/*` and `@noufex/shared/*` are cross-workspace TypeScript path aliases (declared in `apps/api/tsconfig.json`).
+- Database migrations live in `packages/db/migrations/` and are applied by `npm run db:setup` from the repo root.
+- Docker images: `docker compose up -d --build` at the repo root builds a multi-stage image that includes both the API bundle (`apps/api/dist/index.js`) and the SPA dist (`apps/web/dist/`).
+
 ## §4.2 Tech stack
 
 | Layer | Tech | Why |
@@ -1050,8 +1083,11 @@ psql "$DATABASE_URL" -c "SELECT bucket, COUNT(*) FROM rate_limit_buckets GROUP B
 curl -sI "$BASE_URL/api/health" | grep -i 'content-security-policy:'
 curl -sI -H "Origin: https://evil.example" "$BASE_URL/api/health" | grep -i 'access-control-allow'
 
-# Test suite
-cd apps/web && npm run typecheck && npm run lint && npm run test:unit && npm run test:a11y
+# Test suite (from repo root)
+npm run typecheck
+npm run lint
+npm run test -w @noufex/api   # server unit + integration tests
+npm run test -w @noufex/web   # component + a11y tests
 ```
 
 ---

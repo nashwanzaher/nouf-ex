@@ -9,7 +9,7 @@
  */
 
 // ─── Base client (ApiError, fetch wrapper) ──────────────────
-export { ApiError, isApiError, isErrorCode } from './client';
+export { ApiError, ensureCsrfToken, isApiError, isErrorCode } from './client';
 export type { ApiResponse, RequestOptions } from './client';
 
 // ─── Standardized error codes (mirrors server catalog) ────────

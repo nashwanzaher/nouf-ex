@@ -11,6 +11,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
+	broadcastLimiter,
 	db,
 	sendError,
 	sendSuccess,
@@ -18,6 +19,9 @@ import {
 	requireRole,
 	validate,
 	writeAuditLog,
+	readSettingDirect,
+	redactSettingValue,
+	diffSettingValue,
 	paginationSchema,
 	adminCategoryCreateSchema,
 	adminCategoryUpdateSchema,
@@ -408,9 +412,12 @@ adminExtrasRouter.delete(
 
 /** POST /api/admin/notifications/broadcast
  *  Inserts one `notifications` row per user matching the segment.
+ *  P0 (2026-07-12): rate-limited to 10 broadcasts / hour / admin to
+ *  prevent abuse via a compromised admin session.
  */
 adminExtrasRouter.post(
 	'/notifications/broadcast',
+	broadcastLimiter,
 	...adminAuth,
 	async (req: Request, res: Response) => {
 		try {
@@ -492,9 +499,17 @@ adminExtrasRouter.patch(
 			const v = validate(adminSettingUpdateSchema, req.body);
 			if (!v.ok) return sendError(res, v.error, 400);
 			const key = String(req.params.key ?? '');
-			const oldRow = (await db
-				.prepare('SELECT key, value FROM app_settings WHERE key = $1')
-				.get(key)) as Record<string, unknown> | undefined;
+			const newValue = v.data.value;
+			// SECURITY (P0, 2026-07-12): audit-log redaction for
+			// sensitive setting values. The literal `value` is NEVER
+			// persisted to `admin_audit_log.old_values` /
+			// `.new_values` when the setting key matches the
+			// sensitive-key patterns in `lib/settings-redact.ts`
+			// (e.g. STRIPE_SECRET_KEY, SMTP_PASSWORD, *_API_KEY).
+			// The audit row is reduced to `{ value: '[REDACTED]' }` or
+			// `{ value: '[unchanged]' }` if the value didn't change.
+			const oldValue = await readSettingDirect(key);
+			const { old_values, new_values } = diffSettingValue(key, oldValue, newValue);
 			await db
 				.prepare(
 					`INSERT INTO app_settings (key, value, updated_at)
@@ -502,16 +517,16 @@ adminExtrasRouter.patch(
 					 ON CONFLICT (key) DO UPDATE
 					   SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
 				)
-				.run(key, v.data.value);
-			await writeAuditLog(
-				req,
-				'set_setting',
-				'setting',
+				.run(key, newValue);
+			await writeAuditLog(req, 'set_setting', 'setting', key, old_values, new_values);
+			// The HTTP response intentionally echoes back the redacted
+			// representation, not the plaintext, so a GET /settings
+			// audit log does NOT roundtrip the secret back to the
+			// browser cache.
+			return sendSuccess(res, {
 				key,
-				oldRow ?? null,
-				{ value: v.data.value },
-			);
-			return sendSuccess(res, { key, value: v.data.value });
+				value: redactSettingValue(key, newValue),
+			});
 		} catch (err) {
 			return sendError(res, err);
 		}

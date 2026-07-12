@@ -35,6 +35,13 @@ import {
 // connection count and waste resources.
 import { PgDb } from './db/pg-wrapper.ts';
 import { db } from './lib/shared.ts';
+import cookieParser from 'cookie-parser';
+import {
+	csrfProtection,
+	csrfTokenEndpoint,
+	startAuditCleanupScheduler,
+	stopAuditCleanupScheduler,
+} from './lib/shared.ts';
 import { addressesRouter } from './modules/addresses/index.ts';
 import { adminRouter } from './modules/admin/index.ts';
 import { adminExtrasRouter } from './routes/admin-extras.ts';
@@ -92,8 +99,28 @@ app.use(
 	cors({
 		origin: ALLOWED_ORIGINS,
 		credentials: true,
+		methods: ['GET', 'HEAD', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+		allowedHeaders: ['Content-Type', 'x-csrf-token'],
+		exposedHeaders: ['x-request-id'],
+		maxAge: 86400,
 	}),
 );
+// Cookie parsing — required by the CSRF middleware below. The cookie
+// secret is irrelevant because the SPA never sends its auth cookie
+// via document.cookie (it's HttpOnly). The parser only needs to
+// populate `req.cookies` for the CSRF double-submit comparison.
+app.use(cookieParser('noufex-csrf-double-submit'));
+
+// P0 (2026-07-12): CSRF double-submit protection. Applied globally so
+// every mutating endpoint (POST/PATCH/DELETE) requires the SPA to
+// echo back the `x-csrf-token` header from the `noufex_csrf`
+// non-HttpOnly cookie. Unauthenticated routes (login, register,
+// health, ready, /api/auth/csrf itself) are exempt.
+app.use(csrfProtection());
+
+// Lightweight endpoint the SPA calls once on app boot to mint a fresh
+// token (and get the JSON mirror for the API client to cache).
+app.get('/api/auth/csrf', csrfTokenEndpoint);
 // SECURITY (M-1): the previous 10 MB JSON limit was a DoS vector — a
 // single attacker could pin ~10 MB of heap per concurrent request.
 // 1 MB is more than enough for any of our documented payloads (the
@@ -341,6 +368,9 @@ let server: import('http').Server | null = null;
  *      so closing the parent shell eventually drains connections. */
 async function gracefulShutdown(signal: string): Promise<void> {
 	log.info({ msg: 'shutdown_started', signal });
+	// Stop the audit-cleanup scheduler first so we don't kick off a
+	// new run mid-shutdown.
+	stopAuditCleanupScheduler();
 	if (server) {
 		await new Promise<void>((resolve) => {
 			server!.close(() => resolve());
@@ -382,6 +412,12 @@ if (
 	process.stdin.resume();
 }
 if (__isMainModule) {
+	// P0 (2026-07-12): start the audit-log retention scheduler. This
+	// kicks off `cleanup_audit_logs()` once per day at 03:00 (UTC by
+	// default; configurable via env vars) and dead-letters to logs
+	// on failure. Started BEFORE the listener so the first run happens
+	// after the DB pool is up but before the first request lands.
+	startAuditCleanupScheduler();
 	server = app.listen(PORT, () => {
 		log.info({
 			msg: 'server_started',

@@ -69,6 +69,48 @@ export const db = new PgDb(_databaseUrl);
 export { authLimiter, rateLimit } from './ratelimit.js';
 
 // ═══════════════════════════════════════════════════════════
+// CSRF protection (P0, 2026-07-12) — exported so `index.ts` can
+// apply `csrfProtection()` globally and expose
+// `csrfTokenEndpoint` on `GET /api/auth/csrf`. The middleware
+// itself uses the `x-csrf-token` header + the `noufex_csrf_h`
+// HttpOnly cookie; the SPA reads the token from the non-HttpOnly
+// `noufex_csrf` cookie that we set on every safe-method request.
+// ═══════════════════════════════════════════════════════════
+export {
+	csrfProtection,
+	csrfTokenEndpoint,
+	ensureCsrfCookie,
+} from './csrf.js';
+
+// ═══════════════════════════════════════════════════════════
+// Audit-cleanup scheduler (P0, 2026-07-12) — exported so
+// `index.ts` can start it on boot. Configurable via env vars
+// (AUDIT_CLEANUP_CRON, AUDIT_CLEANUP_ADMIN_DAYS, etc.). Disabled
+// in dev/test by default so developers don't lose audit rows
+// unexpectedly.
+// ═══════════════════════════════════════════════════════════
+export {
+	auditCleanupStatus,
+	runAuditCleanup,
+	startAuditCleanupScheduler,
+	stopAuditCleanupScheduler,
+} from './audit-scheduler.js';
+
+/** Dedicated limiter for `/api/admin/notifications/broadcast`.
+ *
+ *  Limit: 10 broadcasts per hour per admin (P0 abuse-prevention).
+ *  Even though every broadcast costs 1 row per targeted user, an
+ *  admin with a compromised session could otherwise spam thousands
+ *  of notifications per minute. This is a per-admin cap (key includes
+ *  `req.user.id`) so multiple admins don't share the quota. */
+import { rateLimit as _rateLimitFactory } from './ratelimit.js';
+export const broadcastLimiter = _rateLimitFactory(
+	60 * 60 * 1000,
+	10,
+	'broadcast',
+);
+
+// ═══════════════════════════════════════════════════════════
 // Generic helpers
 // ═══════════════════════════════════════════════════════════
 // P0-1 phase 7 (2026-07-04): the two remaining inline helpers
@@ -91,6 +133,24 @@ export { validate } from './validation.js';
 // middleware cycle that the type extraction closed.
 // ═══════════════════════════════════════════════════════════
 export { redactSensitive, writeAuditLog } from './audit.js';
+
+// ═══════════════════════════════════════════════════════════
+// Settings redaction (P0 security, 2026-07-12) — the generic
+// `redactSensitive()` walks JSON by KEY name and only masks a fixed
+// allow-list of secrets. Settings have the OPPOSITE shape: the KEY is
+// the setting name (e.g. `STRIPE_SECRET_KEY`) and the VALUE is what
+// gets stored. The helpers in `settings-redact.ts` know which setting
+// names are sensitive (by suffix pattern) and produce the audit-safe
+// representation (the literal value, or `[REDACTED]`, or `[unchanged]`).
+// ═══════════════════════════════════════════════════════════
+export {
+	SETTING_REDACTED,
+	diffSettingValue,
+	isSensitiveSettingKey,
+	readSettingDirect,
+	redactSettingValue,
+	writeSettingAudit,
+} from './settings-redact.js';
 
 // ═══════════════════════════════════════════════════════════
 // JSON helpers (used by product/category/etc. endpoints) —

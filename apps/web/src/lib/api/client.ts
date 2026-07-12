@@ -9,6 +9,13 @@
  * SECURITY: Auth token is stored in HttpOnly cookie (set by server),
  * not in localStorage. This prevents XSS attacks from stealing tokens.
  * We send `credentials: 'include'` to automatically include the cookie.
+ *
+ * SECURITY (P0, 2026-07-12): every mutating request (POST/PATCH/DELETE)
+ * also includes a CSRF token in the `x-csrf-token` header, read from
+ * the non-HttpOnly `noufex_csrf` cookie. The server compares this to
+ * the HttpOnly `noufex_csrf_h` mirror before accepting any mutation.
+ * Same-origin XSS cannot read HttpOnly cookies, so a CSRF token is
+ * unreachable to a malicious script.
  */
 
 const API_BASE: string =
@@ -39,6 +46,43 @@ export interface RequestOptions {
  *  hanging forever if the server stops responding. Callers can
  *  override by passing their own `signal`. */
 const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
+
+/** Read the non-HttpOnly `noufex_csrf` cookie. Returns `null` if not
+ *  present (the SPA will get one on its first GET from the server). */
+function readCsrfCookie(): string | null {
+	if (typeof document === 'undefined') return null;
+	const match = document.cookie.match(/(?:^|; )noufex_csrf=([^;]+)/);
+	return match ? decodeURIComponent(match[1]) : null;
+}
+
+/** Fetch a fresh CSRF token from the server. The server sets the
+ *  HttpOnly mirror cookie (`noufex_csrf_h`) AND the non-HttpOnly
+ *  read-only cookie (`noufex_csrf`); we return the same token the
+ *  server returned so callers can cache it if they want. Used on
+ *  SPA boot to guarantee the cookie exists before the first
+ *  mutating request. */
+export async function ensureCsrfToken(): Promise<string | null> {
+	try {
+		// Use raw fetch here (NOT apiRequest) because this endpoint
+		// should always be reachable, even before login, and must
+		// run regardless of the current auth state.
+		const res = await fetch(`${API_BASE}/auth/csrf`, {
+			credentials: 'include',
+		});
+		if (!res.ok) return null;
+		const json = (await res.json()) as {
+			success?: boolean;
+			data?: { token?: string };
+		};
+		return json.data?.token ?? readCsrfCookie();
+	} catch {
+		return readCsrfCookie();
+	}
+}
+
+/** HTTP methods that must carry a CSRF token. Anything else (GET,
+ *  HEAD, OPTIONS) is safe to skip. */
+const CSRF_PROTECTED_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 
 export class ApiError extends Error {
 	status: number;
@@ -84,6 +128,17 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
 				safeCallerHeaders[key] = String(value);
 			}
 		}
+	}
+	// P0 (2026-07-12): attach the CSRF token to mutating requests. The
+	// token is read from the non-HttpOnly `noufex_csrf` cookie set by
+	// the server on every safe-method response. If the cookie is missing
+	// (e.g. cleared by the user) the request goes through without a
+	// token — the server then 403s with `CSRF_INVALID` and the SPA can
+	// recover by issuing a GET to /api/auth/csrf to mint a new token.
+	const method = (restOptions.method ?? 'GET').toUpperCase();
+	if (CSRF_PROTECTED_METHODS.has(method)) {
+		const csrf = readCsrfCookie();
+		if (csrf) safeCallerHeaders['x-csrf-token'] = csrf;
 	}
 	const config: RequestInit = {
 		headers: {

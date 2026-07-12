@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name             TEXT        NOT NULL,
     phone                 VARCHAR(20),
     role                  VARCHAR(20) NOT NULL
-        CHECK (role IN ('customer','merchant','admin')),
+        CHECK (role IN ('customer','merchant','admin','delivery_agent')),
     status                VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','suspended','banned')),
     is_verified           BOOLEAN     NOT NULL DEFAULT FALSE,

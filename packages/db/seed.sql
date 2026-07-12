@@ -97,9 +97,22 @@ VALUES
   'Noor Al-Khazen', '+967712345678', 'merchant', 'active',
   TRUE, TRUE, TRUE, NULL, 'ar', 'female'),
 (10, 'layla@mokha-coffee.com',
-  'scrypt$4+NUHh9EY7TlQjfvtpxIGw==$E48o2DOf7Yqc1QFkRJJFzEM3efKn+CjMd/fmhzZT3bkPTE2rIMrVcopScYomUZjJeKaXxdueKA+mHCYnvvMFEQ==',
-  'Layla Al-Maqtari', '+967712345679', 'merchant', 'active',
-  TRUE, TRUE, TRUE, NULL, 'ar', 'female')
+   'scrypt$4+NUHh9EY7TlQjfvtpxIGw==$E48o2DOf7Yqc1QFkRJJFzEM3efKn+CjMd/fmhzZT3bkPTE2rIMrVcopScYomUZjJeKaXxdueKA+mHCYnvvMFEQ==',
+   'Layla Al-Maqtari', '+967712345679', 'merchant', 'active',
+   TRUE, TRUE, TRUE, NULL, 'ar', 'female'),
+-- Delivery Agents
+(11, 'ahmed.delivery@noufex.com',
+   'scrypt$4+NUHh9EY7TlQjfvtpxIGw==$E48o2DOf7Yqc1QFkRJJFzEM3efKn+CjMd/fmhzZT3bkPTE2rIMrVcopScYomUZjJeKaXxdueKA+mHCYnvvMFEQ==',
+   'Ahmed Delivery', '+967712345680', 'delivery_agent', 'active',
+   TRUE, TRUE, TRUE, NULL, 'ar', 'male'),
+(12, 'mohammed.delivery@noufex.com',
+   'scrypt$4+NUHh9EY7TlQjfvtpxIGw==$E48o2DOf7Yqc1QFkRJJFzEM3efKn+CjMd/fmhzZT3bkPTE2rIMrVcopScYomUZjJeKaXxdueKA+mHCYnvvMFEQ==',
+   'Mohammed Delivery', '+967712345681', 'delivery_agent', 'active',
+   TRUE, TRUE, TRUE, NULL, 'ar', 'male'),
+(13, 'sara.delivery@noufex.com',
+   'scrypt$4+NUHh9EY7TlQjfvtpxIGw==$E48o2DOf7Yqc1QFkRJJFzEM3efKn+CjMd/fmhzZT3bkPTE2rIMrVcopScYomUZjJeKaXxdueKA+mHCYnvvMFEQ==',
+   'Sara Delivery', '+967712345682', 'delivery_agent', 'active',
+   TRUE, TRUE, TRUE, NULL, 'ar', 'female')
 ON CONFLICT (id) DO NOTHING;
 -- Reset sequence past the explicit IDs.
 SELECT setval(pg_get_serial_sequence('users','id'), GREATEST((SELECT MAX(id) FROM users), 1));
@@ -172,6 +185,16 @@ VALUES
    'diamond', 99.1, 98.0, 5, '2016', TRUE, TRUE)
 ON CONFLICT (id) DO NOTHING;
 SELECT setval(pg_get_serial_sequence('stores','id'), GREATEST((SELECT MAX(id) FROM stores), 1));
+
+-- ---------------------------------------------------------------------
+-- DELIVERY AGENTS
+-- ---------------------------------------------------------------------
+INSERT INTO delivery_agents (user_id, vehicle_type, vehicle_plate, license_number, status, current_lat, current_lng, rating, total_deliveries, completed_deliveries, avg_delivery_time_minutes)
+VALUES
+(11, 'motorcycle', '1234-أ', 'DL123456', 'active', 12.7855, 45.0162, 4.9, 156, 148, 25),
+(12, 'motorcycle', '5678-ب', 'DL789012', 'active', 12.8567, 44.9876, 4.8, 203, 195, 22),
+(13, 'bicycle', '9012-ج', 'DL345678', 'offline', 12.7234, 45.1234, 4.7, 89, 85, 30)
+ON CONFLICT DO NOTHING;
 
 -- ---------------------------------------------------------------------
 -- PRODUCTS — 24 demo products across all stores/categories

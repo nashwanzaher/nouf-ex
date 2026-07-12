@@ -10,7 +10,7 @@ import {
 } from 'react';
 
 type Lang = 'ar' | 'en' | 'zh';
-type Role = 'guest' | 'customer' | 'merchant' | 'admin';
+type Role = 'guest' | 'customer' | 'merchant' | 'admin' | 'delivery_agent';
 
 interface User {
 	id: string;

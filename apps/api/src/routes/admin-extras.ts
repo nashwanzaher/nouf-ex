@@ -530,14 +530,7 @@ adminExtrasRouter.patch(
 			// "FOO_BAR" as DEFAULT_CURRENCY and break checkout. Now each
 			// known key has a typed validator in
 			// apps/api/src/lib/settings-validation.ts.
-			let canonicalValue: string;
-			try {
-				canonicalValue = validateSettingValue(key, v.data.value);
-			} catch (e) {
-				// HttpError from the validator — forward to the client
-				// as a 400 with the actionable error message.
-				throw e;
-			}
+			const canonicalValue = validateSettingValue(key, v.data.value);
 			// SECURITY (P0, 2026-07-12): audit-log redaction for
 			// sensitive setting values. The literal `value` is NEVER
 			// persisted to `admin_audit_log.old_values` /

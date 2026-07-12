@@ -5,7 +5,7 @@
 export const SUPPORTED_LANGUAGES = ['ar', 'en', 'zh'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-export const USER_ROLES = ['customer', 'merchant', 'admin'] as const;
+export const USER_ROLES = ['customer', 'merchant', 'admin', 'delivery_agent'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const ORDER_STATUSES = [

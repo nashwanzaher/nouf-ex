@@ -94,7 +94,6 @@ export default function Messages() {
 	// the function starts with setLoadingThreads(true). The pattern
 	// is intentional and matches the React docs "fetching data"
 	// example (https://react.dev/reference/react/useEffect#fetching-data).
-	/* eslint-disable react-hooks/set-state-in-effect */
 	useEffect(() => {
 		void reloadThreads();
 	}, [reloadThreads]);

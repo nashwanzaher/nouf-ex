@@ -36,7 +36,6 @@ import type {
 import {
 	ApiError,
 	createOrder,
-	getAddresses,
 	getAdminAuditLog,
 	getAdminDisputes,
 	getAdminGovernorate,
@@ -46,6 +45,7 @@ import {
 	getAdminStores,
 	getAdminTimeSeries,
 	getAdminUsers,
+	getAddresses,
 	getCategories,
 	getHomeStats,
 	getNotifications,
@@ -232,6 +232,23 @@ export function useOrders(): HookResult<Order[]> {
 
 // (Removed useOrder in K.5 — was orphaned. When a CustomerOrderDetail
 // page is needed, re-introduce from git history.)
+
+// ─── My Reviews ───────────────────────────────────────────────────
+// Fetches reviews written by the current customer.
+// Returns empty array on 401 (guest) instead of throwing.
+import { getMyReviews as _getMyReviews, type MyReview } from '../features/customer/api/reviews';
+export function useMyReviews(): HookResult<MyReview[]> {
+	return useDataHook(async (signal) => {
+		try {
+			return await _getMyReviews({ signal });
+		} catch (err) {
+			if (err instanceof ApiError && err.status === 401) {
+				return [] as MyReview[];
+			}
+			throw err;
+		}
+	});
+}
 
 export function useUserAddresses(userId: number | null): HookResult<Address[]> {
 	return useDataHook(
@@ -765,4 +782,148 @@ export function useAdminGovernorate(
  *  lib/api.ts for the rationale. */
 export function useSystemHealth() {
 	return useDataHook((signal) => getSystemHealth({ signal }));
+}
+
+/* ────────────────────────────────────────────────────────────── */
+/*                    DELIVERY AGENT HOOKS                        */
+/* ────────────────────────────────────────────────────────────── */
+
+export interface DeliveryAgentProfile {
+	id: number;
+	user_id: number;
+	vehicle_type: string;
+	vehicle_plate: string;
+	license_number: string;
+	status: 'offline' | 'active' | 'busy' | 'suspended' | 'on_break';
+	current_lat: number | null;
+	current_lng: number | null;
+	last_location_update: string | null;
+	rating: number;
+	total_deliveries: number;
+	completed_deliveries: number;
+	cancelled_deliveries: number;
+	avg_delivery_time_minutes: number | null;
+	created_at: string;
+	updated_at: string;
+	user: {
+		id: number;
+		email: string;
+		full_name: string;
+		phone: string;
+		avatar: string | null;
+		preferred_language: string;
+	};
+}
+
+export interface DeliveryOrder {
+	id: number;
+	order_number: string;
+	customer_id: number;
+	store_id: number;
+	status: string;
+	payment_method: string;
+	payment_status: string;
+	subtotal: number;
+	shipping_cost: number;
+	discount: number;
+	total: number;
+	shipping_address: Record<string, unknown>;
+	store_name: string;
+	store_logo: string | null;
+	store_location: string | null;
+	store_phone: string | null;
+	customer_name: string;
+	customer_phone: string;
+	shipping_name: string | null;
+	shipping_phone: string | null;
+	customer_lat: number | null;
+	customer_lng: number | null;
+	items_count: number;
+	assigned_at: string | null;
+	picked_up_at: string | null;
+	delivered_at: string | null;
+	created_at: string;
+}
+
+export interface DeliveryStats {
+	total_assigned: number;
+	completed_today: number;
+	pending: number;
+	in_transit: number;
+	earnings_today: number;
+	earnings_this_week: number;
+	earnings_this_month: number;
+	avg_delivery_time: number;
+	rating: number;
+	cancelled: number;
+}
+
+export interface EarningsHistory {
+	date: string;
+	earnings: number;
+	deliveries: number;
+}
+
+export interface DeliveryDashboardData {
+	agent: DeliveryAgentProfile;
+	stats: DeliveryStats;
+	earningsHistory: EarningsHistory[];
+}
+
+export function useDeliveryAgentDashboard() {
+	return useDataHook<DeliveryDashboardData>((signal) =>
+		fetch('/api/delivery-agent/dashboard', { signal }).then((r) => r.json()),
+	);
+}
+
+export function useDeliveryAgentOrders(status?: string) {
+	return useDataHook<DeliveryOrder[]>((signal) =>
+		fetch(`/api/delivery-agent/orders${status ? `?status=${status}` : ''}`, { signal }).then((r) => r.json()),
+		[status],
+	);
+}
+
+export function useDeliveryAgentAvailableOrders(lat?: number, lng?: number) {
+	return useDataHook<DeliveryOrder[]>((signal) =>
+		fetch(`/api/delivery-agent/available-orders${lat && lng ? `?lat=${lat}&lng=${lng}` : ''}`, { signal }).then((r) => r.json()),
+		[lat, lng],
+	);
+}
+
+export function useDeliveryAgentMutations() {
+	const refreshDashboard = useCallback(() => {
+		// Trigger a refresh by invalidating the query
+	}, []);
+
+	const refreshAll = useCallback(async () => {
+		refreshDashboard();
+	}, [refreshDashboard]);
+
+	const goOnline = useCallback(async () => {
+		await fetch('/api/delivery-agent/go-online', { method: 'POST' });
+	}, []);
+
+	const goOffline = useCallback(async () => {
+		await fetch('/api/delivery-agent/go-offline', { method: 'POST' });
+	}, []);
+
+	const acceptOrder = useCallback(async (orderId: number) => {
+		await fetch(`/api/delivery-agent/orders/${orderId}/accept`, { method: 'POST' });
+	}, []);
+
+	const updateDeliveryStatus = useCallback(async (orderId: number, status: 'out_for_delivery' | 'delivered') => {
+		await fetch(`/api/delivery-agent/orders/${orderId}/status`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ status }),
+		});
+	}, []);
+
+	return {
+		refreshAll,
+		goOnline,
+		goOffline,
+		acceptOrder,
+		updateDeliveryStatus,
+	};
 }

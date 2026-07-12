@@ -24,6 +24,8 @@ function dashboardForRole(role: Role): string {
 			return '/seller';
 		case 'customer':
 			return '/customer';
+		case 'delivery_agent':
+			return '/delivery-agent';
 		case 'guest':
 		default:
 			return '/';

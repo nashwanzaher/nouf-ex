@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Heart, ShoppingCart, X, Package, Loader2, AlertCircle } from 'lucide-react';
+import { Heart, ShoppingCart, X, Package, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CustomerSidebar from './CustomerSidebar';
-import { useAuth } from '@/context/AppContext';
+import { useApp } from '@/context/AppContext';
 import { useServerWishlist } from '@/hooks/useApi';
 import { removeFromWishlist as apiRemoveFromWishlist, addToCart as apiAddToCart } from '@/lib/api';
 import type { WishlistItem as ApiWishlistItem } from '@/lib/api';
@@ -40,8 +40,9 @@ function StarRating({ rating }: { rating: number | string | undefined }) {
 
 export default function Wishlist() {
 	const { t, i18n } = useTranslation();
-	const { user, isAuthenticated } = useAuth();
-	const userId = isAuthenticated && user ? Number(user.id) : null;
+	const { state, addToast } = useApp();
+	const user = state.user;
+	const userId = user ? Number(user.id) : null;
 
 	// ── Real API call via hook ──────────────────────────────────────
 	// Coerce `data` to a non-nullable array with `?? []`. The destructure
@@ -49,13 +50,14 @@ export default function Wishlist() {
 	// is typed as `T | null`, so without the `??` the compiler narrows
 	// `items` back to nullable at the use sites and TS18047 fires.
 	const wishlistResult = useServerWishlist(userId);
-	const items = wishlistResult.data ?? [];
+	const items = useMemo(() => wishlistResult.data ?? [], [wishlistResult.data]);
 	const { loading, error, refetch } = wishlistResult;
 
 	// ── Local interaction state ──────────────────────────────────────
 	const [removingId, setRemovingId] = useState<number | null>(null);
 	const [addedToCart, setAddedToCart] = useState<number | null>(null);
 	const [actionError, setActionError] = useState<string | null>(null);
+	const [movingAllToCart, setMovingAllToCart] = useState(false);
 
 	// ── Remove from wishlist (real API) ─────────────────────────────
 	const handleRemove = useCallback(
@@ -96,8 +98,27 @@ export default function Wishlist() {
 		[userId, refetch, t],
 	);
 
+	// ── Move all to cart ────────────────────────────────────────────
+	const handleMoveAllToCart = useCallback(async () => {
+			if (!userId || items.length === 0 || movingAllToCart) return;
+			setMovingAllToCart(true);
+			setActionError(null);
+			try {
+				for (const item of items) {
+					await apiAddToCart({ productId: item.product_id, quantity: 1 });
+					await apiRemoveFromWishlist(item.id);
+				}
+				refetch();
+				addToast({ message: t('wishlist.moveAllToCartSuccess', 'All items moved to cart!'), type: 'success' });
+			} catch {
+				addToast({ message: t('wishlist.moveAllToCartError', 'Failed to move all items to cart. Try again.'), type: 'error' });
+			} finally {
+				setMovingAllToCart(false);
+			}
+	}, [userId, items, refetch, t, addToast, movingAllToCart]);
+
 	// ── Not authenticated ───────────────────────────────────────────
-	if (!isAuthenticated) {
+	if (!user) {
 		return (
 			<div className="min-h-[100dvh] bg-[#F8F8F8]" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
 				<CustomerSidebar />
@@ -141,9 +162,27 @@ export default function Wishlist() {
 								{t('wishlist.subtitle', 'المنتجات التي حفظتها')}
 							</p>
 						</div>
-						<span className="text-sm text-[#6B6B6B] font-cairo bg-[#F3EDE4] px-3 py-1 rounded-full">
-							{t('wishlist.itemCount', '{{count}} منتج', { count: items.length })}
-						</span>
+						<div className="flex items-center gap-2">
+							<span className="text-sm text-[#6B6B6B] font-cairo bg-[#F3EDE4] px-3 py-1 rounded-full">
+								{t('wishlist.itemCount', '{{count}} منتج', { count: items.length })}
+							</span>
+							{items.length > 0 && !movingAllToCart && (
+								<button
+									type="button"
+									onClick={handleMoveAllToCart}
+									className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#10B981] hover:bg-[#059669] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+								>
+									<ArrowRight className="w-3 h-3" />
+									{t('wishlist.moveAllToCart', 'Move all to cart')}
+								</button>
+							)}
+							{movingAllToCart && (
+								<button type="button" disabled className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gray-400 cursor-not-allowed">
+									<Loader2 className="w-3 h-3 animate-spin" />
+									{t('wishlist.movingAll', 'Moving all...')}
+								</button>
+							)}
+						</div>
 					</div>
 				</div>
 

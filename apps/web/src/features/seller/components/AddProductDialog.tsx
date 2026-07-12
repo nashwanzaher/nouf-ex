@@ -84,7 +84,6 @@ export function AddProductDialog({ open, onClose, onSaved }: AddProductDialogPro
 	// parent component, so this AddProductDialog always mounts with
 	// fresh state and no manual reset is needed here. If the parent
 	// ever forgets to pass a key, we still want to reset on open.
-	/* eslint-disable react-hooks/set-state-in-effect */
 	useEffect(() => {
 		if (open) {
 			setForm(EMPTY_FORM);
@@ -94,7 +93,6 @@ export function AddProductDialog({ open, onClose, onSaved }: AddProductDialogPro
 			setShowAdvanced(false);
 		}
 	}, [open]);
-	/* eslint-enable react-hooks/set-state-in-effect */
 
 	const categories = (categoriesData ?? []) as Array<{
 		id: number;

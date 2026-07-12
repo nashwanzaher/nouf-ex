@@ -37,6 +37,7 @@ const adminCategoryCreateSchema = z
 	.strict();
 
 const adminCategoryUpdateSchema = adminCategoryCreateSchema.partial();
+void adminCategoryUpdateSchema; // referenced for parity with server; partial PATCH tests live in admin-extras-integration.test.ts
 
 describe('adminCategoryCreateSchema', () => {
 	it('accepts canonical category data', () => {

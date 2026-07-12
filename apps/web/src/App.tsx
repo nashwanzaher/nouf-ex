@@ -84,6 +84,11 @@ const SellerAnalytics = lazyPage(() => import('./pages/seller/SellerAnalytics'))
 // from Register.tsx, then onward to /seller.
 const SellerOnboarding = lazyPage(() => import('./pages/seller/SellerOnboarding'));
 
+// Delivery Agent area — code-split behind the role guard
+const DeliveryAgentDashboard = lazyPage(() => import('./pages/delivery-agent/DeliveryAgentDashboard'));
+const DeliveryAgentAvailableOrders = lazyPage(() => import('./pages/delivery-agent/DeliveryAgentAvailableOrders'));
+const DeliveryAgentOrderDetail = lazyPage(() => import('./pages/delivery-agent/DeliveryAgentOrderDetail'));
+
 // Admin — biggest bundle (recharts, full data tables); isolated so
 // the 99% of visitors who never visit /admin never download it.
 const AdminDashboard = lazyPage(() => import('./pages/admin/AdminDashboard'));
@@ -107,7 +112,7 @@ const AdminSystemHealth = lazyPage(() => import('./pages/admin/AdminSystemHealth
 /** Wrap a page in ProtectedRoute + Suspense so the loader shows during
  *  the chunk download AND the auth check. */
 function guard(
-	roles: ('customer' | 'merchant' | 'admin')[],
+	roles: ('customer' | 'merchant' | 'admin' | 'delivery_agent')[],
 	Page: React.LazyExoticComponent<ComponentType<unknown>>,
 ): ReactNode {
 	return (
@@ -162,6 +167,19 @@ export default function App() {
 								<Route
 									path="/seller/onboarding"
 									element={guard(['merchant', 'admin'], SellerOnboarding)}
+								/>
+								{/* Delivery Agent area — dedicated panel for couriers */}
+								<Route
+									path="/delivery-agent"
+									element={guard(['delivery_agent', 'admin'], DeliveryAgentDashboard)}
+								/>
+								<Route
+									path="/delivery-agent/orders"
+									element={guard(['delivery_agent', 'admin'], DeliveryAgentAvailableOrders)}
+								/>
+								<Route
+									path="/delivery-agent/orders/:id"
+									element={guard(['delivery_agent', 'admin'], DeliveryAgentOrderDetail)}
 								/>
 								<Route
 									path="/customer"

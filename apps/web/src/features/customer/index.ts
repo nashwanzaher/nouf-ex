@@ -16,7 +16,8 @@ export {
 	 type CreateAddressBody,
 } from './api/addresses';
 
-export { createReview, getReviews } from './api/reviews';
+export { createReview, getReviews, getMyReviews, deleteReview, getPendingReviews } from './api/reviews';
+export type { MyReview, PendingReview } from './api/reviews';
 
 export {
 	getNotifications,

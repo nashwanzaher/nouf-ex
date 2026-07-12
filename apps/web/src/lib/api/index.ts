@@ -55,6 +55,7 @@ export type {
 	InboxResponse,
 	Message,
 	MessageThread,
+	MyReview,
 	Notification,
 	Order,
 	OrderItem,
@@ -125,7 +126,7 @@ export {
 } from '@/features/products';
 
 // ─── Reviews ────────────────────────────────────────────────
-export { createReview, getReviews } from '@/features/customer';
+export { createReview, getMyReviews, getReviews } from '@/features/customer';
 
 // ─── Orders ─────────────────────────────────────────────────
 export { createOrder, getOrder, getOrders } from '@/features/orders';

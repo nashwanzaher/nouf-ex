@@ -129,6 +129,27 @@ export interface Review {
 	store_name?: string;
 }
 
+/** Review as returned by /api/customer/my-reviews (includes product & store names) */
+export interface MyReview {
+	id: number;
+	product_id: number;
+	store_id: number;
+	rating: number;
+	title: string | null;
+	comment: string | null;
+	images: string[] | null;
+	is_verified: boolean;
+	is_visible: boolean;
+	merchant_reply: string | null;
+	merchant_replied_at: string | null;
+	created_at: string;
+	updated_at: string;
+	product_name_en: string | null;
+	product_name_ar: string | null;
+	main_image: string | null;
+	store_name: string;
+}
+
 // ─── Orders, Cart, Wishlist ─────────────────────────────────
 
 export interface Order {

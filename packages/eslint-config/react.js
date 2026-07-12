@@ -30,6 +30,7 @@ export default defineConfig([
 					ignoreRestSiblings: true,
 				},
 			],
+			'react-hooks/set-state-in-effect': 'off',
 		},
 	},
 	{

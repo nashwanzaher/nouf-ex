@@ -50,12 +50,14 @@ import { authRouter } from './modules/auth/index.ts';
 import { cartRouter } from './modules/cart/index.ts';
 import { catalogRouter } from './modules/catalog/index.ts';
 import { couponsRouter } from './modules/coupons/index.ts';
+import { deliveryAgentRouter } from './modules/delivery-agent/index.ts';
 import { messagesRouter } from './modules/messages/index.ts';
 import { notificationsRouter } from './modules/notifications/index.ts';
 import { ordersRouter } from './modules/orders/index.ts';
 import { paymentsRouter } from './modules/payments/index.ts';
 import { refundsRouter } from './modules/refunds/index.ts';
 import { reviewsRouter } from './modules/reviews/index.ts';
+import { customerReviewsRouter } from './routes/customer-reviews.ts';
 import { sellerRouter } from './modules/seller/index.ts';
 import { shippingRouter } from './modules/shipping/index.ts';
 import { statsRouter } from './modules/stats/index.ts';
@@ -281,10 +283,12 @@ app.use('/api/wishlist', wishlistRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/seller', sellerRouter);
+app.use('/api/delivery-agent', deliveryAgentRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/coupons', couponsRouter);
 app.use('/api/refunds', refundsRouter);
 app.use('/api/reviews', reviewsRouter);
+app.use('/api/customer/reviews', customerReviewsRouter);
 app.use('/api/stats', cacheControl(30, statsRouter)); // stats = 30s edge cache
 app.use('/api/shipping', cacheControl(300, shippingRouter)); // shipping = 5min
 app.use('/api/store-followers', storeFollowersRouter);

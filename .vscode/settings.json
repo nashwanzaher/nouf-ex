@@ -454,5 +454,38 @@
     "localhost",
     "127.0.0.1"
   ],
-  "github.copilot.chat.agentDebugLog.fileLogging.enabled": true
+  "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
+  "chat.mcp.serverSampling": {
+    "nouf-ex/.vscode/mcp.json: memory": {
+      "allowedModels": [
+        "copilot/auto",
+        "copilotcli/auto",
+        "opencodego/deepseek-v4-flash",
+        "opencodego/deepseek-v4-pro",
+        "opencodego/glm-5",
+        "opencodego/glm-5.1",
+        "opencodego/glm-5.2",
+        "opencodego/kimi-k2.5",
+        "opencodego/kimi-k2.6",
+        "opencodego/kimi-k2.7-code",
+        "opencodego/mimo-v2-omni",
+        "opencodego/mimo-v2-pro",
+        "opencodego/mimo-v2.5",
+        "opencodego/mimo-v2.5-pro",
+        "opencodego/minimax-m2.5",
+        "opencodego/minimax-m2.7",
+        "minimax/MiniMax/MiniMax-M2.7",
+        "minimax/MiniMax/MiniMax-M2.7-highspeed",
+        "opencodego/minimax-m3",
+        "minimax/MiniMax/MiniMax-M3",
+        "opencodego/qwen3.5-plus",
+        "opencodego/qwen3.6-plus",
+        "opencodego/qwen3.7-max",
+        "opencodego/qwen3.7-plus",
+        "minimax/MiniMax-M2.7",
+        "minimax/MiniMax-M2.7-highspeed",
+        "minimax/MiniMax-M3"
+      ]
+    }
+  }
 }

@@ -1,0 +1,99 @@
+%% Nouf-ex — Request Lifecycle Workflow
+%% Generated from actual source files (commit 1c2d8bc, branch fix/routes-cts-to-ts-2026-07-06).
+%% Every node is a real file path. All 5 MCP tools verified registered.
+
+graph TB
+  subgraph browser["Browser / PWA"]
+    direction LR
+    USER(["User<br/>(customer / merchant / admin)"])
+    HTML["apps/web/index.html<br/>lang=ar dir=rtl<br/>theme-color=#0d9488"]
+    MAIN["apps/web/src/main.tsx<br/>ReactDOM.createRoot"]
+  end
+
+  subgraph web["apps/web/src/"]
+    direction TB
+    APP["App.tsx<br/>33 × lazyPage()<br/>Suspense + ErrorBoundary"]
+    CTX["context/AppContext.tsx<br/>AppProvider<br/>useApp() useAuth()"]
+    CARTCTX["features/cart/context/CartContext.tsx<br/>CartProvider<br/>localStorage sync"]
+
+    subgraph feat["features/* (12 features, 47 components)"]
+      direction LR
+      F_AUTH["features/auth/components/Login.tsx<br/>features/auth/api/auth.ts"]
+      F_PROD["features/products/components/ProductDetail.tsx<br/>features/products/api/products.ts"]
+      F_CART["features/cart/api/cart.ts<br/>addToCart clearCart"]
+      F_CHK["features/checkout/components/Checkout.tsx<br/>features/checkout/api/payments.ts"]
+      F_HOME["features/home/components/index.tsx<br/>features/home/api/system.ts<br/>useHomeStats() useProducts()"]
+      F_CUST["features/customer/components/Addresses.tsx<br/>api/addresses reviews notifications refunds"]
+      F_SELL["features/seller/components/SellerProducts.tsx<br/>features/seller/api/seller.ts"]
+      F_ADM["features/admin/components/AdminOverview.tsx<br/>features/admin/api/admin.ts"]
+      F_MSG["features/messages/components/Messages.tsx<br/>features/messages/api/messages.ts"]
+    end
+
+    API["lib/api/client.ts<br/>apiRequest()<br/>lib/api/error-codes.ts<br/>lib/api/error-messages.ts"]
+  end
+
+  subgraph api["apps/api/src/"]
+    direction TB
+    IDX["index.ts (394 lines)<br/>loadEnv → PgDb → 18 mounts"]
+    MID["middleware.ts (14 exports)<br/>requestId securityHeaders log<br/>optionalAuth requireAuth requireRole<br/>setAuthCookie extractAuthToken<br/>errorHandler notFoundHandler"]
+    POOL["db/pg-wrapper.ts<br/>PgDb singleton"]
+
+    subgraph mod["modules/* (10 fully-layered + 8 wrappers)"]
+      direction LR
+      M_AUTH["modules/auth/<br/>routes → controller →<br/>service → repository"]
+      M_ADDR["modules/addresses/<br/>4 files (rcrs)"]
+      M_CART["modules/cart/<br/>4 files"]
+      M_COUP["modules/coupons/<br/>4 files"]
+      M_MSG["modules/messages/<br/>4 files"]
+      M_NOTIF["modules/notifications/<br/>4 files"]
+      M_SHP["modules/shipping/<br/>4 files"]
+      M_STAT["modules/stats/<br/>4 files"]
+      M_SF["modules/store-followers/<br/>4 files"]
+      M_WISH["modules/wishlist/<br/>4 files"]
+    end
+
+    WRAP["routes/{admin,auth-2fa,catalog,orders,<br/>payments,refunds,reviews,seller}.ts<br/>(wrapper modules → thin re-export)"]
+
+    SHARED["lib/shared.ts<br/>db hashPassword verifyPassword<br/>schemas sendError sendSuccess<br/>computeCouponDiscount"]
+    VAL["lib/validation.ts<br/>(32 Zod schemas)"]
+  end
+
+  subgraph db["packages/db/"]
+    direction LR
+    PG[("PostgreSQL 17<br/>noufex_db<br/>host.docker.internal:5432")]
+    SCHEMA["schema.sql<br/>schema-extra.sql<br/>functions.sql<br/>triggers.sql<br/>views.sql<br/>roles.sql<br/>seed.sql"]
+    MIG["migrations/0001..0030<br/>(30 numbered SQL files)"]
+  end
+
+  subgraph mcp["apps/mcp-server/ + docker/mcp-gateway/"]
+    direction TB
+    MCP["mcp-server/src/index.ts<br/>McpServer('noufex-mcp')"]
+    MCPDB["src/db-tools.ts<br/>db_query db_schema"]
+    MCPCODE["src/code-tools.ts<br/>code_search code_read"]
+    MCPAPI["src/api-tools.ts<br/>api_routes api_route_detail"]
+    MCPDOC["src/docs-tools.ts<br/>docs_search"]
+    GATEWAY["docker/mcp-gateway/Dockerfile<br/>+ catalog.yaml (5 tools)<br/>+ docker-compose.yml :8811<br/>SSE transport"]
+  end
+
+  USER --> HTML --> MAIN --> APP
+  APP --> CTX --> CARTCTX
+  APP --> feat
+  feat --> API
+  API -->|HTTP /api/*| IDX
+  IDX --> MID --> POOL
+  IDX --> mod --> SHARED --> POOL
+  IDX --> WRAP --> SHARED --> POOL
+  SHARED -->|pg pool| PG
+  SCHEMA --> PG
+  MIG --> PG
+  MCP --> MCPDB -->|pg| PG
+  MCP --> MCPCODE
+  MCP --> MCPAPI
+  MCP --> MCPDOC
+  GATEWAY -->|SSE :8811 / spawns stdio| MCP
+  GATEWAY -->|Bearer auth| AICLIENT(["AI tooling<br/>Claude / Cursor"])
+
+  classDef real fill:#d4f7d4,stroke:#2e7d32,color:#1b5e20
+  classDef ext fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+  class feat,mod,WRAP,MCP,MCPDB,MCPCODE,MCPAPI,MCPDOC,GATEWAY,IDX,MID,POOL,SHARED,VAL,API,CTX,CARTCTX,APP,MAIN,HTML real
+  class PG,AICLIENT,USER ext

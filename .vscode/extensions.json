@@ -37,8 +37,7 @@
 
 		// ─── Productivity ───────────────────────────────────────────────
 		"wmaurer.change-case",
-		"visualstudioexptteam.vscodeintellicode",
-		"humao.rest-client",
+    "humao.rest-client",
 		"antfu.file-nesting",
 		"christian-kohler.path-intellisense",
 		"formulahendry.auto-rename-tag",

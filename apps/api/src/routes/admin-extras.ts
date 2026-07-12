@@ -282,8 +282,30 @@ adminExtrasRouter.delete('/coupons/:id', ...adminAuth, async (req: Request, res:
 			.prepare('SELECT id FROM coupons WHERE id = $1')
 			.get(id)) as Record<string, unknown> | undefined;
 		if (!oldRow) return sendError(res, 'Not found', 404);
-		await db.prepare('DELETE FROM coupons WHERE id = $1').run(id);
-		await writeAuditLog(req, 'delete_coupon', 'coupon', String(id), oldRow, null);
+		// P0 fix 2026-07-12: clean up orphaned coupon_usage rows BEFORE
+		// deleting the coupon. Without this, foreign-key cascade leaves
+		// dangling coupon_usage rows pointing at a non-existent coupon
+		// (coupon_usage has no FK constraint, only an index on coupon_id).
+		// Wrapped in a transaction so a failure in either delete aborts
+		// both — we never end up with an orphaned record OR a coupon
+		// deleted without its usage history being cleaned up.
+		await db.tx(async (txDb) => {
+			const usageResult = (await txDb
+				.prepare('DELETE FROM coupon_usage WHERE coupon_id = $1')
+				.run(id)) as unknown as { changes?: number };
+			const usageDeleted = usageResult?.changes ?? 0;
+			await txDb.prepare('DELETE FROM coupons WHERE id = $1').run(id);
+			// Surface the count in the audit log so admins can see how
+			// many redemption records were purged.
+			await writeAuditLog(
+				req,
+				'delete_coupon',
+				'coupon',
+				String(id),
+				oldRow,
+				{ usage_rows_deleted: usageDeleted },
+			);
+		});
 		return sendSuccess(res, { id, deleted: true });
 	} catch (err) {
 		return sendError(res, err);

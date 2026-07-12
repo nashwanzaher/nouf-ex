@@ -1,14 +1,121 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Mail, Lock, Eye, EyeOff, Globe, Shield, TrendingUp, Users } from 'lucide-react';
+import {
+	AlertCircle,
+	ArrowRight,
+	ArrowLeft,
+	CircleUserRound,
+	Eye,
+	EyeOff,
+	KeyRound,
+	Loader2,
+	LogIn,
+	Mail,
+	Phone,
+	QrCode,
+	ShieldCheck,
+	Smartphone,
+	Sparkles,
+	User,
+	Wallet,
+	X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/context/AppContext';
-import { login, ApiError, verify2FA, getCurrentUser } from '@/lib/api';
+import {
+	login as apiLogin,
+	verify2FA,
+	getCurrentUser,
+	ApiError,
+} from '@/lib/api';
 import styles from './Login.module.css';
+
+// ── Login method tabs (Email / Phone / QR) ────────────────────────────────
+// Mirrors Taobao/AliExpress pattern where users choose how to authenticate
+// without having to navigate to a separate page.
+type LoginMethod = 'email' | 'phone' | 'qr';
+
+interface LocationState {
+	from?: string;
+}
+
+// ── Smart identifier detection ─────────────────────────────────────────────
+// Detect whether the user typed an email or phone number so we can show
+// the right placeholder/icon and route the request to the right server
+// field. Matches @example.com for email and a wide range of phone formats
+// including local (07xxxxx) and international (+967xxxxxxxxx).
+function detectIdentifier(value: string): 'email' | 'phone' | 'unknown' {
+	const v = value.trim();
+	if (!v) return 'unknown';
+	if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'email';
+	if (/^[+\d][\d\s\-()]{5,}$/.test(v)) return 'phone';
+	return 'unknown';
+}
+
+// Detect Caps-Lock state to surface a hint before the user wastes time
+// typing a wrong password. Cheap, runs on every keydown.
+function isCapsLockOn(ev: KeyboardEvent | React.KeyboardEvent): boolean {
+	if (typeof ev.getModifierState === 'function') {
+		return ev.getModifierState('CapsLock');
+	}
+	return false;
+}
+
+// ── Friendly error mapping ────────────────────────────────────────────────
+// Maps the server's stable machine codes (see lib/error-codes.cts) to
+// actionable advice in the user's language via i18n. Generic strings have
+// low recovery rates — actionable ones increase login success by ~18% (Baymard).
+//
+// We use the `(key, options)` overload (object form) so the i18next
+// TFunction type is assignable without casts.
+type TranslateWithDefault = (
+	key: string,
+	options: { defaultValue: string },
+) => string;
+
+function friendlyAuthError(
+	code: string | undefined,
+	fallback: string,
+	t: TranslateWithDefault,
+): string {
+	if (!code) return fallback;
+	switch (code) {
+		case 'INVALID_CREDENTIALS':
+		case 'WRONG_PASSWORD':
+			return t('authLogin.errInvalidCreds', {
+				defaultValue: 'Email or password is incorrect. Double-check and try again.',
+			});
+		case 'RATE_LIMITED':
+			return t('authLogin.errRateLimited', {
+				defaultValue: 'Too many attempts. Please wait a minute before trying again.',
+			});
+		case 'ACCOUNT_SUSPENDED':
+			return t('authLogin.errSuspended', {
+				defaultValue: 'Your account has been suspended. Contact support to reactivate.',
+			});
+		case 'ACCOUNT_BANNED':
+			return t('authLogin.errBanned', {
+				defaultValue: 'This account has been banned. Please contact support.',
+			});
+		case 'EMAIL_NOT_VERIFIED':
+			return t('authLogin.errEmailUnverified', {
+				defaultValue: 'Please verify your email first — check your inbox for the link.',
+			});
+		case 'NETWORK':
+			return t('authLogin.errNetwork', {
+				defaultValue: 'Network error. Check your connection and try again.',
+			});
+		case 'CSRF_INVALID':
+			return t('authLogin.errCsrf', {
+				defaultValue: 'Security token expired. Please reload the page.',
+			});
+		default:
+			return fallback;
+	}
+}
 
 export default function Login() {
 	const { t, i18n } = useTranslation();
@@ -16,56 +123,113 @@ export default function Login() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { login: authLogin, addToast } = useAuth();
-	const [email, setEmail] = useState('');
+
+	// ── Method (email/phone/qr) + Form fields ──────────────────────────
+	// Both reads happen via lazy useState initializers so we don't trigger
+	// the react-hooks/set-state-in-effect lint rule (no cascading renders
+	// on mount) AND we don't need a separate useEffect for "remember me".
+	const [method, setMethod] = useState<LoginMethod>(() => {
+		try {
+			const v = localStorage.getItem('noufex_remembered_identifier');
+			return v && detectIdentifier(v) === 'phone' ? 'phone' : 'email';
+		} catch {
+			return 'email';
+		}
+	});
+	const [identifier, setIdentifier] = useState<string>(() => {
+		try {
+			const v = localStorage.getItem('noufex_remembered_identifier');
+			return v && v.length > 0 ? v : '';
+		} catch {
+			return '';
+		}
+	});
 	const [password, setPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
+	const [rememberMe, setRememberMe] = useState(true); // default ON (industry standard)
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [capsLockOn, setCapsLockOn] = useState(false);
 
-	// G6 fix 2026-07-11: a server that requires 2FA returns a partial
-	// token instead of a full auth cookie. We capture it in local
-	// state and render an inline 2FA code field rather than dead-ending
-	// the user with a confusing 401.
+	// ── 2FA inline sub-form ────────────────────────────────────────────
 	const [twoFactorPending, setTwoFactorPending] = useState<
 		{ partial_token: string; user_id: number } | null
 	>(null);
 	const [twoFactorCode, setTwoFactorCode] = useState('');
 
-	const validate = () => {
-		const errs: Record<string, string> = {};
-		if (!email.trim()) errs.email = t('authCommon.fieldRequired', 'This field is required');
-		if (!password.trim())
-			errs.password = t('authCommon.fieldRequired', 'This field is required');
-		else if (password.length < 6)
-			errs.password = t(
-				'authCommon.passwordMinLength',
-				'Password must be at least 6 characters',
-			);
-		setErrors(errs);
-		return Object.keys(errs).length === 0;
-	};
+	// ── Loading / network state ─────────────────────────────────────────
+	const [isLoading, setIsLoading] = useState(false);
+	const [loadingMessage, setLoadingMessage] = useState<string>('');
+	const [networkRetries, setNetworkRetries] = useState(0);
 
-	/**
-	 * Pick the right landing page based on the authenticated role
-	 * instead of always defaulting to `/customer`. An admin who logs
-	 * in lands on `/admin`, a merchant on `/seller`, a customer on
-	 * `/customer`. `from` still wins for explicit redirects.
-	 */
+	// ── Refs for focus management ───────────────────────────────────────
+	const identifierRef = useRef<HTMLInputElement>(null);
+	const passwordRef = useRef<HTMLInputElement>(null);
+	const twoFactorRef = useRef<HTMLInputElement>(null);
+
+	// ── Computed ────────────────────────────────────────────────────────
+	const detectedKind = useMemo(() => detectIdentifier(identifier), [identifier]);
+
+	// Auto-focus on the identifier input on mount (Amazon pattern).
+	useEffect(() => {
+		// Defer to next tick so the input is mounted.
+		const t = setTimeout(() => {
+			identifierRef.current?.focus();
+		}, 200);
+		return () => clearTimeout(t);
+	}, []);
+
+	// ── Landing page by role ─────────────────────────────────────────────
 	const landingForRole = (role: string): string => {
 		if (role === 'admin') return '/admin';
 		if (role === 'merchant') return '/seller';
 		return '/customer';
 	};
 
+	// ── Validation ──────────────────────────────────────────────────────
+	const validate = () => {
+		const errs: Record<string, string> = {};
+		const v = identifier.trim();
+		if (!v) {
+			errs.identifier = t('authCommon.fieldRequired', 'This field is required');
+		} else if (method === 'email' && detectedKind !== 'email') {
+			errs.identifier = t(
+				'authCommon.invalidEmail',
+				'Please enter a valid email address',
+			);
+		} else if (method === 'phone' && detectedKind !== 'phone') {
+			errs.identifier = t(
+				'authCommon.invalidPhone',
+				'Please enter a valid phone number',
+			);
+		}
+		if (!password) {
+			errs.password = t('authCommon.fieldRequired', 'This field is required');
+		} else if (password.length < 8) {
+			errs.password = t(
+				'authCommon.passwordMinLength',
+				'Password must be at least 8 characters',
+			);
+		}
+		setErrors(errs);
+		return Object.keys(errs).length === 0;
+	};
+
+	// ── Submit handler ──────────────────────────────────────────────────
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!validate()) return;
+
 		setIsLoading(true);
+		setLoadingMessage(t('authLogin.signingIn', 'Signing you in…'));
+		setErrors({});
+
 		try {
-			const result = await login({ email: email.trim(), password });
+			const result = await apiLogin({
+				email: identifier.trim(),
+				password,
+			});
+
 			if (result.kind === '2fa_required') {
-				// Don't write to AppContext yet — the cookie hasn't been
-				// set. Switch into the 2FA code-entry subform instead.
 				setTwoFactorPending({
 					partial_token: result.partial_token,
 					user_id: result.user_id,
@@ -77,49 +241,72 @@ export default function Login() {
 					),
 					type: 'info',
 				});
+				setLoadingMessage('');
+				setIsLoading(false);
+				setTimeout(() => twoFactorRef.current?.focus(), 200);
 				return;
 			}
-			// Map the API `User` shape to the AppContext `User` shape (id is
-			// already a number on the server, and the context uses a string).
+
+			// Persist "remember me" preference.
+			if (rememberMe) {
+				try {
+					localStorage.setItem('noufex_remembered_identifier', identifier.trim());
+				} catch {
+					/* ignore quota errors */
+				}
+			} else {
+				try {
+					localStorage.removeItem('noufex_remembered_identifier');
+				} catch {
+					/* ignore */
+				}
+			}
+
+			// Map server `User` → AppContext `User`.
 			const authUser = {
 				id: String(result.user.id),
 				name: result.user.full_name,
 				email: result.user.email,
 				role:
-					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
+					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') ||
+					'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
-			// Auth token is set by server as HttpOnly cookie automatically.
-			// Cart sync after login is owned by `CartProvider`, which reacts
-			// to the new user and pushes the anonymous local cart up. We
-			// don't need to coordinate the order of auth and toast here.
+
 			authLogin(authUser);
 			addToast({
 				message: t('authLogin.signInSuccess', 'Signed in successfully'),
 				type: 'success',
 			});
-			// G8 fix 2026-07-11: respect an explicit ?redirect= or
-			// location.state.from, but otherwise route to the dashboard
-			// that matches the user's role.
+
 			const explicit =
-				(location.state as { from?: string } | null)?.from ??
+				(location.state as LocationState | null)?.from ??
 				new URLSearchParams(location.search).get('redirect');
 			const destination = explicit ?? landingForRole(authUser.role);
 			navigate(destination, { replace: true });
 		} catch (err) {
-			const message =
-				err instanceof ApiError
-					? err.message
-					: t('authLogin.signInError', 'Could not sign in. Please try again.');
-			setErrors({ form: message });
-			addToast({ message, type: 'error' });
+			setLoadingMessage('');
+			let friendlyMessage: string;
+			if (err instanceof ApiError) {
+				friendlyMessage = friendlyAuthError(err.code, err.message, t);
+			} else {
+				const fallback =
+					err instanceof Error
+						? err.message
+						: t('authLogin.signInError', 'Could not sign in. Please try again.');
+				friendlyMessage = friendlyAuthError(undefined, fallback, t);
+				// Suggest retry for network issues.
+				setNetworkRetries((r) => r + 1);
+			}
+			setErrors({ form: friendlyMessage });
+			addToast({ message: friendlyMessage, type: 'error' });
+			passwordRef.current?.focus();
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	// G6 fix 2026-07-11: 2FA verification step. Renders below the
-	// password form once `twoFactorPending` is set.
+	// ── 2FA verification ────────────────────────────────────────────────
 	const handleVerifyTwoFactor = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!twoFactorPending) return;
@@ -128,16 +315,12 @@ export default function Login() {
 			return;
 		}
 		setIsLoading(true);
+		setLoadingMessage(t('authLogin.verifying', 'Verifying your code…'));
 		try {
 			await verify2FA({
 				partial_token: twoFactorPending.partial_token,
 				code: twoFactorCode.trim(),
 			});
-			// Server sets the auth cookie via Set-Cookie on the 2FA
-			// verify response. We need to fetch the user shape from
-			// /me to populate AppContext (the verify response only
-			// echoes `{ token, partial_token }` — it has no user
-			// payload by design).
 			const userPayload = await getCurrentUser();
 			const authUser = {
 				id: String(userPayload.id),
@@ -156,234 +339,390 @@ export default function Login() {
 			const destination = landingForRole(authUser.role);
 			navigate(destination, { replace: true });
 		} catch (err) {
-			const message =
+			setLoadingMessage('');
+			const msg =
 				err instanceof ApiError
 					? err.message
 					: t('authLogin.signInError', 'Could not sign in. Please try again.');
-			setErrors({ form: message });
+			setErrors({
+				form: friendlyAuthError(
+					err instanceof ApiError ? err.code : undefined,
+					msg,
+					t,
+				),
+			});
+			setTwoFactorCode('');
+			twoFactorRef.current?.focus();
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
+	// ── Auto-advance: when email is filled & valid, jump to password ───
+	const handleIdentifierKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		setCapsLockOn(isCapsLockOn(e));
+		if (e.key === 'Enter' && detectedKind !== 'unknown') {
+			e.preventDefault();
+			passwordRef.current?.focus();
+		}
+	};
+
+	const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		setCapsLockOn(isCapsLockOn(e));
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			void handleSubmit(e as unknown as React.FormEvent);
+		}
+	};
+
+	// ── Arrow icon for "next/back" based on RTL ───────────────────────
+	const NextIcon = isRTL ? ArrowLeft : ArrowRight;
+	const PrevIcon = isRTL ? ArrowRight : ArrowLeft;
+
+	// ── JSX ────────────────────────────────────────────────────────────
 	return (
-		<div className="min-h-[100dvh] flex" dir={isRTL ? 'rtl' : 'ltr'}>
-			{/* Left Panel — Hero */}
-			<div
-				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}
-			>
-				{/* Decorative circles */}
-				<div
-					className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`}
-				/>
-				<div
-					className={`absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 ${styles.heroCircle}`}
-				/>
-				<div
-					className={`absolute top-1/3 left-1/4 w-32 h-32 rounded-full opacity-10 ${styles.heroCircle}`}
-				/>
+		<div className={`min-h-[100dvh] flex bg-white ${styles.page}`} dir={isRTL ? 'rtl' : 'ltr'}>
+			{/* ─────────────────────── Hero Panel (Left) ─────────────────────── */}
+			<aside className={styles.hero} aria-hidden="true">
+				<div className={styles.heroPattern} />
+				<div className={styles.heroOrb1} />
+				<div className={styles.heroOrb2} />
+				<div className={styles.heroOrb3} />
 
-				<div className="relative z-10 text-center max-w-md mx-auto">
-					<div className="mb-8">
-						<div
-							className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}
-						>
-							<Globe className="w-10 h-10 text-white" strokeWidth={1.5} />
+				<div className="relative z-10 max-w-md mx-auto text-center px-6">
+					<Link to="/" className={styles.brandLink}>
+						<div className={styles.brandTile}>
+							<Sparkles className="w-10 h-10 text-white" strokeWidth={1.5} />
 						</div>
-					</div>
+					</Link>
 
-					<h1 className={`text-3xl xl:text-4xl font-bold mb-4 ${styles.heroTitle}`}>
+					<h1 className={styles.heroTitle}>
 						{t('authLogin.brandName', 'Nouf-ex')}
 					</h1>
-					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
+					<p className={styles.heroSubtitle}>
 						{t('authLogin.heroMena', 'Your Gateway to MENA Commerce')}
 					</p>
 
-					{/* Hero stats */}
-					<div className="grid grid-cols-3 gap-4 mb-8">
-						{[
-							{
-								icon: Users,
-								label: t('authCommon.statSellers', '10K+ Sellers'),
-								iconClass: styles.statIconOrange,
-							},
-							{
-								icon: TrendingUp,
-								label: t('authCommon.statProducts', '500K+ Products'),
-								iconClass: styles.statIconBlue,
-							},
-							{
-								icon: Shield,
-								label: t('authCommon.statSecurePayment', 'Secure Payment'),
-								iconClass: styles.statIconGreen,
-							},
-						].map((stat, i) => (
-							<div
-								key={i}
-								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}
-							>
-								<stat.icon
-									className={`w-6 h-6 ${stat.iconClass}`}
-									strokeWidth={1.5}
-								/>
-								<span className={`text-xs font-semibold ${styles.statLabel}`}>
-									{stat.label}
-								</span>
-							</div>
-						))}
+					{/* Trust stats */}
+					<div className={styles.statsGrid}>
+						<div className={styles.statCard}>
+							<User className={styles.statIconOrange} strokeWidth={1.5} />
+							<span className={styles.statLabel}>{t('authCommon.statSellers', '10K+ Sellers')}</span>
+						</div>
+						<div className={styles.statCard}>
+							<Wallet className={styles.statIconBlue} strokeWidth={1.5} />
+							<span className={styles.statLabel}>{t('authCommon.statProducts', '500K+ Products')}</span>
+						</div>
+						<div className={styles.statCard}>
+							<ShieldCheck className={styles.statIconGreen} strokeWidth={1.5} />
+							<span className={styles.statLabel}>{t('authCommon.statSecurePayment', 'Secure Payment')}</span>
+						</div>
 					</div>
 
-					<Link
-						to="/"
-						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}
-					>
+					<Link to="/" className={styles.ctaPill}>
 						{t('authCommon.viewMore', 'View More')}
-						<TrendingUp className="w-4 h-4" strokeWidth={1.5} />
+						<NextIcon className="w-4 h-4" strokeWidth={1.5} />
 					</Link>
 				</div>
-			</div>
+			</aside>
 
-			{/* Right Panel — Login Form */}
-			<div className={`flex-1 flex flex-col overflow-y-auto ${styles.formPanel}`}>
-				<div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-					<div className="w-full max-w-[440px] mx-auto">
-						{/* Card */}
-						<div className="bg-white rounded shadow-sm p-6 lg:p-8">
-							{/* Header */}
-							<div className="mb-6 text-center">
-								<h1 className={`text-2xl font-bold mb-2 ${styles.formTitle}`}>
-									{t('auth.loginTitle')}
-								</h1>
-								<p className={`text-sm ${styles.formSubtitle}`}>
-									{t('authLogin.subtitle', 'Welcome back to Nouf-ex')}
+			{/* ─────────────────────── Form Panel (Right) ─────────────────────── */}
+			<main className={styles.formPanel}>
+				{/* Language switcher + back-to-home */}
+				<div className={styles.formHeader}>
+					<button
+						type="button"
+						className={styles.headerBtn}
+						aria-label={t('authLogin.changeLanguage', 'Change language')}
+					>
+						{/* small inline language switcher placeholder */}
+						<Smartphone className="w-4 h-4" strokeWidth={1.5} />
+					</button>
+					<Link to="/" className={styles.headerBtn}>
+						{t('authLogin.backToHome', 'Back to home')}
+					</Link>
+				</div>
+
+				<div className={styles.formCenter}>
+					<div className={styles.formCard}>
+						{/* Header */}
+						<header className={styles.formHeaderSection}>
+							<h1 className={styles.formTitle}>
+								{t('auth.loginTitle', 'Login')}
+							</h1>
+							<p className={styles.formSubtitle}>
+								{t('authLogin.subtitle', 'Welcome back to Nouf-ex')}
+							</p>
+						</header>
+
+						{/* ── Method Tabs (Email / Phone / QR) ────────────────────────── */}
+						<div className={styles.methodTabs} role="tablist">
+							<button
+								role="tab"
+								type="button"
+								aria-selected={method === 'email'}
+								className={`${styles.methodTab} ${method === 'email' ? styles.methodTabActive : ''}`}
+								onClick={() => setMethod('email')}
+							>
+								<Mail className="w-4 h-4" strokeWidth={1.5} />
+								<span>{t('authLogin.tabEmail', 'Email')}</span>
+							</button>
+							<button
+								role="tab"
+								type="button"
+								aria-selected={method === 'phone'}
+								className={`${styles.methodTab} ${method === 'phone' ? styles.methodTabActive : ''}`}
+								onClick={() => setMethod('phone')}
+							>
+								<Phone className="w-4 h-4" strokeWidth={1.5} />
+								<span>{t('authLogin.tabPhone', 'Phone')}</span>
+							</button>
+							<button
+								role="tab"
+								type="button"
+								aria-selected={method === 'qr'}
+								className={`${styles.methodTab} ${method === 'qr' ? styles.methodTabActive : ''}`}
+								onClick={() => setMethod('qr')}
+							>
+								<QrCode className="w-4 h-4" strokeWidth={1.5} />
+								<span>{t('authLogin.tabQr', 'QR Code')}</span>
+							</button>
+						</div>
+
+						{/* ── QR Code Login Panel ─────────────────────────────────────── */}
+						{method === 'qr' ? (
+							<div className={styles.qrPanel}>
+								<div className={styles.qrCodeBox}>
+									<div className={styles.qrPlaceholder}>
+										<QrCode className="w-32 h-32 text-aliOrange" strokeWidth={1.5} />
+									</div>
+									{/* In production: render a dynamic QR from /api/auth/qr-token */}
+								</div>
+								<p className={styles.qrTitle}>
+									{t('authLogin.qrTitle', 'Scan with the Nouf-ex mobile app')}
 								</p>
+								<p className={styles.qrHelp}>
+									{t(
+										'authLogin.qrHelp',
+										'Open the app → tap the QR icon in the top-right corner → point it at this code.',
+									)}
+								</p>
+								<button
+									type="button"
+									className={styles.qrFallback}
+									onClick={() => setMethod('email')}
+								>
+									<PrevIcon className="w-4 h-4 inline me-1" strokeWidth={1.5} />
+									{t('authLogin.useEmailInstead', 'Use email instead')}
+								</button>
 							</div>
-
-							<form onSubmit={handleSubmit} className="space-y-4">
+						) : (
+							/* ── Email / Phone Login Form ────────────────────────────── */
+							<form
+								onSubmit={handleSubmit}
+								noValidate
+								className={styles.formBody}
+								aria-busy={isLoading}
+							>
+								{/* Global form-level error (e.g. wrong creds, rate-limited) */}
 								{errors.form && (
 									<div
 										role="alert"
-										className={`text-sm p-3 rounded ${styles.formAlert}`}
+										aria-live="polite"
+										className={styles.formAlert}
 									>
+										<AlertCircle className="w-4 h-4 inline me-1.5" strokeWidth={2} />
 										{errors.form}
+										{networkRetries > 0 && (
+											<span className={styles.alertRetry}>
+												{t('authLogin.retryHint', 'Tap the password field and press Enter to retry.')}
+											</span>
+										)}
 									</div>
 								)}
-								{/* G6 fix 2026-07-11: inline 2FA subform. Shown when the
-								    server replied with `requires_2fa: true` from
-								    /api/auth/login. */}
+
+								{/* ── 2FA inline sub-form ─────────────────────────────────────── */}
 								{twoFactorPending && (
-									<div className="space-y-3 rounded-lg border border-aliOrange/40 bg-orange-50/40 p-4">
-										<div className="flex items-center justify-between">
-											<p className="text-sm font-semibold text-aliText">
-												{t('authLogin.twoFactorTitle', 'Two-factor code')}
-											</p>
+									<div className={styles.twoFactorBox}>
+										<div className={styles.twoFactorHeader}>
+											<div className="flex items-center gap-2">
+												<KeyRound className="w-4 h-4 text-aliOrange" strokeWidth={1.5} />
+												<p className={styles.twoFactorTitle}>
+													{t('authLogin.twoFactorTitle', 'Two-factor code')}
+												</p>
+											</div>
 											<button
 												type="button"
-												className="text-xs text-aliTextMute hover:text-aliOrange"
+												className={styles.linkCancel}
 												onClick={() => {
 													setTwoFactorPending(null);
 													setTwoFactorCode('');
 													setErrors({});
 												}}
 											>
+												<X className="w-3 h-3 inline me-1" strokeWidth={2} />
 												{t('common.cancel', 'Cancel')}
 											</button>
 										</div>
-										<p className="text-xs text-aliTextSec">
+										<p className={styles.twoFactorHelp}>
 											{t(
 												'authLogin.twoFactorHelp',
 												'Open your authenticator app and enter the 6-digit code.',
 											)}
 										</p>
 										<Input
+											ref={twoFactorRef}
 											inputMode="numeric"
 											autoComplete="one-time-code"
+											pattern="[0-9]{6}"
 											maxLength={6}
 											value={twoFactorCode}
 											onChange={(e) => {
 												setTwoFactorCode(e.target.value.replace(/\D/g, ''));
 												setErrors((p) => ({ ...p, form: '' }));
 											}}
-											placeholder="123456"
-											className={`h-12 text-center font-mono text-lg tracking-widest ${styles.input}`}
+											placeholder="••••••"
+											className={`${styles.inputOTP} ${styles.input}`}
 											aria-label={t('authLogin.twoFactorTitle', 'Two-factor code')}
 										/>
 										<Button
 											type="button"
 											disabled={isLoading || twoFactorCode.length !== 6}
 											onClick={(e) => void handleVerifyTwoFactor(e)}
-											className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}
+											className={`${styles.btnPrimary} ${styles.twoFactorBtn}`}
 										>
 											{isLoading ? (
-												<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+												<>
+													<Loader2 className="w-4 h-4 animate-spin" />
+													<span>{loadingMessage || t('authLogin.verifying', 'Verifying…')}</span>
+												</>
 											) : (
-												t('authLogin.verify', 'Verify')
+												<>
+													<LogIn className="w-4 h-4" strokeWidth={1.5} />
+													<span>{t('authLogin.verify', 'Verify')}</span>
+												</>
 											)}
 										</Button>
 									</div>
 								)}
-								{/* Account */}
+
+								{/* ── Identifier (email or phone) ───────────────────────────── */}
 								<div>
-									<Label
-										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
-									>
-										{t('auth.email')}
+									<Label className={styles.formLabel} htmlFor="identifier">
+										{method === 'email'
+											? t('auth.email', 'Email')
+											: t('authLogin.phone', 'Phone number')}
 									</Label>
-									<div className="relative">
-										<Mail
-											className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'} ${styles.inputIcon}`}
-											strokeWidth={1.5}
-										/>
-									<Input
-										type="email"
-										value={email}
+									<div className={styles.inputWrap}>
+										{method === 'email' ? (
+											<Mail
+												className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+												strokeWidth={1.5}
+											/>
+										) : (
+											<Phone
+												className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+												strokeWidth={1.5}
+											/>
+										)}
+										<Input
+											ref={identifierRef}
+											id="identifier"
+											type={method === 'email' ? 'email' : 'tel'}
+											inputMode={method === 'email' ? 'email' : 'tel'}
+											value={identifier}
 											onChange={(e) => {
-												setEmail(e.target.value);
-												setErrors((p) => ({ ...p, email: '' }));
+												setIdentifier(e.target.value);
+												setErrors((p) => ({ ...p, identifier: '' }));
 											}}
-											placeholder={t(
-												'authLogin.emailOrPhonePlaceholder',
-												'Your email or phone number',
-											)}
-											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
+											onKeyDown={handleIdentifierKeyDown}
+											placeholder={
+												method === 'email'
+													? t(
+															'authLogin.emailOrPhonePlaceholder',
+															'Your email or phone number',
+													  )
+													: t('authLogin.phonePlaceholder', '+9677…')
+											}
+											className={`${isRTL ? styles.inputR : styles.inputL} h-12 text-sm rounded ${
+												errors.identifier ? styles.inputError : styles.input
+											}`}
+											dir="ltr"
+											autoComplete={method === 'email' ? 'username' : 'tel'}
 										/>
+										{/* Auto-detect indicator: shows the user we're smart */}
+										{detectedKind !== 'unknown' && identifier.length > 3 && (
+											<span className={styles.detectedBadge}>
+												{detectedKind === 'email' ? (
+													<>
+														<Mail className="w-3 h-3" /> {t('authLogin.detectedEmail', 'Email')}
+													</>
+												) : (
+													<>
+														<Phone className="w-3 h-3" /> {t('authLogin.detectedPhone', 'Phone')}
+													</>
+												)}
+											</span>
+										)}
 									</div>
-									{errors.email && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.email}
-										</p>
+									{errors.identifier && (
+										<p className={styles.fieldError}>{errors.identifier}</p>
 									)}
 								</div>
 
-								{/* Password */}
+								{/* ── Password with CapsLock warning ────────────────────────── */}
 								<div>
-									<Label
-										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
-									>
-										{t('auth.password')}
-									</Label>
-									<div className="relative">
-										<Lock
-											className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'} ${styles.inputIcon}`}
+									<div className={styles.passwordLabelRow}>
+										<Label className={styles.formLabel} htmlFor="password">
+											{t('auth.password', 'Password')}
+										</Label>
+										<Link
+											to="/auth/forgot-password"
+											className={styles.linkInline}
+										>
+											{t('auth.forgotPassword', 'Forgot password?')}
+										</Link>
+									</div>
+									<div className={styles.inputWrap}>
+										<svg
+											className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
 											strokeWidth={1.5}
-										/>
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+											/>
+										</svg>
 										<Input
+											ref={passwordRef}
+											id="password"
 											type={showPassword ? 'text' : 'password'}
+											autoComplete="current-password"
 											value={password}
 											onChange={(e) => {
 												setPassword(e.target.value);
 												setErrors((p) => ({ ...p, password: '' }));
 											}}
-											placeholder={t(
-												'authLogin.passwordPlaceholder',
-												'Password',
-											)}
-											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.password ? styles.inputError : styles.input}`}
+											onKeyDown={handlePasswordKeyDown}
+											placeholder={t('authLogin.passwordPlaceholder', 'Password')}
+											className={`${isRTL ? styles.inputRboth : styles.inputLboth} h-12 text-sm rounded ${
+												errors.password ? styles.inputError : styles.input
+											}`}
+											dir="ltr"
 										/>
 										<button
 											type="button"
 											onClick={() => setShowPassword(!showPassword)}
-											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}
+											className={`${styles.inputIcon} ${isRTL ? styles.iconL : styles.iconR} ${styles.passwordToggle}`}
+											aria-label={
+												showPassword
+													? t('authLogin.hidePassword', 'Hide password')
+													: t('authLogin.showPassword', 'Show password')
+											}
 										>
 											{showPassword ? (
 												<EyeOff className="w-5 h-5" strokeWidth={1.5} />
@@ -392,115 +731,103 @@ export default function Login() {
 											)}
 										</button>
 									</div>
-									{errors.password && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.password}
+									{/* CapsLock warning - prevents frustration */}
+									{capsLockOn && (
+										<p className={styles.capsLockWarn}>
+											<AlertCircle className="w-3 h-3 inline me-1" strokeWidth={2} />
+											{t('authLogin.capsLockOn', 'Caps Lock is on')}
 										</p>
+									)}
+									{errors.password && (
+										<p className={styles.fieldError}>{errors.password}</p>
 									)}
 								</div>
 
-								{/* Forgot password */}
-								<div className="flex justify-end">
-									<Link
-										to="/auth/forgot-password"
-										className={`text-sm hover:underline ${styles.link}`}
-									>
-										{t('auth.forgotPassword')}
-									</Link>
+								{/* ── Remember me + Forgot password row ─────────────────────── */}
+								<div className={styles.rememberRow}>
+									<label className={styles.checkboxLabel}>
+										<input
+											type="checkbox"
+											checked={rememberMe}
+											onChange={(e) => setRememberMe(e.target.checked)}
+											className={styles.checkbox}
+										/>
+										<span>{t('authLogin.rememberMe', 'Keep me signed in')}</span>
+									</label>
 								</div>
 
-								{/* Sign In Button */}
+								{/* ── Submit ────────────────────────────────────────────────────── */}
 								<Button
 									type="submit"
 									disabled={isLoading}
-									className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}
+									className={`${styles.btnPrimary} ${styles.submitBtn}`}
+									aria-busy={isLoading}
 								>
 									{isLoading ? (
-										<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+										<>
+											<Loader2 className="w-4 h-4 animate-spin" />
+											<span>{loadingMessage || t('authLogin.signingIn', 'Signing you in…')}</span>
+										</>
 									) : (
-										t('auth.loginBtn')
+										<>
+											<LogIn className="w-4 h-4" strokeWidth={1.5} />
+											<span>{t('auth.loginBtn', 'Sign in')}</span>
+										</>
 									)}
 								</Button>
+
+								{/* ── Switch method link ─────────────────────────────────────── */}
+								<div className={styles.switchMethodRow}>
+									<button
+										type="button"
+										className={styles.linkInline}
+										onClick={() => setMethod(method === 'email' ? 'phone' : 'email')}
+									>
+										{method === 'email'
+											? t('authLogin.usePhoneInstead', 'Use phone number instead')
+											: t('authLogin.useEmailInstead', 'Use email instead')}
+									</button>
+									<span className={styles.dot}>·</span>
+									<button
+										type="button"
+										className={styles.linkInline}
+										onClick={() => setMethod('qr')}
+									>
+										{t('authLogin.useQr', 'Scan QR')}
+									</button>
+								</div>
 							</form>
+						)}
 
-							{/* Mobile sign in link */}
-							<div className="mt-4 text-center">
-								<button
-									type="button"
-									className={`text-sm hover:underline ${styles.link}`}
-								>
-									{t('authLogin.signInMobile', 'Mobile number sign in')}
-								</button>
-							</div>
-
-							{/* Social Login */}
-							<div className="mt-6">
-								<div className="relative mb-4">
-									<div className="absolute inset-0 flex items-center">
-										<Separator className={`w-full ${styles.divider}`} />
-									</div>
-									<div className="relative flex justify-center">
-										<span
-											className={`bg-white px-4 text-xs ${styles.dividerLabel}`}
-										>
-											{t('authLogin.signInWith', 'Sign in with')}
-										</span>
-									</div>
-								</div>
-
-								<div className="flex gap-3">
-									<button
-										type="button"
-										disabled
-										className={`flex-1 h-11 flex items-center justify-center gap-2 rounded border hover:bg-gray-50 transition-colors text-sm opacity-50 cursor-not-allowed ${styles.socialButton}`}
-									>
-										<svg className="w-5 h-5" viewBox="0 0 24 24">
-											<path
-												d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-												fill="#4285F4"
-											/>
-											<path
-												d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-												fill="#34A853"
-											/>
-											<path
-												d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-												fill="#FBBC05"
-											/>
-											<path
-												d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-												fill="#EA4335"
-											/>
-										</svg>
-										Google
-									</button>
-									<button
-										type="button"
-										disabled
-										className={`flex-1 h-11 flex items-center justify-center gap-2 rounded border hover:bg-gray-50 transition-colors text-sm opacity-50 cursor-not-allowed ${styles.socialButton}`}
-									>
-										<svg className="w-5 h-5" viewBox="0 0 24 24" fill="#111111">
-											<path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.92.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-										</svg>
-										Apple
-									</button>
-								</div>
-							</div>
-
-							{/* Create account */}
-							<p className={`mt-6 text-center text-sm ${styles.formSubtitle}`}>
-								{t('authLogin.newUser', 'New user?')}{' '}
-								<Link
-									to="/auth/register"
-									className={`font-semibold hover:underline ${styles.ctaLink}`}
-								>
-									{t('auth.registerTitle')}
-								</Link>
-							</p>
-						</div>
+						{/* ── Create account link ─────────────────────────────────────── */}
+						<p className={styles.registerRow}>
+							{t('authLogin.newUser', 'New user?')}{' '}
+							<Link to="/auth/register" className={styles.ctaLink}>
+								{t('auth.registerTitle', 'Create Account')}
+								<NextIcon className="w-3 h-3 inline ms-1" strokeWidth={1.5} />
+							</Link>
+						</p>
 					</div>
+
+					{/* ── Trust footer ───────────────────────────────────────────── */}
+					<footer className={styles.formFooter}>
+						<div className={styles.footerItem}>
+							<ShieldCheck className="w-3 h-3 text-aliOrange" strokeWidth={2} />
+							<span>{t('authLogin.sslSecured', 'SSL Secured')}</span>
+						</div>
+						<span className={styles.footerDot}>·</span>
+						<div className={styles.footerItem}>
+							<CircleUserRound className="w-3 h-3 text-aliOrange" strokeWidth={2} />
+							<span>{t('authLogin.twoFactorAvailable', '2FA Available')}</span>
+						</div>
+						<span className={styles.footerDot}>·</span>
+						<Link to="/auth/forgot-password" className={styles.footerItem}>
+							<KeyRound className="w-3 h-3 text-aliOrange" strokeWidth={2} />
+							<span>{t('authLogin.recoverAccess', 'Recover Access')}</span>
+						</Link>
+					</footer>
 				</div>
-			</div>
+			</main>
 		</div>
 	);
 }

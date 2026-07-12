@@ -1,142 +1,812 @@
-/* Login.module.css — extracted from inline styles in Login.tsx
+/* Login.module.css — World-class login screen (v2)
  *
- * P1 fix: every value that appeared in a `style={{ ... }}` prop in the
- * previous version of Login.tsx lives here as either a CSS custom property
- * (`--login-*`) or a class. The JSX uses only `className` for styling.
+ * Design system references:
+ *   - Alibaba/Taobao login: warm orange + glassmorphic hero
+ *   - Amazon login: simple, focused, error-first
+ *   - Apple ID: glass surfaces, large tap targets
  *
- * Design tokens (`--login-*`) are kept module-scoped on a wrapping class so
- * they don't leak to other pages. If a token needs to be shared with other
- * auth pages (Register, ForgotPassword), promote it to the global theme.
+ * Token philosophy:
+ *   - Module-scoped CSS variables (`--login-*`) keep the surface contained.
+ *   - Promote any token you need elsewhere to the global Tailwind theme.
+ *   - All interactive states have a :hover, :focus, :active, and :disabled rule.
  */
 
-.hero {
-	/* Brand gradient panel on the left. */
-	background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 40%, #ffd4b3 100%);
-	/* Token surface for any descendant that wants the brand palette. */
+.page {
 	--login-primary: #ff6a00;
+	--login-primary-dark: #e55a00;
 	--login-link: #1688c9;
+	--login-link-hover: #0f6da7;
 	--login-success: #4caf50;
-	--login-error: #f44336;
+	--login-error: #d32f2f;
 	--login-error-bg: #fdecea;
 	--login-error-text: #b71c1c;
-	--login-text: #333;
-	--login-text-muted: #666;
-	--login-icon: #999;
-	--login-border: #e5e5e5;
-	--login-surface-soft: #f0f2f5;
-	--login-card-glass: rgba(255, 255, 255, 0.7);
+	--login-warning: #f57c00;
+	--login-warning-bg: #fff4e5;
+	--login-text: #1a1a1a;
+	--login-text-muted: #6b6b6b;
+	--login-text-sec: #4a4a4a;
+	--login-icon: #9aa0a6;
+	--login-border: #e0e0e0;
+	--login-border-focus: #ff6a00;
+	--login-surface-soft: #fafbfc;
+	--login-surface-white: #ffffff;
+	--login-card-glass: rgba(255, 255, 255, 0.75);
+	--login-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+	--login-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+	--login-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+	--login-radius-sm: 6px;
+	--login-radius-md: 10px;
+	--login-radius-lg: 16px;
+	--login-radius-xl: 24px;
+	font-family: inherit;
 }
 
-.heroCircle {
-	background: var(--login-primary);
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Hero Panel (left, hidden on mobile)                                  */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.hero {
+	background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 40%, #ffd4b3 100%);
+	flex: 0 0 45%;
+	max-width: 45%;
+	min-height: 100dvh;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 3rem;
+	overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+	.hero {
+		display: none;
+	}
+}
+
+.heroPattern {
+	position: absolute;
+	inset: 0;
+	background-image:
+		radial-gradient(circle at 1px 1px, rgba(255, 106, 0, 0.08) 1px, transparent 0);
+	background-size: 32px 32px;
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.heroOrb1,
+.heroOrb2,
+.heroOrb3 {
+	position: absolute;
+	border-radius: 50%;
+	filter: blur(60px);
+	pointer-events: none;
+}
+.heroOrb1 {
+	top: 8%;
+	right: 8%;
+	width: 280px;
+	height: 280px;
+	background: rgba(255, 106, 0, 0.25);
+}
+.heroOrb2 {
+	bottom: 12%;
+	left: 6%;
+	width: 220px;
+	height: 220px;
+	background: rgba(255, 106, 0, 0.18);
+}
+.heroOrb3 {
+	top: 35%;
+	left: 22%;
+	width: 160px;
+	height: 160px;
+	background: rgba(22, 136, 201, 0.15);
+}
+
+.brandLink {
+	display: inline-block;
+	margin-bottom: 1.5rem;
+	transition: transform 0.2s ease;
+}
+.brandLink:hover {
+	transform: scale(1.05);
+}
+.brandLink:active {
+	transform: scale(0.95);
 }
 
 .brandTile {
-	background: var(--login-primary);
+	width: 80px;
+	height: 80px;
+	border-radius: var(--login-radius-lg);
+	background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-primary-dark) 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto 1.5rem;
+	box-shadow: 0 8px 24px rgba(255, 106, 0, 0.35);
 }
 
 .heroTitle {
 	color: var(--login-text);
+	font-size: 2.5rem;
+	font-weight: 800;
+	margin-bottom: 0.75rem;
+	letter-spacing: -0.02em;
+}
+
+@media (min-width: 1280px) {
+	.heroTitle {
+		font-size: 3rem;
+	}
 }
 
 .heroSubtitle {
 	color: var(--login-text-muted);
+	font-size: 1.1rem;
+	line-height: 1.6;
+	margin-bottom: 2rem;
+}
+
+.statsGrid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.75rem;
+	margin-bottom: 2rem;
 }
 
 .statCard {
 	background: var(--login-card-glass);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.5);
+	border-radius: var(--login-radius-md);
+	padding: 0.875rem 0.5rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	transition: transform 0.2s ease;
+}
+.statCard:hover {
+	transform: translateY(-2px);
 }
 
 .statLabel {
 	color: var(--login-text);
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-align: center;
+	letter-spacing: 0.02em;
 }
 
 .statIconOrange {
 	color: var(--login-primary);
+	width: 1.25rem;
+	height: 1.25rem;
 }
-
 .statIconBlue {
 	color: var(--login-link);
+	width: 1.25rem;
+	height: 1.25rem;
 }
-
 .statIconGreen {
 	color: var(--login-success);
+	width: 1.25rem;
+	height: 1.25rem;
 }
 
-.cta {
-	background: var(--login-primary);
+.ctaPill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.625rem 1.25rem;
+	border-radius: 999px;
+	background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-primary-dark) 100%);
+	color: white;
+	font-size: 0.875rem;
+	font-weight: 600;
+	transition: all 0.2s ease;
+	box-shadow: 0 4px 12px rgba(255, 106, 0, 0.25);
 }
+.ctaPill:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(255, 106, 0, 0.35);
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Form Panel (right)                                                   */
+/* ─────────────────────────────────────────────────────────────────────── */
 
 .formPanel {
+	flex: 1;
+	min-height: 100dvh;
 	background: var(--login-surface-soft);
-	/* Re-declare tokens here too so the right column gets the same palette
-	   without depending on the parent `.hero` selector. */
-	--login-primary: #ff6a00;
-	--login-link: #1688c9;
-	--login-error: #f44336;
-	--login-error-bg: #fdecea;
-	--login-error-text: #b71c1c;
-	--login-text: #333;
-	--login-text-muted: #666;
-	--login-icon: #999;
-	--login-border: #e5e5e5;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+}
+
+.formHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--login-border);
+	background: white;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.headerBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	color: var(--login-text-muted);
+	font-size: 0.875rem;
+	font-weight: 500;
+	padding: 0.5rem 0.75rem;
+	border-radius: var(--login-radius-sm);
+	transition: all 0.15s ease;
+	cursor: pointer;
+	background: transparent;
+	border: none;
+	text-decoration: none;
+}
+.headerBtn:hover {
+	color: var(--login-primary);
+	background: rgba(255, 106, 0, 0.05);
+}
+
+.formCenter {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem 1rem;
+	gap: 1.5rem;
+}
+
+.formCard {
+	width: 100%;
+	max-width: 460px;
+	background: var(--login-surface-white);
+	border-radius: var(--login-radius-xl);
+	box-shadow: var(--login-shadow-md);
+	padding: 2.5rem;
+	border: 1px solid var(--login-border);
+}
+
+@media (max-width: 480px) {
+	.formCard {
+		padding: 1.5rem;
+		border-radius: var(--login-radius-lg);
+	}
+}
+
+.formHeaderSection {
+	text-align: center;
+	margin-bottom: 1.75rem;
 }
 
 .formTitle {
 	color: var(--login-text);
+	font-size: 1.75rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	margin-bottom: 0.5rem;
 }
 
 .formSubtitle {
 	color: var(--login-text-muted);
+	font-size: 0.875rem;
+	line-height: 1.5;
 }
 
-.formAlert {
-	background: var(--login-error-bg);
-	color: var(--login-error-text);
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Method Tabs (Email / Phone / QR)                                     */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.methodTabs {
+	display: flex;
+	gap: 0.25rem;
+	padding: 0.25rem;
+	background: var(--login-surface-soft);
+	border-radius: var(--login-radius-md);
+	margin-bottom: 1.5rem;
+	border: 1px solid var(--login-border);
+}
+
+.methodTab {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.625rem 0.75rem;
+	border: none;
+	background: transparent;
+	color: var(--login-text-muted);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	border-radius: var(--login-radius-sm);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	letter-spacing: 0.02em;
+}
+.methodTab:hover:not(.methodTabActive) {
+	color: var(--login-text);
+	background: rgba(255, 255, 255, 0.5);
+}
+.methodTabActive {
+	background: white;
+	color: var(--login-primary);
+	box-shadow: var(--login-shadow-sm);
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Form Fields                                                          */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.formBody {
+	display: flex;
+	flex-direction: column;
+	gap: 1.125rem;
 }
 
 .formLabel {
+	display: block;
 	color: var(--login-text);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	margin-bottom: 0.375rem;
+	letter-spacing: 0.01em;
+}
+
+.inputWrap {
+	position: relative;
 }
 
 .inputIcon {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
 	color: var(--login-icon);
+	width: 1.125rem;
+	height: 1.125rem;
+	pointer-events: none;
+	transition: color 0.15s ease;
+}
+.iconL {
+	left: 0.875rem;
+}
+.iconR {
+	right: 0.875rem;
+}
+.inputL {
+	padding-left: 2.625rem !important;
+}
+.inputR {
+	padding-right: 2.625rem !important;
+}
+.inputLboth {
+	padding-left: 2.625rem !important;
+	padding-right: 2.625rem !important;
+}
+.inputRboth {
+	padding-left: 2.625rem !important;
+	padding-right: 2.625rem !important;
+}
+
+.input:focus ~ .inputIcon,
+.input:focus-within .inputIcon {
+	color: var(--login-primary);
 }
 
 .input {
-	border-color: var(--login-border);
+	border: 1.5px solid var(--login-border);
+	background: white;
+	color: var(--login-text);
+	transition: all 0.2s ease;
+	font-size: 0.9375rem;
+}
+.input:focus,
+.input:focus-visible {
+	border-color: var(--login-border-focus);
+	box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.12);
+	outline: none;
+}
+.input:hover:not(:focus) {
+	border-color: #c5c5c5;
 }
 
 .inputError {
 	border-color: var(--login-error);
 }
+.inputError:focus {
+	box-shadow: 0 0 0 4px rgba(211, 47, 47, 0.12);
+}
+
+.passwordToggle {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: auto !important;
+}
+.passwordToggle:hover {
+	color: var(--login-text-muted) !important;
+}
+
+.detectedBadge {
+	position: absolute;
+	bottom: -1.375rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	color: var(--login-success);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.capsLockWarn {
+	margin-top: 0.375rem;
+	color: var(--login-warning);
+	font-size: 0.75rem;
+	font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+}
 
 .fieldError {
+	margin-top: 0.375rem;
+	color: var(--login-error);
+	font-size: 0.75rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Alert (form-level error)                                             */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.formAlert {
+	background: var(--login-error-bg);
+	color: var(--login-error-text);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	padding: 0.75rem 1rem;
+	border-radius: var(--login-radius-md);
+	border-left: 3px solid var(--login-error);
+	display: flex;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.alertRetry {
+	flex-basis: 100%;
+	margin-top: 0.25rem;
+	font-size: 0.75rem;
+	opacity: 0.85;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* 2FA sub-form                                                         */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.twoFactorBox {
+	background: linear-gradient(135deg, rgba(255, 106, 0, 0.04) 0%, rgba(255, 106, 0, 0.08) 100%);
+	border: 1.5px solid rgba(255, 106, 0, 0.3);
+	border-radius: var(--login-radius-md);
+	padding: 1.25rem;
+	margin-bottom: 0.5rem;
+}
+
+.twoFactorHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.5rem;
+}
+
+.twoFactorTitle {
+	color: var(--login-text);
+	font-size: 0.9375rem;
+	font-weight: 700;
+}
+
+.twoFactorHelp {
+	color: var(--login-text-sec);
+	font-size: 0.75rem;
+	margin-bottom: 0.75rem;
+	line-height: 1.5;
+}
+
+.inputOTP {
+	text-align: center;
+	font-family: 'JetBrains Mono', 'Courier New', monospace;
+	font-size: 1.5rem !important;
+	letter-spacing: 0.5em;
+	font-weight: 700;
+	padding-left: 0.75rem !important;
+	padding-right: 0.75rem !important;
+}
+
+.twoFactorBtn {
+	margin-top: 0.75rem;
+	width: 100%;
+}
+
+.linkCancel {
+	background: transparent;
+	border: none;
+	color: var(--login-text-muted);
+	font-size: 0.75rem;
+	cursor: pointer;
+	padding: 0.25rem 0.5rem;
+	border-radius: var(--login-radius-sm);
+	transition: color 0.15s ease;
+}
+.linkCancel:hover {
 	color: var(--login-error);
 }
 
-.link {
-	color: var(--login-link);
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Remember me + password label row                                    */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.passwordLabelRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.375rem;
 }
 
-.ctaLink {
-	color: var(--login-primary);
+.rememberRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: -0.25rem 0 0.5rem;
 }
 
-.submit {
+.checkboxLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--login-text-sec);
+	font-size: 0.8125rem;
+	cursor: pointer;
+	user-select: none;
+}
+
+.checkbox {
+	width: 1.0625rem;
+	height: 1.0625rem;
+	border-radius: 4px;
+	border: 1.5px solid var(--login-border);
+	accent-color: var(--login-primary);
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+.checkbox:checked {
 	background: var(--login-primary);
 	border-color: var(--login-primary);
 }
 
-.divider {
-	background: var(--login-border);
+.linkInline {
+	background: transparent;
+	border: none;
+	color: var(--login-link);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	cursor: pointer;
+	text-decoration: none;
+	transition: color 0.15s ease;
+	padding: 0;
+}
+.linkInline:hover {
+	color: var(--login-link-hover);
+	text-decoration: underline;
 }
 
-.dividerLabel {
-	color: var(--login-icon);
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Submit Button                                                        */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.btnPrimary {
+	background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-primary-dark) 100%);
+	color: white;
+	font-weight: 700;
+	font-size: 0.9375rem;
+	padding: 0.75rem 1rem;
+	border: none;
+	border-radius: var(--login-radius-md);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	box-shadow: 0 2px 8px rgba(255, 106, 0, 0.25);
+}
+.btnPrimary:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 14px rgba(255, 106, 0, 0.35);
+}
+.btnPrimary:active:not(:disabled) {
+	transform: translateY(0);
+}
+.btnPrimary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	box-shadow: none;
 }
 
-.socialButton {
-	border-color: var(--login-border);
+.submitBtn {
+	width: 100%;
+	height: 3rem;
+	font-size: 0.9375rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Method Switcher Row                                                  */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.switchMethodRow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+.dot {
+	color: var(--login-text-muted);
+	opacity: 0.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* QR Code Panel                                                        */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.qrPanel {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 1.5rem 1rem;
+	gap: 1rem;
+	text-align: center;
+}
+
+.qrCodeBox {
+	padding: 1.25rem;
+	background: linear-gradient(135deg, #fafbfc 0%, #f0f2f5 100%);
+	border-radius: var(--login-radius-lg);
+	border: 2px dashed var(--login-border);
+	margin-bottom: 0.5rem;
+}
+
+.qrPlaceholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 200px;
+	height: 200px;
+	background: white;
+	border-radius: var(--login-radius-md);
+}
+
+.qrTitle {
 	color: var(--login-text);
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.qrHelp {
+	color: var(--login-text-muted);
+	font-size: 0.8125rem;
+	line-height: 1.5;
+	max-width: 320px;
+}
+
+.qrFallback {
+	background: transparent;
+	border: none;
+	color: var(--login-text-muted);
+	font-size: 0.8125rem;
+	cursor: pointer;
+	padding: 0.5rem;
+	transition: color 0.15s ease;
+}
+.qrFallback:hover {
+	color: var(--login-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Register Link + Footer                                              */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.registerRow {
+	margin-top: 1.5rem;
+	text-align: center;
+	color: var(--login-text-muted);
+	font-size: 0.875rem;
+}
+
+.ctaLink {
+	color: var(--login-primary);
+	font-weight: 700;
+	text-decoration: none;
+	margin-left: 0.25rem;
+	transition: color 0.15s ease;
+}
+.ctaLink:hover {
+	color: var(--login-primary-dark);
+	text-decoration: underline;
+}
+
+.formFooter {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--login-text-muted);
+	font-size: 0.75rem;
+	flex-wrap: wrap;
+	max-width: 460px;
+}
+
+.footerItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	color: var(--login-text-muted);
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+a.footerItem:hover {
+	color: var(--login-primary);
+}
+
+.footerDot {
+	opacity: 0.4;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Reduced motion                                                       */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+	.brandTile,
+	.heroOrb1,
+	.heroOrb2,
+	.heroOrb3 {
+		animation: none !important;
+	}
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Mobile: hide hero entirely (already done at 1024px breakpoint above) */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+	.formPanel {
+		min-height: 100dvh;
+	}
 }

@@ -802,6 +802,66 @@ a.footerItem:hover {
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
+/* Password strength meter (Register page)                            */
+/* Five-segment bar that fills left-to-right based on score.            */
+/* ─────────────────────────────────────────────────────────────────────── */
+
+.strengthMeter {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 0.375rem;
+}
+
+.strengthBar {
+	flex: 1;
+	height: 4px;
+	border-radius: 2px;
+	background: #e0e0e0;
+	transition: background 0.3s ease;
+}
+
+/* default: all bars grey. Each strength level colors the first N bars. */
+.strengthMeter.weak .strengthBar1 {
+	background: #d32f2f;
+}
+.strengthMeter.medium .strengthBar1,
+.strengthMeter.medium .strengthBar2 {
+	background: #f57c00;
+}
+.strengthMeter.good .strengthBar1,
+.strengthMeter.good .strengthBar2,
+.strengthMeter.good .strengthBar3 {
+	background: #fbc02d;
+}
+.strengthMeter.strong .strengthBar1,
+.strengthMeter.strong .strengthBar2,
+.strengthMeter.strong .strengthBar3,
+.strengthMeter.strong .strengthBar4 {
+	background: #689f38;
+}
+.strengthMeter.excellent .strengthBar {
+	background: #2e7d32;
+}
+
+.strengthLabel {
+	font-size: 0.75rem;
+	font-weight: 500;
+	margin-top: 0.25rem;
+	display: inline-block;
+}
+.strengthLabel.weak { color: #d32f2f; }
+.strengthLabel.medium { color: #f57c00; }
+.strengthLabel.good { color: #f9a825; }
+.strengthLabel.strong { color: #689f38; }
+.strengthLabel.excellent { color: #2e7d32; }
+
+@media (prefers-reduced-motion: reduce) {
+	.strengthBar {
+		transition: none !important;
+	}
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
 /* Mobile: hide hero entirely (already done at 1024px breakpoint above) */
 /* ─────────────────────────────────────────────────────────────────────── */
 

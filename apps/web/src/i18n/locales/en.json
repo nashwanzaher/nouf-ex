@@ -1077,11 +1077,20 @@
 	"authCommon": {
 		"fieldRequired": "This field is required",
 		"passwordMinLength": "Password must be at least 6 characters",
+		"passwordMinLength10": "Password must be at least 10 characters",
+		"passwordMaxLength": "Password must be at most 128 characters",
+		"passwordComplexity": "Password must include lowercase, uppercase, digit, and symbol",
 		"passwordsDoNotMatch": "Passwords do not match",
+		"passwordsMatch": "Passwords match",
+		"nameMinLength": "Name must be at least 2 characters",
+		"nameMaxLength": "Name is too long",
 		"invalidEmail": "Invalid email",
+		"invalidPhone": "Please enter a valid phone number",
+		"signIn": "Sign in",
+		"fullName": "Full name",
 		"statSellers": "10K+ Sellers",
 		"statProducts": "500K+ Products",
-		"statSecurePayment": "Secure Payment",
+		"statSecurePayment": "Secure payment",
 		"viewMore": "View More"
 	},
 	"authLogin": {
@@ -1133,9 +1142,11 @@
 		"phoneLabel": "Phone number",
 		"phonePlaceholder": "+9677...",
 		"emailPlaceholder": "your@email.com",
-		"passwordPlaceholder": "Password",
-		"confirmPasswordPlaceholder": "Confirm password",
-		"heroJoin": "Join the largest e-commerce platform in the region"
+		"passwordPlaceholder": "At least 10 characters",
+		"confirmPasswordPlaceholder": "Re-enter your password",
+		"namePlaceholder": "Ahmed Al-Maqtari",
+		"heroJoin": "Join the largest e-commerce platform in the region",
+		"creatingAccount": "Creating your account…"
 	},
 	"authForgot": {
 		"title": "Recover password",

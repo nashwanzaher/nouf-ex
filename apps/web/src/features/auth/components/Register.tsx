@@ -1,33 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
-	Mail,
-	Lock,
+	AlertCircle,
+	ArrowRight,
+	ArrowLeft,
+	Check,
 	Eye,
 	EyeOff,
-	ShoppingBag,
+	Loader2,
+	LogIn,
+	Mail,
+	ShieldCheck,
+	Sparkles,
 	Store,
-	Globe,
-	Shield,
-	TrendingUp,
-	Users,
-	Check,
+	ShoppingBag,
+	User,
+	UserPlus,
 } from 'lucide-react';
+// NOTE: `Lock` is intentionally inlined as an SVG below so we don't
+// import the lucide-react default export (its typings don't satisfy
+// the strict JSX component type that the Vite + react-jsx setup
+// expects after the React 19 upgrade).
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AppContext';
-import { register, ApiError } from '@/lib/api';
-import styles from './Auth.module.css';
+import { register as apiRegister, ApiError } from '@/lib/api';
+import { detectIdentifier } from './Login';
+import styles from './Login.module.css';
+
+// ── Password strength meter (Amazon / NIST-aligned) ────────────────────
+// Returns a 0-4 score and a key used to colour the meter bar.
+// Aligned with the backend `evaluatePasswordStrength()` rules so the UI
+// meter and the backend validation agree.
+type StrengthKey = 'empty' | 'weak' | 'medium' | 'good' | 'strong' | 'excellent';
+function evaluateStrength(p: string): { score: number; key: StrengthKey } {
+	if (!p) return { score: 0, key: 'empty' };
+	let score = 0;
+	if (p.length >= 8) score++;
+	if (p.length >= 12) score++;
+	if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+	if (/\d/.test(p) && /[^A-Za-z0-9]/.test(p)) score++;
+	if (p.length >= 14) score++;
+	const key: StrengthKey = (() => {
+		if (score <= 0) return 'weak';
+		if (score === 1) return 'weak';
+		if (score === 2) return 'medium';
+		if (score === 3) return 'good';
+		if (score === 4) return 'strong';
+		return 'excellent';
+	})();
+	return { score, key };
+}
 
 export default function Register() {
 	const { t, i18n } = useTranslation();
 	const isRTL = i18n.language === 'ar';
 	const navigate = useNavigate();
 	const { login: authLogin, addToast } = useAuth();
+
+	// ── Account type ─────────────────────────────────────────────────────
 	const [accountType, setAccountType] = useState<'buyer' | 'seller'>('buyer');
+
+	// ── Form fields ─────────────────────────────────────────────────────
+	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [showPassword, setShowPassword] = useState(false);
@@ -35,46 +74,99 @@ export default function Register() {
 	const [terms, setTerms] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-	const validate = () => {
-		const errs: Record<string, string> = {};
-		if (!email.trim()) errs.email = t('authCommon.fieldRequired', 'This field is required');
-		else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-			errs.email = t('authCommon.invalidEmail', 'Invalid email');
-		if (!password.trim())
-			errs.password = t('authCommon.fieldRequired', 'This field is required');
-		else if (password.length < 6)
-			errs.password = t(
-				'authCommon.passwordMinLength',
-				'Password must be at least 6 characters',
-			);
-		else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-			// Weak password warning — not blocking, just advisory
-			errs.passwordWarning = t(
-				'authCommon.passwordStrength',
-				'For better security, use uppercase, lowercase, and numbers',
-			);
+	// ── Refs for focus management ───────────────────────────────────────
+	const nameRef = useRef<HTMLInputElement>(null);
+	const emailRef = useRef<HTMLInputElement>(null);
+	const phoneRef = useRef<HTMLInputElement>(null);
+	const passwordRef = useRef<HTMLInputElement>(null);
+
+	// ── Computed ────────────────────────────────────────────────────────
+	const strength = useMemo(() => evaluateStrength(password), [password]);
+	const detectedEmailKind = useMemo(() => detectIdentifier(email), [email]);
+
+	// Auto-focus on the name input on mount (Amazon pattern).
+	useEffect(() => {
+		const t = setTimeout(() => nameRef.current?.focus(), 200);
+		return () => clearTimeout(t);
+	}, []);
+
+	// ── Live field validation (only shows after blur) ──────────────────
+	function validateField(name: keyof typeof errors, value: string): string | undefined {
+		if (name === 'name') {
+			if (!value.trim()) return t('authCommon.fieldRequired', 'This field is required');
+			if (value.trim().length < 2) return t('authCommon.nameMinLength', 'Name must be at least 2 characters');
+			if (value.trim().length > 100) return t('authCommon.nameMaxLength', 'Name is too long');
 		}
-		if (password !== confirmPassword)
-			errs.confirmPassword = t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
-		if (!terms) errs.terms = t('authRegister.termsRequired', 'You must agree to the terms');
-		setErrors(errs);
-		return !errs.email && !errs.password && !errs.confirmPassword && !errs.terms;
+		if (name === 'email') {
+			if (!value.trim()) return t('authCommon.fieldRequired', 'This field is required');
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()))
+				return t('authCommon.invalidEmail', 'Invalid email');
+		}
+		if (name === 'phone' && accountType === 'seller') {
+			if (!value.trim()) return t('authCommon.fieldRequired', 'This field is required');
+			if (!/^[+\d][\d\s\-()]{5,}$/.test(value.trim()))
+				return t('authCommon.invalidPhone', 'Please enter a valid phone number');
+		}
+		if (name === 'password') {
+			if (!value) return t('authCommon.fieldRequired', 'This field is required');
+			// Match backend requirements exactly (apps/api/src/lib/validation.ts)
+			if (value.length < 10) return t('authCommon.passwordMinLength10', 'Password must be at least 10 characters');
+			if (value.length > 128) return t('authCommon.passwordMaxLength', 'Password is too long');
+			if (
+				!/[a-z]/.test(value) ||
+				!/[A-Z]/.test(value) ||
+				!/\d/.test(value) ||
+				!/[^A-Za-z0-9]/.test(value)
+			) {
+				return t(
+					'authCommon.passwordComplexity',
+					'Password must include lowercase, uppercase, digit, and symbol',
+				);
+			}
+		}
+		if (name === 'confirmPassword') {
+			if (!value) return t('authCommon.fieldRequired', 'This field is required');
+			if (value !== password) return t('authCommon.passwordsDoNotMatch', 'Passwords do not match');
+		}
+		return undefined;
+	}
+
+	// ── Final full-form validation (on submit) ───────────────────────
+	const validateAll = () => {
+		const newErrors: Record<string, string> = {};
+		const checks: Array<[keyof typeof errors, string]> = [
+			['name', name],
+			['email', email],
+			...(accountType === 'seller' ? ([['phone', phone]] as Array<[keyof typeof errors, string]>) : []),
+			['password', password],
+			['confirmPassword', confirmPassword],
+		];
+		for (const [field, value] of checks) {
+			const err = validateField(field, value);
+			if (err) newErrors[field] = err;
+		}
+		if (!terms) newErrors.terms = t('authRegister.termsRequired', 'You must agree to the terms');
+		setErrors(newErrors);
+		// Mark all touched so the UI shows the errors
+		const allTouched: Record<string, boolean> = {};
+		for (const [field] of checks) allTouched[field] = true;
+		allTouched.terms = true;
+		setTouched(allTouched);
+		return Object.keys(newErrors).length === 0;
 	};
 
+	// ── Submit ─────────────────────────────────────────────────────────
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!validate()) return;
+		if (!validateAll()) return;
 		setIsLoading(true);
 		try {
-			// G5 fix 2026-07-11: forward the buyer/seller tab choice to
-			// the server. The server coerces anything other than
-			// 'customer' or 'merchant' (notably 'admin') back to
-			// 'customer', so this is safe to pass straight through.
-			const result = await register({
+			const result = await apiRegister({
 				email: email.trim(),
 				password,
-				name: email.trim().split('@')[0] || email.trim(),
+				name: name.trim(),
 				role: accountType === 'seller' ? 'merchant' : 'customer',
 			});
 			const authUser = {
@@ -82,19 +174,15 @@ export default function Register() {
 				name: result.user.full_name,
 				email: result.user.email,
 				role:
-					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') || 'customer',
+					(result.user.role as 'customer' | 'merchant' | 'admin' | 'guest') ||
+					'customer',
 				avatar: result.user.avatar ?? undefined,
 			};
-			// Auth token is set by server as HttpOnly cookie automatically.
 			authLogin(authUser);
 			addToast({
 				message: t('authRegister.accountCreated', 'Account created successfully'),
 				type: 'success',
 			});
-			// G5 fix 2026-07-11: route to the role-appropriate landing
-			// page instead of always /customer. New merchants go to
-			// the onboarding wizard which creates their first store;
-			// everyone else lands on the customer dashboard.
 			const destination =
 				authUser.role === 'merchant' ? '/seller/onboarding' : '/customer';
 			navigate(destination, { replace: true });
@@ -113,328 +201,473 @@ export default function Register() {
 		}
 	};
 
+	// ── Field helper that combines touched + error display ────────────
+	const fieldError = (field: string) =>
+		touched[field] && errors[field] ? errors[field] : undefined;
+
+	// ── Arrow icon for RTL ───────────────────────────────────────────
+	const NextIcon = isRTL ? ArrowLeft : ArrowRight;
+	const PrevIcon = isRTL ? ArrowRight : ArrowLeft;
+
+	// ── JSX ────────────────────────────────────────────────────────────
 	return (
-		<div className="min-h-[100dvh] flex" dir={isRTL ? 'rtl' : 'ltr'}>
-			{/* Left Panel — Hero */}
-			<div
-				className={`hidden lg:flex lg:w-[45%] relative flex-col items-center justify-center p-12 overflow-hidden ${styles.hero}`}
-			>
-				<div
-					className={`absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 ${styles.heroCircle}`}
-				/>
-				<div
-					className={`absolute bottom-20 left-10 w-48 h-48 rounded-full opacity-15 ${styles.heroCircle}`}
-				/>
+		<div className={`min-h-[100dvh] flex bg-white ${styles.page}`} dir={isRTL ? 'rtl' : 'ltr'}>
+			{/* Hero Panel */}
+			<aside className={styles.hero} aria-hidden="true">
+				<div className={styles.heroPattern} />
+				<div className={styles.heroOrb1} />
+				<div className={styles.heroOrb2} />
+				<div className={styles.heroOrb3} />
 
-				<div className="relative z-10 text-center max-w-md mx-auto">
-					<div className="mb-8">
-						<div
-							className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${styles.brandTile}`}
-						>
-							<Globe className="w-10 h-10 text-white" strokeWidth={1.5} />
+				<div className="relative z-10 max-w-md mx-auto text-center px-6">
+					<Link to="/" className={styles.brandLink}>
+						<div className={styles.brandTile}>
+							<Sparkles className="w-10 h-10 text-white" strokeWidth={1.5} />
 						</div>
-					</div>
+					</Link>
 
-					<h1 className={`text-3xl xl:text-4xl font-bold mb-4 ${styles.heroTitle}`}>
+					<h1 className={styles.heroTitle}>
 						{t('authRegister.brandName', 'Nouf-ex')}
 					</h1>
-					<p className={`text-lg xl:text-xl mb-8 leading-relaxed ${styles.heroSubtitle}`}>
+					<p className={styles.heroSubtitle}>
 						{t(
 							'authRegister.heroJoin',
 							'Join the largest e-commerce platform in the region',
 						)}
 					</p>
 
-					<div className="grid grid-cols-3 gap-4 mb-8">
-						{[
-							{
-								icon: Users,
-								label: t('authCommon.statSellers', '10K+ Sellers'),
-								iconClass: styles.statIconOrange,
-							},
-							{
-								icon: TrendingUp,
-								label: t('authCommon.statProducts', '500K+ Products'),
-								iconClass: styles.statIconBlue,
-							},
-							{
-								icon: Shield,
-								label: t('authCommon.statSecurePayment', 'Secure Payment'),
-								iconClass: styles.statIconGreen,
-							},
-						].map((stat, i) => (
-							<div
-								key={i}
-								className={`flex flex-col items-center gap-2 p-4 rounded-xl ${styles.statCard}`}
-							>
-								<stat.icon
-									className={`w-6 h-6 ${stat.iconClass}`}
-									strokeWidth={1.5}
-								/>
-								<span className={`text-xs font-semibold ${styles.statLabel}`}>
-									{stat.label}
-								</span>
-							</div>
-						))}
-					</div>
-
-					<Link
-						to="/"
-						className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90 ${styles.cta}`}
-					>
-						{t('authCommon.viewMore', 'View More')}
-						<TrendingUp className="w-4 h-4" strokeWidth={1.5} />
-					</Link>
-				</div>
-			</div>
-
-			{/* Right Panel — Register Form */}
-			<div className={`flex-1 flex flex-col overflow-y-auto ${styles.formPanel}`}>
-				<div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-					<div className="w-full max-w-[440px] mx-auto">
-						<div className="bg-white rounded shadow-sm p-6 lg:p-8">
-							{/* Header */}
-							<div className="mb-6 text-center">
-								<h1 className={`text-2xl font-bold mb-2 ${styles.formTitle}`}>
-									{t('auth.registerTitle')}
-								</h1>
-								<p className={`text-sm ${styles.formSubtitle}`}>
-									{t(
-										'authRegister.subtitle',
-										'Create your account and start your journey',
-									)}
-								</p>
-							</div>
-
-							{/* Account Type */}
-							<div className="grid grid-cols-2 gap-3 mb-5">
-								<button
-									type="button"
-									onClick={() => setAccountType('buyer')}
-									data-selected={accountType === 'buyer'}
-									className={`flex flex-col items-center gap-2 p-4 rounded border-2 transition-all duration-200 ${styles.accountTypeBtn}`}
-								>
-									<ShoppingBag
-										className={`w-6 h-6 ${styles.icon}`}
-										strokeWidth={1.5}
-									/>
-									<span className={`text-sm font-semibold ${styles.formLabel}`}>
-										{t('authRegister.buyerTab', 'Buyer')}
-									</span>
-								</button>
-								<button
-									type="button"
-									onClick={() => setAccountType('seller')}
-									data-selected={accountType === 'seller'}
-									className={`flex flex-col items-center gap-2 p-4 rounded border-2 transition-all duration-200 ${styles.accountTypeBtn}`}
-								>
-									<Store className={`w-6 h-6 ${styles.icon}`} strokeWidth={1.5} />
-									<span className={`text-sm font-semibold ${styles.formLabel}`}>
-										{t('authRegister.sellerTab', 'Seller')}
-									</span>
-								</button>
-							</div>
-
-							<form onSubmit={handleSubmit} className="space-y-4">
-								{errors.form && (
-									<div
-										role="alert"
-										className={`text-sm p-3 rounded ${styles.formAlert}`}
-									>
-										{errors.form}
-									</div>
-								)}
-								{/* Email */}
-								<div>
-									<Label
-										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
-									>
-										{t('auth.email')}
-									</Label>
-									<div className="relative">
-										<Mail
-											className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'} ${styles.inputIcon}`}
-											strokeWidth={1.5}
-										/>
-										<Input
-											type="email"
-											value={email}
-											onChange={(e) => {
-												setEmail(e.target.value);
-												setErrors((p) => ({ ...p, email: '' }));
-											}}
-											placeholder={t(
-												'authRegister.emailPlaceholder',
-												'your@email.com',
-											)}
-											className={`${isRTL ? 'pr-10' : 'pl-10'} h-12 text-sm rounded ${errors.email ? styles.inputError : styles.input}`}
-										/>
-									</div>
-									{errors.email && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.email}
-										</p>
-									)}
-								</div>
-
-								{/* Password */}
-								<div>
-									<Label
-										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
-									>
-										{t('auth.password')}
-									</Label>
-									<div className="relative">
-										<Lock
-											className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'} ${styles.inputIcon}`}
-											strokeWidth={1.5}
-										/>
-										<Input
-											type={showPassword ? 'text' : 'password'}
-											value={password}
-											onChange={(e) => {
-												setPassword(e.target.value);
-												setErrors((p) => ({ ...p, password: '' }));
-											}}
-											placeholder={t(
-												'authRegister.passwordPlaceholder',
-												'Password',
-											)}
-											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.password ? styles.inputError : styles.input}`}
-										/>
-										<button
-											type="button"
-											onClick={() => setShowPassword(!showPassword)}
-											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}
-										>
-											{showPassword ? (
-												<EyeOff className="w-5 h-5" strokeWidth={1.5} />
-											) : (
-												<Eye className="w-5 h-5" strokeWidth={1.5} />
-											)}
-										</button>
-									</div>
-									{errors.password && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.password}
-										</p>
-									)}
-									{errors.passwordWarning && !errors.password && (
-										<p className="text-xs mt-1 text-amber-600">
-											{errors.passwordWarning}
-										</p>
-									)}
-								</div>
-
-								{/* Confirm Password */}
-								<div>
-									<Label
-										className={`text-sm font-medium mb-1.5 block ${styles.formLabel}`}
-									>
-										{t('auth.confirmPassword')}
-									</Label>
-									<div className="relative">
-										<Lock
-											className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 ${isRTL ? 'right-3' : 'left-3'} ${styles.inputIcon}`}
-											strokeWidth={1.5}
-										/>
-										<Input
-											type={showConfirm ? 'text' : 'password'}
-											value={confirmPassword}
-											onChange={(e) => {
-												setConfirmPassword(e.target.value);
-												setErrors((p) => ({ ...p, confirmPassword: '' }));
-											}}
-											placeholder={t(
-												'authRegister.confirmPasswordPlaceholder',
-												'Confirm password',
-											)}
-											className={`${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-12 text-sm rounded ${errors.confirmPassword ? styles.inputError : styles.input}`}
-										/>
-										<button
-											type="button"
-											onClick={() => setShowConfirm(!showConfirm)}
-											className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} ${styles.inputIcon}`}
-										>
-											{showConfirm ? (
-												<EyeOff className="w-5 h-5" strokeWidth={1.5} />
-											) : (
-												<Eye className="w-5 h-5" strokeWidth={1.5} />
-											)}
-										</button>
-									</div>
-									{errors.confirmPassword && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.confirmPassword}
-										</p>
-									)}
-								</div>
-
-								{/* Terms */}
-								<div>
-									<button
-										type="button"
-										onClick={() => {
-											setTerms(!terms);
-											setErrors((p) => ({ ...p, terms: '' }));
-										}}
-										className="flex items-start gap-2 text-left w-full"
-									>
-										<div
-											data-checked={terms}
-											className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${styles.termsBox}`}
-										>
-											{terms && (
-												<Check
-													className="w-3 h-3 text-white"
-													strokeWidth={2}
-												/>
-											)}
-										</div>
-										<span
-											className={`text-xs leading-relaxed ${styles.formSubtitle}`}
-										>
-											{t(
-												'auth.iAgree',
-												'I agree to the Terms of Service and Privacy Policy',
-											)}
-										</span>
-									</button>
-									{errors.terms && (
-										<p className={`text-xs mt-1 ${styles.fieldError}`}>
-											{errors.terms}
-										</p>
-									)}
-								</div>
-
-								{/* Submit */}
-								<Button
-									type="submit"
-									disabled={isLoading}
-									className={`w-full h-12 text-white font-bold text-base rounded transition-colors hover:opacity-90 ${styles.submit}`}
-								>
-									{isLoading ? (
-										<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-									) : (
-										t('auth.registerBtn')
-									)}
-								</Button>
-							</form>
-
-							{/* Switch to login */}
-							<p className={`mt-6 text-center text-sm ${styles.formSubtitle}`}>
-								{t('auth.haveAccount')}{' '}
-								<Link
-									to="/auth/login"
-									className={`font-semibold hover:underline ${styles.ctaLink}`}
-								>
-									{t('auth.loginTitle')}
-								</Link>
-							</p>
+					<div className={styles.statsGrid}>
+						<div className={styles.statCard}>
+							<Store className={styles.statIconOrange} strokeWidth={1.5} />
+							<span className={styles.statLabel}>{t('authCommon.statSellers', '10K+ Sellers')}</span>
+						</div>
+						<div className={styles.statCard}>
+							<ShoppingBag className={styles.statIconBlue} strokeWidth={1.5} />
+							<span className={styles.statLabel}>{t('authCommon.statProducts', '500K+ Products')}</span>
+						</div>
+						<div className={styles.statCard}>
+							<ShieldCheck className={styles.statIconGreen} strokeWidth={1.5} />
+							<span className={styles.statLabel}>{t('authCommon.statSecurePayment', 'Secure Payment')}</span>
 						</div>
 					</div>
+
+					<Link to="/" className={styles.ctaPill}>
+						{t('authCommon.viewMore', 'View More')}
+						<NextIcon className="w-4 h-4" strokeWidth={1.5} />
+					</Link>
 				</div>
-			</div>
+			</aside>
+
+			{/* Form Panel */}
+			<main className={styles.formPanel}>
+				<div className={styles.formHeader}>
+					<Link to="/auth/login" className={styles.headerBtn}>
+						<PrevIcon className="w-4 h-4" strokeWidth={1.5} />
+						{t('authLogin.signIn', 'Sign in')}
+					</Link>
+				</div>
+
+				<div className={styles.formCenter}>
+					<div className={styles.formCard}>
+						<header className={styles.formHeaderSection}>
+							<h1 className={styles.formTitle}>
+								{t('auth.registerTitle', 'Create Account')}
+							</h1>
+							<p className={styles.formSubtitle}>
+								{t('authRegister.subtitle', 'Create your account and start your journey')}
+							</p>
+						</header>
+
+						{/* Account Type — segmented control */}
+						<div className={styles.methodTabs} role="tablist">
+							<button
+								role="tab"
+								type="button"
+								aria-selected={accountType === 'buyer'}
+								className={`${styles.methodTab} ${accountType === 'buyer' ? styles.methodTabActive : ''}`}
+								onClick={() => setAccountType('buyer')}
+							>
+								<ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
+								<span>{t('authRegister.buyerTab', 'Buyer')}</span>
+							</button>
+							<button
+								role="tab"
+								type="button"
+								aria-selected={accountType === 'seller'}
+								className={`${styles.methodTab} ${accountType === 'seller' ? styles.methodTabActive : ''}`}
+								onClick={() => setAccountType('seller')}
+							>
+								<Store className="w-4 h-4" strokeWidth={1.5} />
+								<span>{t('authRegister.sellerTab', 'Seller')}</span>
+							</button>
+						</div>
+
+						<form onSubmit={handleSubmit} noValidate className={styles.formBody} aria-busy={isLoading}>
+							{errors.form && (
+								<div role="alert" aria-live="polite" className={styles.formAlert}>
+									<AlertCircle className="w-4 h-4 inline me-1.5" strokeWidth={2} />
+									{errors.form}
+								</div>
+							)}
+
+							{/* ── Full Name ──────────────────────────────────────── */}
+							<div>
+								<Label className={styles.formLabel} htmlFor="name">
+									{t('auth.fullName', 'Full name')}
+								</Label>
+								<div className={styles.inputWrap}>
+									<User
+										className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+										strokeWidth={1.5}
+									/>
+									<Input
+										ref={nameRef}
+										id="name"
+										type="text"
+										autoComplete="name"
+										value={name}
+										onChange={(e) => {
+											setName(e.target.value);
+											if (touched.name) {
+												const err = validateField('name', e.target.value);
+												setErrors((p) => ({ ...p, name: err ?? '' }));
+											}
+										}}
+										onBlur={() => {
+											setTouched((p) => ({ ...p, name: true }));
+											const err = validateField('name', name);
+											setErrors((p) => ({ ...p, name: err ?? '' }));
+										}}
+										placeholder={t('authRegister.namePlaceholder', 'Ahmed Al-Maqtari')}
+										className={`${isRTL ? styles.inputR : styles.inputL} h-12 text-sm rounded ${
+											fieldError('name') ? styles.inputError : styles.input
+										}`}
+									/>
+								</div>
+								{fieldError('name') && (
+									<p className={styles.fieldError}>{fieldError('name')}</p>
+								)}
+							</div>
+
+							{/* ── Email ──────────────────────────────────────── */}
+							<div>
+								<Label className={styles.formLabel} htmlFor="email">
+									{t('auth.email', 'Email')}
+								</Label>
+								<div className={styles.inputWrap}>
+									<Mail
+										className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+										strokeWidth={1.5}
+									/>
+									<Input
+										ref={emailRef}
+										id="email"
+										type="email"
+										autoComplete="email"
+										value={email}
+										onChange={(e) => {
+											setEmail(e.target.value);
+											if (touched.email) {
+												const err = validateField('email', e.target.value);
+												setErrors((p) => ({ ...p, email: err ?? '' }));
+											}
+										}}
+										onBlur={() => {
+											setTouched((p) => ({ ...p, email: true }));
+											const err = validateField('email', email);
+											setErrors((p) => ({ ...p, email: err ?? '' }));
+										}}
+										placeholder={t('authRegister.emailPlaceholder', 'your@email.com')}
+										className={`${isRTL ? styles.inputR : styles.inputL} h-12 text-sm rounded ${
+											fieldError('email') ? styles.inputError : styles.input
+										}`}
+										dir="ltr"
+									/>
+									{detectedEmailKind === 'email' && email.length > 3 && (
+										<span className={styles.detectedBadge}>
+											<Mail className="w-3 h-3" /> {t('authLogin.detectedEmail', 'Email')}
+										</span>
+									)}
+								</div>
+								{fieldError('email') && (
+									<p className={styles.fieldError}>{fieldError('email')}</p>
+								)}
+							</div>
+
+							{/* ── Phone (sellers only) ──────────────────────── */}
+							{accountType === 'seller' && (
+								<div>
+									<Label className={styles.formLabel} htmlFor="phone">
+										{t('authRegister.phoneLabel', 'Phone number')}
+									</Label>
+									<div className={styles.inputWrap}>
+										<svg
+											className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={1.5}
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a15.998 15.998 0 006.502 6.502l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+											/>
+										</svg>
+										<Input
+											ref={phoneRef}
+											id="phone"
+											type="tel"
+											inputMode="tel"
+											autoComplete="tel"
+											value={phone}
+											onChange={(e) => {
+												setPhone(e.target.value);
+												if (touched.phone) {
+													const err = validateField('phone', e.target.value);
+													setErrors((p) => ({ ...p, phone: err ?? '' }));
+												}
+											}}
+											onBlur={() => {
+												setTouched((p) => ({ ...p, phone: true }));
+												const err = validateField('phone', phone);
+												setErrors((p) => ({ ...p, phone: err ?? '' }));
+											}}
+											placeholder={t('authLogin.phonePlaceholder', '+9677…')}
+											className={`${isRTL ? styles.inputR : styles.inputL} h-12 text-sm rounded ${
+												fieldError('phone') ? styles.inputError : styles.input
+											}`}
+											dir="ltr"
+										/>
+									</div>
+									{fieldError('phone') && (
+										<p className={styles.fieldError}>{fieldError('phone')}</p>
+									)}
+								</div>
+							)}
+
+							{/* ── Password with strength meter ──────────────── */}
+							<div>
+								<Label className={styles.formLabel} htmlFor="password">
+									{t('auth.password', 'Password')}
+								</Label>
+								<div className={styles.inputWrap}>
+									<svg
+										className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={1.5}
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+										/>
+									</svg>
+									<Input
+										ref={passwordRef}
+										id="password"
+										type={showPassword ? 'text' : 'password'}
+										autoComplete="new-password"
+										value={password}
+										onChange={(e) => {
+											setPassword(e.target.value);
+											if (touched.password) {
+												const err = validateField('password', e.target.value);
+												setErrors((p) => ({ ...p, password: err ?? '' }));
+											}
+										}}
+										onBlur={() => {
+											setTouched((p) => ({ ...p, password: true }));
+											const err = validateField('password', password);
+											setErrors((p) => ({ ...p, password: err ?? '' }));
+										}}
+										placeholder={t('authRegister.passwordPlaceholder', 'At least 10 characters')}
+										className={`${isRTL ? styles.inputRboth : styles.inputLboth} h-12 text-sm rounded ${
+											fieldError('password') ? styles.inputError : styles.input
+										}`}
+										dir="ltr"
+									/>
+									<button
+										type="button"
+										onClick={() => setShowPassword(!showPassword)}
+										className={`${styles.inputIcon} ${isRTL ? styles.iconL : styles.iconR} ${styles.passwordToggle}`}
+										aria-label={
+											showPassword
+												? t('authLogin.hidePassword', 'Hide password')
+												: t('authLogin.showPassword', 'Show password')
+										}
+									>
+										{showPassword ? (
+											<EyeOff className="w-5 h-5" strokeWidth={1.5} />
+										) : (
+											<Eye className="w-5 h-5" strokeWidth={1.5} />
+										)}
+									</button>
+								</div>
+								{/* Strength meter — 5-segment bar */}
+								{password && (
+									<div className="mt-2">
+										<div className={`strengthMeter ${strength.key}`}>
+											<div className="strengthBar strengthBar1" />
+											<div className="strengthBar strengthBar2" />
+											<div className="strengthBar strengthBar3" />
+											<div className="strengthBar strengthBar4" />
+											<div className="strengthBar strengthBar5" />
+										</div>
+										<p className={`strengthLabel ${strength.key}`}>
+											{strength.key === 'weak' && t('authPasswordStrength.weak', 'Weak')}
+											{strength.key === 'medium' && t('authPasswordStrength.medium', 'Medium')}
+											{strength.key === 'good' && t('authPasswordStrength.good', 'Good')}
+											{strength.key === 'strong' && t('authPasswordStrength.strong', 'Strong')}
+											{strength.key === 'excellent' && t('authPasswordStrength.excellent', 'Excellent')}
+										</p>
+									</div>
+								)}
+								{fieldError('password') && (
+									<p className={styles.fieldError}>{fieldError('password')}</p>
+								)}
+							</div>
+
+							{/* ── Confirm Password ────────────────────────────── */}
+							<div>
+								<Label className={styles.formLabel} htmlFor="confirmPassword">
+									{t('auth.confirmPassword', 'Confirm password')}
+								</Label>
+								<div className={styles.inputWrap}>
+									<svg
+										className={`${styles.inputIcon} ${isRTL ? styles.iconR : styles.iconL}`}
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={1.5}
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+										/>
+									</svg>
+									<Input
+										id="confirmPassword"
+										type={showConfirm ? 'text' : 'password'}
+										autoComplete="new-password"
+										value={confirmPassword}
+										onChange={(e) => {
+											setConfirmPassword(e.target.value);
+											if (touched.confirmPassword) {
+												const err = validateField('confirmPassword', e.target.value);
+												setErrors((p) => ({ ...p, confirmPassword: err ?? '' }));
+											}
+										}}
+										onBlur={() => {
+											setTouched((p) => ({ ...p, confirmPassword: true }));
+											const err = validateField('confirmPassword', confirmPassword);
+											setErrors((p) => ({ ...p, confirmPassword: err ?? '' }));
+										}}
+										placeholder={t('authRegister.confirmPasswordPlaceholder', 'Re-enter your password')}
+										className={`${isRTL ? styles.inputRboth : styles.inputLboth} h-12 text-sm rounded ${
+											fieldError('confirmPassword') ? styles.inputError : styles.input
+										}`}
+										dir="ltr"
+									/>
+									<button
+										type="button"
+										onClick={() => setShowConfirm(!showConfirm)}
+										className={`${styles.inputIcon} ${isRTL ? styles.iconL : styles.iconR} ${styles.passwordToggle}`}
+										aria-label={
+											showConfirm
+												? t('authLogin.hidePassword', 'Hide password')
+												: t('authLogin.showPassword', 'Show password')
+										}
+									>
+										{showConfirm ? (
+											<EyeOff className="w-5 h-5" strokeWidth={1.5} />
+										) : (
+											<Eye className="w-5 h-5" strokeWidth={1.5} />
+										)}
+									</button>
+								</div>
+								{confirmPassword && !fieldError('confirmPassword') && (
+									<p className="text-xs mt-1 text-green-600 flex items-center gap-1">
+										<Check className="w-3 h-3" /> {t('authCommon.passwordsMatch', 'Passwords match')}
+									</p>
+								)}
+								{fieldError('confirmPassword') && (
+									<p className={styles.fieldError}>{fieldError('confirmPassword')}</p>
+								)}
+							</div>
+
+							{/* ── Terms checkbox (accessible) ──────────────────── */}
+							<div>
+								<label className={styles.checkboxLabel}>
+									<input
+										type="checkbox"
+										checked={terms}
+										onChange={(e) => {
+											setTerms(e.target.checked);
+											setErrors((p) => ({ ...p, terms: '' }));
+										}}
+										className={styles.checkbox}
+									/>
+									<span className={`text-xs leading-relaxed ${styles.formSubtitle}`}>
+										{t(
+											'auth.iAgree',
+											'I agree to the Terms of Service and Privacy Policy',
+										)}
+									</span>
+								</label>
+								{fieldError('terms') && (
+									<p className={styles.fieldError}>{fieldError('terms')}</p>
+								)}
+							</div>
+
+							{/* ── Submit ───────────────────────────────────────────── */}
+							<Button
+								type="submit"
+								disabled={isLoading}
+								className={`${styles.btnPrimary} ${styles.submitBtn}`}
+								aria-busy={isLoading}
+							>
+								{isLoading ? (
+									<>
+										<Loader2 className="w-4 h-4 animate-spin" />
+										<span>{t('authRegister.creatingAccount', 'Creating your account…')}</span>
+									</>
+								) : (
+									<>
+										<UserPlus className="w-4 h-4" strokeWidth={1.5} />
+										<span>{t('auth.registerBtn', 'Create Account')}</span>
+									</>
+								)}
+							</Button>
+
+							{/* ── Switch to login ─────────────────────────────── */}
+							<p className={styles.registerRow}>
+								{t('auth.haveAccount', 'Already have an account?')}{' '}
+								<Link to="/auth/login" className={styles.ctaLink}>
+									{t('auth.loginTitle', 'Login')}
+									<NextIcon className="w-3 h-3 inline ms-1" strokeWidth={1.5} />
+								</Link>
+							</p>
+						</form>
+					</div>
+
+					{/* Trust footer */}
+					<footer className={styles.formFooter}>
+						<div className={styles.footerItem}>
+							<ShieldCheck className="w-3 h-3 text-aliOrange" strokeWidth={2} />
+							<span>{t('authLogin.sslSecured', 'SSL Secured')}</span>
+						</div>
+						<span className={styles.footerDot}>·</span>
+						<div className={styles.footerItem}>
+							<LogIn className="w-3 h-3 text-aliOrange" strokeWidth={2} />
+							<span>{t('authLogin.twoFactorAvailable', '2FA Available')}</span>
+						</div>
+					</footer>
+				</div>
+			</main>
 		</div>
 	);
 }

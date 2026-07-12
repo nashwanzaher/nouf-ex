@@ -1130,12 +1130,14 @@
 		"buyerTab": "买家",
 		"sellerTab": "卖家",
 		"termsRequired": "您必须同意条款",
-		"phoneLabel": "电话号码",
+		"phoneLabel": "手机号",
 		"phonePlaceholder": "+9677...",
 		"emailPlaceholder": "your@email.com",
-		"passwordPlaceholder": "密码",
-		"confirmPasswordPlaceholder": "确认密码",
-		"heroJoin": "加入本地区最大的电商平台"
+		"passwordPlaceholder": "至少 10 个字符",
+		"confirmPasswordPlaceholder": "重新输入您的密码",
+		"namePlaceholder": "张伟",
+		"heroJoin": "加入该地区最大的电商平台",
+		"creatingAccount": "正在创建您的账户…"
 	},
 	"authForgot": {
 		"title": "找回密码",

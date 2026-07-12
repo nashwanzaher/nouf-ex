@@ -1133,9 +1133,11 @@
 		"phoneLabel": "رقم الهاتف",
 		"phonePlaceholder": "+9677...",
 		"emailPlaceholder": "your@email.com",
-		"passwordPlaceholder": "كلمة المرور",
-		"confirmPasswordPlaceholder": "تأكيد كلمة المرور",
-		"heroJoin": "انضم إلى أكبر منصة تجارة إلكترونية في المنطقة"
+		"passwordPlaceholder": "على الأقل 10 أحرف",
+		"confirmPasswordPlaceholder": "أعد إدخال كلمة المرور",
+		"namePlaceholder": "أحمد المقطري",
+		"heroJoin": "انضم إلى أكبر منصة تجارة إلكترونية في المنطقة",
+		"creatingAccount": "جاري إنشاء حسابك…"
 	},
 	"authForgot": {
 		"title": "استعادة كلمة المرور",

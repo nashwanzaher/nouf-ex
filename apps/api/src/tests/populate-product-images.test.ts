@@ -158,7 +158,8 @@ describe('CATEGORY_PLACEHOLDER / CATEGORY_THEME coverage', () => {
 		}
 	});
 	it('every theme has bg + fg + accent hex codes', () => {
-		for (const [slug, t] of Object.entries(CATEGORY_THEME)) {
+		const theme = CATEGORY_THEME as Record<string, { bg: string; fg: string; accent: string }>;
+		for (const [slug, t] of Object.entries(theme)) {
 			expect(t.bg, `${slug} bg`).toMatch(/^#[0-9a-f]{6}$/i);
 			expect(t.fg, `${slug} fg`).toMatch(/^#[0-9a-f]{6}$/i);
 			expect(t.accent, `${slug} accent`).toMatch(/^#[0-9a-f]{6}$/i);

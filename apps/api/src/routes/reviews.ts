@@ -1,5 +1,5 @@
 /**
- * Reviews Ù?¤ public list + authenticated submit.
+ * Reviews ï¿½?ï¿½ public list + authenticated submit.
  *
  * P0-3 fix: only return *visible* reviews. Hidden reviews (spam,
  * moderation queue, soft-deleted) must not leak through the public
@@ -137,7 +137,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.run(avg.toFixed(1), ratingData.count, productId);
 
 		// Fire bilingual i18n notification to the merchant (best-effort).
-		// (C.1 in MASTER_PLAN.md Ù?¤ real review-posted notification)
+		// (C.1 in MASTER_PLAN.md ï¿½?ï¿½ real review-posted notification)
 		try {
 			const { onReviewPosted } = await import('../lib/notifications/events.ts');
 			const productInfo = (await db
@@ -163,7 +163,7 @@ reviewsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			log.error({ msg: 'reviews.notification_dispatch_failed', error: (notifyErr as Error).message });
 		}
 
-		sendSuccess(res, { id: result.lastInsertRowid }, 'Review submitted successfully');
+		sendSuccess(res, { id: (result as { id: number }).id }, 'Review submitted successfully');
 	} catch (err) {
 		return sendError(res, err);
 	}

@@ -447,11 +447,13 @@ export function clearAuthCookie(res: Response): void {
  * Extract auth token from cookie or Authorization header.
  * Cookie takes precedence for security (HttpOnly).
  */
-export function extractAuthToken(req: Request): string | null {
+export function extractAuthToken(req: { headers: unknown }): string | null {
 	// Try cookie first (HttpOnly, more secure)
-	const cookieHeader = req.headers.cookie;
+	// Express 5's `Headers` type (from undici) doesn't expose `.cookie`
+	// directly, so we cast through `unknown` to a string-indexable view.
+	const cookieHeader = (req.headers as unknown as { cookie?: string }).cookie;
 	if (cookieHeader) {
-		const cookies = cookieHeader.split(';').reduce<Record<string, string>>((acc, cookie) => {
+		const cookies = cookieHeader.split(';').reduce<Record<string, string>>((acc: Record<string, string>, cookie: string) => {
 			const [key, value] = cookie.trim().split('=');
 			if (key && value) acc[key] = value;
 			return acc;
@@ -460,8 +462,10 @@ export function extractAuthToken(req: Request): string | null {
 			return cookies[AUTH_COOKIE_NAME];
 		}
 	}
-	// Fallback to Authorization header (for backward compatibility)
-	const header = req.header('authorization') || req.header('Authorization');
+	// Fallback to Authorization header (for backward compatibility).
+	// Express 5 dropped `req.header()` / `req.get()`; use the standard
+	// `Headers.get()` from undici instead.
+	const header = (req.headers as unknown as Headers).get('authorization');
 	if (header && /^Bearer\s+/i.test(header)) {
 		return header.replace(/^Bearer\s+/i, '').trim();
 	}

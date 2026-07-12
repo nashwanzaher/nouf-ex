@@ -1,5 +1,5 @@
 /**
- * Catalog routes Ù?¤ Products, Stores, Categories.
+ * Catalog routes ï¿½?ï¿½ Products, Stores, Categories.
  *
  * The three groups are the public read-mostly surface of the storefront:
  *   - Products (list, featured, deals, single with store+reviews+images)
@@ -7,7 +7,7 @@
  *   - Categories (tree with counts, single with products)
  *
  * All endpoints are public (no auth) and read-only (no writes). They
- * live together because the SQL joins them tightly Ù?¤ every product
+ * live together because the SQL joins them tightly ï¿½?ï¿½ every product
  * pulls in its store + reviews + images, and every category pulls
  * in its products. Splitting them would force the consumer to issue
  * one extra round-trip per page.
@@ -33,7 +33,7 @@ const getProductImages = async (productId: number) => {
 
 /** Count the same WHERE clause with no LIMIT/OFFSET. Only used as a
  *  fallback when the page came back empty (so the window function
- *  has no row to attach `total_count` to) Ù?¤ in that case the
+ *  has no row to attach `total_count` to) ï¿½?ï¿½ in that case the
  *  unfiltered total must be queried separately. */
 async function countProducts(where: string[], params: (string | number)[]): Promise<number> {
 	const row = (await db
@@ -42,9 +42,9 @@ async function countProducts(where: string[], params: (string | number)[]): Prom
 	return row ? Number(row.c) : 0;
 }
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 // PRODUCTS
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
 /**
  * GET /api/products
@@ -89,7 +89,7 @@ catalogRouter.get('/products', async (req: Request, res: Response) => {
 			where.push('price <= ?');
 			params.push(Number(maxPrice));
 		}
-		if (search) {
+		if (search && typeof search === 'string') {
 			const escaped = search.replace(/[%_]/g, '\\$&');
 			const term = `%${escaped}%`;
 			where.push(
@@ -214,7 +214,7 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 			.prepare('SELECT * FROM stores WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
 			.get(product.store_id as number)) as Record<string, unknown> | undefined;
 
-		// Get reviews (only visible Ù?¤ hidden/spam reviews are not exposed)
+		// Get reviews (only visible ï¿½?ï¿½ hidden/spam reviews are not exposed)
 		// Paginated to avoid unbounded responses for products with many reviews.
 		const reviewLimit = Math.max(1, Math.min(50, Number(req.query.reviewLimit) || 20));
 		const reviewOffset = Math.max(0, Number(req.query.reviewOffset) || 0);
@@ -244,9 +244,9 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 // STORES
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
 /**
  * GET /api/stores
@@ -343,11 +343,11 @@ catalogRouter.get('/stores/:id', async (req: Request, res: Response) => {
 catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		// R4 fix: `await` was missing Ù?¤ `.all()` returns a Promise, so
+		// R4 fix: `await` was missing ï¿½?ï¿½ `.all()` returns a Promise, so
 		// `sendSuccess` was wrapping a Promise in the success envelope
 		// and the client received `{ data: <Promise> }`. Same shape of
 		// bug as the original `wishlist` Promise-leak flagged in
-		// docs/audit/code-review-fixes-2026-06-23.md ?Ï1.
+		// docs/audit/code-review-fixes-2026-06-23.md ?ï¿½1.
 		const reviews = (await db
 			.prepare(
 				`SELECT r.*, u.full_name as customer_name, u.avatar as customer_avatar, p.name_en as product_name
@@ -364,9 +364,9 @@ catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => 
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 // CATEGORIES
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
 /**
  * GET /api/categories
@@ -389,9 +389,9 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-// SEARCH Ù?¤ P1-1: full-text search backend
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+// SEARCH ï¿½?ï¿½ P1-1: full-text search backend
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
 /**
  * GET /api/search
@@ -416,7 +416,7 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
  *
  * Side effects
  *   Writes a row to `search_logs` with the query, result count, and
- *   the duration. The log is best-effort Ù?¤ a failure to insert must
+ *   the duration. The log is best-effort ï¿½?ï¿½ a failure to insert must
  *   never break the user-facing search.
  *
  * Implementation notes
@@ -426,7 +426,7 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
  *     plain `ts_rank` because it gives a better relevance spread on
  *     short queries like "honey" vs long queries like "spice".
  *   - The full-text match is the hard gate. A result MUST hit the
- *     FTS Ù?¤ category/price filters narrow the set further, but
+ *     FTS ï¿½?ï¿½ category/price filters narrow the set further, but
  *     they don't broaden it. This is the right behaviour for a
  *     search engine: returning "everything in this category" when
  *     the user typed a query is the classic relevance bug.
@@ -442,10 +442,10 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 				middleware.ErrorCodes.VALIDATION_ERROR,
 			);
 		}
-		// The query logic Ù?¤ FTS ranking, filters, pagination, store
-		// join Ù?¤ lives in lib/search.cts so it can be unit-tested
+		// The query logic ï¿½?ï¿½ FTS ranking, filters, pagination, store
+		// join ï¿½?ï¿½ lives in lib/search.cts so it can be unit-tested
 		// without spinning up an Express app. The router is the thin
-		// HTTP wrapper: parse Ù?ú call Ù?ú log Ù?ú respond.
+		// HTTP wrapper: parse ï¿½?ï¿½ call ï¿½?ï¿½ log ï¿½?ï¿½ respond.
 		const result = await runSearch(q, {
 			category: req.query.category ? String(req.query.category) : undefined,
 			storeId: req.query.store ? Number(req.query.store) : undefined,
@@ -458,7 +458,7 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 			offset: req.query.offset !== undefined ? Number(req.query.offset) : undefined,
 		});
 
-		// Best-effort analytics log (see logSearch() Ù?¤ failures never
+		// Best-effort analytics log (see logSearch() ï¿½?ï¿½ failures never
 		// break the user-facing search).
 		const userId = (req as { user?: { id: number } }).user?.id ?? null;
 		const requestId = (req as { id?: string }).id ?? null;

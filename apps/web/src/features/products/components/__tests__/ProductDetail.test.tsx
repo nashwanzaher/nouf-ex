@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * ProductDetail page tests
  *
@@ -12,7 +13,7 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../../../mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());
 afterAll(() => uninstallFetchSpy());
@@ -25,7 +26,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 const dispatchMock = vi.fn();
-vi.mock('@/context/CartContext', () => ({
+vi.mock('@/features/cart/context/CartContext', () => ({
 	useCart: () => ({
 		state: { items: [] },
 		dispatch: dispatchMock,

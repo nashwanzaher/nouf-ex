@@ -422,12 +422,21 @@ describe('Refunds API', () => {
 });
 
 describe('Authorization header', () => {
-	it('attaches Bearer <token> when a token is in localStorage', async () => {
+	it('sends credentials: include so the HttpOnly auth cookie travels', async () => {
+		// The auth model post-C-2 uses HttpOnly cookies, NOT
+		// localStorage. The client must always send credentials so
+		// the browser attaches the noufex_token cookie automatically.
 		localStorage.setItem('noufex_token', 'unit-test-token');
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
 		await getProducts();
-		const headers = (fetchSpy.mock.calls[0]?.[1]?.headers ?? {}) as Record<string, string>;
-		expect(headers['Authorization']).toBe('Bearer unit-test-token');
+		const init = (fetchSpy.mock.calls[0]?.[1] ?? {}) as RequestInit;
+		expect(init.credentials).toBe('include');
+		// The legacy localStorage token is no longer attached as a
+		// Bearer header — the server sets the HttpOnly cookie on
+		// /api/auth/login and the browser carries it on every
+		// subsequent request.
+		const headers = (init.headers ?? {}) as Record<string, string>;
+		expect(headers['Authorization']).toBeUndefined();
 		fetchSpy.mockRestore();
 	});
 

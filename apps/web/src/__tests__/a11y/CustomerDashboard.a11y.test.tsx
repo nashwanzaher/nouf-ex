@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Accessibility (a11y) tests — CustomerDashboard.
  *

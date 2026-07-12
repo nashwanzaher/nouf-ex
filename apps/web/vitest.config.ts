@@ -15,6 +15,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
 // Vitest 4 + Vite 7 run vitest.config.ts in ESM mode, where `__dirname`
 // is undefined. We derive the directory of THIS file from `import.meta.url`
@@ -23,10 +24,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
+	plugins: [react()],
 	resolve: {
 		alias: {
 			'@': path.resolve(__dirname, './src'),
 		},
+	},
+	esbuild: {
+		// Use the automatic JSX runtime so test files don't need
+		// `import React from 'react'` at the top of every .tsx file.
+		// Mirrors tsconfig.app.json `jsx: "react-jsx"`. Without this
+		// vitest/esbuild falls back to the classic runtime and emits
+		// `React is not defined` at runtime.
+		jsx: 'automatic',
+		jsxImportSource: 'react',
 	},
 	test: {
 		globals: true,
@@ -88,6 +99,8 @@ export default defineConfig({
 				// passes the file to a JS parser and chokes on
 				// the `function foo(): T` return-type annotation.
 				esbuild: {
+					jsx: 'automatic',
+					jsxImportSource: 'react',
 					loader: 'tsx',
 					include: [/server\/.*\.[mc]?[jt]sx?$/],
 				},

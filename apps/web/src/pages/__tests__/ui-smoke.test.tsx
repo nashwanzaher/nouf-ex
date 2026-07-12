@@ -26,7 +26,7 @@ import { MemoryRouter } from 'react-router';
 import { Suspense, type ReactNode } from 'react';
 import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
 import { AppProvider } from '@/context/AppContext';
-import { CartProvider } from '@/context/CartContext';
+import { CartProvider } from '@/features/cart/context/CartContext';
 
 // ─── HTTP interception ────────────────────────────────────────────
 // The fetch-spy patches `globalThis.fetch` so every call inside a

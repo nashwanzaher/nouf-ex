@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Integration test for the Checkout page (P0-1: cart-to-order pipeline).
  *
@@ -17,7 +18,7 @@
 import { describe, expect, it, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { installFetchSpy, uninstallFetchSpy } from '../../../mocks/fetch-spy';
+import { installFetchSpy, uninstallFetchSpy } from '../../../../../mocks/fetch-spy';
 
 beforeAll(() => installFetchSpy());
 afterAll(() => uninstallFetchSpy());
@@ -38,7 +39,7 @@ const MOCK_CART = [
 ];
 
 // Mock CartContext so the page can read items + dispatch CLEAR.
-vi.mock('@/context/CartContext', () => ({
+vi.mock('@/features/cart/context/CartContext', () => ({
 	useCart: () => ({
 		state: { items: MOCK_CART },
 		dispatch: vi.fn(),

@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * BottomNav component tests
  *
@@ -11,9 +12,10 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import BottomNav from '../BottomNav';
+import { AppProvider } from '@/context/AppContext';
 
 // Stub out CartContext so we can pin the cart count for the badge test.
-vi.mock('@/context/CartContext', () => ({
+vi.mock('@/features/cart/context/CartContext', () => ({
 	useCart: () => ({ cartCount: 3 }),
 }));
 
@@ -27,7 +29,9 @@ vi.mock('react-i18next', () => ({
 function renderBottomAt(path: string) {
 	return render(
 		<MemoryRouter initialEntries={[path]}>
-			<BottomNav />
+			<AppProvider>
+				<BottomNav />
+			</AppProvider>
 		</MemoryRouter>,
 	);
 }

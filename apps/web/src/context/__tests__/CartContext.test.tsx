@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * CartContext tests
  *
@@ -9,7 +10,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider } from '../AppContext';
-import { CartProvider, useCart } from '../CartContext';
+import { CartProvider, useCart } from '@/features/cart/context/CartContext';
 
 function wrapper() {
 	return ({ children }: { children: React.ReactNode }) => (

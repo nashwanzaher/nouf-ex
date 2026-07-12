@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Navbar component tests
  *
@@ -23,7 +24,7 @@ vi.mock('react-i18next', () => ({
 	}),
 }));
 
-vi.mock('@/context/CartContext', () => ({
+vi.mock('@/features/cart/context/CartContext', () => ({
 	useCart: () => ({ cartCount: 4 }),
 }));
 

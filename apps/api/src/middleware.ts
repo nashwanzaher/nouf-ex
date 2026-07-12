@@ -463,9 +463,12 @@ export function extractAuthToken(req: { headers: unknown }): string | null {
 		}
 	}
 	// Fallback to Authorization header (for backward compatibility).
-	// Express 5 dropped `req.header()` / `req.get()`; use the standard
-	// `Headers.get()` from undici instead.
-	const header = (req.headers as unknown as Headers).get('authorization');
+	// Express 5 dropped `req.header()` / `req.get()`; access the
+	// raw headers object directly. The value can be a string or
+	// string[] (Node IncomingMessage allows duplicate header names);
+	// we only accept the first.
+	const raw = (req.headers as Record<string, string | string[] | undefined>)['authorization'];
+	const header = Array.isArray(raw) ? raw[0] : raw;
 	if (header && /^Bearer\s+/i.test(header)) {
 		return header.replace(/^Bearer\s+/i, '').trim();
 	}

@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Footer component tests
  *

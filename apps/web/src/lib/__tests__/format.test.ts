@@ -13,22 +13,29 @@ import { describe, expect, it } from 'vitest';
 import { formatMoney, formatMoneyCompact, parseMoney, resolveLocale } from '../format';
 
 describe('formatMoney', () => {
-	it('formats YER (default currency) with the default locale', () => {
-		expect(formatMoney(25000)).toBe('25,000 YER');
+	it('defaults to Arabic locale (Yemen-first)', () => {
+		// ar-YE locale uses Arabic-Indic digits (project is Yemen-first).
+		expect(formatMoney(25000)).toBe('٢٥٬٠٠٠ ر.ي');
 	});
 
-	it('handles zero', () => {
-		expect(formatMoney(0)).toBe('0 YER');
+	it('handles zero in Arabic', () => {
+		expect(formatMoney(0)).toBe('٠ ر.ي');
 	});
 
-	it('handles negative amounts', () => {
-		expect(formatMoney(-1500)).toBe('-1,500 YER');
+	it('handles negative amounts in Arabic', () => {
+		expect(formatMoney(-1500)).toBe('؜-١٬٥٠٠ ر.ي');
 	});
 
-	it('uses Arabic abbreviation (ر.ي) when lang=ar', () => {
-		// ar-YE locale uses Arabic-Indic digits (existing UX behavior —
-		// preserved from the original formatYER() helper).
-		expect(formatMoney(25000, { lang: 'ar' })).toBe('٢٥٬٠٠٠ ر.ي');
+	it('formats English locale when lang=en', () => {
+		expect(formatMoney(25000, { lang: 'en' })).toBe('25,000 YER');
+	});
+
+	it('handles zero in English', () => {
+		expect(formatMoney(0, { lang: 'en' })).toBe('0 YER');
+	});
+
+	it('handles negative amounts in English', () => {
+		expect(formatMoney(-1500, { lang: 'en' })).toBe('-1,500 YER');
 	});
 
 	it('puts USD symbol AFTER number for consistency with YER', () => {
@@ -44,12 +51,12 @@ describe('formatMoney', () => {
 	});
 
 	it('respects maximumFractionDigits', () => {
-		expect(formatMoney(1234.56, { maximumFractionDigits: 2 })).toBe('1,234.56 YER');
-		expect(formatMoney(1234.56)).toBe('1,235 YER'); // default = 0
+		expect(formatMoney(1234.56, { maximumFractionDigits: 2, lang: 'en' })).toBe('1,234.56 YER');
+		expect(formatMoney(1234.56, { lang: 'en' })).toBe('1,235 YER'); // default = 0
 	});
 
 	it('omits the symbol when showSymbol=false', () => {
-		expect(formatMoney(25000, { showSymbol: false })).toBe('25,000');
+		expect(formatMoney(25000, { showSymbol: false, lang: 'en' })).toBe('25,000');
 	});
 
 	it('returns em-dash for null / undefined / NaN / Infinity', () => {
@@ -62,24 +69,26 @@ describe('formatMoney', () => {
 });
 
 describe('formatMoneyCompact', () => {
-	it('formats amounts under 1000 as plain integer', () => {
-		expect(formatMoneyCompact(450)).toBe('450 YER');
-		// Arabic locale uses Arabic-Indic digits.
-		expect(formatMoneyCompact(450, { lang: 'ar' })).toBe('٤٥٠ ر.ي');
+	it('formats amounts under 1000 as plain integer (Arabic default)', () => {
+		expect(formatMoneyCompact(450)).toBe('٤٥٠ ر.ي');
 	});
 
-	it('uses k suffix for thousands', () => {
-		expect(formatMoneyCompact(1500)).toBe('1.5k YER');
-		expect(formatMoneyCompact(999_999)).toBe('1,000k YER');
+	it('formats amounts under 1000 in English', () => {
+		expect(formatMoneyCompact(450, { lang: 'en' })).toBe('450 YER');
 	});
 
-	it('uses m suffix for millions', () => {
-		expect(formatMoneyCompact(2_500_000)).toBe('2.5m YER');
-		expect(formatMoneyCompact(12_000_000)).toBe('12m YER');
+	it('uses k suffix for thousands (English)', () => {
+		expect(formatMoneyCompact(1500, { lang: 'en' })).toBe('1.5k YER');
+		expect(formatMoneyCompact(999_999, { lang: 'en' })).toBe('1,000k YER');
 	});
 
-	it('keeps the sign on negative amounts', () => {
-		expect(formatMoneyCompact(-1500)).toBe('-1.5k YER');
+	it('uses m suffix for millions (English)', () => {
+		expect(formatMoneyCompact(2_500_000, { lang: 'en' })).toBe('2.5m YER');
+		expect(formatMoneyCompact(12_000_000, { lang: 'en' })).toBe('12m YER');
+	});
+
+	it('keeps the sign on negative amounts (English)', () => {
+		expect(formatMoneyCompact(-1500, { lang: 'en' })).toBe('-1.5k YER');
 	});
 
 	it('returns em-dash for non-finite', () => {

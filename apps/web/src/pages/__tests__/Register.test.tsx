@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * Register page tests
  *

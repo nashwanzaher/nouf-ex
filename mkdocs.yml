@@ -160,88 +160,39 @@ nav:
   - Code of Conduct: ../CODE_OF_CONDUCT.md
   - Security: ../SECURITY.md
 
-  - Tutorials:
-    - "First 10 minutes": development/getting-started.md
-    - "Tutorial: run an order end-to-end":
-      "https://github.com/nashwanzaher/nouf-ex/blob/main/docs/tutorials/run-an-order.md"
-
-  - How-to guides:
-    - Contributor workflow:
-      - ../CONTRIBUTING.md
-      - development/workflow.md
-      - development/conventions.md
-    - CI / CD:
-      - development/ci-cd.md
-    - Debugging & recovery:
-      - development/debugging.md
-    - Operations:
-      - operations/docker.md
-      - operations/deployment.md
-      - operations/monitoring.md
-      - operations/backup-restore.md
-
   - Reference:
     - Architecture:
-      - architecture/overview.md
-      - architecture/api.md
-      - architecture/database.md
-      - architecture/er-diagram.md
-      - architecture/security.md
-      - architecture/workflow.md
-    - Testing:
-      - testing/README.md
-      - testing/overview.md
-      - testing/conventions.md
-      - testing/standards/IEEE-829.md
-      - testing/standards/ISO-29119.md
-      - testing/standards/ISTQB-CTFL.md
-      - testing/standards/google-style.md
-    - Test design specs:
-      - "phase00 · health & auth": testing/phases/PHASE_00_HEALTH_AUTH.md
-      - "phase01 · profile & addresses": testing/phases/PHASE_01_PROFILE_ADDRESSES.md
-      - "phase01-R · profile retest": testing/phases/PHASE_01_PROFILE_ADDRESSES_RETEST.md
-      - "phase02 · public catalog": testing/phases/PHASE_02_PUBLIC_CATALOG.md
-      - "phase03 · search & filters": testing/phases/PHASE_03_SEARCH_FILTERS.md
-      - "phase04 · cart": testing/phases/PHASE_04_CART.md
-      - "phase05 · orders & inventory": testing/phases/PHASE_05_ORDERS_INVENTORY.md
-      - "phase06 · coupons & discounts": testing/phases/PHASE_06_COUPONS_DISCOUNTS.md
-      - "phase07 · payments & refunds": testing/phases/PHASE_07_PAYMENTS_REFUNDS.md
-      - "phase08 · reviews & ratings": testing/phases/PHASE_08_REVIEWS_RATINGS.md
-      - "phase09 · wishlist & followers": testing/phases/PHASE_09_WISHLIST_FOLLOWERS.md
-      - "phase10 · merchant flow": testing/phases/PHASE_10_MERCHANT_FLOW.md
-      - "phase11 · admin & RBAC": testing/phases/PHASE_11_ADMIN_RBAC.md
-      - "phase12 · 2FA & backup codes": testing/phases/PHASE_12_2FA_BACKUP.md
-      - "phase13 · notifications & messages": testing/phases/PHASE_13_NOTIFICATIONS_MESSAGES.md
-      - "phase14 · shipping methods": testing/phases/PHASE_14_SHIPPING_METHODS.md
-      - "phase15 · audit logs": testing/phases/PHASE_15_AUDIT_LOGS.md
-      - "phase16 · frontend SPA": testing/phases/PHASE_16_FRONTEND_SPA.md
-      - "phase17 · full regression": testing/phases/PHASE_17_FULL_REGRESSION.md
-    - Test templates:
-      - testing/templates/PS_TESTHELPERS_REFERENCE.md
-    - Project map:
-      - STRUCTURE.md
-
-  - Planning:
-    - "Risk register": planning/risks.md
-    - "Remediation roadmap — 2026 Q3": planning/REMEDIATION_ROADMAP_2026-Q3.md
-    - Conformance audits:
-      - "2026-07-11 · OWASP / ISO 25010 / NIST SSDF": audits/2026-07-11-owasp-iso25010-nist-ssdf.md
-    - Architecture decisions:
-      - planning/adr/README.md
-      - planning/adr/0001-mkdocs-and-release-please.md
-      - planning/adr/0002-vitest-axe-a11y.md
-      - planning/adr/0003-ssot-production-monolith.md
-      - planning/adr/0004-production-hardening-0024.md
-      - planning/adr/0005-tsconfig-project-references.md
-      - planning/adr/0006-httponly-cookie-auth.md
-      - planning/adr/0007-owasp-iso25010-nist-ssdf-baseline.md
-    - Market research:
-      - "2026-07-11 · Nouf-ex vs Amazon / Alibaba / Noon / Shopify": research/2026-07-11-Nouf-ex-vs-global-marketplaces-comparative-study.md
+      - "Overview": ARCHITECTURE.md
+      - "API": architecture/api.md
+      - "Database": architecture/database.md
+      - "ER Diagram": architecture/er-diagram.md
+      - "Security model": architecture/security.md
+      - "Workflow": architecture/workflow.md
+    - Backlog: BACKLOG.md
+    - Operations:
+      - Deployment: operations/deployment.md
+    - Planning:
+      - "Risk register": planning/risks.md
+    - Changelog: ../CHANGELOG.md
+    - Research:
+      - "2026-07-11 · Nouf-ex vs global marketplaces": research/2026-07-11-Nouf-ex-vs-global-marketplaces-comparative-study.md
+      - "2026-07-12 · Admin dashboard research": research/2026-07-12-admin-dashboard-research-and-recommendation.md
 
   - About:
-    - Changelog: ../CHANGELOG.md
     - License: ../LICENSE
     - Repository: https://github.com/nashwanzaher/nouf-ex
+
+# ---------------------------------------------------------------------
+# Updated 2026-07-12: Added references for the newly-created docs:
+# - architecture/api.md, database.md, er-diagram.md, security.md
+# - operations/deployment.md, planning/risks.md
+#
+# Still pending (from BACKLOG P0 #7):
+# - testing/standards/*.md (4 files)
+# - testing/phases/PHASE_*.md (18 files)
+# - planning/adr/*.md (7 files)
+# - development/*.md (5 files)
+# ---------------------------------------------------------------------
 
 # ---------------------------------------------------------------------
 # EXCLUDES — never build these (rendered output is identical to source)

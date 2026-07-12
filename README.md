@@ -167,7 +167,7 @@ npm run dev
 
 ## 🗄️ قاعدة البيانات
 
-### الجداول الـ 28 (موزعة على 7 ملفات SQL + 30 migration):
+### الجداول الـ 32 (موزعة على 7 ملفات SQL + 30 migration):
 
 **المستخدمون (5):** `users`, `subscriptions`, `rate_limit_buckets`, `used_jtis`, `admin_audit_log`
 
@@ -266,26 +266,26 @@ npm run dev
 
 ### 18 Router تحت `/api/*`:
 
-| المسار | الوصف | Cache |
-|---|---|---|
-| `/api/admin` | Admin endpoints | — |
-| `/api/auth` | Authentication | — |
-| `/api/auth/2fa` | 2FA endpoints | — |
-| `/api/orders` | Order management | — |
-| `/api/cart` | Shopping cart | — |
-| `/api/wishlist` | User wishlist | — |
-| `/api/notifications` | User notifications | — |
-| `/api/messages` | Customer ↔ Merchant chat | — |
-| `/api/seller` | Seller dashboard | — |
-| `/api/payments` | Payment processing | — |
-| `/api/coupons` | Coupon management | — |
-| `/api/refunds` | Refund requests | — |
-| `/api/reviews` | Product reviews | — |
-| `/api/addresses` | User addresses | — |
-| `/api/store-followers` | Store follows | — |
-| `/api/shipping` | Shipping methods | 300s |
-| `/api/stats` | Statistics | 30s |
-| `/api` (catalog) | Products/Stores/Categories/Search | 60s |
+| المسار | الوصف | Cache | عدد الـ routes |
+|---|---|---|---|
+| `/api/admin` | Admin endpoints | — | 12 endpoints |
+| `/api/auth` | Authentication | — | 8 endpoints |
+| `/api/auth/2fa` | 2FA endpoints | — | 4 endpoints |
+| `/api/orders` | Order management | — | 3 endpoints |
+| `/api/cart` | Shopping cart | — | 5 endpoints |
+| `/api/wishlist` | User wishlist | — | 3 endpoints |
+| `/api/notifications` | User notifications | — | 3 endpoints |
+| `/api/messages` | Customer ↔ Merchant chat | — | 6 endpoints |
+| `/api/seller` | Seller dashboard | — | 18 endpoints |
+| `/api/payments` | Payment processing | — | 4 endpoints + webhook |
+| `/api/coupons` | Coupon management | — | 2 endpoints |
+| `/api/refunds` | Refund requests | — | 2 endpoints |
+| `/api/reviews` | Product reviews | — | 2 endpoints |
+| `/api/addresses` | User addresses | — | 4 endpoints |
+| `/api/store-followers` | Store follows | — | 3 endpoints |
+| `/api/shipping` | Shipping methods | 300s | 1 endpoint |
+| `/api/stats` | Statistics (homepage) | 30s | 1 endpoint |
+| `/api` (catalog) | Products/Stores/Categories/Search | 60s | 10 endpoints |
 
 ### Health & Ready:
 - `GET /api/health` — liveness probe (no DB check)
@@ -381,17 +381,41 @@ npm run dev
 
 ### MCP Server (`apps/mcp-server/`):
 
-**4 عائلات أدوات (stdio transport):**
-- `db_*` (db-tools.ts) — استعلام schema، queries، list tables
-- `code_*` (code-tools.ts) — بحث وقراءة الكود
-- `api_*` (api-tools.ts) — استكشاف API routes
-- `docs_*` (docs-tools.ts) — بحث في الوثائق
+**18 أداة MCP عبر 4 عائلات (stdio transport):**
+
+**`db_*` — 9 أدوات (`db-tools.ts`):**
+- `db_stats` — counts: tables, views, functions, triggers, size
+- `db_list_tables` — كل الجداول مع row counts و size
+- `db_describe_table` — columns + types + constraints + indexes + FKs
+- `db_list_views` — كل الـ views مع definitions
+- `db_list_functions` — كل PL/pgSQL functions
+- `db_list_triggers` — كل الـ triggers مع table و function
+- `db_get_migrations` — migrations المطبّقة
+- `db_sample_rows` — عينة من صفوف الجدول
+- `db_query` — SQL مخصص (read-only افتراضياً)
+
+**`code_*` — 3 أدوات (`code-tools.ts`):**
+- `code_tree` — شجرة الملفات
+- `code_read_file` — قراءة ملف (مع line numbers)
+- `code_search` — regex search مع glob filters
+
+**`api_*` — 3 أدوات (`api-tools.ts`):**
+- `api_list_endpoints` — كل Express routes (مع auth detection)
+- `api_get_endpoint` — تفاصيل endpoint + source excerpt
+- `api_search` — بحث في المسارات
+
+**`docs_*` — 3 أدوات (`docs-tools.ts`):**
+- `docs_list` — قائمة ملفات `.md`
+- `docs_read` — قراءة ملف doc
+- `docs_search` — regex search في docs
 
 ### Docker MCP Gateway:
 - يستمع على `:8811` (SSE)
 - Bearer token authentication
 - `/health` endpoint
-- يقرأ `catalog.yaml` لتحديد stdio servers
+- `catalog.yaml` يحدد 5 tools أساسية + 2 resources + 2 prompts
+- mount الـ repo على `/repo` (read-only)
+- يستقبل `DATABASE_URL` من host `.env`
 
 ---
 
@@ -489,11 +513,25 @@ Conventional Commits مطلوبة لكل commit. release-please يتولى versi
 |---|---|
 | التطبيقات (apps) | 4 |
 | الحزم المشتركة (packages) | 4 |
-| جداول قاعدة البيانات | 28 |
-| PL/pgSQL Functions | 8 |
-| Triggers | 17 |
+| جداول قاعدة البيانات | **32** |
+| PL/pgSQL Functions | ~14 (8 في functions.sql + 6 في migrations) |
+| **Triggers** | **32** (17 dynamic updated_at + 15 explicit) |
 | Views | 4 |
-| API routers | 18 |
+| **API routers** | **18** |
+| **API endpoints** | **~60+** |
+| lib utilities | 15 |
+| **MCP tools** | **18** (4 عائلات) |
+| **MCP catalog tools** | **5** (db_query, db_schema, code_search, api_routes, docs_search) |
+| Notification channels | 3 (in_app, email, sms) |
+| Notification event triggers | 8 |
+| **Frontend pages** | **47** (8 public + 5 auth + 12 customer + 7 seller + 15 admin) |
+| **Frontend custom hooks** | **30+** |
+| **Backend tests (Vitest)** | **31** |
+| **Frontend tests (Vitest)** | **38** |
+| **E2E phase scripts** | **18** |
+| **Agent skills** | **20** |
+| **Agent definitions** | **12** |
+| Payment providers | 4 (stripe, paymob, stub, offline) |
 | صفحات الواجهة | 33 |
 | Features modules | 12 |
 | Migrations | 30 |
@@ -501,6 +539,10 @@ Conventional Commits مطلوبة لكل commit. release-please يتولى versi
 | Seed stores | 7 |
 | Seed products | 24 |
 | Seed orders | 8 |
+| Seed coupons | 4 |
+| Seed categories | 18 (7 رئيسية + 11 فرعية) |
+| Seed reviews | 10 |
+| Seed transactions | 8 (wallet ledger) |
 
 ---
 

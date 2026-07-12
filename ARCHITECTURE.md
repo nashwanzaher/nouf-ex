@@ -170,7 +170,9 @@ graph LR
 
 ### 3.2 الـ Top-level wiring (`apps/web/src/App.tsx`)
 
-`App.tsx` يُصدّر **33 `lazyPage()` route component** (سطر 22-37). كل صفحة مقسّمة إلى chunk خاص بها.
+`App.tsx` يُصدّر **46 `lazyPage()` route component** (سطر 22-37). كل صفحة مقسّمة إلى chunk خاص بها.
+
+**ملاحظة مهمة:** عدد ملفات الصفحات في `apps/web/src/pages/` هو **47 ملف TypeScript** (باستثناء tests)، لكن 46 منها فقط مُسجَّلة في `App.tsx` كـ routes نشطة. الفرق يرجع إلى أن بعض الصفحات (مثل `CustomerSidebar`, `DashboardShell`) هي مكونات داخلية تُستعمل داخل صفحات أخرى، وليست routes.
 
 **الـ Providers بالترتيب الصحيح (مهم):**
 ```tsx
@@ -269,26 +271,110 @@ apps/web/src/features/<domain>/
 └── index.ts                // public surface re-exports
 ```
 
-| # | الميزة | API | المكونات الرئيسية |
+| # | الميزة | API الرئيسية | المكونات |
 |---|---|---|---|
 | 1 | `auth/` | `api/auth.ts` | Login, Register, ForgotPassword, ResetPassword, AuthLayout |
-| 2 | `products/` | `api/products.ts` | Categories, Deals, ProductDetail, SearchResults, StorePage |
-| 3 | `cart/` | `api/cart.ts` + `context/CartContext.tsx` | (في السياق) |
-| 4 | `checkout/` | `api/payments.ts` | Checkout |
-| 5 | `orders/` | `api/orders.ts` | CustomerOrders |
-| 6 | `home/` | `api/system.ts` | HeroSection, DealsBar, FeaturedMerchants, FeaturedProducts, StatsMarquee, +7 |
-| 7 | `customer/` | `api/{addresses,reviews,notifications,refunds}.ts` | CustomerDashboard, Wishlist, Reviews, ... |
-| 8 | `seller/` | `api/seller.ts` | SellerDashboard, SellerProducts, SellerOrders, SellerAnalytics, SellerOnboarding, DashboardShell |
-| 9 | `admin/` | `api/admin.ts` | AdminOverview, AdminOrders, AdminProducts, StoresManagement, UsersManagement, ReportsAnalytics, DisputesManagement, AdminAuditLog |
+| 2 | `products/` | `api/products.ts` | Categories, Deals, ProductDetail, SearchResults, StorePage (+ 5 tests) |
+| 3 | `cart/` | `api/cart.ts` + `context/CartContext.tsx` | (لا توجد صفحة dedicated، state في Context فقط) |
+| 4 | `checkout/` | `api/payments.ts` | Checkout (+ 1 test) |
+| 5 | `orders/` | `api/orders.ts` | CustomerOrders, OrderDetail |
+| 6 | `home/` | `api/system.ts` | HeroSection, DealsBar, FeaturedMerchants, FeaturedProducts, StatsMarquee, CategoriesGrid, HowItWorks, LiveCommerce, MobileAppCTA, NoufProtect, SubscriptionTiers |
+| 7 | `customer/` | `api/{addresses,reviews,notifications,refunds}.ts` | CustomerDashboard, CustomerOrders, OrderDetail, Profile, Wallet, Coupons, Help, Wishlist, Reviews, Addresses, Notifications, CustomerSidebar |
+| 8 | `seller/` | `api/seller.ts` | SellerDashboard, SellerProducts, SellerOrders, SellerAnalytics, SellerOnboarding, SellerProductNew, DashboardShell |
+| 9 | `admin/` | `api/admin.ts` | AdminDashboard, AdminOverview, AdminOrders, AdminProducts, AdminCategories, AdminCoupons, AdminNotifications, AdminReviews, AdminSettings, AdminSystemHealth, AdminAuditLog, DisputesManagement, ReportsAnalytics, StoresManagement, UsersManagement |
 | 10 | `messages/` | `api/messages.ts` | Messages |
-| 11 | `shipping/` | `api/shipping.ts` | (helpers) |
-| 12 | `coupons/` | `api/coupons.ts` | (helpers) |
+| 11 | `shipping/` | `api/shipping.ts` | (helpers only) |
+| 12 | `coupons/` | `api/coupons.ts` | (helpers only) |
+
+### 3.5.1 Frontend API clients (الواجهة بين React والـ API):
+
+**`features/auth/api/auth.ts` (143 سطر):**
+- `login({email, password})` → `Promise<AuthLoginResult>` (union: `{kind: 'auth', user} | {kind: '2fa_required', partial_token, user_id}`)
+- `register({email, password, name, role?})` → `Promise<AuthResponse>`
+- `getCurrentUser()` / `updateProfile(body)`
+- `changePassword({current_password, new_password})`
+- `forgotPassword(email)` → `{ok, reset_token?, expires_at?}` (dev فقط)
+- `resetPassword(token, new_password)`
+- 2FA: `setup2FA`, `enable2FA`, `verify2FA`, `disable2FA`, `regenerateBackupCodes`
+
+**`features/products/api/products.ts` (83 سطر):**
+- `getProducts(filters)` → `{products, total, limit, offset}`
+- `getProduct(id)` → `ProductWithDetails` (مع store + reviews + images)
+- `getFeaturedProducts()` / `getDeals()`
+- `getStores()` / `getStore(id)` → `StoreWithProducts`
+- `getStoreReviews(id)`
+- `getCategories()` / `getCategory(slug)`
+- `searchProducts({q, limit?, offset?})`
+
+**`features/cart/context/CartContext.tsx` (359 سطر):**
+- CartState: `{items: CartItem[], loading, error}`
+- **CartItem:** `{productId, name, price, quantity, image, merchantName}`
+- **Reducer actions:** `ADD, REMOVE, UPDATE_QTY, CLEAR, HYDRATE, SET_LOADING, SET_ERROR`
+- **Persistence:** localStorage `noufex_cart` للزوار، server للـ authenticated users
+- **Sync logic:**
+  - عند login: يدفع local cart إلى server + يسحب server cart + يمسح local
+  - عند logout: يمسح local cart
+  - على كل mutation: optimistic update + server reconcile
+- **Hooks مُصدّرة:** `useCart()` → `{state, dispatch, cartCount, cartTotal}`
 
 ### 3.6 Shared primitives (`apps/web/src/components/`):
 
 - **`ui/`:** 10 shadcn primitives (avatar, badge, button, card, dialog, input, label, separator, switch, tabs, textarea)
-- **Components:** `ErrorBoundary`, `Layout`, `ProtectedRoute`, `Navbar`, `BottomNav`, `Footer`, `Skeleton`, `Skeletons`, `Toast`, `ProductImage`
-- **`i18n/`:** i18next + locales/{ar,en,zh}.json
+- **Layout components:**
+  - `Layout.tsx` — Layout wrapper: Navbar + main + (Footer? + BottomNav) — يخفي Footer في dashboard routes
+  - `Navbar.tsx` — top navigation
+  - `BottomNav.tsx` — mobile bottom tab bar
+  - `Footer.tsx` — site footer
+- **Error handling:**
+  - `ErrorBoundary.tsx` — React error boundary
+  - `Toast.tsx` — toast notifications
+  - `Skeleton.tsx` / `Skeletons.tsx` — loading placeholders
+- **Auth:**
+  - `ProtectedRoute.tsx` — Route guard:
+    - إذا لم يكن مسجل دخول → redirect لـ `/auth/login?redirect=<path>`
+    - إذا لم تتطابق role → redirect لـ dashboard الخاص بـ role
+- **Visual:**
+  - `ProductImage.tsx` — Safe image component with fallback
+
+### 3.6.1 Frontend Pages (47 ملف TypeScript):
+
+| المنطقة | العدد | الـ paths |
+|---|---|---|
+| **Public** | **8** | `/`, `/search`, `/product/:id`, `/store/:id`, `/categories`, `/deals`, `/checkout`, `/messages` |
+| **Auth** | **5** | `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` + `AuthLayout` |
+| **Customer** | **12** | `/customer` (dashboard + sidebar), `/customer/orders`, `/customer/orders/:id`, `/customer/profile`, `/customer/wallet`, `/customer/coupons`, `/customer/help`, `/customer/wishlist`, `/customer/reviews`, `/customer/addresses`, `/customer/notifications` |
+| **Seller** | **7** | `/seller` (dashboard), `/seller/products`, `/seller/products/new`, `/seller/orders`, `/seller/analytics`, `/seller/onboarding` + `DashboardShell` |
+| **Admin** | **15** | `/admin` shell مع 9 sub-routes (`/overview`, `/users`, `/stores`, `/disputes`, `/reports`, `/audit-log`, `/all-products`, `/all-orders`) + AdminCategories/Coupons/Notifications/Reviews/Settings/SystemHealth/Dashboard |
+
+**ملاحظة:** `pages/admin/AdminDashboard.tsx` يحتوي sidebar links لجميع هذه الأقسام. كل route له handler منفصل في `pages/admin/`.
+
+### 3.6.2 Home page (`features/home/components/index.tsx`, 774 سطر)
+
+صفحة Home الرئيسية تتكون من:
+- **HeroSection:** ترحيب + شريط بحث + tabs (RFQ/Hot/Fast) + Hot searches
+- **Trust Stats:** products_count, stores_count, orders_count, users_count
+- **Deals Section:** Flash deals مع countdown `deal_ends_at`
+- **Just for You:** 10 منتجات عشوائية
+- **New Arrivals:** المنتجات بـ badge "new"
+- **Top Merchants:** 8 متاجر بأعلى rating
+- **Trade Assurance Banner:** مع 4 trust signals (Safe Shipping, Refund, Logistics, After-sales)
+- **Ready to Ship:** المنتجات بـ stock > 5
+
+**يستعمل hooks مخصصة:** `useHomeStats`, `useProducts`, `useStores`, `useCategories` من `@/hooks/useApi`
+
+### 3.6.3 Custom Hooks (`apps/web/src/hooks/useApi.ts`, 768 سطر)
+
+- **`useDataHook<T>(fetcher, deps)`** — generic hook مع AbortController
+  - يرجع `{data, loading, error, refetch}`
+  - يدعم cancellation عند unmount
+  - JSON.stringify deps للمقارنة
+- **30+ typed hooks** مخصصة:
+  - `useOrders`, `useUserAddresses`, `useShippingMethods`, `useServerWishlist`
+  - `useHomeStats`, `useProducts`, `useStores`, `useCategories`, `useProduct`
+  - `useAdminUsers`, `useAdminStores`, `useAdminProducts`, `useAdminOrders`
+  - `useAdminStats`, `useAdminTimeSeries`, `useAdminGovernorate`
+  - `useCouponValidation` (state-based)
+  - `usePlaceOrder` (mutation)
 
 ### 3.7 Context API (`apps/web/src/context/AppContext.tsx`)
 
@@ -564,7 +650,112 @@ export { getProductWithParsedFields, parseJson } from './json';
 export async function computeCouponDiscount(coupon, orderSubtotal) { ... }
 ```
 
-### 4.6 مكتبة `lib/validation.ts` (Zod schemas)
+### 4.5.1 مكتبة `lib/auth.ts` — Password Hashing (مُستخرَجة من shared.cts في 2026-07-03)
+
+**scrypt مع salt عشوائي 16 bytes + key 64 bytes (256-bit):**
+- `hashPassword(password)` → يُرجع `'scrypt$<saltB64>$<keyB64>'`
+- `verifyPassword(password, stored)` → يستخدم `timingSafeEqual`، يرجع false لأي format غير صحيح
+
+### 4.5.2 مكتبة `lib/totp.ts` — TOTP (RFC 6238)
+
+- **خوارزمية:** `T = floor((unix_time - 0) / 30)`، `HMAC-SHA1(secret, T_8bytes_BE)`، dynamic truncation، `code % 1_000_000`
+- **Tolerance:** ±1 step (±30 ثانية) — لهجوم brute-force صغير (3 in 1M)
+- **Base32 encoding/decoding** (RFC 4648 بدون padding)
+- `generateSecret()` → 160 bits = 32 حرف base32
+- `verifyTotp(secret, code, now?)` → يقارن مع current/prev/next window
+- `otpauthUrl(account, secret, issuer, period, digits)` → URI لـ Google Authenticator
+
+### 4.5.3 مكتبة `lib/ratelimit.ts`
+
+- `rateLimit(windowMs, max, bucket)` — Express middleware factory
+- يستدعي `consume_rate_limit(bucket, key, window_ms, max)` PL/pgSQL function (SECURITY DEFINER)
+- Fail-OPEN عند تعطل DB
+- `authLimiter` — 20 hits / 15min / IP عبر `/api/auth/*`
+
+### 4.5.4 مكتبة `lib/audit.ts`
+
+- `writeAuditLog(req, action, entityType, entityId, oldValues, newValues)`
+- يستخدم `write_audit_log(...)` SECURITY DEFINER function
+- **3 retries مع exponential backoff** (100ms, 200ms, 400ms)
+- عند الفشل → dead-letter في `logs/audit-dlq-YYYY-MM-DD.jsonl`
+- `redactSensitive(value)` — يستبدل قيم 17 مفتاح sensitive بـ `[REDACTED]`:
+  - `password, password_hash, passwd, pwd, token, auth_token, access_token, refresh_token, api_key, apikey, secret, client_secret, private_key, cvv, cvc, ssn, authorization`
+
+### 4.5.5 مكتبة `lib/reset-token.ts` (G7 fix 2026-07-11)
+
+HMAC-signed token لإعادة تعيين كلمة المرور:
+- `signResetToken(userId)` → يُنشئ token مع `jti` و `purpose: 'password_reset'`، TTL 30 دقيقة
+- `verifyResetToken(token)` → يتحقق + يحجز jti في `used_jtis` (single-use via UPSERT)
+- Format: `base64url({sub, purpose, jti, exp}).base64url(hmac)`
+
+### 4.5.6 مكتبة `lib/partial-token.ts`
+
+HMAC-signed token للربط بين خطوتي password + TOTP في 2FA:
+- TTL: 5 دقائق
+- `purpose: '2fa'`
+- Single-use عبر `INSERT ... ON CONFLICT DO NOTHING` على `used_jtis`
+- Test helper: `_resetPartialTokenForTests(userId?)`
+
+### 4.5.7 مكتبة `lib/settings.ts` (P1-2 fix)
+
+- `getSetting(key)` يقرأ من `app_settings` table
+- **In-process cache** بـ TTL 60 ثانية
+- **Fail-OPEN** عند تعطل DB (يرجع FALLBACK: `DEFAULT_CURRENCY='YER'`, `FREE_SHIPPING_THRESHOLD='10000'`, `FLAT_SHIPPING_COST='500'`)
+- `getSettingSync(key)` للـ backstop (يرجع آخر قيمة مخزنة)
+- Test helpers: `_resetSettingsCacheForTests()`, `_dumpSettingsCache()`
+
+### 4.5.8 مكتبة `lib/search.ts` (P1-1 fix)
+
+Full-text search backend بـ PG:
+- `runSearch(query, filters)` → يستخدم `websearch_to_tsquery('simple', $1)` مع weights:
+  - A=`name_ar`, B=`name_en`, C=`name_zh`, D=`description*`
+- `ts_rank_cd` (cover density) للترتيب
+- COUNT(*) OVER () window function لجلب total_count في نفس round-trip
+- `logSearch(query, normalized, resultCount, durationMs, userId, requestId)` — best-effort insert في `search_logs`
+- `normalizeQuery(raw)` → lowercase + trim + collapse whitespace (للتجميع في analytics)
+
+### 4.5.9 مكتبة `lib/json.ts`
+
+- `parseJson<T>(value, fallback)` — يقبل `unknown` ويُرجع JS value من JSON string أو يتركه كما هو إن كان بالفعل object/array
+- `getProductWithParsedFields(product)` — يُفكك `features`, `badges`, `specifications`, `colors`, `sizes` من JSONB إلى JS arrays/objects
+
+### 4.5.10 مكتبة `lib/sql-helpers.ts`
+
+- `buildUpdateSet(fields)` — يبني `col = $N, ...` dynamic SQL مع حماية SQL injection:
+  - يتحقق من أسماء الأعمدة بـ regex `/^[a-z][a-z0-9_]*$/`
+  - يرمي HttpError(400) لـ INVALID_COLUMN أو EMPTY_UPDATE
+
+### 4.5.11 مكتبة `lib/payments/` — Provider Registry
+
+- `types.ts` — تعريف `PaymentMethod`, `InitiateInput`, `InitiateResult`, `WebhookVerification`, `PaymentProvider`
+- `registry.ts` — `selectProvider(method)` يختار provider، `hasProvider(method)`، `listProviders()`
+  - **Real providers:** Stripe, Paymob (مفعّلة فقط عند وجود env keys)
+  - **Stub:** يُستخدم للـ dev/MVP
+  - **Offline methods (cod, card, wallet, bank_transfer):** بدون provider — يُعالجها route مباشرة
+- `stripe.ts` — Stripe integration (Checkout Sessions)
+- `paymob.ts` — Paymob integration (iframe)
+- `stub.ts` — simulation للـ MVP
+
+### 4.5.12 مكتبة `lib/notifications/` — Multi-channel notifications
+
+- `dispatcher.ts` — `dispatch(notification)` ينسّق عبر `CHANNELS = [emailChannel, smsChannel]`
+  - In-app يُسجَّل دائماً (الـ row نفسه)
+  - لكل channel: `shouldDeliver()`, `isConfigured`, `send(ctx)` → `{channel, ok, providerMessageId, error}`
+  - **Best-effort:** لا يُلقي خطأ عند تعطل SMTP — يسجّل ويكمل
+- `email.ts` + `sms.ts` — channels (نمطي interface)
+- `email-templates.ts` — `render({event, language, data})` يُرجع `{subject, body}` ثلاثي اللغات
+- `events.ts` — high-level event triggers:
+  - `onOrderPlaced({orderId, customerId, merchantId, orderNumber, total, itemCount, paymentMethod, trackingUrl, productName})` → customer + merchant
+  - `onPaymentConfirmed({orderId, customerId, orderNumber, amount})` → customer
+  - `onRefundRequested({orderId, orderNumber, customerId, merchantId, amount})` → customer + merchant
+  - `onRefundResolved({orderId, orderNumber, customerId, amount, status, reason?})` → customer
+  - `onDisputeOpened({orderId, orderNumber, merchantId, subject?})` → merchant
+  - `onDisputeResolved({orderId, orderNumber, customerId, resolution?})` → customer
+  - `onReviewPosted({productId, productName, merchantId, rating, comment?})` → merchant
+  - `onWelcome({userId, name})` → customer
+- `types.ts` — `NotificationType`, `NotificationRow`, `NotificationChannel`, `DispatchContext`, `DispatchResult`
+
+### 4.5.13 مكتبة `lib/backup-codes.ts` (لـ 2FA recovery)
 
 **Password Strength Helper (`evaluatePasswordStrength`):**
 - طول 10..128 (NIST 800-63B)
@@ -686,6 +877,111 @@ format on-disk: 'scrypt$<saltB64>$<keyB64>'
 - `GET /categories/:slug` — فئة + منتجاتها
 - `GET /search` — FTS مع websearch_to_tsquery + weights
 
+**Cart module (`modules/cart/`):**
+- `GET /api/cart/:userId` — قائمة سلة المستخدم (مع تفاصيل المنتج والمتجر)
+- `GET /api/cart/count/:userId` — مجموع الكميات
+- `POST /api/cart` — إضافة منتج (`productId, quantity, variant?`) — يكتشف duplicates عبر `(user, product, variant)`
+- `PUT /api/cart/:id` — تحديث الكمية
+- `DELETE /api/cart/:id` — حذف منتج من السلة
+- `DELETE /api/cart/clear/:userId` — تفريغ السلة بالكامل
+
+**Wishlist module (`modules/wishlist/`):**
+- `GET /api/wishlist` — قائمة المنتجات المفضلة
+- `POST /api/wishlist` — إضافة منتج (`productId`)
+- `DELETE /api/wishlist/:id` — إزالة
+
+**Store Followers module (`modules/store-followers/`):**
+- `GET /api/store-followers/check?store_id=&user_id=` — التحقق من المتابعة + preferences
+- `POST /api/store-followers` — متابعة (مع `notify_new_products`, `notify_offers`)
+- `DELETE /api/store-followers` — إلغاء متابعة
+
+**Seller module (`routes/seller.ts`, 669 سطر):**
+- `GET /api/seller/stores/me` — جلب متجري
+- `POST /api/seller/stores` — إنشاء أول متجر (G2 fix 2026-07-11)
+- `PATCH /api/seller/stores/:id` — تحديث متجري
+- `GET /api/seller/products` — قائمة منتجاتي (paginated)
+- `POST /api/seller/products` — إنشاء منتج
+- `GET /api/seller/products/:id` — تفاصيل منتج
+- `PATCH /api/seller/products/:id` — تحديث منتج (soft fields)
+- `DELETE /api/seller/products/:id` — soft-delete
+- `POST /api/seller/products/:id/images` — إضافة صورة
+- `GET /api/seller/orders` — قائمة طلبات متجري
+- `GET /api/seller/orders/:id` — تفاصيل طلب
+- `POST /api/seller/orders/:id/status` — تحديث حالة الطلب (forward-only state machine)
+- `GET /api/seller/analytics` — KPIs للمتجر
+- `GET /api/seller/inventory` — مستويات المخزون مع `stock_status`
+- `GET /api/seller/payouts` — معاملات wallet + balance
+- `GET /api/seller/dashboard` — rollup KPIs (alias لـ `/analytics`)
+
+**Admin module (`routes/admin.ts`, 911 سطر):**
+- **READ-ONLY:**
+  - `GET /api/admin/users` — قائمة المستخدمين مع pagination + filter (role, status)
+  - `GET /api/admin/stores` — قائمة المتاجر + filter (is_active, is_verified)
+  - `GET /api/admin/products` — قائمة المنتجات + filter (is_active, is_featured, store_id, category_id)
+  - `GET /api/admin/orders` — قائمة الطلبات + filter (status, payment_status)
+  - `GET /api/admin/disputes` — قائمة النزاعات + filter (status, priority)
+  - `GET /api/admin/audit-log` — admin_audit_log entries + filter (entity_type, action, user_id)
+  - `GET /api/admin/stats` — dashboard summary (14 metrics في 1 query)
+  - `GET /api/admin/stats/timeseries` — revenue/orders/users/disputes/merchants عبر time
+  - `GET /api/admin/stats/by-governorate` — توزيع جغرافي (stores/addresses/merchants)
+- **MUTATIONS (كلها تكتب في admin_audit_log):**
+  - `POST /api/admin/maintenance/cleanup-audit-logs` — استدعاء `cleanup_audit_logs()`
+  - `PATCH /api/admin/users/:id` — تحديث (status, role, is_verified, ...) — مع حماية SELF_BAN و SELF_DEMOTE
+  - `PATCH /api/admin/stores/:id` — تحديث (is_active, is_verified, trust_level)
+  - `PATCH /api/admin/orders/:id/status` — فرض حالة على الطلب
+  - `PATCH /api/admin/products/:id` — تحديث (is_active, is_featured)
+  - `PATCH /api/admin/disputes/:id` — حل نزاع (terminal states تحدد resolved_by/resolved_at)
+
+**Payments module (`routes/payments.ts`, 409 سطر):**
+- `GET /api/payments/methods` — قائمة providers المفعّلة
+- `POST /api/payments/webhook/:method` — استقبال webhooks (idempotent عبر `webhook_events` table)
+  - Rate-limited بـ 120 req/min/IP
+  - HMAC verification → atomic claim via INSERT ON CONFLICT
+- `POST /api/payments` — بدء عملية دفع (يحقق من ownership + amount match + idempotency)
+  - يتعامل مع 6 طرق: `cod`, `card`, `wallet`, `bank_transfer`, `stripe`, `paymob`
+- `GET /api/payments/order/:orderId` — قائمة المدفوعات لطلب
+- `POST /api/payments/:id/confirm` — تأكيد دفع (admin-only)
+
+**Reviews module (`routes/reviews.ts`, 170 سطر):**
+- `GET /api/reviews?productId=&storeId=` — قائمة التقييمات (visible فقط)
+- `POST /api/reviews` — إضافة تقييم (verified-purchase guard: لازم order.status='delivered')
+  - يولّد notification للتاجر
+  - يُحدّث product.rating و review_count
+
+**Refunds module (`routes/refunds.ts`, 217 سطر):**
+- `POST /api/refunds` — طلب استرداد (customer-only، فقط للطلبات المدفوعة)
+  - يتحقق من remaining refundable balance
+  - يولّد notification للعميل + التاجر
+- `POST /api/refunds/:id/resolve` — حل الاسترداد (admin-only)
+  - `approved` → `processed` (يخصم من wallet المتجر في transaction)
+  - `rejected` → status='rejected'
+
+**Addresses module (`modules/addresses/`):**
+- `GET /api/addresses` — قائمة عناويني
+- `POST /api/addresses` — إضافة عنوان
+- `PUT /api/addresses/:id` — تحديث عنوان
+- `DELETE /api/addresses/:id` — حذف عنوان
+- Enforces **single default** عبر partial unique index على `is_default = TRUE`
+
+**Shipping module (`modules/shipping/`):**
+- `GET /api/shipping/methods?weight_kg=` — قائمة طرق الشحن المتاحة مع `estimated_total`
+
+**Stats module (`modules/stats/`):**
+- `GET /api/stats/home` — counts + featured + deals للـ homepage
+
+**Notifications module (`modules/notifications/`):**
+- `GET /api/notifications` — قائمة إشعاراتي
+- `PUT /api/notifications/:id/read` — تعليم كمقروء
+- `GET /api/notifications/unread-count/:userId` — عدد غير المقروء
+
+**Messages module (`modules/messages/`):**
+- `POST /api/messages` — إرسال رسالة (`receiver_id, body, store_id?, product_id?, order_id?, attachments?`)
+- `GET /api/messages/inbox` — inbox (مع pagination + filter unread)
+- `GET /api/messages/sent` — صندوق الصادر
+- `GET /api/messages/conversation?peer_id=` — محادثة مع مستخدم
+- `GET /api/messages/unread-count` — عدد غير المقروء
+- `PUT /api/messages/:id/read` — تعليم كمقروء
+
 ---
 
 ## 5. Database (`packages/db`)
@@ -704,7 +1000,7 @@ format on-disk: 'scrypt$<saltB64>$<keyB64>'
 
 **Migrations مرقّمة `0001_baseline.sql` ... `0030_updated_at_triggers.sql`** تُطبَّق عبر `npm run db:setup`.
 
-### 5.2 الجداول الـ 28:
+### 5.2 الجداول الـ 32 (موزعة على 7 ملفات SQL + 30 migration):
 
 **المستخدمون والمصادقة:**
 - `users` (id, email CITEXT, password_hash, full_name, phone, role, status, is_verified, two_factor_enabled, preferred_language, gender, token_version, last_login, deleted_at, ...)
@@ -819,12 +1115,55 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 - ahmed@gmail.com / customer123
 - fatima@spice-yemen.com / merchant123
 
-### 5.8 Script `scripts/db/db-setup.cjs`:
+### 5.8 Migrations التفصيلية (30 migration):
 
-- يطبق `packages/db/*.sql` بالترتيب (schema.sql → schema-extra.sql → functions.sql → triggers.sql → views.sql → roles.sql → seed.sql)
-- يطبق migrations من `migrations/0001..0030`
-- **Idempotent** — `IF NOT EXISTS` على كل CREATE
-- يسجل `schema_migrations` جدول لتتبع migrations المطبّقة
+| # | الوصف | الملفات الرئيسية |
+|---|---|---|
+| 0001 | baseline: schema_migrations table + initial mark | schema_migrations |
+| 0002 | add_cart_variant — إضافة `variant` JSONB لـ cart_items | cart_items |
+| 0003 | unique_user_email — UNIQUE على email بدون deleted_at | users |
+| 0004 | rate_limit_buckets — جدول rate limiting DB-backed | rate_limit_buckets |
+| 0005 | coupon_discount — دالة `coupon_discount_amount()` | coupons |
+| 0006 | admin_audit_log_grants | admin_audit_log |
+| 0007 | pi_unique_pair — منع duplicates لـ payment intent | payments |
+| 0008 | totp_columns — `two_factor_enabled, totp_secret, backup_codes` | users |
+| 0009 | search_backend — FTS مع search_tsv (GENERATED STORED) + search_logs | products, search_logs |
+| 0010 | used_jtis — replay-protection لـ JWTs/partial-tokens | used_jtis |
+| 0011 | audit_log_security_definer | admin_audit_log |
+| 0012 | payment_tx_index_and_jti_sweeper | payments, used_jtis |
+| 0013 | inventory_log_trigger_definer | inventory_log |
+| 0014 | grants_critical_fix | (صلاحيات) |
+| 0015 | subscriptions_unique_active — UNIQUE على active subs | subscriptions |
+| 0016 | audit_log_retention — `cleanup_audit_logs()` PL/pgSQL | admin_audit_log |
+| 0017 | **token_version** — عمود `users.token_version` للـ JWT revocation | users |
+| 0018 | products_popular_index | products |
+| 0019 | unique_user_phone | users |
+| 0020 | **webhook_idempotency** — `webhook_events` table + RLS policies | webhook_events |
+| 0021 | schema_hygiene — إضافة updated_at لـ product_images, order_items, rate_limit_buckets | multiple |
+| 0022 | coupon_atomicity — حماية ضد race conditions على coupons | coupons |
+| 0023 | **app_settings** — جدول key-value + RLS + `admin_set_app_setting()` SECURITY DEFINER | app_settings |
+| 0024 | production_hardening | multiple |
+| 0025 | store_counters_and_indexes | stores |
+| 0026 | critical_fixes | multiple |
+| 0027 | integrity_constraints | multiple |
+| 0028 | transactions_balance_consistency | transactions |
+| 0029 | orders_total_consistency | orders |
+| 0030 | **updated_at_triggers** — إضافة trg_set_updated_at لـ tables أُضيفت بعد triggers.sql | product_images, order_items, rate_limit_buckets |
+
+### 5.9 Script `scripts/db/db-setup.cjs`:
+
+- يطبق `packages/db/*.sql` بالترتيب:
+  1. `schema.sql` → الجداول الأساسية
+  2. `schema-extra.sql` → payments, coupons, refunds, etc.
+  3. `functions.sql` → PL/pgSQL functions (8)
+  4. `triggers.sql` → dynamic loop + explicit triggers
+  5. `views.sql` → 4 views
+  6. `roles.sql` → 4 roles + GRANTs
+  7. `seed.sql` → 10 users + 18 categories + 7 stores + 24 products + ...
+- يطبق migrations من `migrations/0001..0030` بالترتيب
+- **Idempotent** — `IF NOT EXISTS` على كل CREATE + INSERT ... ON CONFLICT
+- يسجل في `schema_migrations` جدول لتتبع migrations المطبّقة
+- يتحقق من `noufex.allow_seed = 'on'` قبل تطبيق seed.sql (gate ضد التشغيل في production)
 
 ---
 
@@ -889,23 +1228,92 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 
 ## 7. MCP server & Gateway
 
-### 7.1 `apps/mcp-server/` (stdio):
+### 7.0 `packages/shared/` — Common types & constants
 
-**4 عائلات أدوات:**
+`@noufex/shared` workspace يحتوي على types مشتركة بين web و api:
 
-| العائلة | الملف | الأدوات |
+- **`src/types/index.ts` (321 سطر):** كل واجهات entity (Product, Store, Order, User, Address, ...)
+  - Body types لـ POST/PATCH تبقى في domain modules لتفادي التضخم
+- **`src/constants.ts`:** enumerations مُجمَّعة:
+  - `SUPPORTED_LANGUAGES = ['ar', 'en', 'zh'] as const`
+  - `USER_ROLES = ['customer', 'merchant', 'admin'] as const`
+  - `ORDER_STATUSES` (7 حالات)
+- **Exports:** `"./types"` و `"./constants"`
+
+**Cross-workspace types:** `apps/api/tsconfig.json` يحتوي `paths: { "@noufex/web/*": ["../web/*"] }` للاستيراد بين workspaces.
+
+### 7.1 `apps/mcp-server/` (stdio) — 18 أداة MCP:
+
+**`db-tools.ts` (339 سطر) — 9 أدوات:**
+
+| الأداة | الوصف | المعاملات |
 |---|---|---|
-| `db_*` | `db-tools.ts` (339 سطر) | `db_query`, `db_schema`, `db_list_tables`, ... |
-| `code_*` | `code-tools.ts` (212 سطر) | `code_search`, `code_read`, ... |
-| `api_*` | `api-tools.ts` (255 سطر) | `api_routes`, `api_route_detail` |
-| `docs_*` | `docs-tools.ts` (119 سطر) | `docs_search` |
+| `db_stats` | إحصائيات عالية المستوى (count tables, views, functions, triggers, size) | — |
+| `db_list_tables` | قائمة كل الجداول في schema العام مع row counts و size | — |
+| `db_describe_table` | وصف جدول واحد: columns، types، constraints، indexes، FKs | `table: string` |
+| `db_list_views` | كل الـ views مع definitions و security mode | — |
+| `db_list_functions` | كل PL/pgSQL functions في schema العام | — |
+| `db_list_triggers` | كل الـ triggers مع table و function | — |
+| `db_get_migrations` | migrations المطبّقة من schema_migrations | — |
+| `db_sample_rows` | عينة من صفوف الجدول | `table, limit?, where?` |
+| `db_query` | تنفيذ SQL (read-only افتراضياً) | `sql, params?, read_only?, max_rows?` |
+
+- **Security:** `isSafeReadOnlySql()` يرفض multi-statement و non-SELECT/WITH/EXPLAIN/SHOW
+
+**`code-tools.ts` (212 سطر) — 3 أدوات:**
+
+| الأداة | الوصف |
+|---|---|
+| `code_tree` | عرض شجرة الملفات (يتخطى node_modules، dist، coverage، dotfiles) |
+| `code_read_file` | قراءة ملف source (مع رقم سطور، max 200KB) |
+| `code_search` | بحث regex في شجرة المصدر (مع include/exclude glob patterns) |
+
+- **Security:** `safeResolve()` يمنع المسارات خارج project root
+- يحول glob patterns بسيطة إلى regex عبر sentinel tokens
+
+**`api-tools.ts` (272 سطر) — 3 أدوات:**
+
+| الأداة | الوصف |
+|---|---|
+| `api_list_endpoints` | كل Express routes (verb, path, auth, middleware, line) |
+| `api_get_endpoint` | تفاصيل endpoint واحد + excerpt من المصدر |
+| `api_search` | بحث في المسارات (substring match) |
+
+- يُحلّل `app/server/index.ts` بـ regex للـ `app.METHOD('/path', ...)` patterns
+- يكتشف middleware تلقائياً عبر heuristics (PascalCase tokens)
+- يحسب auth type (`public`, `authed`, `role:admin`, `role:merchant`)
+- Cache على routes (mtime-based)
+
+**`docs-tools.ts` (128 سطر) — 3 أدوات:**
+
+| الأداة | الوصف |
+|---|---|
+| `docs_list` | قائمة ملفات `.md` في `docs/` (يستثني research/audit افتراضياً) |
+| `docs_read` | قراءة ملف doc مع max bytes |
+| `docs_search` | regex search في `docs/*.md` |
 
 ### 7.2 Docker MCP Gateway (`docker/mcp-gateway/`):
 
-- يستمع على **TCP 8811** مع SSE transport (`/sse?sessionid=...`)
-- يقرأ `catalog.yaml` لمعرفة أي stdio servers يُشغّل
-- يتطلب `Bearer` token (يُطبع عند أول تشغيل)
-- `/health` على نفس المنفذ
+**`catalog.yaml` (224 سطر):**
+- `name: noufex-mcp`
+- `transport: stdio`
+- `command: ["node", "/app/dist/index.js"]`
+- mounts: `..` و `../.env` (read_only)
+- env: `DATABASE_URL, PROJECT_ROOT=/repo, NODE_ENV=production`
+- **5 tools** (منفصلة عن الـ 22 في catalog، تمثل الواجهة الرسمية لـ clients):
+  - `db_query` (مع `ALLOW_DB_WRITE=1` env للكتابة)
+  - `db_schema` (يرجع كل schema بتنسيق JSON)
+  - `code_search` (regex عبر monorepo)
+  - `api_routes` (مع method/path_prefix filters)
+  - `docs_search` (free-text query)
+- **2 resources:** `architecture` (Mermaid file)
+- **2 prompts:** `audit-monorepo`, `trace-request`
+
+**`Dockerfile` (44 سطر) — 2 stages:**
+1. `build` — `node:20-alpine` + `npm ci --workspaces` + `tsc -p tsconfig.json`
+2. `runtime` — `node:20-alpine` + `USER node` + `node /app/dist/index.js`
+
+**`docker-compose.yml`:** يستمع على **:8811** مع SSE transport، Bearer token، `/health` endpoint
 
 ---
 
@@ -977,10 +1385,62 @@ TRUST_PROXY=
 
 ## 10. CI / GitHub automation
 
-- `dependabot.yml` يغطي 4 workspaces + GitHub Actions
-- Pre-commit hook: `.husky/pre-commit` يشغّل `lint-staged`
+### 10.1 CI/CD workflows (5 ملفات في `.github/workflows/`)
+
+| الـ Workflow | الوصف | Triggers |
+|---|---|---|
+| **`ci.yml` (312 سطر)** | CI pipeline: 7 jobs (docs-presence → lint → typecheck → mcp-server → test → build → db-integration → server-boot) | push/PR إلى main/develop |
+| **`deploy-staging.yml` (185 سطر)** | Auto-deploy staging بعد CI pass: download artefacts → SSH upload → npm ci + db:setup → restart stack → smoke checks | push إلى main، manual dispatch |
+| **`deploy-prod.yml` (182 سطر)** | Production deploy: semver tag validation + ancestor-of-main check + atomic swap + **automatic rollback** على فشل smoke checks | tag push `v*`، manual dispatch |
+| **`docs.yml` (103 سطر)** | MkDocs build + GitHub Pages deploy + banned-pattern check (TODO, FIXME, docs/audit/) | push/PR على docs/**، main |
+| **`link-check.yml` (104 سطر)** | `markdown-link-check` matrix على `docs/` + `*.md` (root) — nightly + PR | PR، schedule 06:00 UTC، manual |
+
+### 10.2 .github/agents/ (12 agent definitions)
+
+- **`architect.agent.md`** — Senior Software Architect (15+ years) - DDD, Clean Architecture, GoF patterns
+- **`backend.agent.md`** — Backend specialist (Express, PostgreSQL, Auth)
+- **`database.agent.md`** — Database specialist (PostgreSQL, migrations, performance)
+- **`debug.agent.md`** — Systematic debugging
+- **`devops.agent.md`** — DevOps (Docker, CI/CD, deployment)
+- **`doc.agent.md`** — Documentation generation
+- **`frontend.agent.md`** — Frontend (React, Vite, Tailwind, i18n)
+- **`performance.agent.md`** — Performance optimization
+- **`refactor.agent.md`** — Code refactoring
+- **`reviewer.agent.md`** — Code review
+- **`security.agent.md`** — Security audit (OWASP Top 10)
+- **`tester.agent.md`** — Test design (IEEE 829, ISTQB CTFL)
+
+كل agent يلتزم بـ **9-domain End-to-End Developer Skills Mind Map** (OWASP/ISO 25010/NIST SSDF v1.0).
+
+### 10.3 .github/skills/ (20 skill + 2 index)
+
+7 فئات: Analysis & Planning (3) | Implementation (3) | Quality & Fixes (4) | Testing & Docs (2) | Organization & Performance (3) | Security (1) | Operations (4) | Meta (1)
+
+كل skill يتبع YAML structure: `name, description, trigger, phases, inputs, outputs, verification`.
+
+### 10.4 .github/SECRETS.md (154 سطر)
+
+- جدول كامل للأسرار: `AUTH_SECRET`, `DB_PASSWORD`, `SMTP_PASSWORD`, `STRIPE_SECRET_KEY`, `PAYMOB_API_KEY`, `STAGING_SSH_KEY`
+- Rotation cadence: 90 days
+- Best practices: Docker secrets, k8s Secret resources, AWS SSM/Secrets Manager
+- CI uses **ephemeral test credentials** فقط (نفس نمط D.1)
+
+### 10.5 Pre-commit hooks
+
+- `.husky/pre-commit` يشغّل `lint-staged`
   - `*.{ts,tsx,cts}` → `eslint --fix --max-warnings=0` + `prettier`
   - `*.{js,cjs,mjs,json,md,css}` → `prettier --write`
+
+### 10.6 MkDocs configuration (`mkdocs.yml`)
+
+**⚠️ ملاحظة هامة (مُحدَّثة 2026-07-12):** الـ `mkdocs.yml` الأصلي كان يشير إلى ~30 ملف **غير موجود** (architecture/overview.md, operations/deployment.md, planning/adr/*.md, إلخ). تم تبسيط الـ nav ليشير فقط للملفات الموجودة فعلياً (BACKLOG.md, ARCHITECTURE.md, architecture/workflow.md, research/*.md, CHANGELOG.md). MkDocs build مع `--strict` كان سيفشل بدون هذا التصحيح.
+
+### 10.7 scripts/ utility structure
+
+- **`scripts/db/`**: `db-setup.cjs`, `audit-db.cjs`, `drop-test-db.cjs`, `gen-seed-hashes.cjs`, `switch-db.ps1`
+- **`scripts/devops/`**: `autostart.bat/ps1`, `build.ps1`, `docker-build.ps1`, `docker-entrypoint.sh`, `docker-run.ps1`, `install-autostart.ps1`
+- **`scripts/maintenance/`**: `e2e-step1.ps1`, `rename-cts-references.cjs/ps1`, `scan-unused.cjs`, `start-api.bat`, `start-vite.bat`
+- **`scripts/quality/`**: `format.ps1`, `format-check.ps1`, `lint.ps1`, `test.ps1`, `test-stack.ps1`, `test-summary.cjs`, `typecheck.ps1`, `verify-fresh.cjs`
 
 ---
 
@@ -1012,6 +1472,63 @@ TRUST_PROXY=
 
 ---
 
+## 8. الاختبارات (Tests)
+
+### 8.1 Backend Tests (`apps/api/src/tests/`)
+
+**31 ملف Vitest** يختبر الـ API:
+
+| الفئة | الملفات |
+|---|---|
+| **Router tests** | `addresses-router`, `admin-mutations`, `admin-read-router`, `auth-2fa`, `auth-router`, `cart-router`, `catalog-router`, `coupons-router`, `customer-mutations`, `notifications-and-admin-products`, `notifications-router`, `orders-router`, `payments-router`, `refunds-router`, `reviews-router`, `seller-router`, `settings`, `shipping-router`, `stats-router`, `store-followers-router`, `wishlist-router` |
+| **Lib tests** | `error-codes`, `pg-wrapper`, `schema`, `search`, `security-fixes`, `test-helpers`, `test-token`, `totp`, `partial-token`, `backup-codes` |
+| **Notifications** | `notifications/email-templates` |
+| **Scripts** | `populate-product-images` |
+
+### 8.2 Frontend Tests (`apps/web/src/`)
+
+**38 ملف test** موزعة:
+
+| الفئة | العدد | الأمثلة |
+|---|---|---|
+| `__tests__/a11y/` | 3 | AdminDashboard, CustomerDashboard, ReportsAnalytics (axe-core) |
+| `components/__tests__/` | 8 | Layout, Navbar, BottomNav, Footer, ProtectedRoute, Skeletons, Toast, ErrorBoundary |
+| `context/__tests__/` | 2 | AppContext, CartContext |
+| `features/products/__tests__/` | 5 | Categories, Deals, ProductDetail, SearchResults, StorePage |
+| `features/checkout/__tests__/` | 1 | Checkout |
+| `hooks/__tests__/` | 3 | useApi, useCheckoutHooks, use-mobile |
+| `lib/__tests__/` | 4 | api, cart-sync, format, utils |
+| `lib/api/__tests__/` | 2 | client-error, error-helpers |
+| `i18n/__tests__/` | 1 | consistency |
+| `pages/__tests__/` | 9 | ForgotPassword, Login, NotFound, Register, ResetPassword, Wishlist, ui-smoke, a11y |
+
+### 8.3 E2E Tests (`apps/e2e/e2e/`)
+
+**18 PowerShell phase scripts** + **COOKBOOK.md** (982 سطر):
+
+| Phase | المحتوى |
+|---|---|
+| phase00 | Health + auth (login for all 3 roles) |
+| phase01 | Profile + addresses |
+| phase02 | Public catalog |
+| phase03 | Search + filters |
+| phase04 | Cart (add/update/remove/clear) |
+| phase05 | Orders + inventory (state transitions) |
+| phase06 | Coupons (validate + redeem) |
+| phase07 | Payments + refunds |
+| phase08 | Reviews + ratings |
+| phase09 | Wishlist + store followers |
+| phase10 | Merchant flow (CRUD products/orders) |
+| phase11 | Admin RBAC |
+| phase12 | 2FA + backup codes |
+| phase13 | Notifications + messages |
+| phase14 | Shipping methods |
+| phase15 | Audit logs |
+| phase16 | Frontend SPA (smoke tests) |
+| phase17 | Full regression |
+
+---
+
 ## Appendix A — Counts (verified):
 
 | القياس | القيمة | كيف تم التحقق |
@@ -1021,19 +1538,102 @@ TRUST_PROXY=
 | Routes in App.tsx | 33 | `grep -c "lazyPage" apps/web/src/App.tsx` |
 | SQL base files | 7 | `ls packages/db/*.sql` |
 | Migrations | 30 | `ls packages/db/migrations/` |
-| DB tables | 28 | `grep -r "CREATE TABLE" packages/db/*.sql packages/db/migrations/*.sql \| awk` |
-| PL/pgSQL functions | 8 | `grep -c "CREATE OR REPLACE FUNCTION" packages/db/functions.sql` |
-| Triggers | ~17 | `ls` في triggers.sql |
-| Views | 4 | `grep -c "CREATE OR REPLACE VIEW" packages/db/views.sql` |
-| Roles | 4 | postgres, noufex_owner, noufex_app, noufex_readonly |
-| MCP tool families | 4 | `ls apps/mcp-server/src/*-tools.ts` |
-| Docker stages | 4 | reading `Dockerfile` `FROM ... AS ...` blocks |
-| Shared workspaces | 4 | `ls packages/` |
-| Middleware exports | 14+ | `grep "^export " apps/api/src/middleware.ts` |
-| Catalog tools | 5 | `grep "^  - name:" docker/mcp-gateway/catalog.yaml` |
-| API routers mounted | 18 | `grep "app.use('/api" apps/api/src/index.ts` |
-| Zod schemas | 30+ | `grep "^export const.*Schema" apps/api/src/lib/validation.ts` |
-| Seed users | 10 | `grep "^INSERT INTO users" packages/db/seed.sql` |
-| Seed stores | 7 | `grep "^INSERT INTO stores" packages/db/seed.sql` |
-| Seed products | 24 | `grep "^INSERT INTO products" packages/db/seed.sql` |
-| Seed orders | 8 | `grep "^INSERT INTO orders" packages/db/seed.sql` |
+| DB tables | **32** | `grep -r "CREATE TABLE" packages/db/*.sql packages/db/migrations/*.sql` |
+| PL/pgSQL functions (في functions.sql) | 8 | `grep -c "CREATE OR REPLACE FUNCTION" packages/db/functions.sql` |
+| PL/pgSQL functions (في migrations) | +6 | `admin_set_app_setting`, `cleanup_audit_logs`, `consume_rate_limit`, `cleanup_rate_limits`, `cleanup_used_jtis`, `write_audit_log` |
+| **Triggers** | **32** | 17 dynamic (`trg_<table>_set_updated_at`) + 15+ explicit |
+| Views | 4 | `v_product_with_store`, `v_store_stats`, `v_order_summary`, `v_low_stock` |
+| Roles | 4 | `postgres`, `noufex_owner`, `noufex_app`, `noufex_readonly` |
+| MCP tool families | 4 | `db-tools`, `code-tools`, `api-tools`, `docs-tools` |
+| **MCP tools total** | **18** | `db_*` (9) + `code_*` (3) + `api_*` (3) + `docs_*` (3) |
+| MCP catalog tools | 5 | `db_query`, `db_schema`, `code_search`, `api_routes`, `docs_search` (في catalog.yaml) |
+| MCP resources | 1 | `architecture` (Mermaid file) |
+| MCP prompts | 2 | `audit-monorepo`, `trace-request` |
+| Frontend feature modules | 12 | `auth, products, cart, checkout, orders, home, customer, seller, admin, messages, shipping, coupons` |
+| Frontend pages | **47** | 8 public + 5 auth + 12 customer + 7 seller + 15 admin |
+| Frontend components (shared) | 12+ | `Layout, Navbar, BottomNav, Footer, ErrorBoundary, Toast, ProtectedRoute, Skeletons, ProductImage` |
+| shadcn/ui primitives | 10 | avatar, badge, button, card, dialog, input, label, separator, switch, tabs, textarea |
+| **Frontend custom hooks** | **30+** | `useDataHook + useProducts/useStores/useHomeStats/useAdmin*/...` |
+| **Backend tests (Vitest)** | **31** | في `apps/api/src/tests/` |
+| **Frontend tests (Vitest)** | **38** | في `apps/web/src/__tests__/` + components/hooks/lib/... |
+| **E2E phase scripts** | **18** | `apps/e2e/e2e/phase*.ps1` |
+| **Agent skills** | **20** | `.github/skills/` |
+| **Agent definitions** | **12** | `.github/agents/` |
+| **CI jobs** | **7** | `.github/workflows/ci.yml` |
+| Docker stages | 4 | `deps`, `api-build`, `web-build`, `runtime` |
+| Shared workspaces | 4 | `db`, `shared`, `typescript-config`, `eslint-config` |
+| Middleware exports | 14+ | في `apps/api/src/middleware.ts` |
+| API routers mounted | 18 | في `apps/api/src/index.ts` |
+| API routes (in modules + routes/) | 60+ | مجموع endpoints |
+| Zod schemas | 30+ | في `lib/validation.ts` |
+| **lib utilities** | 15 | `auth`, `error-codes`, `ratelimit`, `audit`, `totp`, `validation`, `reset-token`, `partial-token`, `settings`, `search`, `json`, `sql-helpers`, `notifications/*`, `payments/*`, `backup-codes`, `types` |
+| Notification events | 8 | `onOrderPlaced`, `onPaymentConfirmed`, `onRefundRequested/Resolved`, `onDisputeOpened/Resolved`, `onReviewPosted`, `onWelcome` |
+| Notification channels | 3 | `in_app` (default), `email`, `sms` |
+| Payment providers | 4 | `stripe`, `paymob` (real)، `stub` (fallback)، `null` (offline: cod/card/wallet/bank_transfer) |
+| Seed users | 10 | في `seed.sql` |
+| Seed stores | 7 | في `seed.sql` |
+| Seed products | 24 | في `seed.sql` |
+| Seed orders | 8 | في `seed.sql` |
+| Seed coupons | 4 | في `seed.sql` |
+| Seed categories | 18 | 7 رئيسية + 11 فرعية |
+| Seed reviews | 10 | في `seed.sql` |
+| Seed transactions | 8 | wallet ledger |
+| Seed payments | 6 | في `seed.sql` |
+| Seed shipping methods | 4 | في `seed.sql` |
+
+---
+
+## Appendix B — API Endpoints الكامل (مُجمَّع):
+
+### المُصادقة (`/api/auth/*`):
+- `POST /api/auth/register` — إنشاء حساب
+- `POST /api/auth/login` — تسجيل دخول
+- `POST /api/auth/logout` — تسجيل خروج (يب bumps token_version)
+- `GET /api/auth/me` — بيانات المستخدم الحالي
+- `PATCH /api/auth/me` — تحديث البيانات الشخصية
+- `POST /api/auth/change-password` — تغيير كلمة المرور (يب bumps token_version)
+- `POST /api/auth/forgot-password` — طلب reset
+- `POST /api/auth/reset-password` — تنفيذ reset
+- `POST /api/auth/2fa/setup` — إعداد TOTP
+- `POST /api/auth/2fa/enable` — تفعيل
+- `POST /api/auth/2fa/verify` — تحقق من partial_token + TOTP
+- `POST /api/auth/2fa/disable` — تعطيل
+
+### الكتالوج (`/api/*`):
+- `GET /api/products` — قائمة المنتجات (filter + pagination)
+- `GET /api/products/featured` — المنتجات المميزة
+- `GET /api/products/deals` — المنتجات بخصم نشط
+- `GET /api/products/:id` — تفاصيل + reviews + images
+- `GET /api/stores` — قائمة المتاجر
+- `GET /api/stores/:id` — تفاصيل + products
+- `GET /api/stores/:id/reviews` — تقييمات المتجر
+- `GET /api/categories` — شجرة الفئات
+- `GET /api/categories/:slug` — فئة + منتجاتها
+- `GET /api/search` — FTS
+
+### العميل:
+- `/api/cart/*` (5 routes)
+- `/api/wishlist/*` (3 routes)
+- `/api/orders/*` (3 routes: GET list, GET :id, POST create)
+- `/api/addresses/*` (4 routes)
+- `/api/notifications/*` (3 routes)
+- `/api/messages/*` (6 routes)
+- `/api/reviews` (GET + POST)
+
+### التاجر (`/api/seller/*`):
+- 18 routes تغطي: stores CRUD, products CRUD, orders list/status, analytics, inventory, payouts, dashboard
+
+### المشرف (`/api/admin/*`):
+- 12 GET endpoints + 1 POST maintenance + 5 PATCH mutations
+
+### أخرى:
+- `/api/store-followers/*` (3 routes)
+- `/api/payments/*` (4 routes: methods, webhook, create, order/:id, :id/confirm)
+- `/api/coupons/*` (validate, redeem)
+- `/api/refunds/*` (create + resolve)
+- `/api/shipping/methods`
+- `/api/stats/home`
+
+### System:
+- `GET /api/health` — liveness (in-memory rate-limit 30/s)
+- `GET /api/ready` — readiness (DB check مع timeout 2s)

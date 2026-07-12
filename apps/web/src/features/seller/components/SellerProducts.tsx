@@ -2,10 +2,11 @@ import { useState, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
-import { useSellerProducts } from '@/hooks/useApi';
+import { useCategories, useSellerProducts } from '@/hooks/useApi';
 import { deleteSellerProduct } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import DashboardShell from './DashboardShell';
+import { AddProductDialog } from './AddProductDialog';
 import {
 	Search,
 	Grid3X3,
@@ -101,7 +102,7 @@ function StatusBadge({ status }: { status: Product['status'] }) {
 /*  Add Product Wizard                                                 */
 /* ------------------------------------------------------------------ */
 
-function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const { t } = useTranslation();
 	const [step, setStep] = useState<WizardStep>(1);
 	const [images, setImages] = useState<string[]>([]);
@@ -825,10 +826,10 @@ function AddProductWizard({ open, onClose }: { open: boolean; onClose: () => voi
 /* ------------------------------------------------------------------ */
 
 export default function SellerProducts() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [view, setView] = useState<'grid' | 'list'>('grid');
 	const [search, setSearch] = useState('');
-	const [category, setCategory] = useState('');
+	const [category, setCategory] = useState('all');
 	const [statusFilter, setStatusFilter] = useState('all');
 	const [sortBy, setSortBy] = useState('newest');
 	const [wizardOpen, setWizardOpen] = useState(false);
@@ -837,6 +838,7 @@ export default function SellerProducts() {
 	const { addToast } = useApp();
 	const { data: sellerProductsResponse, refetch: refetchSellerProducts } =
 		useSellerProducts();
+	const { data: categoriesData } = useCategories();
 
 	/* ── Effects: map API data ── */
 	const apiProducts = useMemo<Product[]>(() => {
@@ -954,19 +956,32 @@ const deleteProduct = useCallback(
 							/>
 						</div>
 
-						{/* Category Filter */}
-						<select
-							value={category}
-							onChange={(e) => setCategory(e.target.value)}
-							aria-label={t('seller.categoryLabel', 'Category')}
-							className="px-3 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
-						>
-							{CATEGORY_KEYS.map((c) => (
-								<option key={c.key} value={c.key}>
-									{t(c.labelKey)}
-								</option>
-							))}
-						</select>
+					{/* Category Filter — live list from /api/categories */}
+					<select
+						value={category}
+						onChange={(e) => setCategory(e.target.value)}
+						aria-label={t('seller.categoryLabel', 'Category')}
+						className="px-3 py-2.5 rounded-xl border border-[#F3EDE4] focus:border-[#D4A853] outline-none text-sm font-cairo bg-white"
+					>
+						<option value="all">{t('seller.allCategories', 'All categories')}</option>
+						{((categoriesData ?? []) as Array<{
+							id: number;
+							name_ar: string;
+							name_en: string;
+							name_zh: string;
+							is_active: number;
+						}>)
+							.filter((c) => c.is_active)
+							.map((c) => {
+								const lang = (i18n.language ?? 'en').slice(0, 2) as 'ar' | 'en' | 'zh';
+								const name = c[`name_${lang}`] || c.name_en || c.name_ar;
+								return (
+									<option key={c.id} value={String(c.id)}>
+										{name}
+									</option>
+								);
+							})}
+					</select>
 
 						{/* Status Filter */}
 						<div className="flex items-center gap-1 bg-[#F8F8F8] rounded-xl p-1 overflow-x-auto">
@@ -1244,8 +1259,18 @@ const deleteProduct = useCallback(
 				)}
 			</div>
 
-			{/* Add Product Wizard */}
-			<AddProductWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
+			{/* Quick-add dialog — replaces the old multi-step wizard for
+			    fast batch entry. The legacy `AddProductWizard` (full
+			    6-step modal) is still exported and used by the
+			    `/seller/products/new` dedicated page for first-time
+			    onboarding flows. */}
+			<AddProductDialog
+				open={wizardOpen}
+				onClose={() => setWizardOpen(false)}
+				onSaved={() => {
+					void refetchSellerProducts();
+				}}
+			/>
 		</DashboardShell>
 	);
 }

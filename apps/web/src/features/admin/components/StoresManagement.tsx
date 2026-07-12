@@ -70,7 +70,14 @@ function mapAdminStoreToView(store: AdminStore): StoreRecord {
 		phone: '—',
 		category: '—',
 		status: store.is_active ? 'active' : 'suspended',
-		trustBadge: store.is_verified ? 'verified' : 'none',
+		// Map the server's trust_level CHECK enum ('verified'|'golden'|'diamond')
+		// to the local TrustBadge union. Anything else → 'none'.
+		trustBadge:
+			store.trust_level === 'verified' ||
+			store.trust_level === 'golden' ||
+			store.trust_level === 'diamond'
+				? (store.trust_level as TrustBadge)
+				: 'none',
 		rating: store.rating ?? 0,
 		productsCount: 0,
 		joinedDate: store.created_at,

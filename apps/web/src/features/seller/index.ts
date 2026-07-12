@@ -7,6 +7,9 @@ export { default as SellerDashboard } from './components/SellerDashboard';
 export { default as SellerOnboarding } from './components/SellerOnboarding';
 export { default as SellerOrders } from './components/SellerOrders';
 export { default as SellerProducts } from './components/SellerProducts';
+// G12 fix 2026-07-12: full-page host for the AddProductWizard so
+// the /seller/products/new link in SellerDashboard's header resolves.
+export { default as SellerProductNew } from './components/SellerProductNew';
 
 export {
 	addSellerProductImage,

@@ -434,49 +434,40 @@
 		"widthCm": "Width (cm)"
 	},
 	"customer": {
-		"myOrders": "طلباتي",
-		"myWishlist": "المفضلة",
-		"myReviews": "تقييماتي",
+		"orders": "طلباتي",
+		"wishlist": "المفضلة",
+		"reviews": "تقييماتي",
 		"addresses": "العناوين",
 		"notifications": "الإشعارات",
-		"profile": "الملف الشخصي",
-		"orderNumber": "رقم الطلب",
-		"orderDate": "تاريخ الطلب",
-		"orderStatus": "حالة الطلب",
-		"pending": "قيد الانتظار",
-		"processing": "قيد المعالجة",
-		"shipped": "تم الشحن",
-		"delivered": "تم التوصيل",
-		"cancelled": "ملغي",
-		"trackOrder": "تتبع الطلب",
-		"reorder": "إعادة الطلب",
+		"backToHome": "العودة للرئيسية",
+		"guest": "ضيف",
 		"dashboard": "لوحة العميل",
-		"orders": "الطلبات",
-		"wishlist": "المفضلة",
-		"reviews": "التقييمات",
-		"settings": "الإعدادات",
-		"tracking": "تتبع الطلبات",
-		"recentNotifications": "آخر الإشعارات",
-		"noOrders": "لا توجد طلبات بعد",
+		"tracking": "تتبع الطلب",
+		"noOrders": "لا توجد طلبات حتى الآن",
 		"noWishlist": "قائمة المفضلة فارغة",
 		"noNotifications": "لا توجد إشعارات",
-		"status": {
-			"label": "الحالة"
-		},
-		"timeline": {
-			"label": "تقدم الطلب",
-			"ordered": "تم الطلب",
-			"processing": "قيد المعالجة",
-			"shipped": "تم الشحن",
-			"delivered": "تم التوصيل",
-			"done": "مكتمل",
-			"pending": "قيد الانتظار"
-		},
+		"recentNotifications": "الإشعارات الأخيرة",
 		"stats": {
 			"orders": "الطلبات",
 			"wishlist": "المفضلة",
 			"reviews": "التقييمات",
 			"notifications": "الإشعارات"
+		},
+		"timeline": {
+			"label": "تقدم الطلب",
+			"ordered": "تم الطلب",
+			"processing": "قيد التجهيز",
+			"shipped": "تم الشحن",
+			"delivered": "تم التوصيل",
+			"done": "مكتمل",
+			"pending": "قيد الانتظار"
+		},
+		"status": {
+			"label": "الحالة"
+		},
+		"coupons": {},
+		"help": {
+			"faq": {}
 		}
 	},
 	"admin": {
@@ -580,81 +571,16 @@
 		}
 	},
 	"common": {
-		"productNameLabel": "اسم المنتج",
-		"productNamePlaceholder": "أدخل اسم المنتج",
-		"descriptionLabel": "وصف المنتج",
-		"dragImagesHere": "اسحب الصور هنا أو انقر للاختيار",
-		"imageLimits": "PNG, JPG حتى ٥ ميجا — بحد أقصى ٨ صور",
-		"comparePriceLabel": "سعر المقارنة",
-		"costLabel": "التكلفة",
-		"stockLabel": "المخزون",
-		"skuPlaceholder": "رمز المنتج",
-		"barcodeLabel": "الباركود",
-		"barcodePlaceholder": "أو اقرأ باستخدام الماسح الضوئي",
-		"variantNameLabel": "اسم المتغير",
-		"variantValuesLabel": "القيم (مفصولة بفاصلة)",
-		"variantValuesPlaceholder": "أحمر، أزرق، أخضر",
-		"weightKg": "الوزن (كجم)",
-		"lengthCm": "الطول (سم)",
-		"variantHelpText": "أضف متغيرات للمنتج مثل اللون والمقاس",
-		"readyToPublish": "جاهز للنشر",
-		"reviewBeforePublish": "راجع معلومات المنتج قبل النشر",
-		"reviewProductName": "اسم المنتج",
-		"reviewStatus": "الحالة",
-		"noProducts": "لا توجد منتجات",
-		"noProductsMatch": "لم يتم العثور على منتجات تطابق معايير البحث",
-		"resetFilters": "إعادة ضبط الفلاتر",
-		"inStock": "متوفر",
-		"thImage": "صورة",
-		"thProductName": "اسم المنتج",
-		"thPrice": "السعر",
-		"thStock": "المخزون",
-		"thStatus": "الحالة",
-		"thSales": "المبيعات",
-		"thActions": "إجراءات",
-		"statusActive": "نشط",
-		"statusLow": "منخفض",
-		"statusOut": "نفذ",
-		"statusDisabled": "معطل",
-		"catElectronics": "إلكترونيات",
-		"catFashion": "موضة",
-		"catFood": "غذائية",
-		"catJewelry": "مجوهرات",
-		"catHome": "منزلية",
+		"loading": "جاري التحميل…",
+		"retry": "إعادة المحاولة",
+		"updating": "جارٍ التحديث…",
 		"search": "بحث",
-		"filter": "تصفية",
-		"sortBy": "ترتيب حسب",
-		"save": "حفظ",
-		"cancel": "إلغاء",
-		"delete": "حذف",
-		"edit": "تعديل",
-		"view": "عرض",
-		"loading": "جاري التحميل...",
-		"error": "خطأ",
-		"success": "نجاح",
-		"submit": "إرسال",
+		"viewAll": "عرض الكل",
+		"items": "عناصر",
 		"close": "إغلاق",
 		"menu": "القائمة",
-		"expand": "توسيع",
-		"collapse": "طي",
-		"back": "رجوع",
-		"next": "التالي",
-		"yes": "نعم",
-		"no": "لا",
-		"confirm": "تأكيد",
-		"warning": "تحذير",
-		"welcome": "مرحباً",
-		"hello": "أهلاً",
-		"guest": "زائر",
-		"showMore": "عرض المزيد",
-		"showLess": "عرض أقل",
-		"noResults": "لا توجد نتائج",
-		"tryAgain": "حاول مرة أخرى",
-		"viewAll": "عرض الكل",
-		"all": "All",
-		"backToHome": "Back to home",
-		"items": "",
-		"remove": "Remove"
+		"collapse": "طي القائمة",
+		"expand": "توسيع القائمة"
 	},
 	"trust": {
 		"noufProtect": "نوف بروتكت",
@@ -1214,57 +1140,8 @@
 		"excellent": "ممتاز"
 	},
 	"store": {
-		"loading": "جاري التحميل...",
-		"notFound": "المتجر غير موجود",
-		"contactUs": "تواصل معنا",
-		"follow": "متابعة",
-		"share": "مشاركة",
-		"stats": {
-			"products": "المنتجات",
-			"transactions": "المبيعات",
-			"responseRate": "معدل الاستجابة",
-			"onTimeDelivery": "التسليم في الوقت"
-		},
-		"tabs": {
-			"products": "المنتجات",
-			"profile": "ملف الشركة",
-			"markets": "الأسواق الرئيسية"
-		},
-		"searchPlaceholder": "ابحث في المتجر...",
-		"sortDefault": "افتراضي",
-		"sortPriceLow": "السعر: من الأقل إلى الأعلى",
-		"sortPriceHigh": "السعر: من الأعلى إلى الأقل",
-		"sortRating": "التقييم",
-		"emptyProducts": "لا توجد منتجات",
-		"profileTitle": "معلومات الشركة",
-		"companyName": "اسم المتجر",
-		"location": "الموقع",
-		"established": "تأسس في",
-		"website": "الموقع الإلكتروني",
-		"phone": "الهاتف",
-		"capabilities": "القدرات والشهادات",
-		"capShipping": "شحن إلى أكثر من 50 دولة حول العالم",
-		"capOem": "تصنيع حسب الطلب (OEM/ODM)",
-		"capSupport": "فريق دعم فني على مدار الساعة",
-		"capQuality": "شهادات جودة دولية (ISO 9001)",
-		"capAudit": "تدقيق مصنع سنوي",
-		"marketsTitle": "الأسواق الرئيسية",
-		"totalExport": "إجمالي الصادرات",
-		"totalExportDesc": "لقد صدرت {store} منتجاتها إلى أكثر من 25 دولة حول العالم، مع أكثر من {count}K معاملة ناجحة.",
-		"badgeVerified": "موثق",
-		"badgeGold": "مورد ذهبي",
-		"badgeDiamond": "مورد ألماسي",
-		"yearsUnit": "سنة",
-		"countrySaudi": "المملكة العربية السعودية",
-		"countryUae": "الإمارات العربية المتحدة",
-		"countryKuwait": "الكويت",
-		"countryQatar": "قطر",
-		"countryUs": "الولايات المتحدة",
-		"countryUk": "المملكة المتحدة",
-		"countryMalaysia": "ماليزيا",
-		"categoryFallback": "فئة {id}",
-		"allCategories": "All categories",
-		"sortByLabel": "Sort by"
+		"badgeFastShipping": "شحن سريع",
+		"badgeEasyReturns": "إرجاع سهل"
 	},
 	"reviews": {
 		"title": "تقييماتي",
@@ -1296,6 +1173,7 @@
 	},
 	"errors": {
 		"notFound": {
+			"title": "Page not found",
 			"desc": "The page you are looking for does not exist or has been moved."
 		}
 	},
@@ -1323,24 +1201,6 @@
 		"monthsAgo": "منذ {{count}} شهر",
 		"yearsAgo": "منذ {{count}} سنة"
 	},
-	"common": {
-		"loading": "جاري التحميل…",
-		"retry": "إعادة المحاولة",
-		"updating": "جارٍ التحديث…"
-	},
-	"customer": {
-		"orders": "طلباتي",
-		"wishlist": "المفضلة",
-		"reviews": "تقييماتي",
-		"addresses": "العناوين",
-		"notifications": "الإشعارات",
-		"backToHome": "العودة للرئيسية",
-		"guest": "ضيف"
-	},
-	"store": {
-		"badgeFastShipping": "شحن سريع",
-		"badgeEasyReturns": "إرجاع سهل"
-	},
 	"wishlist": {
 		"title": "المفضلة",
 		"subtitle": "المنتجات التي حفظتها",
@@ -1356,11 +1216,5 @@
 		"discount": "{{percent}}% خصم",
 		"removeError": "تعذّر حذف المنتج. حاول مرة أخرى.",
 		"moveToCartError": "تعذّر نقل المنتج إلى السلة. حاول مرة أخرى."
-	},
-	"errors": {
-		"notFound": {
-			"title": "Page not found",
-			"desc": "The page you are looking for does not exist or has been moved."
-		}
 	}
 }

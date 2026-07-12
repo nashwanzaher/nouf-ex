@@ -165,8 +165,21 @@ export default function CustomerOrders() {
 	const { t, i18n } = useTranslation();
 	const { isAuthenticated } = useAuth();
 	const [searchParams, setSearchParams] = useSearchParams();
-	const [activeFilter, setActiveFilter] = useState<'all' | OrderStatus>('all');
+	// Read initial status from URL (?status=pending|confirmed|...) so the
+	// dashboard's status-lane cards can deep-link into a pre-filtered list.
+	const urlStatus = (searchParams.get('status') as OrderStatus | null) ?? null;
+	const [activeFilter, setActiveFilter] = useState<'all' | OrderStatus>(
+		urlStatus ?? 'all',
+	);
 	const [expandedId, setExpandedId] = useState<string | null>(null);
+
+	const updateFilter = (next: 'all' | OrderStatus) => {
+		setActiveFilter(next);
+		const sp = new URLSearchParams(searchParams);
+		if (next === 'all') sp.delete('status');
+		else sp.set('status', next);
+		setSearchParams(sp, { replace: true });
+	};
 
 	const { data: ordersData, loading, error, refetch } = useOrders();
 	// `ordersData` is `T | null` per HookResult. The destructure
@@ -280,7 +293,7 @@ export default function CustomerOrders() {
 						{statusFilters.map((f) => (
 							<button
 								key={f.key}
-								onClick={() => setActiveFilter(f.key)}
+								onClick={() => updateFilter(f.key)}
 								className={`px-4 py-2 rounded-full text-sm font-cairo font-medium whitespace-nowrap transition-colors ${
 									activeFilter === f.key
 										? 'bg-[#D4A853] text-[#1A1612]'
@@ -391,6 +404,12 @@ export default function CustomerOrders() {
 																| 'zh',
 														})}
 													</p>
+													<Link
+														to={`/customer/orders/${order.id}`}
+														className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#D4A853]/10 text-[#D4A853] hover:bg-[#D4A853] hover:text-white text-xs font-bold transition-colors"
+													>
+														{t('customer.viewInvoice', 'View details')}
+													</Link>
 													<button
 														type="button"
 														onClick={() =>

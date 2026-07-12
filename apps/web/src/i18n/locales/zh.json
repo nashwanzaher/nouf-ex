@@ -434,34 +434,24 @@
 		"widthCm": "Width (cm)"
 	},
 	"customer": {
-		"myOrders": "我的订单",
-		"myWishlist": "我的收藏",
-		"myReviews": "我的评价",
-		"addresses": "收货地址",
+		"orders": "我的订单",
+		"wishlist": "收藏夹",
+		"reviews": "我的评价",
+		"addresses": "地址",
 		"notifications": "通知",
-		"profile": "个人资料",
-		"orderNumber": "订单号",
-		"orderDate": "下单日期",
-		"orderStatus": "订单状态",
-		"pending": "待处理",
-		"processing": "处理中",
-		"shipped": "已发货",
-		"delivered": "已送达",
-		"cancelled": "已取消",
-		"trackOrder": "追踪订单",
-		"reorder": "再次购买",
-		"dashboard": "客户面板",
-		"orders": "订单",
-		"wishlist": "收藏",
-		"reviews": "评价",
-		"settings": "设置",
+		"backToHome": "返回首页",
+		"guest": "访客",
+		"dashboard": "客户仪表板",
 		"tracking": "订单跟踪",
-		"recentNotifications": "最新通知",
 		"noOrders": "暂无订单",
-		"noWishlist": "收藏列表为空",
+		"noWishlist": "收藏夹为空",
 		"noNotifications": "暂无通知",
-		"status": {
-			"label": "状态"
+		"recentNotifications": "最近通知",
+		"stats": {
+			"orders": "订单",
+			"wishlist": "收藏",
+			"reviews": "评价",
+			"notifications": "通知"
 		},
 		"timeline": {
 			"label": "订单进度",
@@ -470,13 +460,14 @@
 			"shipped": "已发货",
 			"delivered": "已送达",
 			"done": "已完成",
-			"pending": "等待中"
+			"pending": "待处理"
 		},
-		"stats": {
-			"orders": "订单",
-			"wishlist": "收藏",
-			"reviews": "评价",
-			"notifications": "通知"
+		"status": {
+			"label": "状态"
+		},
+		"coupons": {},
+		"help": {
+			"faq": {}
 		}
 	},
 	"admin": {
@@ -580,81 +571,16 @@
 		}
 	},
 	"common": {
-		"productNameLabel": "商品名称",
-		"productNamePlaceholder": "请输入商品名称",
-		"descriptionLabel": "商品描述",
-		"dragImagesHere": "拖拽图片到此处或点击选择",
-		"imageLimits": "PNG、JPG 格式，最大 5MB，最多 8 张图片",
-		"comparePriceLabel": "对比价格",
-		"costLabel": "成本",
-		"stockLabel": "库存",
-		"skuPlaceholder": "商品 SKU",
-		"barcodeLabel": "条形码",
-		"barcodePlaceholder": "或使用扫描枪扫描",
-		"variantNameLabel": "规格名称",
-		"variantValuesLabel": "规格值（逗号分隔）",
-		"variantValuesPlaceholder": "红、蓝、绿",
-		"weightKg": "重量 (kg)",
-		"lengthCm": "长度 (cm)",
-		"variantHelpText": "添加规格，如颜色和尺寸",
-		"readyToPublish": "准备发布",
-		"reviewBeforePublish": "发布前请检查商品信息",
-		"reviewProductName": "商品名称",
-		"reviewStatus": "状态",
-		"noProducts": "暂无商品",
-		"noProductsMatch": "未找到符合搜索条件的商品",
-		"resetFilters": "重置筛选",
-		"inStock": "有货",
-		"thImage": "图片",
-		"thProductName": "商品名称",
-		"thPrice": "价格",
-		"thStock": "库存",
-		"thStatus": "状态",
-		"thSales": "销量",
-		"thActions": "操作",
-		"statusActive": "在售",
-		"statusLow": "库存少",
-		"statusOut": "缺货",
-		"statusDisabled": "已下架",
-		"catElectronics": "电子产品",
-		"catFashion": "服装",
-		"catFood": "食品",
-		"catJewelry": "珠宝",
-		"catHome": "家居",
+		"loading": "加载中…",
+		"retry": "重试",
+		"updating": "更新中…",
 		"search": "搜索",
-		"filter": "筛选",
-		"sortBy": "排序",
-		"save": "保存",
-		"cancel": "取消",
-		"delete": "删除",
-		"edit": "编辑",
-		"view": "查看",
-		"loading": "加载中...",
-		"error": "错误",
-		"success": "成功",
-		"submit": "提交",
+		"viewAll": "查看全部",
+		"items": "件",
 		"close": "关闭",
 		"menu": "菜单",
-		"expand": "展开",
-		"collapse": "折叠",
-		"back": "返回",
-		"next": "下一步",
-		"yes": "是",
-		"no": "否",
-		"confirm": "确认",
-		"warning": "警告",
-		"welcome": "欢迎",
-		"hello": "你好",
-		"guest": "访客",
-		"showMore": "显示更多",
-		"showLess": "收起",
-		"noResults": "未找到结果",
-		"tryAgain": "重试",
-		"viewAll": "查看全部",
-		"all": "All",
-		"backToHome": "Back to home",
-		"items": "",
-		"remove": "Remove"
+		"collapse": "收起侧边栏",
+		"expand": "展开侧边栏"
 	},
 	"trust": {
 		"noufProtect": "Nouf-Protect保护",
@@ -1214,57 +1140,8 @@
 		"excellent": "极强"
 	},
 	"store": {
-		"loading": "加载中...",
-		"notFound": "商店不存在",
-		"contactUs": "联系我们",
-		"follow": "关注",
-		"share": "分享",
-		"stats": {
-			"products": "商品",
-			"transactions": "交易",
-			"responseRate": "回复率",
-			"onTimeDelivery": "准时发货"
-		},
-		"tabs": {
-			"products": "商品",
-			"profile": "公司档案",
-			"markets": "主要市场"
-		},
-		"searchPlaceholder": "搜索店铺...",
-		"sortDefault": "默认",
-		"sortPriceLow": "价格：从低到高",
-		"sortPriceHigh": "价格：从高到低",
-		"sortRating": "评分",
-		"emptyProducts": "暂无商品",
-		"profileTitle": "公司信息",
-		"companyName": "店铺名称",
-		"location": "所在地",
-		"established": "成立时间",
-		"website": "网站",
-		"phone": "电话",
-		"capabilities": "能力与认证",
-		"capShipping": "出口至全球50+国家",
-		"capOem": "支持OEM/ODM定制",
-		"capSupport": "全天候技术支持团队",
-		"capQuality": "国际质量认证（ISO 9001）",
-		"capAudit": "年度工厂审核",
-		"marketsTitle": "主要出口市场",
-		"totalExport": "总出口量",
-		"totalExportDesc": "{store}已向全球25+国家出口商品，完成{count}K+成功交易。",
-		"badgeVerified": "已认证",
-		"badgeGold": "金牌供应商",
-		"badgeDiamond": "钻石供应商",
-		"yearsUnit": "年",
-		"countrySaudi": "沙特阿拉伯",
-		"countryUae": "阿联酋",
-		"countryKuwait": "科威特",
-		"countryQatar": "卡塔尔",
-		"countryUs": "美国",
-		"countryUk": "英国",
-		"countryMalaysia": "马来西亚",
-		"categoryFallback": "分类 {id}",
-		"allCategories": "All categories",
-		"sortByLabel": "Sort by"
+		"badgeFastShipping": "快速配送",
+		"badgeEasyReturns": "轻松退货"
 	},
 	"reviews": {
 		"title": "我的评价",
@@ -1296,6 +1173,7 @@
 	},
 	"errors": {
 		"notFound": {
+			"title": "Page not found",
 			"desc": "The page you are looking for does not exist or has been moved."
 		}
 	},
@@ -1323,24 +1201,6 @@
 		"monthsAgo": "{{count}} 个月前",
 		"yearsAgo": "{{count}} 年前"
 	},
-	"common": {
-		"loading": "加载中…",
-		"retry": "重试",
-		"updating": "更新中…"
-	},
-	"customer": {
-		"orders": "我的订单",
-		"wishlist": "收藏夹",
-		"reviews": "我的评价",
-		"addresses": "地址",
-		"notifications": "通知",
-		"backToHome": "返回首页",
-		"guest": "访客"
-	},
-	"store": {
-		"badgeFastShipping": "快速配送",
-		"badgeEasyReturns": "轻松退货"
-	},
 	"wishlist": {
 		"title": "收藏夹",
 		"subtitle": "您保存的商品",
@@ -1356,11 +1216,5 @@
 		"discount": "{{percent}}% 折扣",
 		"removeError": "删除商品失败。请重试。",
 		"moveToCartError": "将商品移至购物车失败。请重试。"
-	},
-	"errors": {
-		"notFound": {
-			"title": "Page not found",
-			"desc": "The page you are looking for does not exist or has been moved."
-		}
 	}
 }

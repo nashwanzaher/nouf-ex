@@ -1,12 +1,12 @@
 /**
- * Nouf-ex Ù?¤ Seller (merchant self-service) API.
+ * Nouf-ex ï¿½?ï¿½ Seller (merchant self-service) API.
  *
  * Mounted by server/index.ts at `/api/seller`. Every route below
- * requires a `merchant` (or admin) role Ù?¤ the middleware chain is
+ * requires a `merchant` (or admin) role ï¿½?ï¿½ the middleware chain is
  * `[requireAuth, requireRole('merchant', 'admin')]`.
  *
- * C.3 in MASTER_PLAN.md Ù?¤ closes the 12 missing seller endpoints
- * documented in phase10_merchant_flow.ps1 ?Ï3.
+ * C.3 in MASTER_PLAN.md ï¿½?ï¿½ closes the 12 missing seller endpoints
+ * documented in phase10_merchant_flow.ps1 ?ï¿½3.
  *
  * Security model:
  *   - A merchant can only see/edit their OWN store's products, orders,
@@ -61,11 +61,11 @@ async function getMerchantStoreId(req: Request, res: Response): Promise<number |
 	return id;
 }
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-//  STORE Ù?¤ merchant edits their own store
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+//  STORE ï¿½?ï¿½ merchant edits their own store
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
-/** GET /api/seller/stores/me Ù?¤ return my store. 404 if none. */
+/** GET /api/seller/stores/me ï¿½?ï¿½ return my store. 404 if none. */
 sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const storeId = await getMerchantStoreId(req, res);
@@ -80,7 +80,7 @@ sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response
 });
 
 /**
- * POST /api/seller/stores Ù?¤ G2 fix 2026-07-11.
+ * POST /api/seller/stores ï¿½?ï¿½ G2 fix 2026-07-11.
  *
  * Creates the caller's first store. The endpoint is the missing
  * piece in the seller onboarding chain:
@@ -93,7 +93,7 @@ sellerRouter.get('/stores/me', ...sellerAuth, async (req: Request, res: Response
  *
  * Ownership is the entire security model: this route is open to any
  * authenticated user with role 'merchant' (or 'admin'). The merchant
- * is always the owner Ù?¤ `owner_id` is taken from `req.user.id`, never
+ * is always the owner ï¿½?ï¿½ `owner_id` is taken from `req.user.id`, never
  * from the request body.
  *
  * Idempotency: a second call by the same user returns 409 with code
@@ -184,7 +184,7 @@ sellerRouter.post('/stores', ...sellerAuth, async (req: Request, res: Response) 
 	}
 });
 
-/** PATCH /api/seller/stores/:id Ù?¤ update my store. */
+/** PATCH /api/seller/stores/:id ï¿½?ï¿½ update my store. */
 sellerRouter.patch('/stores/:id', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
@@ -214,11 +214,11 @@ sellerRouter.patch('/stores/:id', ...sellerAuth, async (req: Request, res: Respo
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-//  PRODUCTS Ù?¤ merchant creates/edits/deletes their own products
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+//  PRODUCTS ï¿½?ï¿½ merchant creates/edits/deletes their own products
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
-/** POST /api/seller/products Ù?¤ create a new product under my store. */
+/** POST /api/seller/products ï¿½?ï¿½ create a new product under my store. */
 sellerRouter.post('/products', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const storeId = await getMerchantStoreId(req, res);
@@ -239,11 +239,11 @@ sellerRouter.post('/products', ...sellerAuth, async (req: Request, res: Response
 		const result = (await db
 			.prepare(
 				`INSERT INTO products
-             (store_id, category_id, name_ar, name_en, name_zh, slug, sku,
+             (store_id, category_id, name_ar, name_en, name_zh,
               price, original_price, stock, description, main_image,
-              images, features, badges, metadata, is_active, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, ?::jsonb, TRUE, NOW(), NOW())
-           RETURNING id`,
+              features, badges, specifications, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb, TRUE, NOW(), NOW())
+            RETURNING id`,
 			)
 			.get(
 				storeId,
@@ -251,17 +251,14 @@ sellerRouter.post('/products', ...sellerAuth, async (req: Request, res: Response
 				data.name_ar,
 				data.name_en ?? null,
 				data.name_zh ?? null,
-				data.slug,
-				data.sku ?? null,
 				data.price,
 				data.original_price ?? null,
 				data.stock,
 				data.description ?? null,
 				data.main_image ?? null,
-				JSON.stringify(data.images ?? []),
 				JSON.stringify(data.features ?? []),
 				JSON.stringify(data.badges ?? []),
-				JSON.stringify(data.metadata ?? {}),
+				JSON.stringify(data.specifications ?? {}),
 			)) as { id: number };
 		await writeAuditLog(req, 'product.create', 'products', result.id, null, data);
 		return sendSuccess(res, { id: result.id }, 'Product created');
@@ -272,7 +269,7 @@ sellerRouter.post('/products', ...sellerAuth, async (req: Request, res: Response
 	}
 });
 
-/** GET /api/seller/products Ù?¤ list MY store's products (paginated). */
+/** GET /api/seller/products ï¿½?ï¿½ list MY store's products (paginated). */
 sellerRouter.get('/products', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const storeId = await getMerchantStoreId(req, res);
@@ -295,7 +292,7 @@ sellerRouter.get('/products', ...sellerAuth, async (req: Request, res: Response)
 	}
 });
 
-/** GET /api/seller/products/:id Ù?¤ get one of my products. */
+/** GET /api/seller/products/:id ï¿½?ï¿½ get one of my products. */
 sellerRouter.get('/products/:id', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(sellerProductIdParamSchema, req.params);
@@ -315,7 +312,7 @@ sellerRouter.get('/products/:id', ...sellerAuth, async (req: Request, res: Respo
 	}
 });
 
-/** PATCH /api/seller/products/:id Ù?¤ partial update. */
+/** PATCH /api/seller/products/:id ï¿½?ï¿½ partial update. */
 sellerRouter.patch('/products/:id', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(sellerProductIdParamSchema, req.params);
@@ -344,7 +341,7 @@ sellerRouter.patch('/products/:id', ...sellerAuth, async (req: Request, res: Res
 	}
 });
 
-/** DELETE /api/seller/products/:id Ù?¤ soft-delete (sets deleted_at). */
+/** DELETE /api/seller/products/:id ï¿½?ï¿½ soft-delete (sets deleted_at). */
 sellerRouter.delete('/products/:id', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(sellerProductIdParamSchema, req.params);
@@ -368,7 +365,7 @@ sellerRouter.delete('/products/:id', ...sellerAuth, async (req: Request, res: Re
 	}
 });
 
-/** POST /api/seller/products/:id/images Ù?¤ add an image to one of my products. */
+/** POST /api/seller/products/:id/images ï¿½?ï¿½ add an image to one of my products. */
 sellerRouter.post('/products/:id/images', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(sellerProductIdParamSchema, req.params);
@@ -403,11 +400,11 @@ sellerRouter.post('/products/:id/images', ...sellerAuth, async (req: Request, re
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-//  ORDERS Ù?¤ merchant sees and updates orders for their store
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+//  ORDERS ï¿½?ï¿½ merchant sees and updates orders for their store
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
-/** GET /api/seller/orders Ù?¤ list orders for my store. */
+/** GET /api/seller/orders ï¿½?ï¿½ list orders for my store. */
 sellerRouter.get('/orders', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const storeId = await getMerchantStoreId(req, res);
@@ -450,7 +447,7 @@ sellerRouter.get('/orders', ...sellerAuth, async (req: Request, res: Response) =
 	}
 });
 
-/** GET /api/seller/orders/:id Ù?¤ get one of my orders. */
+/** GET /api/seller/orders/:id ï¿½?ï¿½ get one of my orders. */
 sellerRouter.get('/orders/:id', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
@@ -470,7 +467,7 @@ sellerRouter.get('/orders/:id', ...sellerAuth, async (req: Request, res: Respons
 	}
 });
 
-/** POST /api/seller/orders/:id/status Ù?¤ update order status. */
+/** POST /api/seller/orders/:id/status ï¿½?ï¿½ update order status. */
 sellerRouter.post('/orders/:id/status', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
@@ -485,7 +482,7 @@ sellerRouter.post('/orders/:id/status', ...sellerAuth, async (req: Request, res:
 		const v = validate(sellerOrderStatusUpdateSchema, req.body);
 		if (!v.ok) return sendError(res, 'Invalid input: ' + v.error, 400);
 		const data = v.data;
-		// Forward-only state machine: confirmed Ù?ú processing Ù?ú shipped Ù?ú delivered
+		// Forward-only state machine: confirmed ï¿½?ï¿½ processing ï¿½?ï¿½ shipped ï¿½?ï¿½ delivered
 		// (cancelled is allowed from any pre-shipped state). Reject any backward
 		// transition so the merchant can't accidentally un-cancel.
 		const allowed: Record<string, string[]> = {
@@ -535,11 +532,11 @@ sellerRouter.post('/orders/:id/status', ...sellerAuth, async (req: Request, res:
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-//  ANALYTICS + INVENTORY + PAYOUTS Ù?¤ read-only seller dashboards
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+//  ANALYTICS + INVENTORY + PAYOUTS ï¿½?ï¿½ read-only seller dashboards
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 
-/** GET /api/seller/analytics Ù?¤ sales KPIs for my store. */
+/** GET /api/seller/analytics ï¿½?ï¿½ sales KPIs for my store. */
 sellerRouter.get('/analytics', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const myStoreId = await getMerchantStoreId(req, res);
@@ -580,7 +577,7 @@ sellerRouter.get('/analytics', ...sellerAuth, async (req: Request, res: Response
 	}
 });
 
-/** GET /api/seller/inventory Ù?¤ stock levels for my products. */
+/** GET /api/seller/inventory ï¿½?ï¿½ stock levels for my products. */
 sellerRouter.get('/inventory', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const myStoreId = await getMerchantStoreId(req, res);
@@ -604,7 +601,7 @@ sellerRouter.get('/inventory', ...sellerAuth, async (req: Request, res: Response
 	}
 });
 
-/** GET /api/seller/payouts Ù?¤ recent store_balance transactions. */
+/** GET /api/seller/payouts ï¿½?ï¿½ recent store_balance transactions. */
 sellerRouter.get('/payouts', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		const myStoreId = await getMerchantStoreId(req, res);
@@ -637,7 +634,7 @@ sellerRouter.get('/payouts', ...sellerAuth, async (req: Request, res: Response) 
 	}
 });
 
-/** GET /api/seller/dashboard Ù?¤ KPIs rollup (alias for /analytics). */
+/** GET /api/seller/dashboard ï¿½?ï¿½ KPIs rollup (alias for /analytics). */
 sellerRouter.get('/dashboard', ...sellerAuth, async (req: Request, res: Response) => {
 	try {
 		// Forward to /analytics internally

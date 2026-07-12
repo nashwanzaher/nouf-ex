@@ -434,34 +434,24 @@
 		"widthCm": "Width (cm)"
 	},
 	"customer": {
-		"myOrders": "My Orders",
-		"myWishlist": "My Wishlist",
-		"myReviews": "My Reviews",
+		"orders": "My Orders",
+		"wishlist": "Wishlist",
+		"reviews": "My Reviews",
 		"addresses": "Addresses",
 		"notifications": "Notifications",
-		"profile": "Profile",
-		"orderNumber": "Order #",
-		"orderDate": "Order Date",
-		"orderStatus": "Status",
-		"pending": "Pending",
-		"processing": "Processing",
-		"shipped": "Shipped",
-		"delivered": "Delivered",
-		"cancelled": "Cancelled",
-		"trackOrder": "Track Order",
-		"reorder": "Reorder",
+		"backToHome": "Back to Home",
+		"guest": "Guest",
 		"dashboard": "Customer Dashboard",
-		"orders": "Orders",
-		"wishlist": "Wishlist",
-		"reviews": "Reviews",
-		"settings": "Settings",
 		"tracking": "Order Tracking",
-		"recentNotifications": "Recent Notifications",
 		"noOrders": "No orders yet",
 		"noWishlist": "Wishlist is empty",
 		"noNotifications": "No notifications",
-		"status": {
-			"label": "Status"
+		"recentNotifications": "Recent Notifications",
+		"stats": {
+			"orders": "Orders",
+			"wishlist": "Wishlist",
+			"reviews": "Reviews",
+			"notifications": "Notifications"
 		},
 		"timeline": {
 			"label": "Order progress",
@@ -472,11 +462,12 @@
 			"done": "done",
 			"pending": "pending"
 		},
-		"stats": {
-			"orders": "Orders",
-			"wishlist": "Wishlist",
-			"reviews": "Reviews",
-			"notifications": "Notifications"
+		"status": {
+			"label": "Status"
+		},
+		"coupons": {},
+		"help": {
+			"faq": {}
 		}
 	},
 	"admin": {
@@ -580,81 +571,16 @@
 		}
 	},
 	"common": {
-		"productNameLabel": "Product name",
-		"productNamePlaceholder": "Enter product name",
-		"descriptionLabel": "Product description",
-		"dragImagesHere": "Drag images here or click to select",
-		"imageLimits": "PNG, JPG up to 5MB — max 8 images",
-		"comparePriceLabel": "Compare-at price",
-		"costLabel": "Cost",
-		"stockLabel": "Stock",
-		"skuPlaceholder": "Product SKU",
-		"barcodeLabel": "Barcode",
-		"barcodePlaceholder": "Or scan with scanner",
-		"variantNameLabel": "Variant name",
-		"variantValuesLabel": "Values (comma-separated)",
-		"variantValuesPlaceholder": "red, blue, green",
-		"weightKg": "Weight (kg)",
-		"lengthCm": "Length (cm)",
-		"variantHelpText": "Add variants like color and size",
-		"readyToPublish": "Ready to publish",
-		"reviewBeforePublish": "Review product info before publishing",
-		"reviewProductName": "Product name",
-		"reviewStatus": "Status",
-		"noProducts": "No products",
-		"noProductsMatch": "No products match your search criteria",
-		"resetFilters": "Reset filters",
-		"inStock": "in stock",
-		"thImage": "Image",
-		"thProductName": "Product name",
-		"thPrice": "Price",
-		"thStock": "Stock",
-		"thStatus": "Status",
-		"thSales": "Sales",
-		"thActions": "Actions",
-		"statusActive": "Active",
-		"statusLow": "Low",
-		"statusOut": "Out",
-		"statusDisabled": "Disabled",
-		"catElectronics": "Electronics",
-		"catFashion": "Fashion",
-		"catFood": "Food",
-		"catJewelry": "Jewelry",
-		"catHome": "Home",
+		"loading": "Loading…",
+		"retry": "Retry",
+		"updating": "Updating…",
 		"search": "Search",
-		"filter": "Filter",
-		"sortBy": "Sort by",
-		"save": "Save",
-		"cancel": "Cancel",
-		"delete": "Delete",
-		"edit": "Edit",
-		"view": "View",
-		"loading": "Loading...",
-		"error": "Error",
-		"success": "Success",
-		"submit": "Submit",
+		"viewAll": "View All",
+		"items": "items",
 		"close": "Close",
 		"menu": "Menu",
-		"expand": "Expand",
-		"collapse": "Collapse",
-		"back": "Back",
-		"next": "Next",
-		"yes": "Yes",
-		"no": "No",
-		"confirm": "Confirm",
-		"warning": "Warning",
-		"welcome": "Welcome",
-		"hello": "Hello",
-		"guest": "Guest",
-		"showMore": "Show More",
-		"showLess": "Show Less",
-		"noResults": "No results found",
-		"tryAgain": "Try again",
-		"viewAll": "View All",
-		"all": "All",
-		"backToHome": "Back to home",
-		"items": "",
-		"remove": "Remove"
+		"collapse": "Collapse sidebar",
+		"expand": "Expand sidebar"
 	},
 	"trust": {
 		"noufProtect": "Nouf-Protect",
@@ -1214,57 +1140,8 @@
 		"excellent": "Excellent"
 	},
 	"store": {
-		"loading": "Loading...",
-		"notFound": "Store not found",
-		"contactUs": "Contact Us",
-		"follow": "Follow",
-		"share": "Share",
-		"stats": {
-			"products": "Products",
-			"transactions": "Transactions",
-			"responseRate": "Response Rate",
-			"onTimeDelivery": "On-time Delivery"
-		},
-		"tabs": {
-			"products": "Products",
-			"profile": "Company Profile",
-			"markets": "Main Markets"
-		},
-		"searchPlaceholder": "Search in store...",
-		"sortDefault": "Default",
-		"sortPriceLow": "Price: Low to High",
-		"sortPriceHigh": "Price: High to Low",
-		"sortRating": "Rating",
-		"emptyProducts": "No products found",
-		"profileTitle": "Company Information",
-		"companyName": "Store Name",
-		"location": "Location",
-		"established": "Established",
-		"website": "Website",
-		"phone": "Phone",
-		"capabilities": "Capabilities & Certifications",
-		"capShipping": "Shipping to 50+ countries worldwide",
-		"capOem": "OEM/ODM Manufacturing Available",
-		"capSupport": "24/7 Technical Support Team",
-		"capQuality": "International Quality Certifications (ISO 9001)",
-		"capAudit": "Annual Factory Audits",
-		"marketsTitle": "Main Export Markets",
-		"totalExport": "Total Export Volume",
-		"totalExportDesc": "{store} has exported products to over 25 countries worldwide, with {count}K+ successful transactions.",
-		"badgeVerified": "Verified",
-		"badgeGold": "Gold Supplier",
-		"badgeDiamond": "Diamond Supplier",
-		"yearsUnit": "yrs",
-		"countrySaudi": "Saudi Arabia",
-		"countryUae": "UAE",
-		"countryKuwait": "Kuwait",
-		"countryQatar": "Qatar",
-		"countryUs": "United States",
-		"countryUk": "United Kingdom",
-		"countryMalaysia": "Malaysia",
-		"categoryFallback": "Category {id}",
-		"allCategories": "All categories",
-		"sortByLabel": "Sort by"
+		"badgeFastShipping": "Fast Shipping",
+		"badgeEasyReturns": "Easy Returns"
 	},
 	"reviews": {
 		"title": "My Reviews",
@@ -1296,6 +1173,7 @@
 	},
 	"errors": {
 		"notFound": {
+			"title": "Page not found",
 			"desc": "The page you are looking for does not exist or has been moved."
 		}
 	},
@@ -1323,24 +1201,6 @@
 		"monthsAgo": "{{count}} months ago",
 		"yearsAgo": "{{count}} years ago"
 	},
-	"common": {
-		"loading": "Loading…",
-		"retry": "Retry",
-		"updating": "Updating…"
-	},
-	"customer": {
-		"orders": "My Orders",
-		"wishlist": "Wishlist",
-		"reviews": "My Reviews",
-		"addresses": "Addresses",
-		"notifications": "Notifications",
-		"backToHome": "Back to Home",
-		"guest": "Guest"
-	},
-	"store": {
-		"badgeFastShipping": "Fast Shipping",
-		"badgeEasyReturns": "Easy Returns"
-	},
 	"wishlist": {
 		"title": "Wishlist",
 		"subtitle": "Products you saved",
@@ -1356,11 +1216,5 @@
 		"discount": "{{percent}}% off",
 		"removeError": "Failed to remove product. Please try again.",
 		"moveToCartError": "Failed to move product to cart. Please try again."
-	},
-	"errors": {
-		"notFound": {
-			"title": "Page not found",
-			"desc": "The page you are looking for does not exist or has been moved."
-		}
 	}
 }

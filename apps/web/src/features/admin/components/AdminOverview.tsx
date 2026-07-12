@@ -84,11 +84,14 @@ function formatRelativeAge(iso: string | null | undefined, locale: string): stri
 }
 
 /** Translate a dispute status enum (server side: open/investigating/
- *  resolved/rejected) into the dashboard's chip styling. */
+ *  resolved_buyer/resolved_seller/closed/rejected) into the dashboard's
+ *  chip styling. */
 const DISPUTE_STATUS_STYLES: Record<AdminDispute['status'], { label: string; color: string }> = {
-	open: { label: 'جديد', color: 'bg-red-500' },
-	investigating: { label: 'قيد المراجعة', color: 'bg-amber-500' },
-	resolved: { label: 'محلول', color: 'bg-emerald-500' },
+	open: { label: 'مفتوح', color: 'bg-red-500' },
+	investigating: { label: 'قيد التحقيق', color: 'bg-amber-500' },
+	resolved_buyer: { label: 'محلول (مشتري)', color: 'bg-emerald-500' },
+	resolved_seller: { label: 'محلول (بائع)', color: 'bg-emerald-500' },
+	closed: { label: 'مغلق', color: 'bg-gray-400' },
 	rejected: { label: 'مرفوض', color: 'bg-gray-400' },
 };
 
@@ -201,7 +204,7 @@ export default function AdminOverview() {
 				const status = DISPUTE_STATUS_STYLES[d.status] ?? DISPUTE_STATUS_STYLES.open;
 				return {
 					id: `D-${d.id}`,
-					type: d.category,
+					type: d.type,
 					buyer: '—',
 					merchant: '—',
 					status: status.label,

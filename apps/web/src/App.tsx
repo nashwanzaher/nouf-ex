@@ -56,6 +56,11 @@ const ResetPassword = lazyPage(() => import('./pages/auth/ResetPassword'));
 // routes never load these chunks for an anonymous visitor.
 const CustomerDashboard = lazyPage(() => import('./pages/customer/CustomerDashboard'));
 const CustomerOrders = lazyPage(() => import('./pages/customer/CustomerOrders'));
+const CustomerOrderDetail = lazyPage(() => import('./pages/customer/OrderDetail'));
+const CustomerProfile = lazyPage(() => import('./pages/customer/Profile'));
+const CustomerWallet = lazyPage(() => import('./pages/customer/Wallet'));
+const CustomerCoupons = lazyPage(() => import('./pages/customer/Coupons'));
+const CustomerHelp = lazyPage(() => import('./pages/customer/Help'));
 const Wishlist = lazyPage(() => import('./pages/customer/Wishlist'));
 const Reviews = lazyPage(() => import('./pages/customer/Reviews'));
 const Addresses = lazyPage(() => import('./pages/customer/Addresses'));
@@ -65,6 +70,12 @@ const Messages = lazyPage(() => import('./pages/Messages'));
 // Seller area — same idea, isolated from the customer bundle.
 const SellerDashboard = lazyPage(() => import('./pages/seller/SellerDashboard'));
 const SellerProducts = lazyPage(() => import('./pages/seller/SellerProducts'));
+// G12 fix 2026-07-12: dedicated page for the "New Product" wizard.
+// SellerDashboard's header button links directly to
+// /seller/products/new; the page hosts the same AddProductWizard
+// used in the modal on /seller/products, but full-page so the
+// seller gets a focused multi-step form.
+const SellerProductNew = lazyPage(() => import('./pages/seller/SellerProductNew'));
 const SellerOrders = lazyPage(() => import('./pages/seller/SellerOrders'));
 const SellerAnalytics = lazyPage(() => import('./pages/seller/SellerAnalytics'));
 // G10 fix 2026-07-11: dedicated onboarding page for first-time
@@ -127,6 +138,10 @@ export default function App() {
 									element={guard(['merchant', 'admin'], SellerProducts)}
 								/>
 								<Route
+									path="/seller/products/new"
+									element={guard(['merchant', 'admin'], SellerProductNew)}
+								/>
+								<Route
 									path="/seller/orders"
 									element={guard(['merchant', 'admin'], SellerOrders)}
 								/>
@@ -152,6 +167,41 @@ export default function App() {
 									element={guard(
 										['customer', 'merchant', 'admin'],
 										CustomerOrders,
+									)}
+								/>
+								<Route
+									path="/customer/orders/:id"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerOrderDetail,
+									)}
+								/>
+								<Route
+									path="/customer/profile"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerProfile,
+									)}
+								/>
+								<Route
+									path="/customer/wallet"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerWallet,
+									)}
+								/>
+								<Route
+									path="/customer/coupons"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerCoupons,
+									)}
+								/>
+								<Route
+									path="/customer/help"
+									element={guard(
+										['customer', 'merchant', 'admin'],
+										CustomerHelp,
 									)}
 								/>
 								<Route

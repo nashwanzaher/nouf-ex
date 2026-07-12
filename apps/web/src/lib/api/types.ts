@@ -504,18 +504,15 @@ export interface SellerProductCreate {
 	name_ar: string;
 	name_en?: string;
 	name_zh?: string;
-	slug: string;
-	sku?: string;
 	category_id: number;
 	price: number;
 	original_price?: number;
 	stock?: number;
 	description?: string;
 	main_image?: string;
-	images?: string[];
 	features?: Array<Record<string, unknown>>;
 	badges?: string[];
-	metadata?: Record<string, unknown>;
+	specifications?: Record<string, unknown>;
 }
 
 export interface SellerStoreUpdate {
@@ -604,15 +601,21 @@ export interface AdminOrder extends Order {
 export interface AdminDispute {
 	id: number;
 	order_id: number;
-	raised_by: number;
-	against_type: 'store' | 'courier' | 'platform';
-	against_id: number | null;
-	category: string;
+	customer_id: number;
+	store_id: number;
+	type: string;
+	status:
+		| 'open'
+		| 'investigating'
+		| 'resolved_buyer'
+		| 'resolved_seller'
+		| 'closed'
+		| 'rejected';
+	priority: 'low' | 'normal' | 'high' | 'urgent';
+	subject: string;
 	description: string;
-	evidence_urls: string[] | null;
-	status: 'open' | 'investigating' | 'resolved' | 'rejected';
-	resolution: string | null;
-	admin_notes: string | null;
+	evidence: unknown;
+	refund_amount: number | null;
 	resolved_by: number | null;
 	resolved_at: string | null;
 	created_at: string;
@@ -685,7 +688,7 @@ export interface AdminUserUpdateBody {
 export interface AdminStoreUpdateBody {
 	is_active?: boolean;
 	is_verified?: boolean;
-	trust_level?: 'basic' | 'verified' | 'premium';
+	trust_level?: 'verified' | 'golden' | 'diamond';
 }
 
 export interface AdminProductUpdateBody {
@@ -700,9 +703,15 @@ export interface AdminOrderStatusUpdateBody {
 }
 
 export interface AdminDisputeUpdateBody {
-	status?: 'open' | 'investigating' | 'resolved' | 'rejected';
+	status?:
+		| 'open'
+		| 'investigating'
+		| 'resolved_buyer'
+		| 'resolved_seller'
+		| 'closed'
+		| 'rejected';
 	resolution?: string;
-	admin_notes?: string;
+	refund_amount?: number;
 }
 
 export interface AdminTimeSeriesPoint {

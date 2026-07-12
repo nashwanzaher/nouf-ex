@@ -577,20 +577,15 @@ export const sellerProductCreateSchema = z
 		name_ar: z.string().trim().min(2).max(200),
 		name_en: z.string().trim().min(2).max(200).optional(),
 		name_zh: z.string().trim().min(2).max(200).optional(),
-		slug: z.string().trim().min(2).max(200).optional(),
-		sku: z.string().trim().min(1).max(50).optional(),
 		category_id: z.number().int().positive(),
 		price: z.number().positive(),
 		original_price: z.number().positive().optional(),
 		stock: z.number().int().nonnegative().default(0),
 		description: z.string().trim().max(4000).optional(),
 		main_image: z.string().trim().url().optional(),
-		images: z.array(z.string().trim().url()).max(20).optional(),
 		features: z.array(z.record(z.string(), z.unknown())).max(50).optional(),
 		badges: z.array(z.string().trim().min(1).max(50)).max(10).optional(),
-		// `metadata` is the historical name used by the API client; the
-		// real column is `specifications` (JSONB). Accept both.
-		metadata: z.record(z.string(), z.unknown()).optional(),
+		// `specifications` is the real column in the products table (JSONB).
 		specifications: z.record(z.string(), z.unknown()).optional(),
 	})
 	.strict();

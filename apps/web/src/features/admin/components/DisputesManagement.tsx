@@ -13,6 +13,7 @@ import {
 	MessageSquare,
 	FileText,
 	ArrowLeft,
+	XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,11 +29,17 @@ import { useApp } from '@/context/AppContext';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-// API status enum (server/routes/admin.cts:278): 'open', 'in_review',
-// 'resolved', 'rejected'. The page used a 4-way legacy enum
-// ('new'|'reviewing'|'resolving'|'resolved'); we accept the API values
-// directly and only label them.
-type DisputeStatus = 'open' | 'in_review' | 'resolved' | 'rejected';
+// API status enum (server/lib/validation.ts:506): 'open' | 'investigating' |
+// 'resolved_buyer' | 'resolved_seller' | 'closed' | 'rejected'.
+// (The previous 'in_review' / 'resolved' enums were a frontend typo that
+// produced 400 ZodErrors when the admin clicked "resolve for buyer".)
+type DisputeStatus =
+	| 'open'
+	| 'investigating'
+	| 'resolved_buyer'
+	| 'resolved_seller'
+	| 'closed'
+	| 'rejected';
 type DisputePriority = 'low' | 'normal' | 'high' | 'urgent';
 type DisputeType =
 	| 'not_received'
@@ -122,19 +129,29 @@ const statusConfig: Record<
 	{ label: string; color: string; icon: typeof AlertTriangle }
 > = {
 	open: {
-		label: 'جديد',
+		label: 'مفتوح',
 		color: 'bg-amber-50 text-amber-600 border-amber-200',
 		icon: AlertTriangle,
 	},
-	in_review: {
-		label: 'قيد المراجعة',
+	investigating: {
+		label: 'قيد التحقيق',
 		color: 'bg-blue-50 text-blue-600 border-blue-200',
 		icon: Clock,
 	},
-	resolved: {
-		label: 'محلول',
+	resolved_buyer: {
+		label: 'محلول لصالح المشتري',
 		color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
 		icon: CheckCircle,
+	},
+	resolved_seller: {
+		label: 'محلول لصالح البائع',
+		color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+		icon: CheckCircle,
+	},
+	closed: {
+		label: 'مغلق',
+		color: 'bg-gray-100 text-gray-600 border-gray-200',
+		icon: XCircle,
 	},
 	rejected: {
 		label: 'مرفوض',
@@ -219,8 +236,10 @@ export default function DisputesManagement() {
 		const counts: Record<'all' | DisputeStatus, number> = {
 			all: adminStats?.counts?.disputes ?? allDisputes.length,
 			open: 0,
-			in_review: 0,
-			resolved: 0,
+			investigating: 0,
+			resolved_buyer: 0,
+			resolved_seller: 0,
+			closed: 0,
 			rejected: 0,
 		};
 		for (const d of allDisputes) counts[d.status] += 1;
@@ -228,10 +247,12 @@ export default function DisputesManagement() {
 	}, [adminStats, allDisputes]);
 
 	// Resolve a dispute via PATCH /api/admin/disputes/:id.
+	// Server accepts: 'open' | 'investigating' | 'resolved_buyer' |
+	// 'resolved_seller' | 'closed' | 'rejected'.
 	const handleResolve = useCallback(
 		async (dispute: DisputeRecord, decision: 'buyer' | 'seller') => {
 			const newStatus: DisputeStatus =
-				decision === 'buyer' ? 'resolved' : 'rejected';
+				decision === 'buyer' ? 'resolved_buyer' : 'resolved_seller';
 			try {
 				await patchAdminDispute(dispute.id, {
 					status: newStatus,
@@ -240,9 +261,9 @@ export default function DisputesManagement() {
 				addToast({
 					type: 'success',
 					message:
-						newStatus === 'resolved'
+						newStatus === 'resolved_buyer'
 							? 'تم حل النزاع لصالح المشتري'
-							: 'تم رفض النزاع',
+							: 'تم حل النزاع لصالح البائع',
 				});
 				setResolutionNotes('');
 				setSelectedDispute(null);
@@ -275,27 +296,39 @@ export default function DisputesManagement() {
 					[
 						{
 							key: 'open',
-							label: 'جديد',
+							label: 'مفتوح',
 							color: 'bg-amber-500',
 							textColor: 'text-amber-600',
 						},
 						{
-							key: 'in_review',
-							label: 'قيد المراجعة',
+							key: 'investigating',
+							label: 'قيد التحقيق',
 							color: 'bg-blue-500',
 							textColor: 'text-blue-600',
 						},
 						{
-							key: 'resolved',
-							label: 'محلولة',
+							key: 'resolved_buyer',
+							label: 'محلول (مشتري)',
 							color: 'bg-emerald-500',
 							textColor: 'text-emerald-600',
 						},
 						{
+							key: 'resolved_seller',
+							label: 'محلول (بائع)',
+							color: 'bg-emerald-500',
+							textColor: 'text-emerald-600',
+						},
+						{
+							key: 'closed',
+							label: 'مغلق',
+							color: 'bg-gray-400',
+							textColor: 'text-gray-600',
+						},
+						{
 							key: 'rejected',
-							label: 'مرفوضة',
+							label: 'مرفوض',
 							color: 'bg-red-500',
-							textColor: 'text-red-500',
+							textColor: 'text-red-600',
 						},
 					] as const
 				).map((s) => (
@@ -345,9 +378,11 @@ export default function DisputesManagement() {
 								className="text-xs font-cairo px-3 py-2 rounded-xl border border-[#e5e5e5] bg-white text-[#111111] outline-none focus:border-[#D4A853]"
 							>
 								<option value="all">جميع الحالات</option>
-								<option value="open">جديد</option>
-								<option value="in_review">قيد المراجعة</option>
-								<option value="resolved">محلول</option>
+								<option value="open">مفتوح</option>
+								<option value="investigating">قيد التحقيق</option>
+								<option value="resolved_buyer">محلول (مشتري)</option>
+								<option value="resolved_seller">محلول (بائع)</option>
+								<option value="closed">مغلق</option>
 								<option value="rejected">مرفوض</option>
 							</select>
 						</div>
@@ -679,7 +714,10 @@ export default function DisputesManagement() {
 						</div>
 
 						<div className="flex flex-wrap gap-2 mt-5">
-							{selectedDispute.status !== 'resolved' && (
+							{selectedDispute.status !== 'resolved_buyer' &&
+								selectedDispute.status !== 'resolved_seller' &&
+								selectedDispute.status !== 'closed' &&
+								selectedDispute.status !== 'rejected' && (
 								<Button
 									onClick={() => handleResolve(selectedDispute, 'buyer')}
 									className="bg-emerald-500 hover:bg-emerald-600 text-white font-cairo"

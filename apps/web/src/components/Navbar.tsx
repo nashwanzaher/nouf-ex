@@ -154,7 +154,7 @@ export default function Navbar() {
 									<ChevronDown size={14} />
 								</button>
 								{catDropdownOpen && (
-									<div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-aliBorder py-1 z-50">
+									<div className="absolute top-full start-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-aliBorder py-1 z-50">
 										<button
 											type="button"
 											onClick={() => {
@@ -257,7 +257,7 @@ export default function Navbar() {
 								/>
 							</button>
 							{userOpen && (
-								<div className="absolute top-full left-0 mt-1 w-52 bg-white rounded-lg shadow-lg border border-aliBorder py-2 z-50">
+								<div className="absolute top-full end-0 mt-1 w-52 bg-white rounded-lg shadow-lg border border-aliBorder py-2 z-50">
 									{!state.user ? (
 										<>
 											<Link
@@ -327,7 +327,7 @@ export default function Navbar() {
 							<ChevronDown size={14} />
 						</button>
 						{catDropdownOpen && (
-							<div className="absolute top-full left-0 mt-0 w-56 bg-white rounded-b-lg shadow-lg border border-t-0 border-aliBorder py-1 z-50">
+							<div className="absolute top-full start-0 mt-0 w-56 bg-white rounded-b-lg shadow-lg border border-t-0 border-aliBorder py-1 z-50">
 								{categories.map((cat) => (
 									<Link
 										key={cat.id}

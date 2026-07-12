@@ -176,6 +176,191 @@ export async function patchAdminProduct(
 	});
 }
 
+// ─── Phase-2 admin API (2026-07-12) ──────────────────────────────────
+
+export interface AdminCategory {
+	id: number;
+	parent_id: number | null;
+	name_ar: string;
+	name_en: string | null;
+	name_zh: string | null;
+	slug: string;
+	icon: string | null;
+	image: string | null;
+	sort_order: number;
+	is_active: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface AdminCoupon {
+	id: number;
+	code: string;
+	type: 'percentage' | 'fixed';
+	value: number;
+	min_order_amount: number;
+	max_discount: number | null;
+	usage_limit: number | null;
+	usage_count: number;
+	per_user_limit: number;
+	store_id: number | null;
+	starts_at: string | null;
+	expires_at: string | null;
+	is_active: boolean;
+	description: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface AdminReview {
+	id: number;
+	product_id: number;
+	store_id: number;
+	customer_id: number;
+	order_id: number | null;
+	rating: number;
+	title: string | null;
+	comment: string | null;
+	is_verified: boolean;
+	is_visible: boolean;
+	helpful_count: number;
+	merchant_reply: string | null;
+	created_at: string;
+	updated_at: string;
+	product_name?: string;
+	product_name_en?: string;
+	customer_name?: string;
+	customer_email?: string;
+}
+
+export interface AdminSetting {
+	key: string;
+	value: string;
+	updated_at: string;
+}
+
+export async function getAdminCategories(
+	options?: RequestOptions,
+): Promise<{ items: AdminCategory[]; total: number }> {
+	return apiRequest('/admin/categories', { signal: options?.signal });
+}
+
+export async function createAdminCategory(
+	body: Partial<AdminCategory>,
+): Promise<{ id: number }> {
+	return apiRequest('/admin/categories', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function patchAdminCategory(
+	id: number,
+	body: Partial<AdminCategory>,
+): Promise<{ id: number }> {
+	return apiRequest(`/admin/categories/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function deleteAdminCategory(id: number): Promise<{ id: number }> {
+	return apiRequest(`/admin/categories/${id}`, { method: 'DELETE' });
+}
+
+export async function getAdminCoupons(
+	options?: RequestOptions,
+): Promise<{ items: AdminCoupon[]; total: number }> {
+	return apiRequest('/admin/coupons', { signal: options?.signal });
+}
+
+export async function createAdminCoupon(body: Partial<AdminCoupon>): Promise<{ id: number }> {
+	return apiRequest('/admin/coupons', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function patchAdminCoupon(
+	id: number,
+	body: Partial<AdminCoupon>,
+): Promise<{ id: number }> {
+	return apiRequest(`/admin/coupons/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function deleteAdminCoupon(id: number): Promise<{ id: number }> {
+	return apiRequest(`/admin/coupons/${id}`, { method: 'DELETE' });
+}
+
+export async function getAdminReviews(
+	options?: RequestOptions,
+): Promise<{ items: AdminReview[]; total: number }> {
+	return apiRequest('/admin/reviews', { signal: options?.signal });
+}
+
+export async function patchAdminReview(
+	id: number,
+	body: { is_visible?: boolean },
+): Promise<{ id: number }> {
+	return apiRequest(`/admin/reviews/${id}`, {
+		method: 'PATCH',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function deleteAdminReview(id: number): Promise<{ id: number }> {
+	return apiRequest(`/admin/reviews/${id}`, { method: 'DELETE' });
+}
+
+export async function getAdminSettings(): Promise<{ settings: AdminSetting[] }> {
+	return apiRequest('/admin/settings');
+}
+
+export async function patchAdminSetting(
+	key: string,
+	value: string,
+): Promise<{ key: string; value: string }> {
+	return apiRequest(`/admin/settings/${encodeURIComponent(key)}`, {
+		method: 'PATCH',
+		body: JSON.stringify({ value }),
+	});
+}
+
+export async function broadcastNotification(body: {
+	segment: 'all' | 'customers' | 'merchants' | 'admins';
+	title: string;
+	body: string;
+	type?: string;
+}): Promise<{ created: number; segment: string }> {
+	return apiRequest('/admin/notifications/broadcast', {
+		method: 'POST',
+		body: JSON.stringify(body),
+	});
+}
+
+export async function getAdminOrdersWithPeople(
+	options?: RequestOptions,
+): Promise<{ items: Record<string, unknown>[]; total: number }> {
+	return apiRequest('/admin/orders-with-people', { signal: options?.signal });
+}
+
+export interface SystemHealth {
+	ok: boolean;
+	uptime_s: number;
+	ts: string;
+	checks: {
+		db: { ok: boolean; ms: number; detail?: string };
+	};
+}
+
+/** Read the public `/api/ready` endpoint (no admin auth required). */
+export async function getSystemHealth(): Promise<SystemHealth> {
+	return apiRequest('/ready');
+}
+
 export async function patchAdminOrderStatus(
 	id: number,
 	body: AdminOrderStatusUpdateBody,

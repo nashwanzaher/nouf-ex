@@ -519,7 +519,13 @@
 		"totalRevenue": "إجمالي الإيرادات",
 		"totalOrders": "إجمالي الطلبات",
 		"totalUsers": "إجمالي المستخدمين",
-		"totalStores": "إجمالي المتاجر"
+		"totalStores": "إجمالي المتاجر",
+		"categories": {},
+		"coupons": {},
+		"reviews": {},
+		"notifications": {},
+		"systemHealth": {},
+		"settings": {}
 	},
 	"footer": {
 		"brand": {

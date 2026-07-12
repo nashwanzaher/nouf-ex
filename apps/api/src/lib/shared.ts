@@ -112,8 +112,9 @@ export { getProductWithParsedFields, parseJson } from './json.js';
 // the `db` connection, which would otherwise create a circular
 // import (validation.ts → shared.cts → validation.ts).
 export {
-    addressSchema, adminDisputeUpdateSchema, adminOrderStatusSchema,
-    adminProductUpdateSchema, adminStoreUpdateSchema, adminUserUpdateSchema, cartAddSchema,
+    addressSchema, adminBroadcastSchema, adminCategoryCreateSchema, adminCategoryUpdateSchema,
+    adminCouponCreateSchema, adminCouponUpdateSchema, adminDisputeUpdateSchema, adminOrderStatusSchema,
+    adminProductUpdateSchema, adminSettingUpdateSchema, adminStoreUpdateSchema, adminUserUpdateSchema, cartAddSchema,
     cartItemIdParamSchema,
     cartItemUpdateSchema, COUPON_COLUMNS, couponRedeemSchema, emailSchema, evaluatePasswordStrength, loginSchema, notificationIdParamSchema, orderItemSchema, orderSchema, paginationSchema, passwordChangeSchema, passwordSchema, paymentCreateSchema, profileUpdateSchema, refundCreateSchema, registerSchema, resolveOrderStoreId, reviewSchema, sellerOrderStatusUpdateSchema, sellerProductCreateSchema, sellerProductIdParamSchema, sellerProductImageAddSchema, sellerProductUpdateSchema, sellerStoreCreateSchema, sellerStoreUpdateSchema, wishlistAddSchema,
     wishlistItemIdParamSchema, type CouponRow, type OrderProductRow, type ResolveStoreIdResult

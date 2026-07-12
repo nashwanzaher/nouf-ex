@@ -1,6 +1,7 @@
 # Nouf-ex
 
-> B2B/B2C e-commerce marketplace targeting Yemen and the Middle East, modelled on Alibaba/Taobao. React + Vite front-end, Express + PostgreSQL back-end.
+> **منصة تجارة إلكترونية B2B/B2C** موجهة لليمن والشرق الأوسط، مستوحاة من Alibaba/Taobao.
+> React + Vite + Express + PostgreSQL 17، monorepo بـ npm workspaces + Turbo.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Changelog](https://img.shields.io/badge/keep--a--changelog-1.1.0-blue)](CHANGELOG.md)
@@ -8,63 +9,502 @@
 [![Conventional Commits](https://img.shields.io/badge/conventional--commits-1.0.0-blue)](https://www.conventionalcommits.org/)
 [![Diátaxis](https://img.shields.io/badge/Di%C3%A1taxis-compliant-purple)](https://diataxis.fr/)
 
-**[Full documentation →](docs/README.md)** · [Contributing →](.github/CONTRIBUTING.md) · [Security →](.github/SECURITY.md) · [Changelog →](CHANGELOG.md)
+**[📖 الوثائق الكاملة →](ARCHITECTURE.md)** · [المساهمة →](.github/CONTRIBUTING.md) · [الأمان →](.github/SECURITY.md) · [سجل التغييرات →](CHANGELOG.md)
 
 ---
 
-## What it is
+## 🎯 الفكرة
 
-A single Node/Express API talks to one external PostgreSQL database, and a React/Vite SPA talks to that API. The whole thing runs as one Docker image when deployed.
+منصة تجارة إلكترونية على طراز **Alibaba/Taobao** مصممة خصيصاً للسوق اليمني والشرق أوسط، مع:
 
-| Layer | Tech |
-|---|---|
-| Database | PostgreSQL 17 (external, database `noufex_db`) — 32 tables (16 + 10 + 6 in migrations), 32 triggers (18 + 14 in migrations) |
-| API | Node 20 + Express 5 + `pg`, scrypt, HMAC-SHA256, Zod |
-| Frontend | React 19 + React Router 7 + Vite 7 + Tailwind 3 + shadcn/ui |
-| i18n | i18next — Arabic (RTL default) / English / Chinese |
-| Auth | HttpOnly-cookie session + scrypt + optional TOTP 2FA |
-| Container | `node:20-alpine` + tini PID 1 |
-
-## Quick start
-
-```sh
-cp .env.example .env             # fill in your DB password
-cd app && npm install
-npm run db:setup                 # applies database/*.sql
-docker compose up -d --build     # API image
-```
-
-→ open `http://localhost:3000`.
-
-Without Docker:
-```sh
-cd app && npm run api            # Express on :3000
-cd app && npm run dev            # Vite on :5173 (separate terminal)
-```
-
-Full guide: [docs/README.md → Getting started](docs/README.md#1-tutorials-learning-oriented).
-
-## Documentation map
-
-| I want to… | Read |
-|---|---|
-| Get the project running | [docs/README.md §1](docs/README.md#1-tutorials-learning-oriented) |
-| Learn the architecture | [docs/README.md §3 — Reference](docs/README.md#3-reference-information-oriented) |
-| Deploy to production | [docs/README.md §2.4 — Deployment](docs/README.md#24-deployment) |
-| Find an API endpoint | [docs/README.md §3.1 — API](docs/README.md#31-api-reference) |
-| Read the security model | [docs/README.md §3.3 — Security](docs/README.md#33-security-model) |
-| Understand a design decision | [docs/README.md §4 — Architecture decisions](docs/README.md#4-explanation-understanding-oriented) |
-| See the active backlog | [docs/README.md §5.2 — Roadmap](docs/README.md#52-roadmap) |
-| Report a vulnerability | [.github/SECURITY.md](.github/SECURITY.md) |
-| Contribute code | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) |
-
-## License
-
-[MIT](LICENSE) — see the file for the full text.
+- 🌐 **دعم ثلاثي اللغات:** العربية (RTL افتراضي)، الإنجليزية، الصينية
+- 💰 **عملة محلية:** الريال اليمني (YER) كعملة افتراضية
+- 🏪 **نظام متعدد المتاجر** (B2B/B2C)
+- 🔐 **مصادقة آمنة:** HttpOnly cookies + scrypt + TOTP 2FA
+- 📱 **PWA:** قابل للتثبيت كتطبيق ويب تقدمي
+- 🤖 **أدوات ذكاء اصطناعي:** MCP server + Docker MCP Gateway
 
 ---
 
-<!-- Schema.org structured data for search-engine crawlers -->
+## 🏗️ البنية التقنية
+
+| الطبقة | التقنية | الإصدار |
+|---|---|---|
+| **قاعدة البيانات** | PostgreSQL | 17 |
+| **Backend API** | Node.js + Express | 20.x / 5.2.1 |
+| **Driver** | `pg` (node-postgres) | 8.22.0 |
+| **Hashing** | scrypt (Node built-in) | — |
+| **JWT** | HMAC-SHA256 (Node built-in) | — |
+| **Validation** | Zod | 4.3.5 |
+| **Frontend** | React + Vite | 19.2 / 7.2.4 |
+| **Routing** | React Router | 7.6.1 |
+| **Styling** | Tailwind CSS | 3.4.19 |
+| **i18n** | i18next | 26.3.1 |
+| **UI Components** | shadcn/ui (Radix) | latest |
+| **PWA** | vite-plugin-pwa + Workbox | 1.3.0 |
+| **Charts** | recharts | 2.15.4 |
+| **Animation** | framer-motion + gsap | 12.40 / 3.15 |
+| **Container** | Docker (node:20-alpine + tini) | — |
+| **Tests** | Vitest + Supertest + axe-core | 4.1.9 |
+
+---
+
+## 📁 بنية المشروع (Monorepo)
+
+```
+nouf-ex/
+├── apps/                       # 4 تطبيقات قابلة للنشر
+│   ├── web/      @noufex/web         # React 19 + Vite 7 SPA
+│   ├── api/      @noufex/api         # Express 5 REST API
+│   ├── mcp-server/ @noufex/mcp-server # MCP server (stdio)
+│   └── e2e/      @noufex/e2e         # PowerShell E2E scripts
+│
+├── packages/                   # 4 مكتبات مشتركة
+│   ├── db/        @noufex/db         # 7 SQL files + 30 migrations
+│   ├── shared/    @noufex/shared     # types + constants
+│   ├── typescript-config/            # tsconfig presets
+│   └── eslint-config/                # eslint presets
+│
+├── docker/
+│   └── mcp-gateway/            # Docker MCP Gateway catalog
+│
+├── docs/                       # MkDocs documentation
+├── scripts/                    # admin scripts
+├── logs/                       # audit-dlq dead-letter queue
+│
+├── package.json                # workspaces + lint-staged + husky
+├── turbo.json                  # 6-task pipeline
+├── Dockerfile                  # 4-stage multi-stage build
+└── docker-compose.yml          # service: noufex on :3000
+```
+
+---
+
+## 🚀 التشغيل السريع
+
+### المتطلبات الأساسية:
+- **Node.js** ≥ 20.18.0
+- **npm** ≥ 10.0.0
+- **PostgreSQL** 17 (مستقل أو في Docker)
+- **Docker** + **Docker Compose** (اختياري، موصى به)
+
+### خطوة 1: إعداد البيئة
+```sh
+git clone <repo-url> nouf-ex
+cd nouf-ex
+cp .env.example .env
+```
+
+عدّل ملف `.env` وعبئ كلمات المرور الخاصة بك:
+```env
+DB_PASSWORD=<كلمة-مرور-قوية>
+AUTH_SECRET=<سر-عشوائي-32-حرف>
+POSTGRES_PASSWORD=<كلمة-مرور-superuser>
+```
+
+### خطوة 2: تثبيت الحزم
+```sh
+npm install
+```
+هذا يثبت كل الحزم لكل workspaces عبر npm workspaces.
+
+### خطوة 3: إعداد قاعدة البيانات
+```sh
+npm run db:setup
+```
+هذا يطبق:
+- `packages/db/schema.sql` (الجداول الأساسية)
+- `packages/db/schema-extra.sql` (الجداول الإضافية)
+- `packages/db/functions.sql` (PL/pgSQL functions)
+- `packages/db/triggers.sql` (triggers)
+- `packages/db/views.sql` (views)
+- `packages/db/roles.sql` (الأدوار + GRANTs)
+- `packages/db/seed.sql` (بيانات تجريبية)
+- `packages/db/migrations/0001..0030/*.sql`
+
+### خطوة 4: تشغيل التطبيق
+
+#### الخيار A: بـ Docker (موصى به)
+```sh
+docker compose up -d --build
+```
+- يبني 4-stage Dockerfile
+- يعرض API + SPA على `:3000`
+- healthcheck تلقائي على `/api/health`
+
+→ افتح `http://localhost:3000`
+
+#### الخيار B: بدون Docker (للتطوير)
+في terminal واحد:
+```sh
+cd apps/api
+npm run api
+# Express يستمع على :3000
+```
+
+في terminal آخر:
+```sh
+cd apps/web
+npm run dev
+# Vite يستمع على :8080 مع proxy /api/* → :3000
+```
+
+→ افتح `http://localhost:8080`
+
+---
+
+## 🔌 المنافذ (Ports)
+
+| المنفذ | الاستخدام | البيئة |
+|---|---|---|
+| **3000** | Express API + SPA (production) | dev + prod |
+| **8080** | Vite dev server | dev only |
+| **5432** | PostgreSQL 17 | dev + prod |
+| **8811** | Docker MCP Gateway (SSE) | dev + prod |
+| **stdio** | MCP server (stdio transport) | dev + prod |
+
+---
+
+## 🗄️ قاعدة البيانات
+
+### الجداول الـ 28 (موزعة على 7 ملفات SQL + 30 migration):
+
+**المستخدمون (5):** `users`, `subscriptions`, `rate_limit_buckets`, `used_jtis`, `admin_audit_log`
+
+**المتاجر والمنتجات (8):** `stores`, `categories`, `products`, `product_variants`, `product_images`, `inventory_log`, `store_balance`, `store_followers`
+
+**الطلبات والمدفوعات (6):** `orders`, `order_items`, `cart_items`, `payments`, `transactions`, `shipping_methods`, `refunds`
+
+**التفاعل والمراجعات (5):** `reviews`, `wishlist`, `notifications`, `messages`, `disputes`, `addresses`
+
+**العروض (2):** `coupons`, `coupon_usage`
+
+**النظام (2):** `app_settings`, `search_logs`, `webhook_events`
+
+### الأدوار (Roles):
+- **`postgres`** — superuser (لا يستخدمه التطبيق أبداً)
+- **`noufex_owner`** — DDL owner (migrations + setup فقط)
+- **`noufex_app`** — least-privilege للتطبيق
+- **`noufex_readonly`** — BI/reporting فقط
+
+### PL/pgSQL Functions (8):
+1. `trg_set_updated_at()` — تحديث تلقائي للـ `updated_at`
+2. `trg_orders_state_machine()` — يفرض transitions صالحة
+3. `trg_orders_append_timeline()` — يسجل تغييرات الحالة
+4. `trg_order_items_decrement_stock()` — ينقص المخزون + يدون في `inventory_log`
+5. `trg_reviews_refresh_rating()` — يُحدّث rating تلقائياً
+6. `trg_products_refresh_store_count()` — يُحدّث عداد المنتجات
+7. `trg_refunds_resolve_payments()` — يزامن الـ refund مع payment
+8. `trg_stores_refresh_review_stats()` و `refresh_followers_count` و `refresh_sales_count`
+
+---
+
+## 🔐 المصادقة والأمان
+
+### Auth Flow:
+
+```
+[Client]                       [Express API :3000]              [PostgreSQL]
+   │                                   │                              │
+   │──POST /api/auth/login ──────────→ │                              │
+   │                                   │──SELECT users WHERE email ──→│
+   │                                   │←───── user row ─────────────│
+   │                                   │ verifyPassword(scrypt)       │
+   │                                   │                              │
+   │  if two_factor_enabled:           │                              │
+   │  ←─ {requires_2fa, partial_token}─│                              │
+   │                                   │                              │
+   │──POST /api/auth/2fa/verify ─────→ │                              │
+   │                                   │ verifyTotp                   │
+   │                                   │                              │
+   │  else:                            │                              │
+   │  ←─ Set-Cookie: noufex_token=... ─│ signAuthToken(HMAC-SHA256)    │
+   │                                   │                              │
+   │──GET /api/cart ─────────────────→ │ requireAuth middleware       │
+   │   (Cookie تلقائي)                 │ verifyAuthToken              │
+   │                                   │──SELECT token_version ──────→│
+   │                                   │   (cached 30s)               │
+   │   ←─ 200 {cart}                   │ req.user = {id, role}        │
+```
+
+### Auth Security Features:
+
+- **HttpOnly cookies** — `noufex_token` غير قابل للوصول من JavaScript (XSS protection)
+- **SameSite=Strict** — CSRF protection
+- **Secure flag** في production — HTTPS فقط
+- **HMAC-SHA256 JWT** — `base64url(payload).base64url(hmac)`
+- **7 أيام TTL** للـ token
+- **30 ثانية cache** لـ `token_version` + `role` lookup
+- **Bumping `token_version`** عند logout/change-password → يبطل كل الـ tokens دفعة واحدة
+- **Dummy scrypt hash** عند login failure — للحماية من timing attacks
+- **TOTP 2FA** اختياري (RFC 6238، ±30s tolerance)
+- **Backup codes** للـ 2FA recovery
+
+### Password Policy:
+- طول 10..128 حرف (NIST 800-63B)
+- على الأقل 3 من: lower, upper, digit, symbol
+- رفض: 4+ chars متكررة، 4+ متتالية، كلمات شائعة
+- لا يساوي local-part من email
+
+### Security Headers:
+- **CSP** مع per-request nonce (16 bytes base64url)
+- **HSTS** في production: `max-age=31536000; includeSubDomains; preload`
+- **X-Frame-Options: DENY**
+- **Permissions-Policy** موسّعة (32 capability denied)
+- **X-Content-Type-Options: nosniff**
+- **Referrer-Policy: strict-origin-when-cross-origin**
+
+### Rate Limiting:
+- **DB-backed limiter** عبر `consume_rate_limit()` PL/pgSQL function
+- **Auth endpoints:** 20 hits / 15min / IP
+- **Health endpoints:** 30 hits / 1s / IP (in-memory)
+- **Catalog/stats/shipping:** cache TTL على الـ responses (60s/30s/300s)
+
+---
+
+## 🛣️ API Reference (مختصر)
+
+### 18 Router تحت `/api/*`:
+
+| المسار | الوصف | Cache |
+|---|---|---|
+| `/api/admin` | Admin endpoints | — |
+| `/api/auth` | Authentication | — |
+| `/api/auth/2fa` | 2FA endpoints | — |
+| `/api/orders` | Order management | — |
+| `/api/cart` | Shopping cart | — |
+| `/api/wishlist` | User wishlist | — |
+| `/api/notifications` | User notifications | — |
+| `/api/messages` | Customer ↔ Merchant chat | — |
+| `/api/seller` | Seller dashboard | — |
+| `/api/payments` | Payment processing | — |
+| `/api/coupons` | Coupon management | — |
+| `/api/refunds` | Refund requests | — |
+| `/api/reviews` | Product reviews | — |
+| `/api/addresses` | User addresses | — |
+| `/api/store-followers` | Store follows | — |
+| `/api/shipping` | Shipping methods | 300s |
+| `/api/stats` | Statistics | 30s |
+| `/api` (catalog) | Products/Stores/Categories/Search | 60s |
+
+### Health & Ready:
+- `GET /api/health` — liveness probe (no DB check)
+- `GET /api/ready` — readiness probe (DB check with 2s timeout)
+
+### Response Envelope (موحد):
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Optional message",
+  "request_id": "uuid-v4"
+}
+```
+
+### Error Envelope:
+```json
+{
+  "success": false,
+  "error": "Human-readable message",
+  "code": "STABLE_MACHINE_CODE",
+  "details": [ /* Zod issues etc. */ ],
+  "request_id": "uuid-v4"
+}
+```
+
+### Stable Error Codes:
+`VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `DUPLICATE`, `PAYLOAD_TOO_LARGE`, `UNPROCESSABLE_ENTITY`, `RATE_LIMITED`, `INTERNAL_ERROR`, `DATABASE_ERROR`, `SERVICE_UNAVAILABLE`, `INSERT_FAILED`, `UPDATE_FAILED`, `DELETE_FAILED`, `ALREADY_ENABLED`, `NOT_ENABLED`, `PARTIAL_INVALID`
+
+---
+
+## 🎨 الواجهة الأمامية (apps/web)
+
+### 33 صفحة مقسّمة بـ `lazy()` loading:
+
+**Public (8):** `/`, `/search`, `/product/:id`, `/store/:id`, `/categories`, `/deals`, `/checkout`, `/messages`
+
+**Auth (4):** `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/reset-password`
+
+**Customer (11):** `/customer`, `/customer/orders`, `/customer/orders/:id`, `/customer/profile`, `/customer/wallet`, `/customer/coupons`, `/customer/help`, `/customer/wishlist`, `/customer/reviews`, `/customer/addresses`, `/customer/notifications`
+
+**Seller (6):** `/seller`, `/seller/products`, `/seller/products/new`, `/seller/orders`, `/seller/analytics`, `/seller/onboarding`
+
+**Admin (8):** `/admin/overview`, `/admin/users`, `/admin/stores`, `/admin/disputes`, `/admin/reports`, `/admin/audit-log`, `/admin/all-products`, `/admin/all-orders`
+
+### 12 Feature Modules:
+`auth`, `products`, `cart`, `checkout`, `orders`, `home`, `customer`, `seller`, `admin`, `messages`, `shipping`, `coupons`
+
+### Providers (الترتيب مهم):
+```tsx
+<AppProvider>          {/* lang, dir, user, toasts */}
+  <CartProvider>       {/* cart + server sync */}
+    <Layout>           {/* Navbar + BottomNav + Footer */}
+      <ErrorBoundary>
+        <Suspense>
+          <Routes>...</Routes>
+        </Suspense>
+      </ErrorBoundary>
+    </Layout>
+  </CartProvider>
+</AppProvider>
+```
+
+### Build Optimizations:
+- **Code splitting** per route (33 chunks)
+- **Manual chunks:** `react`, `recharts`, `framer-motion`, `gsap`, `radix-ui`
+- **Tree-shaking** للـ `lucide-react` (icons only)
+- **PWA** مع Workbox (HTML not cached — CSP nonce)
+- **chunkSizeWarningLimit: 800** KB
+
+---
+
+## 🐳 Docker
+
+### Dockerfile (4 stages):
+
+| Stage | Base | Output |
+|---|---|---|
+| 1. `deps` | node:20-alpine | `/build/node_modules` |
+| 2. `api-build` | node:20-alpine | `apps/api/dist/index.js` (esbuild ESM) |
+| 3. `web-build` | node:20-alpine | `apps/web/dist/` (vite) |
+| 4. `runtime` | node:20-alpine + tini | الصورة النهائية |
+
+### docker-compose.yml:
+- `noufex` service → `:3000`
+- `healthcheck` كل 30s
+- `extra_hosts: host.docker.internal:host-gateway` (Linux)
+- Resources limit: 512MB RAM, 1.0 CPU
+
+---
+
+## 🤖 AI Tooling (MCP)
+
+### MCP Server (`apps/mcp-server/`):
+
+**4 عائلات أدوات (stdio transport):**
+- `db_*` (db-tools.ts) — استعلام schema، queries، list tables
+- `code_*` (code-tools.ts) — بحث وقراءة الكود
+- `api_*` (api-tools.ts) — استكشاف API routes
+- `docs_*` (docs-tools.ts) — بحث في الوثائق
+
+### Docker MCP Gateway:
+- يستمع على `:8811` (SSE)
+- Bearer token authentication
+- `/health` endpoint
+- يقرأ `catalog.yaml` لتحديد stdio servers
+
+---
+
+## 🧪 الاختبارات
+
+### Test Stack:
+- **Vitest** 4.1.9 — test runner
+- **Supertest** 7.2.2 — HTTP integration tests
+- **axe-core** + **vitest-axe** — accessibility tests
+- **happy-dom** — DOM environment
+- **msw** — mock service worker
+
+### السكربتات:
+```sh
+npm test                    # جميع workspaces
+cd apps/api && npm test     # اختبارات الـ API
+cd apps/web && npm test     # اختبارات الواجهة
+cd apps/web && npm run test:a11y  # اختبارات الوصولية فقط
+cd apps/web && npm run test:coverage  # مع coverage
+```
+
+---
+
+## 📚 الوثائق
+
+| الدليل | الموقع |
+|---|---|
+| **البنية المعمارية الكاملة** | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| **MkDocs (diataxis-compliant)** | [docs/README.md](docs/README.md) |
+| **دليل المساهمة** | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) |
+| **سياسة الأمان** | [.github/SECURITY.md](.github/SECURITY.md) |
+| **سجل التغييرات** | [CHANGELOG.md](CHANGELOG.md) |
+| **قانون السلوك** | [.github/CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md) |
+
+---
+
+## 🔧 الأوامر المتاحة
+
+### من الجذر:
+```sh
+npm run dev         # تشغيل كل التطبيقات بالتوازي
+npm run build       # بناء كل workspaces
+npm run typecheck   # type-check كل workspaces
+npm run lint        # eslint على كل workspaces
+npm test            # تشغيل الاختبارات
+npm run clean       # تنظيف dist/ و node_modules/.tmp
+```
+
+### apps/api:
+```sh
+npm run dev         # tsx src/index.ts (development)
+npm run start       # NODE_ENV=production tsx src/index.ts
+npm run build       # esbuild → apps/api/dist/index.js
+```
+
+### apps/web:
+```sh
+npm run dev         # vite (development)
+npm run build       # tsc -b && vite build
+npm run preview     # vite preview
+```
+
+---
+
+## 🛡️ الأمان
+
+- **كل كلمات المرور** يجب أن تكون ≥10 أحرف مع 3 فئات أحرف على الأقل
+- **`AUTH_SECRET`** يجب أن يكون ≥32 حرف عشوائي:
+  ```sh
+  node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+  ```
+- **DB password** يجب تغييرها من `CHANGE_ME_APP` الافتراضي
+- **HTTPS** إلزامي في production (HSTS preload)
+- **CSP nonce** لكل request (لا inline scripts بدون nonce)
+
+---
+
+## 📄 الترخيص
+
+[MIT](LICENSE) — انظر الملف للنص الكامل.
+
+---
+
+## 🤝 المساهمة
+
+نرحب بالمساهمات! اقرأ [CONTRIBUTING.md](.github/CONTRIBUTING.md) و [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md) قبل البدء.
+
+Conventional Commits مطلوبة لكل commit. release-please يتولى versioning تلقائياً.
+
+---
+
+## 📊 إحصائيات المشروع
+
+| القياس | العدد |
+|---|---|
+| التطبيقات (apps) | 4 |
+| الحزم المشتركة (packages) | 4 |
+| جداول قاعدة البيانات | 28 |
+| PL/pgSQL Functions | 8 |
+| Triggers | 17 |
+| Views | 4 |
+| API routers | 18 |
+| صفحات الواجهة | 33 |
+| Features modules | 12 |
+| Migrations | 30 |
+| Seed users | 10 |
+| Seed stores | 7 |
+| Seed products | 24 |
+| Seed orders | 8 |
+
+---
+
+<!-- Schema.org structured data -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -80,18 +520,6 @@ Full guide: [docs/README.md → Getting started](docs/README.md#1-tutorials-lear
   "programmingLanguage": ["TypeScript", "SQL", "PL/pgSQL"],
   "runtimePlatform": ["Node.js", "Vite", "Express"],
   "license": "https://github.com/nashwanzaher/nouf-ex/blob/main/LICENSE",
-  "codeRepository": "https://github.com/nashwanzaher/nouf-ex",
-  "issueTracker": "https://github.com/nashwanzaher/nouf-ex/issues",
-  "documentation": "https://github.com/nashwanzaher/nouf-ex/blob/main/docs/README.md",
-  "datePublished": "2026-06-01",
-  "dateModified": "2026-07-11",
-  "author": {"@type": "Organization", "name": "Nouf-ex Team", "url": "https://github.com/nashwanzaher/nouf-ex"},
-  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock"},
-  "keywords": "ecommerce, marketplace, b2b, b2c, yemen, middle-east, react, express, postgresql, i18n, arabic, rtl",
   "inLanguage": ["ar", "en", "zh"]
 }
 </script>
-
-<meta name="description" content="Nouf-ex — open-source B2B/B2C e-commerce marketplace reference implementation for Yemen and the Middle East. React 19 + Vite 7 + Express 5 + PostgreSQL 17.">
-<meta name="keywords" content="ecommerce, marketplace, b2b, b2c, yemen, middle-east, react, vite, express, postgresql, typescript, i18n, arabic, rtl">
-<meta name="robots" content="index, follow">

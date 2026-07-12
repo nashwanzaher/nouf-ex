@@ -95,6 +95,14 @@ const AdminOverview = lazyPage(() => import('./pages/admin/AdminOverview'));
 const AdminAuditLog = lazyPage(() => import('./pages/admin/AdminAuditLog'));
 const AdminProducts = lazyPage(() => import('./pages/admin/AdminProducts'));
 const AdminOrders = lazyPage(() => import('./pages/admin/AdminOrders'));
+const AdminSettings = lazyPage(() => import('./pages/admin/AdminSettings'));
+const AdminCategories = lazyPage(() => import('./pages/admin/AdminCategories'));
+const AdminCoupons = lazyPage(() => import('./pages/admin/AdminCoupons'));
+const AdminReviews = lazyPage(() => import('./pages/admin/AdminReviews'));
+const AdminNotificationsPage = lazyPage(
+	() => import('./pages/admin/AdminNotifications'),
+);
+const AdminSystemHealth = lazyPage(() => import('./pages/admin/AdminSystemHealth'));
 
 /** Wrap a page in ProtectedRoute + Suspense so the loader shows during
  *  the chunk download AND the auth check. */
@@ -293,6 +301,54 @@ export default function App() {
 										element={
 											<Suspense fallback={<ProductGridSkeleton count={6} />}>
 												<AdminOrders />
+											</Suspense>
+										}
+									/>
+									<Route
+										path="categories"
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminCategories />
+											</Suspense>
+										}
+									/>
+									<Route
+										path="reviews"
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminReviews />
+											</Suspense>
+										}
+									/>
+									<Route
+										path="coupons"
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminCoupons />
+											</Suspense>
+										}
+									/>
+									<Route
+										path="notifications"
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminNotificationsPage />
+											</Suspense>
+										}
+									/>
+									<Route
+										path="settings"
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminSettings />
+											</Suspense>
+										}
+									/>
+									<Route
+										path="system"
+										element={
+											<Suspense fallback={<ProductGridSkeleton count={6} />}>
+												<AdminSystemHealth />
 											</Suspense>
 										}
 									/>

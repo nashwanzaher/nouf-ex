@@ -519,7 +519,13 @@
 		"totalRevenue": "总收入",
 		"totalOrders": "总订单",
 		"totalUsers": "总用户",
-		"totalStores": "总店铺"
+		"totalStores": "总店铺",
+		"categories": {},
+		"coupons": {},
+		"reviews": {},
+		"notifications": {},
+		"systemHealth": {},
+		"settings": {}
 	},
 	"footer": {
 		"brand": {

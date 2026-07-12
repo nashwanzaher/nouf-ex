@@ -37,6 +37,7 @@ import { PgDb } from './db/pg-wrapper.ts';
 import { db } from './lib/shared.ts';
 import { addressesRouter } from './modules/addresses/index.ts';
 import { adminRouter } from './modules/admin/index.ts';
+import { adminExtrasRouter } from './routes/admin-extras.ts';
 import { auth2faRouter } from './modules/auth-2fa/index.ts';
 import { authRouter } from './modules/auth/index.ts';
 import { cartRouter } from './modules/cart/index.ts';
@@ -242,6 +243,7 @@ function cacheControl(seconds: number, router: express.Router) {
 }
 
 app.use('/api/admin', adminRouter);
+app.use('/api/admin', adminExtrasRouter);
 app.use('/api', cacheControl(60, catalogRouter)); // catalog = 60s edge cache
 
 app.use('/api/auth', authRouter);

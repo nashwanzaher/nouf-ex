@@ -663,3 +663,102 @@ export const sellerProductImageAddSchema = z
 		is_primary: z.boolean().default(false),
 	})
 	.strict();
+
+// ── Admin (Phase 2 — 2026-07-12) ─────────────────────────────────────
+
+/** POST /api/admin/categories — create category. */
+export const adminCategoryCreateSchema = z
+	.object({
+		name_ar: z.string().trim().min(1).max(120),
+		name_en: z.string().trim().max(120).optional(),
+		name_zh: z.string().trim().max(120).optional(),
+		slug: z
+			.string()
+			.trim()
+			.min(1)
+			.max(80)
+			.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be lowercase kebab-case'),
+		parent_id: z.number().int().positive().optional(),
+		icon: z.string().trim().max(120).optional(),
+		image: z.string().trim().url().optional(),
+		sort_order: z.number().int().nonnegative().default(0),
+		is_active: z.boolean().default(true),
+	})
+	.strict();
+
+/** PATCH /api/admin/categories/:id — partial update. */
+export const adminCategoryUpdateSchema = adminCategoryCreateSchema.partial();
+
+/** POST /api/admin/coupons — create coupon. */
+export const adminCouponCreateSchema = z
+	.object({
+		code: z
+			.string()
+			.trim()
+			.min(2)
+			.max(40)
+			.regex(/^[A-Z0-9_-]+$/i, 'code must be alphanumeric'),
+		type: z.enum(['percentage', 'fixed']),
+		value: z.number().positive(),
+		min_order_amount: z.number().nonnegative().default(0),
+		max_discount: z.number().nonnegative().optional(),
+		usage_limit: z.number().int().positive().optional(),
+		per_user_limit: z.number().int().positive().default(1),
+		store_id: z.number().int().positive().optional(),
+		starts_at: z.string().datetime().optional(),
+		expires_at: z.string().datetime().optional(),
+		is_active: z.boolean().default(true),
+		description: z.string().trim().max(2000).optional(),
+	})
+	.strict()
+	.refine(
+		(v) => !(v.type === 'percentage' && v.value > 100),
+		{ message: 'percentage coupon value must be ≤ 100', path: ['value'] },
+	)
+	.refine(
+		(v) =>
+			!v.starts_at || !v.expires_at || new Date(v.expires_at) > new Date(v.starts_at),
+		{ message: 'expires_at must be after starts_at', path: ['expires_at'] },
+	);
+
+/** PATCH /api/admin/coupons/:id — partial update (re-declared manually
+ *  because Zod v4 forbids `.partial()` on refined schemas). */
+export const adminCouponUpdateSchema = z
+	.object({
+		code: z
+			.string()
+			.trim()
+			.min(2)
+			.max(40)
+			.regex(/^[A-Z0-9_-]+$/i, 'code must be alphanumeric')
+			.optional(),
+		type: z.enum(['percentage', 'fixed']).optional(),
+		value: z.number().positive().optional(),
+		min_order_amount: z.number().nonnegative().optional(),
+		max_discount: z.number().nonnegative().optional(),
+		usage_limit: z.number().int().positive().optional(),
+		per_user_limit: z.number().int().positive().optional(),
+		store_id: z.number().int().positive().optional(),
+		starts_at: z.string().datetime().optional(),
+		expires_at: z.string().datetime().optional(),
+		is_active: z.boolean().optional(),
+		description: z.string().trim().max(2000).optional(),
+	})
+	.strict();
+
+/** POST /api/admin/notifications/broadcast — broadcast to a segment. */
+export const adminBroadcastSchema = z
+	.object({
+		segment: z.enum(['all', 'customers', 'merchants', 'admins']),
+		title: z.string().trim().min(1).max(120),
+		body: z.string().trim().min(1).max(1000),
+		type: z
+			.enum(['order', 'message', 'review', 'promo', 'system', 'dispute', 'refund'])
+			.default('system'),
+	})
+	.strict();
+
+/** PATCH /api/admin/settings/:key — set a single app setting. */
+export const adminSettingUpdateSchema = z
+	.object({ value: z.string().min(1).max(2000) })
+	.strict();

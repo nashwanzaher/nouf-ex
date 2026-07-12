@@ -519,7 +519,13 @@
 		"totalRevenue": "Total Revenue",
 		"totalOrders": "Total Orders",
 		"totalUsers": "Total Users",
-		"totalStores": "Total Stores"
+		"totalStores": "Total Stores",
+		"categories": {},
+		"coupons": {},
+		"reviews": {},
+		"notifications": {},
+		"systemHealth": {},
+		"settings": {}
 	},
 	"footer": {
 		"brand": {

@@ -591,7 +591,7 @@ review_keywords:
 file_patterns:
   - "*.tsx", "*.jsx", "*.css", "*.scss", "*.html"
     → auto-switch: @frontend
-  - "*.ts" in app/server/**
+  - "*.ts" in apps/api/src/**
     → auto-switch: @backend
   - "*.sql", "database/**", "migrations/**"
     → auto-switch: @database
@@ -1807,7 +1807,7 @@ The agent MUST follow these rules for EVERY action on this repository:
    - Unencrypted password storage (always use scrypt)
    - Hardcoded timing values (always use `timingSafeEqual`)
 
-5. **Accessibility Compliance** — every new interactive component must have an a11y test in `app/src/__tests__/a11y/` that verifies:
+5. **Accessibility Compliance** — every new interactive component must have an a11y test in `apps/web/src/__tests__/a11y/` that verifies:
    - Zero `axe()` violations
    - Keyboard navigable
    - Screen-reader friendly (proper ARIA roles, labels)

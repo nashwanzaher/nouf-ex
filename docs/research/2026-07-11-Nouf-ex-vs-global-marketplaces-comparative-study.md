@@ -2,7 +2,7 @@
 
 > **Date:** 2026-07-11
 > **Subject:** Nouf-ex (`@noufex/app` v0.0.0) — Yemen & Middle East B2B/B2C marketplace
-> **Method:** Source-code extraction (`app/src/App.tsx`, `app/src/pages/**`, `app/server/routes/**`, `app/server/middleware.ts`) cross-referenced with publicly documented competitor surfaces ([Amazon Seller Central](https://sellercentral.amazon.com), [Alibaba.com](https://www.alibaba.com), [Noon](https://www.noon.com), [Shopify Admin](https://www.shopify.com/plus)).
+> **Method:** Source-code extraction (`apps/web/src/App.tsx`, `apps/web/src/pages/**`, `apps/api/src/routes/**`, `apps/api/src/middleware.ts`) cross-referenced with publicly documented competitor surfaces ([Amazon Seller Central](https://sellercentral.amazon.com), [Alibaba.com](https://www.alibaba.com), [Noon](https://www.noon.com), [Shopify Admin](https://www.shopify.com/plus)).
 > **Conventions:** every Nouf-ex claim is anchored to a `file:line` citation. Competitor claims are anchored to the public page referenced.
 
 ---
@@ -13,7 +13,7 @@ Nouf-ex is a **single-namespace B2B/B2C marketplace** built on a React 19 SPA + 
 
 The strongest gaps are **Seller onboarding / KYC**, **Admin moderation tools**, and **Analytics depth**. The strongest advantages are **Arabic-RTL first-class i18n**, **baked-in 2FA with backup codes**, and a **DB-enforced order state machine** that none of the four competitors expose as code (they hide it behind internal services).
 
-The P0/P1/P2 remediation plan in §8 closes the largest gaps with realistic effort estimates based on the current codebase size (≈ 6,300 LOC across `app/server/`).
+The P0/P1/P2 remediation plan in §8 closes the largest gaps with realistic effort estimates based on the current codebase size (≈ 6,300 LOC across `apps/api/src/`).
 
 ---
 
@@ -21,72 +21,72 @@ The P0/P1/P2 remediation plan in §8 closes the largest gaps with realistic effo
 
 | Source | Path / URL | What we extracted |
 |---|---|---|
-| **Nouf-ex routing** | `app/src/App.tsx:103-262` | 26 routes — 8 public, 6 customer, 5 merchant, 7 admin |
-| **Nouf-ex pages** | `app/src/pages/**` | 25 .tsx page files + 9 Home sub-components |
-| **Nouf-ex API surface** | `app/server/routes/*.ts` | 92 endpoint definitions across 18 routers |
-| **Nouf-ex role model** | `app/src/context/AppContext.tsx:13` + `app/server/middleware.ts:718` (`requireRole`) | `Role = 'guest' \| 'customer' \| 'merchant' \| 'admin'` |
+| **Nouf-ex routing** | `apps/web/src/App.tsx:103-262` | 26 routes — 8 public, 6 customer, 5 merchant, 7 admin |
+| **Nouf-ex pages** | `apps/web/src/pages/**` | 25 .tsx page files + 9 Home sub-components |
+| **Nouf-ex API surface** | `apps/api/src/routes/*.ts` | 92 endpoint definitions across 18 routers |
+| **Nouf-ex role model** | `apps/web/src/context/AppContext.tsx:13` + `apps/api/src/middleware.ts:718` (`requireRole`) | `Role = 'guest' \| 'customer' \| 'merchant' \| 'admin'` |
 | **Nouf-ex DB** | `database/schema.sql` + `database/schema-extra.sql` + 30 migrations | 32 tables, 32 triggers, 4 views |
 | **Amazon Seller Central** | https://sellercentral.amazon.com | Verified manually 2026-07-11 |
 | **Alibaba Group** | https://en.wikipedia.org/wiki/Alibaba_Group | Public reference + https://www.alibaba.com seller flow |
 | **Shopify Plus** | https://www.shopify.com/plus/features | Verified manually 2026-07-11 |
 | **Noon** | https://www.noon.com | Public marketplace reference (Saudi/UAE) |
 
-All percentages are based on the Nouf-ex code surface — i.e., if Nouf-ex has a route, the screen counts; if a route handler returns 200 from `app/server/routes/`, it counts as "real" (not mock).
+All percentages are based on the Nouf-ex code surface — i.e., if Nouf-ex has a route, the screen counts; if a route handler returns 200 from `apps/api/src/routes/`, it counts as "real" (not mock).
 
 ---
 
-## 3. Nouf-ex Screen Inventory (extracted from `app/src/App.tsx`)
+## 3. Nouf-ex Screen Inventory (extracted from `apps/web/src/App.tsx`)
 
 ### 3.1 Public screens (8 routes, no auth)
 
 | Route | Page | File | API status |
 |---|---|---|---|
-| `/` | `Home/index.tsx` + 9 sub-components | `app/src/pages/Home/` | **real** (`/api/products?*`, `/api/categories`, `/api/stores`) |
-| `/search` | `SearchResults.tsx` | `app/src/pages/SearchResults.tsx` | **real** (`/api/products?search=*`) |
-| `/product/:id` | `ProductDetail.tsx` | `app/src/pages/ProductDetail.tsx` | **real** (`/api/products/:id` + reviews + images) |
-| `/store/:id` | `StorePage.tsx` | `app/src/pages/StorePage.tsx` | **real** (`/api/stores/:id`) |
-| `/categories` | `Categories.tsx` | `app/src/pages/Categories.tsx` | **real** (`/api/categories`) |
-| `/deals` | `Deals.tsx` | `app/src/pages/Deals.tsx` | **real** (`/api/products?onSale=true`) |
+| `/` | `Home/index.tsx` + 9 sub-components | `apps/web/src/pages/Home/` | **real** (`/api/products?*`, `/api/categories`, `/api/stores`) |
+| `/search` | `SearchResults.tsx` | `apps/web/src/pages/SearchResults.tsx` | **real** (`/api/products?search=*`) |
+| `/product/:id` | `ProductDetail.tsx` | `apps/web/src/pages/ProductDetail.tsx` | **real** (`/api/products/:id` + reviews + images) |
+| `/store/:id` | `StorePage.tsx` | `apps/web/src/pages/StorePage.tsx` | **real** (`/api/stores/:id`) |
+| `/categories` | `Categories.tsx` | `apps/web/src/pages/Categories.tsx` | **real** (`/api/categories`) |
+| `/deals` | `Deals.tsx` | `apps/web/src/pages/Deals.tsx` | **real** (`/api/products?onSale=true`) |
 | `/auth/login` `/auth/register` `/auth/forgot-password` `/auth/reset-password` | `auth/Login.tsx` `auth/Register.tsx` `auth/ForgotPassword.tsx` `auth/ResetPassword.tsx` | **real** (`/api/auth/*`) |
-| `*` (catch-all) | `NotFound.tsx` | `app/src/pages/NotFound.tsx` | n/a |
+| `*` (catch-all) | `NotFound.tsx` | `apps/web/src/pages/NotFound.tsx` | n/a |
 
 ### 3.2 Customer screens (6 routes, role=`customer|merchant|admin`)
 
 | Route | Page | File | API status |
 |---|---|---|---|
-| `/customer` | `CustomerDashboard.tsx` | `app/src/pages/customer/CustomerDashboard.tsx` | **mixed** (orders: live; reviews count: hardcoded `0` with `// Reviews count comes from /api/reviews — kept at 0 here to avoid an extra request per dashboard load.`) |
-| `/customer/orders` | `CustomerOrders.tsx` | `app/src/pages/customer/CustomerOrders.tsx` | **real** (`useOrders()` → `/api/orders`) |
-| `/customer/wishlist` | `Wishlist.tsx` | `app/src/pages/customer/Wishlist.tsx` | **real** (`useWishlist()` → `/api/wishlist/:userId`) |
-| `/customer/reviews` | `Reviews.tsx` | `app/src/pages/customer/Reviews.tsx` | **real** (`/api/reviews`) |
-| `/customer/addresses` | `Addresses.tsx` | `app/src/pages/customer/Addresses.tsx` | **real** (`/api/addresses`) |
-| `/customer/notifications` | `Notifications.tsx` | `app/src/pages/customer/Notifications.tsx` | **real** (`/api/notifications/:userId`) |
-| `/checkout` | `Checkout.tsx` (auth required for all) | `app/src/pages/Checkout.tsx` | **real** (addresses, shipping, coupons, orders) |
-| `/messages` | `Messages.tsx` | `app/src/pages/Messages.tsx` | **real** (`/api/messages/inbox`, `/sent`, `/conversation`) |
+| `/customer` | `CustomerDashboard.tsx` | `apps/web/src/pages/customer/CustomerDashboard.tsx` | **mixed** (orders: live; reviews count: hardcoded `0` with `// Reviews count comes from /api/reviews — kept at 0 here to avoid an extra request per dashboard load.`) |
+| `/customer/orders` | `CustomerOrders.tsx` | `apps/web/src/pages/customer/CustomerOrders.tsx` | **real** (`useOrders()` → `/api/orders`) |
+| `/customer/wishlist` | `Wishlist.tsx` | `apps/web/src/pages/customer/Wishlist.tsx` | **real** (`useWishlist()` → `/api/wishlist/:userId`) |
+| `/customer/reviews` | `Reviews.tsx` | `apps/web/src/pages/customer/Reviews.tsx` | **real** (`/api/reviews`) |
+| `/customer/addresses` | `Addresses.tsx` | `apps/web/src/pages/customer/Addresses.tsx` | **real** (`/api/addresses`) |
+| `/customer/notifications` | `Notifications.tsx` | `apps/web/src/pages/customer/Notifications.tsx` | **real** (`/api/notifications/:userId`) |
+| `/checkout` | `Checkout.tsx` (auth required for all) | `apps/web/src/pages/Checkout.tsx` | **real** (addresses, shipping, coupons, orders) |
+| `/messages` | `Messages.tsx` | `apps/web/src/pages/Messages.tsx` | **real** (`/api/messages/inbox`, `/sent`, `/conversation`) |
 
 ### 3.3 Merchant screens (5 routes + 1 onboarding, role=`merchant|admin`)
 
 | Route | Page | File | API status |
 |---|---|---|---|
-| `/seller` | `SellerDashboard.tsx` | `app/src/pages/seller/SellerDashboard.tsx` | **real** (`/api/seller/dashboard` + `/products` + `/orders`) |
-| `/seller/products` | `SellerProducts.tsx` | `app/src/pages/seller/SellerProducts.tsx` | **mixed** — has `const mockProducts: Product[]` fallback (line 57) when API returns empty |
-| `/seller/orders` | `SellerOrders.tsx` | `app/src/pages/seller/SellerOrders.tsx` | **mixed** — has `const mockOrders: Order[]` fallback (line 59) |
-| `/seller/analytics` | `SellerAnalytics.tsx` | `app/src/pages/seller/SellerAnalytics.tsx` | **real** (`useSellerAnalytics()` → `/api/seller/analytics`) |
+| `/seller` | `SellerDashboard.tsx` | `apps/web/src/pages/seller/SellerDashboard.tsx` | **real** (`/api/seller/dashboard` + `/products` + `/orders`) |
+| `/seller/products` | `SellerProducts.tsx` | `apps/web/src/pages/seller/SellerProducts.tsx` | **mixed** — has `const mockProducts: Product[]` fallback (line 57) when API returns empty |
+| `/seller/orders` | `SellerOrders.tsx` | `apps/web/src/pages/seller/SellerOrders.tsx` | **mixed** — has `const mockOrders: Order[]` fallback (line 59) |
+| `/seller/analytics` | `SellerAnalytics.tsx` | `apps/web/src/pages/seller/SellerAnalytics.tsx` | **real** (`useSellerAnalytics()` → `/api/seller/analytics`) |
 | `/seller/payouts` | (no dedicated page; data via `useSellerPayouts()`) | n/a | **real** |
 | `/seller/inventory` | (no dedicated page; data via `useSellerInventory()`) | n/a | **real** |
-| `/seller/onboarding` | `SellerOnboarding.tsx` | `app/src/pages/seller/SellerOnboarding.tsx` | **real** (`POST /api/seller/stores`) |
+| `/seller/onboarding` | `SellerOnboarding.tsx` | `apps/web/src/pages/seller/SellerOnboarding.tsx` | **real** (`POST /api/seller/stores`) |
 
 ### 3.4 Admin screens (7 nested routes, role=`admin` only)
 
 | Route | Page | File | API status |
 |---|---|---|---|
-| `/admin` (→ `/admin/overview`) | `AdminOverview.tsx` | `app/src/pages/admin/AdminOverview.tsx` | **mixed** — live `/api/admin/stats`, `/api/ready`, `/api/admin/disputes?status=open`; KPIs for top-stores + top-customers **mock** (`// Until C.4 ships`) |
-| `/admin/users` | `UsersManagement.tsx` | `app/src/pages/admin/UsersManagement.tsx` | **real** (`useAdminUsers()` → `/api/admin/users`) |
-| `/admin/stores` | `StoresManagement.tsx` | `app/src/pages/admin/StoresManagement.tsx` | **real** but `// exists for this in /api/admin/stores yet — fall back` (line 248) |
-| `/admin/disputes` | `DisputesManagement.tsx` | `app/src/pages/admin/DisputesManagement.tsx` | **real** (`useAdminDisputes()` + `PATCH /api/admin/disputes/:id`) |
-| `/admin/reports` | `ReportsAnalytics.tsx` | `app/src/pages/admin/ReportsAnalytics.tsx` | **real** (`useAdminStats()` + `useAdminTimeSeries()` + `useAdminGovernorate()`) |
-| `/admin/audit-log` | `AdminAuditLog.tsx` | `app/src/pages/admin/AdminAuditLog.tsx` | **real** (`useAdminAuditLog()` → `/api/admin/audit-log`) |
-| `/admin/all-products` | `AdminProducts.tsx` | `app/src/pages/admin/AdminProducts.tsx` | **real** (`/api/admin/products` + `PATCH /api/admin/products/:id`) |
-| `/admin/all-orders` | `AdminOrders.tsx` | `app/src/pages/admin/AdminOrders.tsx` | **real** (`/api/admin/orders` + `PATCH /api/admin/orders/:id/status`) |
+| `/admin` (→ `/admin/overview`) | `AdminOverview.tsx` | `apps/web/src/pages/admin/AdminOverview.tsx` | **mixed** — live `/api/admin/stats`, `/api/ready`, `/api/admin/disputes?status=open`; KPIs for top-stores + top-customers **mock** (`// Until C.4 ships`) |
+| `/admin/users` | `UsersManagement.tsx` | `apps/web/src/pages/admin/UsersManagement.tsx` | **real** (`useAdminUsers()` → `/api/admin/users`) |
+| `/admin/stores` | `StoresManagement.tsx` | `apps/web/src/pages/admin/StoresManagement.tsx` | **real** but `// exists for this in /api/admin/stores yet — fall back` (line 248) |
+| `/admin/disputes` | `DisputesManagement.tsx` | `apps/web/src/pages/admin/DisputesManagement.tsx` | **real** (`useAdminDisputes()` + `PATCH /api/admin/disputes/:id`) |
+| `/admin/reports` | `ReportsAnalytics.tsx` | `apps/web/src/pages/admin/ReportsAnalytics.tsx` | **real** (`useAdminStats()` + `useAdminTimeSeries()` + `useAdminGovernorate()`) |
+| `/admin/audit-log` | `AdminAuditLog.tsx` | `apps/web/src/pages/admin/AdminAuditLog.tsx` | **real** (`useAdminAuditLog()` → `/api/admin/audit-log`) |
+| `/admin/all-products` | `AdminProducts.tsx` | `apps/web/src/pages/admin/AdminProducts.tsx` | **real** (`/api/admin/products` + `PATCH /api/admin/products/:id`) |
+| `/admin/all-orders` | `AdminOrders.tsx` | `apps/web/src/pages/admin/AdminOrders.tsx` | **real** (`/api/admin/orders` + `PATCH /api/admin/orders/:id/status`) |
 
 ### 3.5 Summary of screen count by data source
 
@@ -101,15 +101,15 @@ All percentages are based on the Nouf-ex code surface — i.e., if Nouf-ex has a
 
 ---
 
-## 4. Nouf-ex Role Model (extracted from `app/src/context/AppContext.tsx` and `app/server/middleware.ts`)
+## 4. Nouf-ex Role Model (extracted from `apps/web/src/context/AppContext.tsx` and `apps/api/src/middleware.ts`)
 
-### 4.1 Role hierarchy (source: `app/src/context/AppContext.tsx:13`)
+### 4.1 Role hierarchy (source: `apps/web/src/context/AppContext.tsx:13`)
 
 ```ts
 type Role = 'guest' | 'customer' | 'merchant' | 'admin';
 ```
 
-### 4.2 Server-side enforcement (source: `app/server/middleware.ts:718`)
+### 4.2 Server-side enforcement (source: `apps/api/src/middleware.ts:718`)
 
 ```ts
 export const requireRole = (...allowed: AuthRole[]): RequestHandler => {
@@ -123,7 +123,7 @@ export const requireRole = (...allowed: AuthRole[]): RequestHandler => {
 
 Middleware chain: `requireAuth → requireRole('admin')` → 403 if role mismatch.
 
-### 4.3 SPA-side enforcement (source: `app/src/components/ProtectedRoute.tsx`)
+### 4.3 SPA-side enforcement (source: `apps/web/src/components/ProtectedRoute.tsx`)
 
 ```ts
 function dashboardForRole(role: Role): string {
@@ -248,7 +248,7 @@ Nouf-ex                      91 %       50 %       86 %      76 %
 | Payout forecast | ✓ | ✓ | ✓ | ✓ | ✗ |
 | Comparative benchmark | ✓ (Brand Analytics) | ✓ | ✓ | ✓ (Shopify Analytics) | ✗ |
 
-Nouf-ex currently exposes **only basic sales counts** via `/api/seller/analytics` (verified in `app/server/routes/seller.ts:478+`). It is the weakest analytics depth of the five.
+Nouf-ex currently exposes **only basic sales counts** via `/api/seller/analytics` (verified in `apps/api/src/routes/seller.ts:478+`). It is the weakest analytics depth of the five.
 
 ### 5.6 Security model comparison
 
@@ -279,7 +279,7 @@ Shopify        3       Low         2 min       Yes (for payouts)
 Nouf-ex        4       Medium      5 min       Partial — email + password only (G-13)
 ```
 
-Nouf-ex flow (`app/src/pages/auth/Register.tsx`):
+Nouf-ex flow (`apps/web/src/pages/auth/Register.tsx`):
 1. Enter email + password → `POST /api/auth/register`
 2. Redirect to `/?registered=true`
 3. **No email verification** (no `/verify-email` route; the `users.email_verified` column is only set to TRUE by seed)
@@ -297,10 +297,10 @@ Shopify        4       5 min      No (basic)   Auto
 Nouf-ex        3       2 min      No           Auto (merchant role granted at register)
 ```
 
-Nouf-ex flow (`app/src/pages/seller/SellerOnboarding.tsx`):
+Nouf-ex flow (`apps/web/src/pages/seller/SellerOnboarding.tsx`):
 1. Register with `role='merchant'` → user is created with role `merchant` (but the docs claim "only customers can self-register, merchants need admin upgrade" — see ADR-0001 §G9)
 
-> ⚠️ **Note (not a drift, but a security observation):** `app/server/routes/auth.ts:62-64` accepts `role:'merchant'` at registration time, and `app/src/pages/auth/Register.tsx:78` exposes a "Seller / Buyer" toggle that maps directly to this. This is **intentional** (see comment `G1 fix 2026-07-11` at `auth.ts:55-58`) — the docs nowhere claim admin-only merchant promotion. What IS missing is **KYC** — anyone can self-register as merchant without identity verification, so real money flow is blocked until P0-1 (KYC document upload) ships.
+> ⚠️ **Note (not a drift, but a security observation):** `apps/api/src/routes/auth.ts:62-64` accepts `role:'merchant'` at registration time, and `apps/web/src/pages/auth/Register.tsx:78` exposes a "Seller / Buyer" toggle that maps directly to this. This is **intentional** (see comment `G1 fix 2026-07-11` at `auth.ts:55-58`) — the docs nowhere claim admin-only merchant promotion. What IS missing is **KYC** — anyone can self-register as merchant without identity verification, so real money flow is blocked until P0-1 (KYC document upload) ships.
 
 ---
 
@@ -366,7 +366,7 @@ Nouf-ex flow (`app/src/pages/seller/SellerOnboarding.tsx`):
               customer → /customer    guest → /
 ```
 
-Source: `app/src/components/ProtectedRoute.tsx:31-46`.
+Source: `apps/web/src/components/ProtectedRoute.tsx:31-46`.
 
 ### 6.3 Order state machine (DB-enforced)
 
@@ -400,9 +400,9 @@ Enforced by `trg_orders_a_state_machine` (`database/triggers.sql:48-50`). Any `U
 
 | # | Action | Source file | Effort | Why |
 |---|---|---|---|---|
-| P0-1 | **Add KYC document upload** — `/api/seller/upload-kyc` endpoint, `seller_kyc_documents` table, file storage in `app/server/lib/storage/`. Currently **zero** seller identity verification. | `app/server/routes/seller.ts:36-150` | 3 d | Block any real-money flow |
-| P0-2 | **Gate `merchant` role** behind admin approval. Currently `auth.ts:96` accepts `role:'merchant'` at register; change to `role:'customer'` always, then admin PATCHes to `merchant`. | `app/server/routes/auth.ts:80-100` | 1 d | Documented vs actual drift |
-| P0-3 | **Email verification flow** — `POST /api/auth/verify-email` + `users.email_verified = TRUE` gate on protected endpoints. | `app/server/routes/auth.ts` (not present) | 2 d | Required to prevent spam signups |
+| P0-1 | **Add KYC document upload** — `/api/seller/upload-kyc` endpoint, `seller_kyc_documents` table, file storage in `apps/api/src/lib/storage/`. Currently **zero** seller identity verification. | `apps/api/src/routes/seller.ts:36-150` | 3 d | Block any real-money flow |
+| P0-2 | **Gate `merchant` role** behind admin approval. Currently `auth.ts:96` accepts `role:'merchant'` at register; change to `role:'customer'` always, then admin PATCHes to `merchant`. | `apps/api/src/routes/auth.ts:80-100` | 1 d | Documented vs actual drift |
+| P0-3 | **Email verification flow** — `POST /api/auth/verify-email` + `users.email_verified = TRUE` gate on protected endpoints. | `apps/api/src/routes/auth.ts` (not present) | 2 d | Required to prevent spam signups |
 | P0-4 | **Apply `0028_transactions_balance_consistency.sql`** is already applied; **add `FOR UPDATE`** to `trg_transactions_check_balance_after` per G-15. | `database/migrations/0028_transactions_balance_consistency.sql:20-24` | 0.5 d | Race condition under concurrent refunds |
 | P0-5 | **Fix `cart_items` UNIQUE NULL semantics** per G-18 — partial unique indexes. | `database/schema.sql:300` | 0.5 d | Allows duplicate cart rows |
 
@@ -410,15 +410,15 @@ Enforced by `trg_orders_a_state_machine` (`database/triggers.sql:48-50`). Any `U
 
 | # | Action | Source | Effort |
 |---|---|---|---|
-| P1-1 | **Brand-store customisation page** (`/seller/storefront`) — theme colors, banner, About-us copy. | new file `app/src/pages/seller/StorefrontEditor.tsx` | 5 d |
-| P1-2 | **Returns / refunds UI page** — `/customer/returns` (data already in `refunds` table). | new file `app/src/pages/customer/Returns.tsx` + `app/src/pages/seller/Returns.tsx` | 3 d |
+| P1-1 | **Brand-store customisation page** (`/seller/storefront`) — theme colors, banner, About-us copy. | new file `apps/web/src/pages/seller/StorefrontEditor.tsx` | 5 d |
+| P1-2 | **Returns / refunds UI page** — `/customer/returns` (data already in `refunds` table). | new file `apps/web/src/pages/customer/Returns.tsx` + `apps/web/src/pages/seller/Returns.tsx` | 3 d |
 | P1-3 | **Loyalty / rewards** — `loyalty_points` table + earn/redeem rules. | new table in `database/migrations/0031_loyalty.sql` | 4 d |
-| P1-4 | **KYC admin review page** — `/admin/kyc` listing pending sellers. | new file `app/src/pages/admin/KycReview.tsx` | 3 d |
-| P1-5 | **Inventory UI page** (`/seller/inventory`) — low-stock alerts, batch update. | new file `app/src/pages/seller/Inventory.tsx` | 2 d |
-| P1-6 | **Top-products / top-customers analytics** — replace `// Until C.4 ships` mock in `AdminOverview.tsx:173,192`. | `app/src/pages/admin/AdminOverview.tsx:173-195` | 2 d |
-| P1-7 | **Search keyword reports** for sellers — extend `/api/seller/analytics`. | `app/server/routes/seller.ts:478+` | 2 d |
-| P1-8 | **Content moderation queue** in admin — `/admin/moderation` for product reviews, store descriptions. | new file `app/src/pages/admin/Moderation.tsx` | 3 d |
-| P1-9 | **scrypt params upgrade** to `N=131072, r=8, p=1` (OWASP 2024). | `app/server/lib/auth.ts:38` | 0.5 d |
+| P1-4 | **KYC admin review page** — `/admin/kyc` listing pending sellers. | new file `apps/web/src/pages/admin/KycReview.tsx` | 3 d |
+| P1-5 | **Inventory UI page** (`/seller/inventory`) — low-stock alerts, batch update. | new file `apps/web/src/pages/seller/Inventory.tsx` | 2 d |
+| P1-6 | **Top-products / top-customers analytics** — replace `// Until C.4 ships` mock in `AdminOverview.tsx:173,192`. | `apps/web/src/pages/admin/AdminOverview.tsx:173-195` | 2 d |
+| P1-7 | **Search keyword reports** for sellers — extend `/api/seller/analytics`. | `apps/api/src/routes/seller.ts:478+` | 2 d |
+| P1-8 | **Content moderation queue** in admin — `/admin/moderation` for product reviews, store descriptions. | new file `apps/web/src/pages/admin/Moderation.tsx` | 3 d |
+| P1-9 | **scrypt params upgrade** to `N=131072, r=8, p=1` (OWASP 2024). | `apps/api/src/lib/auth.ts:38` | 0.5 d |
 | P1-10 | **Tax / VAT support** for merchants (configurable per-store rate). | new column + new route | 4 d |
 
 ### 7.3 P2 — next quarter (90-day SLO)
@@ -448,8 +448,8 @@ Enforced by `trg_orders_a_state_machine` (`database/triggers.sql:48-50`). Any `U
 | Nouf-ex roles | 4 (guest, customer, merchant, admin) |
 | Nouf-ex locales | 3 (ar, en, zh) with RTL first-class |
 | Nouf-ex test files (server + frontend + e2e + a11y) | ≈ 80 |
-| Nouf-ex LOC (`app/server/`) | ≈ 6,300 |
-| Nouf-ex LOC (`app/src/`) | ≈ 14,000 |
+| Nouf-ex LOC (`apps/api/src/`) | ≈ 6,300 |
+| Nouf-ex LOC (`apps/web/src/`) | ≈ 14,000 |
 | **Feature parity vs Amazon** | **27 %** |
 | **Feature parity vs Alibaba** | **32 %** |
 | **Feature parity vs Noon** | **76 %** |
@@ -477,7 +477,7 @@ Enforced by `trg_orders_a_state_machine` (`database/triggers.sql:48-50`). Any `U
 | Field | Value |
 |---|---|
 | Version | 1.0 (2026-07-11) |
-| Source files inspected | `app/src/App.tsx`, `app/src/pages/**/*.tsx`, `app/src/components/ProtectedRoute.tsx`, `app/src/context/AppContext.tsx`, `app/server/routes/*.ts`, `app/server/middleware.ts`, `app/server/lib/{auth,ratelimit,totp,backup-codes}.ts`, `database/{schema,schema-extra,roles}.sql` + 30 migrations |
+| Source files inspected | `apps/web/src/App.tsx`, `apps/web/src/pages/**/*.tsx`, `apps/web/src/components/ProtectedRoute.tsx`, `apps/web/src/context/AppContext.tsx`, `apps/api/src/routes/*.ts`, `apps/api/src/middleware.ts`, `apps/api/src/lib/{auth,ratelimit,totp,backup-codes}.ts`, `database/{schema,schema-extra,roles}.sql` + 30 migrations |
 | Public competitor pages | 4 (Amazon, Alibaba, Noon, Shopify) |
 | Methodology | Source-code extraction + public docs cross-reference |
 | Reproducibility | Every Nouf-ex claim has a `file:line` citation that can be `grep`'d |

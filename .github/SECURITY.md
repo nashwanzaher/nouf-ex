@@ -1,7 +1,7 @@
 # Security Policy — Nouf-ex
 
 > **Last updated:** 2026-07-11
-> **Scope:** All code in this repository — server (`app/server/`), frontend (`app/src/`), database (`database/`), and infrastructure (`.github/workflows/`).
+> **Scope:** All code in this repository — server (`apps/api/src/`), frontend (`apps/web/src/`), database (`database/`), and infrastructure (`.github/workflows/`).
 > **Active conformance baseline:** [docs/README.md §4.5](docs/README.md#45-standards--conformance) ·
 > [2026-07-11 audit](docs/README.md#45-standards--conformance) ·
 > [Q3 remediation roadmap](docs/README.md#52-roadmap).
@@ -33,7 +33,7 @@ We follow a **coordinated disclosure** model:
 
 ### What to include
 
-- **Affected component** (`app/server/routes/payments.cts` etc.)
+- **Affected component** (`apps/api/src/routes/payments.cts` etc.)
 - **Attack vector** (network, authenticated, requires-physical, etc.)
 - **Steps to reproduce** — minimal `curl` snippet, screenshot, or test code
 - **Impact** — what can an attacker do, on whose data, with what privilege

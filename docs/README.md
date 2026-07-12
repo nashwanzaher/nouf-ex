@@ -91,9 +91,9 @@ docker compose up -d --build
 **Option B — local Node, two terminals:**
 ```sh
 # Terminal 1 (from app/)
-cd app && npm run api                # Express on :3000
+cd apps/web && npm run api                # Express on :3000
 # Terminal 2 (from app/)
-cd app && npm run dev                # Vite on :5173 (proxies /api to :3000)
+cd apps/web && npm run dev                # Vite on :5173 (proxies /api to :3000)
 ```
 
 ### 1.1.4 Smoke test
@@ -107,7 +107,7 @@ curl -fs http://localhost:3000/api/ready
 # → 503 with {"status":"degraded", ...} when DB connection fails
 ```
 
-See [`app/server/index.ts:171-201`](../../app/server/index.ts) for the exact shape. The server-boot smoke job in `ci.yml` asserts that both endpoints return 200 AND that `/api/health` body contains `"status":"ok"` and `"uptime_s":`.
+See [`apps/api/src/index.ts:171-201`](../../apps/api/src/index.ts) for the exact shape. The server-boot smoke job in `ci.yml` asserts that both endpoints return 200 AND that `/api/health` body contains `"status":"ok"` and `"uptime_s":`.
 
 Then open the SPA in a browser, sign in as a seed customer (e.g. `ahmed@gmail.com` / `customer123`), and place a test order.
 
@@ -127,7 +127,7 @@ npm run test:a11y      # vitest-axe WCAG 2.1 AA
 |---|---|---|
 | `AUTH_SECRET env var is required` on startup | `.env` missing or secret too short | Set `AUTH_SECRET` to ≥ 32 random chars |
 | `ECONNREFUSED 127.0.0.1:5432` | Postgres not running or wrong host | `pg_isready -h localhost -p 5432`; on Windows-Docker use `host.docker.internal` |
-| `permission denied for table X` | Migrations not applied | `cd app && npm run db:setup` |
+| `permission denied for table X` | Migrations not applied | `cd apps/web && npm run db:setup` |
 | `npm run db:setup` fails with `noufex.allow_seed` | `NODE_ENV=production` blocks seed | Use a non-prod env or unset it for dev |
 
 ## §1.2 Tutorial: run an order end-to-end
@@ -263,14 +263,14 @@ npm run lint && npm run typecheck && npm run test:unit && npm run build && npm r
 
 ## §2.4 Server runtime
 
-> All facts verified against [`app/server/index.ts`](../../app/server/index.ts), [`app/server/middleware.ts`](../../app/server/middleware.ts) and [`app/server/lib/shared.ts`](../../app/server/lib/shared.ts).
+> All facts verified against [`apps/api/src/index.ts`](../../apps/api/src/index.ts), [`apps/api/src/middleware.ts`](../../apps/api/src/middleware.ts) and [`apps/api/src/lib/shared.ts`](../../apps/api/src/lib/shared.ts).
 
 | Property | Value | Source |
 |---|---|---|
-| Runtime | Node.js ≥ 20.18 (single ESM process) | `app/package.json:8` |
-| Entry point | `app/server/index.ts` → bundled to `app/server/index.js` via `esbuild` | `app/server/Dockerfile:64-75` |
-| Dev script | `npm run api` → `tsx server/index.ts` (no auto-restart) | `app/package.json:35` |
-| Prod script | container: `tini -- noufex-entrypoint.sh` → runs `server/index.js` | `Dockerfile:96` |
+| Runtime | Node.js ≥ 20.18 (single ESM process) | `apps/web/package.json:8` |
+| Entry point | `apps/api/src/index.ts` → bundled to `apps/api/dist/index.js` via `esbuild` | `Dockerfile:64-75` |
+| Dev script | `npm run dev` from root (Vite on :8080, proxy → :3000) | `apps/web/package.json:5` |
+| Prod script | container: `tini -- noufex-entrypoint.sh` → runs `apps/api/dist/index.js` | `Dockerfile:96` |
 | Port | `env.API_PORT` (default **3000** per `envSchema`) | `middleware.ts:938` |
 | Bind address | `0.0.0.0` (Express default; `env.HOST` is parsed but **not** passed to `listen()`) | `middleware.ts:939` |
 | Body limit | JSON 1 MB; urlencoded 1 MB; raw body captured to `req.rawBody` for HMAC webhook verification | `index.ts:115-164` |
@@ -373,7 +373,7 @@ The PostgreSQL server is **not** part of this stack. It must already exist on th
 
 | Component | Path inside container |
 |---|---|
-| Express API | `/app/server/index.ts` (run via `tsx`) |
+| Express API | `/apps/api/src/index.ts` (run via `tsx`) |
 | Entrypoint | `/usr/local/bin/noufex-entrypoint.sh` |
 
 The built SPA (if you ran `npm run build` first) is served from `/app/dist` by the same API process.
@@ -389,7 +389,7 @@ From inside the container, `localhost` is the container itself, so `docker-compo
 
 ## §2.6 Monitoring & observability
 
-The API logs to **stdout** as one structured JSON line per request (see [`app/server/middleware.ts:230-247`](../../app/server/middleware.ts)):
+The API logs to **stdout** as one structured JSON line per request (see [`apps/api/src/middleware.ts:230-247`](../../apps/api/src/middleware.ts)):
 
 ```json
 {"ts":"2026-07-11T12:34:56.789Z","level":"info","request_id":"…","msg":"request","method":"GET","path":"/api/products/42","status":200,"duration_ms":42,"user_id":2}
@@ -397,14 +397,14 @@ The API logs to **stdout** as one structured JSON line per request (see [`app/se
 
 > Note: the `msg` field is literally **`"request"`** (not `request_completed`); `request_id`, `method`, `path`, `status`, `duration_ms`, and `user_id` are the standard fields emitted on every request completion.
 
-Every response carries `x-request-id` (lowercase) — set by [`app/server/middleware.ts:38-44`](../../app/server/middleware.ts). To correlate a user-reported failure with the server log, ask for the request ID.
+Every response carries `x-request-id` (lowercase) — set by [`apps/api/src/middleware.ts:38-44`](../../apps/api/src/middleware.ts). To correlate a user-reported failure with the server log, ask for the request ID.
 
 | What | Where |
 |---|---|
 | Liveness | `GET /api/health` → `{status:"ok",uptime_s:N,ts:"…"}` always 200 if the process is up |
 | Readiness | `GET /api/ready` → 200 `{status:"ready",uptime_s,checks:{db:{ok,ms}}}` or 503 `{status:"degraded",…}` when DB connection fails |
 | Metrics | Open Prometheus scrape at `/metrics` (**planned**, not yet implemented) |
-| Audit log | `admin_audit_log` table — actor, target, IP, UA, before/after diff; redacted per `REDACT_KEYS` (17 keys, [`app/server/lib/audit.ts`](../../app/server/lib/audit.ts)) |
+| Audit log | `admin_audit_log` table — actor, target, IP, UA, before/after diff; redacted per `REDACT_KEYS` (17 keys, [`apps/api/src/lib/audit.ts`](../../apps/api/src/lib/audit.ts)) |
 
 **RED metrics** (recommended per [Google SRE Book](https://sre.google/sre-book/monitoring-distributed-systems/)):
 - **R**ate — `requests_per_second` by `route` (derivable from `requestLogger`)
@@ -435,7 +435,7 @@ pg_restore --no-owner --dbname=noufex_db "/backups/noufex_<TIMESTAMP>.dump"
 ### Apply schema + seed (only on first-time setup, NOT a restore path)
 
 ```sh
-cd app && npm run db:setup
+cd apps/web && npm run db:setup
 ```
 
 **Targets:** nightly full dump + WAL archive continuously. **DR RPO:** 15 min. **DR RTO:** 2 h.
@@ -447,12 +447,12 @@ cd app && npm run db:setup
 | `AUTH_SECRET env var is required` on startup | `.env` missing or secret < 32 chars | Set `AUTH_SECRET` to ≥ 32 random chars |
 | Tests pass locally but fail in CI | Different Node version, timezone, port conflict, hidden env var | CI uses Node 20 — match `engines` in `package.json` |
 | `ECONNREFUSED 127.0.0.1:5432` in Docker | Wrong DB host | Use `host.docker.internal` |
-| `permission denied for table X` | Migrations not applied | `cd app && npm run db:setup` |
+| `permission denied for table X` | Migrations not applied | `cd apps/web && npm run db:setup` |
 | 429 on every request | Rate limiter triggered | Wait 15 min for the auth bucket, 1 min for the health bucket |
 | CSP blocks inline script | Missing nonce | Check that `index.html` (built by Vite) has the nonce injected by `securityHeaders` middleware |
 | Rate-limit cascade in tests | Test runner hammers `/api/health` faster than the IP-keyed limiter allows | Retry with a few seconds' delay or run against a fresh DB |
 
-Reset utilities live in `app/scripts/` and `scripts/maintenance/`. The full failure-mode list is in the deleted `docs/development/debugging.md` (consolidated here 2026-07-11).
+Reset utilities live in `apps/web/scripts/` and `scripts/maintenance/`. The full failure-mode list is in the deleted `docs/development/debugging.md` (consolidated here 2026-07-11).
 
 ---
 
@@ -462,7 +462,7 @@ Reset utilities live in `app/scripts/` and `scripts/maintenance/`. The full fail
 
 ## §3.1 API reference
 
-All endpoints are served by `app/server/index.ts` on the same origin as the SPA (default `http://localhost:3000`). The frontend talks to relative paths (`/api/...`).
+All endpoints are served by `apps/api/src/index.ts` on the same origin as the SPA (default `http://localhost:3000`). The frontend talks to relative paths (`/api/...`).
 
 | Verb | Path | Auth | Purpose |
 |---|---|---|---|
@@ -561,9 +561,9 @@ All endpoints are served by `app/server/index.ts` on the same origin as the SPA 
 | `/api/store-followers/*` | — | auth | Follow / unfollow a store (see `/api/messages/` block above) |
 | `/api/auth/2fa/*` | — | auth | 2FA setup / verify / disable / backup codes (see `/api/auth/` block above) |
 
-**Auth legend:** `—` = public; `auth` = any logged-in user; `auth (admin)` = admin role only; `auth (merchant)` = merchant or admin; `rate-limited` = per-IP rate-limited on `/api/auth/*` (20 req / 15 min) — see [`app/server/lib/ratelimit.ts`](../../app/server/lib/ratelimit.ts).
+**Auth legend:** `—` = public; `auth` = any logged-in user; `auth (admin)` = admin role only; `auth (merchant)` = merchant or admin; `rate-limited` = per-IP rate-limited on `/api/auth/*` (20 req / 15 min) — see [`apps/api/src/lib/ratelimit.ts`](../../apps/api/src/lib/ratelimit.ts).
 
-**Endpoint count (verified 2026-07-11):** **92 endpoints** across 18 routers — addresses (4), auth (8), auth-2fa (4), cart (6), catalog (10), coupons (2), messages (6), notifications (2), orders (3), payments (5), refunds (1), reviews (2), seller (16), shipping (1), stats (1), store-followers (3), wishlist (3), admin (14), plus the two top-level health endpoints `/api/health` and `/api/ready` defined inline in [`app/server/index.ts:171-201`](../../app/server/index.ts).
+**Endpoint count (verified 2026-07-11):** **92 endpoints** across 18 routers — addresses (4), auth (8), auth-2fa (4), cart (6), catalog (10), coupons (2), messages (6), notifications (2), orders (3), payments (5), refunds (1), reviews (2), seller (16), shipping (1), stats (1), store-followers (3), wishlist (3), admin (14), plus the two top-level health endpoints `/api/health` and `/api/ready` defined inline in [`apps/api/src/index.ts:171-201`](../../apps/api/src/index.ts).
 
 Every authenticated endpoint returns `401 AUTH_REQUIRED` for missing/invalid session, `403 AUTH_FORBIDDEN` for wrong role.
 
@@ -637,7 +637,7 @@ The `postgres` superuser is used **only** for the one-time `npm run db:setup` (c
 
 - **HttpOnly-cookie session** — server sets `noufex_token=<JWT>` with `Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800` (7 days). Logout sends `Set-Cookie` with `Max-Age=0`.
 - Token payload `{sub, role, ver, exp}` — `sub` = user id, `role` = `customer|merchant|admin`, `ver` = current `users.token_version` (NOT `token_version`; abbreviated in the JWT to `ver` for compactness), `exp` = unix-seconds expiry. HMAC-SHA256 signed with `AUTH_SECRET` (≥ 32 chars); verified with `crypto.timingSafeEqual`.
-- **Token revocation** — the JWT's `role` and `ver` are checked against the live `users` row on every request (cached for 30 s per `user_id`). The in-process cache is also explicitly invalidated on `logout` / `change-password` via `invalidateTokenVersionCache(userId)` (see [`app/server/middleware.ts:641`](../../app/server/middleware.ts)). Bumping `users.token_version` (on **logout** + **change-password** only) invalidates every existing session.
+- **Token revocation** — the JWT's `role` and `ver` are checked against the live `users` row on every request (cached for 30 s per `user_id`). The in-process cache is also explicitly invalidated on `logout` / `change-password` via `invalidateTokenVersionCache(userId)` (see [`apps/api/src/middleware.ts:641`](../../apps/api/src/middleware.ts)). Bumping `users.token_version` (on **logout** + **change-password** only) invalidates every existing session.
   - ⚠️ **Known gap:** enabling 2FA does NOT bump `token_version` — existing sessions remain valid. Enabling 2FA is a hardening action, not an authentication boundary. Tracked as part of `audit-log-redaction` review.
 - **Password hashing** — scrypt with Node defaults (`N=16384, r=8, p=1`), random 16-byte salt, 64-byte derived key. Documented as below-current-OWASP-recommendation in the audit (G-2).
 - **2FA (optional)** — TOTP (RFC 6238, 30s window, ±1 step). Setup: `POST /api/auth/2fa/setup`. 10 scrypt-hashed single-use backup codes.
@@ -709,10 +709,10 @@ The full Mermaid ER was previously rendered in `docs/architecture/er-diagram.md`
 
 | Layer | Where | Environment | What |
 |---|---|---|---|
-| **Server** | `app/server/tests/` | Node (pg mocked) | API routes, helpers, db wrapper |
-| **Frontend** | `app/src/**/__tests__/` | happy-dom (RTL + MSW) | Components, hooks, contexts, pages |
+| **Server** | `apps/api/src/tests/` | Node (pg mocked) | API routes, helpers, db wrapper |
+| **Frontend** | `apps/web/src/**/__tests__/` | happy-dom (RTL + MSW) | Components, hooks, contexts, pages |
 | **E2E** | `tests/e2e/` | Live stack (PowerShell) | Full stack per PHASE |
-| **A11y** | `app/src/__tests__/a11y/` | happy-dom + vitest-axe | WCAG 2.1 AA assertions |
+| **A11y** | `apps/web/src/__tests__/a11y/` | happy-dom + vitest-axe | WCAG 2.1 AA assertions |
 
 ### Standards mapping
 
@@ -776,14 +776,14 @@ A single Node/Express API talks to one external PostgreSQL database, and a React
 
 | Component | Path | Responsibility |
 |---|---|---|
-| HTTP entry | `app/server/index.ts` | Express bootstrap, middleware chain, route mounting |
-| Security headers | `app/server/middleware.ts` | CSP nonced, HSTS, frame-options, referrer-policy |
-| Auth | `app/server/middleware.ts` (`setAuthCookie` @ 421 · `extractAuthToken` @ 450 · `clearAuthCookie` @ 439) | HttpOnly cookie, HMAC verify, `token_version` revocation |
-| Validation | `app/server/lib/validation.ts` | 32 Zod schemas (20 `.strict()` in production; rest are sub-schemas) |
-| DB wrapper | `app/server/db/pg-wrapper.ts` | async `pg.Pool`, prepared statements |
-| Audit | `app/server/lib/audit.ts` | Redaction + retry/backoff DLQ |
-| Rate limit | `database/migrations/0004_rate_limit_buckets.sql` + `app/server/lib/ratelimit.ts` | Atomic UPSERT |
-| SPA entry | `app/src/main.tsx` → `App.tsx` | React Router 7, lazy routes, `ProtectedRoute` |
+| HTTP entry | `apps/api/src/index.ts` | Express bootstrap, middleware chain, route mounting |
+| Security headers | `apps/api/src/middleware.ts` | CSP nonced, HSTS, frame-options, referrer-policy |
+| Auth | `apps/api/src/middleware.ts` (`setAuthCookie` @ 421 · `extractAuthToken` @ 450 · `clearAuthCookie` @ 439) | HttpOnly cookie, HMAC verify, `token_version` revocation |
+| Validation | `apps/api/src/lib/validation.ts` | 32 Zod schemas (20 `.strict()` in production; rest are sub-schemas) |
+| DB wrapper | `apps/api/src/db/pg-wrapper.ts` | async `pg.Pool`, prepared statements |
+| Audit | `apps/api/src/lib/audit.ts` | Redaction + retry/backoff DLQ |
+| Rate limit | `database/migrations/0004_rate_limit_buckets.sql` + `apps/api/src/lib/ratelimit.ts` | Atomic UPSERT |
+| SPA entry | `apps/web/src/main.tsx` → `App.tsx` | React Router 7, lazy routes, `ProtectedRoute` |
 
 ## §4.2 Tech stack
 
@@ -823,7 +823,7 @@ WCAG 2.1 AA is a hard requirement for the project; `vitest-axe` runs in CI per-c
 
 **Status:** ✅ Accepted (2026-07-04)
 
-The v1 plan proposed a Turborepo + pnpm monorepo with 7 packages. That violates SSOT (multiple packages, multiple builds, multiple deploy units). The current single-package layout (`app/`) with `app/server/` for the API is canonical.
+The v1 plan proposed a Turborepo + pnpm monorepo with 7 packages. As of 2026-07-11 that decision was reversed: the project now uses an npm workspaces monorepo (`apps/*` + `packages/*`) with Turbo task orchestration. The structure changed to `apps/web/` for the React SPA, `apps/api/` for the Express API, `apps/mcp-server/` for the MCP server, and shared packages under `packages/` (`db`, `shared`, `typescript-config`, `eslint-config`).
 
 ### ADR-0004 — Apply `0024_production_hardening.sql` migration
 
@@ -1003,7 +1003,7 @@ Several components keep mock fallbacks (e.g. `chartData` in `AdminOverview.tsx`)
 
 **Mitigation:** Every mock fallback has a `// TODO:` comment naming the missing endpoint. Distinctive names (`mockOrders`, `revenueData`) are greppable.
 
-**Follow-up:** CI check that warns when a `mock*` variable is declared under `app/src/pages/admin/`.
+**Follow-up:** CI check that warns when a `mock*` variable is declared under `apps/web/src/pages/admin/`.
 
 ## §5.2 Roadmap
 
@@ -1036,7 +1036,7 @@ G-6 cart/notifications by cookie · G-8 CSP `report-uri` · G-10 OpenAPI artifac
 
 ```bash
 # Cookie-auth migration complete
-grep -r 'Bearer' app/src/                                       # expect 0
+grep -r 'Bearer' apps/web/src/                                       # expect 0
 grep -i 'csrf-proof\|no session cookies' .github/SECURITY.md     # expect 0
 
 # DB invariants
@@ -1051,7 +1051,7 @@ curl -sI "$BASE_URL/api/health" | grep -i 'content-security-policy:'
 curl -sI -H "Origin: https://evil.example" "$BASE_URL/api/health" | grep -i 'access-control-allow'
 
 # Test suite
-cd app && npm run typecheck && npm run lint && npm run test:unit && npm run test:a11y
+cd apps/web && npm run typecheck && npm run lint && npm run test:unit && npm run test:a11y
 ```
 
 ---

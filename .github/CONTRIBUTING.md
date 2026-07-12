@@ -60,7 +60,7 @@ npm run test:unit      # Vitest (pg mocked)
 npm run build          # tsc + vite build
 ```
 
-For server-side changes that touch `app/server/`, also:
+For server-side changes that touch `apps/api/src/`, also:
 
 ```sh
 npm run db:setup       # applies migrations

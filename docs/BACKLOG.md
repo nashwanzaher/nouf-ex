@@ -1,8 +1,13 @@
 # Nouf-ex — المهام التنفيذية المتبقية (Backlog)
 # ============================================================
-# **آخر تحديث:** 2026-07-12 (مراجعة شاملة للملفات الأساسية)
+# **آخر تحديث:** 2026-07-12 (بعد إصلاح Login + 4 commits نظيفة)
 # **الفرع:** `fix/routes-cts-to-ts-2026-07-06`
-# **الحالة العامة:** ✅ TypeScript نظيف · ✅ ESLint نظيف · ✅ Build نجح · ✅ Pushed
+# **Commits الأخيرة:**
+#   - 26e5e0d chore(scripts): add test scripts for Login screen and i18n verification
+#   - f4369ae docs(architecture): add comprehensive architecture documentation
+#   - e533b09 feat(auth): comprehensive Login screen overhaul v2 (Alibaba/Taobao/Amazon parity)
+#   - b153c4c feat(security): add CSRF protection, audit retention scheduler, and settings redaction
+# **الحالة العامة:** ✅ TypeScript نظيف · ✅ ESLint نظيف · ✅ Build نجح · ✅ 4 commits pushed
 # **عدد الجداول الفعلي:** 32 (وليس 28 كما كان مكتوباً سابقاً)
 # **عدد الـ Triggers الفعلي:** 32 (17 dynamic + 15 explicit)
 
@@ -12,6 +17,10 @@
 > **⚠️ تحديث 2026-07-12 (المراجعة الشاملة):**
 > - المهام الموضوعة في `done` ✅ أدناه **مُنفَّذة فعلياً** في الكود
 > - تم اكتشاف **lib/settings-redact.ts** (152 سطر) — يحل P0 #2
+> - تم اكتشاف **routes/admin-extras.ts** (599 سطر) — يحل معظم admin CRUD
+> - تم اكتشاف **18 phase E2E** scripts تغطي معظم API
+> - تم اكتشاف **31 backend tests** + **38 frontend tests** + **20 skills** + **12 agents**
+> - تم **إعادة كتابة شاشة Login v2** بمقاييس Alibaba/Taobao/Amazon — ESLint ✅ + TypeScript ✅ + 25 i18n keys × 3 لغات ✅
 > - تم اكتشاف **routes/admin-extras.ts** (599 سطر) — يحل معظم admin CRUD
 > - تم اكتشاف **18 phase E2E** scripts تغطي معظم API
 > - تم اكتشاف **31 backend tests** + **38 frontend tests** + **20 skills** + **12 agents**
@@ -81,7 +90,21 @@
       - كل run يدعو `cleanup_audit_logs(admin_interval, search_interval)` PL/pgSQL function
       - idempotent + ROW EXCLUSIVE locks + best-effort logging
 
+- [x] ✅ **Login screen overhaul (P1 UI priority)** — **مُنفَّذ** في `Login.tsx` v2 (808 سطر)
+      - **Benchmarked against:** Alibaba/Taobao/Amazon + Baymard UX research
+      - **Tabbed method switcher:** Email | Phone | QR Code (Taobao pattern)
+      - **Smart identifier detection** (auto-routes email vs phone)
+      - **Remember me** (default ON, persists to localStorage, lazy initializer pattern)
+      - **Caps Lock detection** + inline warning
+      - **Auto-advance on Enter** + **Friendly error mapping** via i18n
+      - **Mobile-first responsive** (hero hidden < 1024px)
+      - **2FA inline sub-form** preserved with improvements
+      - **ESLint clean + TypeScript clean + 25 i18n keys × 3 langs**
+      - 873 lines of CSS with design tokens, RTL-safe, glassmorphic effects
+
 ---
+
+## 🟠 P1 — تحسينات عالية الأولوية (Week 1-2)
 
 ## 🟠 P1 — تحسينات عالية الأولوية (Week 1-2)
 
@@ -324,12 +347,17 @@
 
 - ✅ **CSRF tokens** في `lib/csrf.ts` (154 سطر، double-submit cookie pattern)
 - ✅ **Audit log retention** في `lib/audit-scheduler.ts` (165 سطر، node-cron 03:00 UTC)
-- ✅ **إنشاء 5 ملفات توثيق ناقصة**:
+- ✅ **Settings value redaction** في `lib/settings-redact.ts` (165 سطر)
+- ✅ **Login screen overhaul v2** بمقاييس Alibaba/Taobao/Amazon (808 سطر TSX + 526 سطر CSS)
+- ✅ **إنشاء 7 ملفات توثيق ناقصة**:
   - `docs/architecture/overview.md`
   - `docs/architecture/api.md`
   - `docs/architecture/database.md`
+  - `docs/architecture/er-diagram.md`
+  - `docs/architecture/security.md`
   - `docs/operations/deployment.md`
   - `docs/planning/risks.md`
+- ✅ **6 scripts اختبار** للـ Login flow (`scripts/test-login-*.ps1`, `scripts/check-i18n.*`)
 
 ### إحصائيات المشروع المُحدَّثة (2026-07-12):
 
@@ -775,17 +803,17 @@
 
 ## 📝 خارطة طريق مقترحة للربع القادم
 
-### Sprint 1 (P0 - الأمان):
-1. CSRF tokens (يومان)
-2. Settings value redaction (نصف يوم)
-3. Audit log cron (نصف يوم)
-4. coupon_usage cleanup (ساعة واحدة)
+### Sprint 1 (P0 - الأمان) — الحالة: 3/4 ✅ DONE
+1. ✅ **CSRF tokens** — DONE (commit b153c4c)
+2. ✅ **Settings value redaction** — DONE
+3. ✅ **Audit log retention cron** — DONE
+4. ⏳ **coupon_usage cleanup** (ساعة واحدة) — P0 متبقي
 
-### Sprint 2 (P1 - UX):
-1. Real reviews page
-2. Wishlist price-drop alerts
-3. Order tracking map
-4. User role management
+### Sprint 2 (P1 - UX) — الحالة: 1/4 ✅ DONE
+1. ✅ **Login screen overhaul** — DONE (commit e533b09)
+2. ⏳ **Real reviews page** (يومان)
+3. ⏳ **Wishlist price-drop alerts**
+4. ⏳ **Order tracking map**
 
 ### Sprint 3 (تحسينات معمارية):
 1. استبدال useApi بـ TanStack Query
@@ -794,5 +822,6 @@
 
 ### Sprint 4 (تجارب وأتمتة):
 1. e2e tests للـ admin critical paths
+2. Vitest coverage لـ admin-extras.ts (599 سطر جديدة)
 2. Backup automation
 3. CI/CD للـ docs/audit

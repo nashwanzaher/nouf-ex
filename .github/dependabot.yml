@@ -11,10 +11,14 @@
 
 version: 2
 
-# ─── npm (app/) ──────────────────────────────────────────
+# ─── npm monorepo workspaces ───────────────────────────────────────────────
+# After the 2026-07-11 monorepo restructure, every package.json lives
+# inside an npm workspace. Dependabot is configured per-workspace so
+# production-vs-dev grouping and ignore-rules stay scoped.
 updates:
+  # apps/web — React SPA
   - package-ecosystem: 'npm'
-    directory: '/app'
+    directory: '/apps/web'
     target-branch: 'main'
     schedule:
       interval: 'weekly'
@@ -22,30 +26,49 @@ updates:
       time: '09:00'
       timezone: 'Asia/Aden'
     open-pull-requests-limit: 5
-    # Group minor + patch updates to keep the PR stream small.
     groups:
-      production-npm:
+      web-production:
         dependency-type: 'production'
-        update-types:
-          - 'minor'
-          - 'patch'
-      development-npm:
+        update-types: ['minor', 'patch']
+      web-development:
         dependency-type: 'development'
-        update-types:
-          - 'minor'
-          - 'patch'
-    # Do not auto-update critical packages without a manual review.
+        update-types: ['minor', 'patch']
+    labels:
+      - 'dependencies'
+      - 'npm'
+      - 'web'
+
+  # apps/api — Express backend
+  - package-ecosystem: 'npm'
+    directory: '/apps/api'
+    target-branch: 'main'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Aden'
+    open-pull-requests-limit: 5
+    groups:
+      api-production:
+        dependency-type: 'production'
+        update-types: ['minor', 'patch']
+      api-development:
+        dependency-type: 'development'
+        update-types: ['minor', 'patch']
+    # Critical runtime deps — require manual review.
     ignore:
       - dependency-name: 'express'
       - dependency-name: 'pg'
       - dependency-name: 'jsonwebtoken'
+      - dependency-name: 'zod'
     labels:
       - 'dependencies'
       - 'npm'
+      - 'api'
 
-  # ─── npm (mcp-server/) ──────────────────────────────────
+  # apps/mcp-server — Model Context Protocol server
   - package-ecosystem: 'npm'
-    directory: '/mcp-server'
+    directory: '/apps/mcp-server'
     target-branch: 'main'
     schedule:
       interval: 'weekly'
@@ -57,6 +80,21 @@ updates:
       - 'dependencies'
       - 'npm'
       - 'mcp-server'
+
+  # packages/shared — shared types (dep on api + web)
+  - package-ecosystem: 'npm'
+    directory: '/packages/shared'
+    target-branch: 'main'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Aden'
+    open-pull-requests-limit: 2
+    labels:
+      - 'dependencies'
+      - 'npm'
+      - 'shared'
 
   # ─── GitHub Actions ────────────────────────────────────
   - package-ecosystem: 'github-actions'

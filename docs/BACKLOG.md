@@ -38,9 +38,10 @@
       Settings / Broadcast). الملف: `apps/api/src/tests/`.
       (E2E tests موجودة في `apps/e2e/e2e/phase*.ps1` لكن unit tests مفقودة)
 
-- [ ] **Auto-cleanup orphaned coupon_usage on coupon delete** — حذف القسيمة
-      حالياً يحذف السجل لكن لا يحذف `coupon_usage` المرتبطة. أضف
-      `DELETE FROM coupon_usage WHERE coupon_id = $1` قبل `DELETE FROM coupons`.
+- [x] ✅ **Auto-cleanup orphaned coupon_usage on coupon delete** — **مُنفَّذ** في
+      `routes/admin-extras.ts:277-307` (commit a94552a). يستخدم `db.tx()` لإجراء
+      الحذف في transaction واحدة، مع تسجيل عدد الـ usage rows المحذوفة في
+      admin_audit_log.
 
 - [ ] **Rate-limit broadcast endpoint** — `POST /api/admin/notifications/broadcast`
       يمكن أن يبث لآلاف المستخدمين فيطلب rate-limiting (مثلاً: 10/minute per admin).
@@ -348,7 +349,9 @@
 - ✅ **CSRF tokens** في `lib/csrf.ts` (154 سطر، double-submit cookie pattern)
 - ✅ **Audit log retention** في `lib/audit-scheduler.ts` (165 سطر، node-cron 03:00 UTC)
 - ✅ **Settings value redaction** في `lib/settings-redact.ts` (165 سطر)
+- ✅ **Auto-cleanup orphaned coupon_usage** (commit a94552a) — P0 #4 DONE
 - ✅ **Login screen overhaul v2** بمقاييس Alibaba/Taobao/Amazon (808 سطر TSX + 526 سطر CSS)
+- ✅ **Register screen overhaul v2** (651 سطر TSX، password strength meter، validation متطابق مع backend)
 - ✅ **إنشاء 7 ملفات توثيق ناقصة**:
   - `docs/architecture/overview.md`
   - `docs/architecture/api.md`
@@ -803,17 +806,21 @@
 
 ## 📝 خارطة طريق مقترحة للربع القادم
 
-### Sprint 1 (P0 - الأمان) — الحالة: 3/4 ✅ DONE
+### Sprint 1 (P0 - الأمان) — الحالة: 4/7 ✅ DONE (3 متبقي)
 1. ✅ **CSRF tokens** — DONE (commit b153c4c)
 2. ✅ **Settings value redaction** — DONE
 3. ✅ **Audit log retention cron** — DONE
-4. ⏳ **coupon_usage cleanup** (ساعة واحدة) — P0 متبقي
+4. ✅ **coupon_usage cleanup** — DONE (commit a94552a)
+5. ⏳ **Settings schema validation** (يوم واحد) — P0 متبقي
+6. ⏳ **Rate-limit broadcast endpoint** (يوم واحد) — P0 متبقي
+7. ⏳ **Backend tests for new admin endpoints** (يومان) — P0 متبقي
 
-### Sprint 2 (P1 - UX) — الحالة: 1/4 ✅ DONE
+### Sprint 2 (P1 - UX) — الحالة: 2/4 ✅ DONE
 1. ✅ **Login screen overhaul** — DONE (commit e533b09)
-2. ⏳ **Real reviews page** (يومان)
-3. ⏳ **Wishlist price-drop alerts**
-4. ⏳ **Order tracking map**
+2. ✅ **Register screen overhaul** — DONE (commit 56a29d4)
+3. ⏳ **Real reviews page** (يومان)
+4. ⏳ **Wishlist price-drop alerts**
+5. ⏳ **Order tracking map**
 
 ### Sprint 3 (تحسينات معمارية):
 1. استبدال useApi بـ TanStack Query

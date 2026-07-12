@@ -1,0 +1,53 @@
+# ============================================================================
+# Docker Compose override — adds OpenClaw / OpenCode AI server
+# ----------------------------------------------------------------------------
+# This file is automatically merged with docker-compose.yml by Docker Compose.
+# It adds a headless AI coding assistant container to the nouf-ex stack so both
+# can be started/managed together from Docker Desktop.
+#
+# The service has profile "openclaw" so it does NOT start by default when you
+# run `docker compose up`. Start it explicitly with:
+#   docker compose --profile openclaw up -d --build
+#
+# Or from Docker Desktop: select the nouf-ex project → Containers →
+# Nouf-ex-OpenClaw → Start.
+#
+# Access:
+#   - Web UI: http://localhost:3001
+#   - CLI attach: opencode attach http://localhost:3001 -u noufexAI -p 656650
+# ============================================================================
+
+services:
+  openclaw:
+    build:
+      context: .
+      dockerfile: docker/openclaw/Dockerfile
+    image: noufex-openclaw:latest
+    container_name: Nouf-ex-OpenClaw
+    restart: on-failure:5
+    profiles:
+      - openclaw
+    ports:
+      - '127.0.0.1:3001:3001'
+    volumes:
+      # Bind-mount the project root so OpenClaw can read/edit source files.
+      - .:/workspace
+      # Named volume for OpenClaw config, sessions, and memory.
+      - openclaw-data:/data/.openclaw
+    environment:
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-noufexAI}
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-656650}
+      OPENCODE_WORKSPACE: /workspace
+    working_dir: /workspace
+    healthcheck:
+      test:
+        - 'CMD-SHELL'
+        - 'wget -qO- --user="$${OPENCODE_SERVER_USERNAME}" --password="$${OPENCODE_SERVER_PASSWORD}" http://localhost:3001/health || exit 1'
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  openclaw-data:
+    name: noufex_openclaw_data

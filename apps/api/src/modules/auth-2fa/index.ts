@@ -1,0 +1,1 @@
+export { auth2faRouter } from './routes.ts';

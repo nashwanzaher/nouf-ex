@@ -1,0 +1,1 @@
+export { notificationsRouter } from '../modules/notifications/routes.ts';

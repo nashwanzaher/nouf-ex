@@ -1,0 +1,209 @@
+%% Nouf-ex — Monorepo Architecture Diagram
+%% Generated from actual codebase audit (apps/, packages/, server, db).
+%% ✅ = real, ❌ = mock, ⚠️ = mixed (none in current codebase).
+
+graph TB
+  subgraph clients["Browser / PWA"]
+    direction LR
+    USER["👤 User<br/>Customer / Merchant / Admin"]
+  end
+
+  subgraph docker["Docker Desktop"]
+    direction TB
+    COMPOSE["docker-compose.yml<br/>service: noufex"]
+    DOCKERFILE["Dockerfile<br/>(multi-stage)"]
+    ENTRY["docker-entrypoint.sh<br/>+ healthcheck"]
+  end
+
+  subgraph apps["apps/ — npm workspaces"]
+    direction TB
+
+    subgraph web["apps/web (Vite + React 19)"]
+      direction TB
+      WEB_MAIN["src/main.tsx<br/>src/App.tsx"]
+      WEB_ROUTES["src/context/<br/>AppContext, CartContext"]
+
+      subgraph webFeatures["src/features/ (✅ real)"]
+        direction LR
+        F_AUTH["features/auth/<br/>Login.tsx Register.tsx<br/>api/auth.ts"]
+        F_PRODUCTS["features/products/<br/>Categories.tsx Deals.tsx<br/>ProductDetail.tsx SearchResults.tsx<br/>StorePage.tsx<br/>api/products.ts"]
+        F_CART["features/cart/<br/>CartContext.tsx<br/>api/cart.ts"]
+        F_CHECKOUT["features/checkout/<br/>Checkout.tsx<br/>api/payments.ts"]
+        F_ORDERS["features/orders/<br/>CustomerOrders.tsx<br/>api/orders.ts"]
+        F_HOME["features/home/<br/>HeroSection DealsBar<br/>FeaturedMerchants<br/>FeaturedProducts<br/>StatsMarquee<br/>api/system.ts"]
+        F_CUSTOMER["features/customer/<br/>Addresses Wishlist Reviews<br/>Notifications<br/>api/addresses reviews<br/>notifications refunds"]
+        F_SELLER["features/seller/<br/>DashboardShell SellerProducts<br/>SellerOrders SellerAnalytics<br/>api/seller.ts"]
+        F_ADMIN["features/admin/<br/>AdminOverview AdminOrders<br/>AdminProducts Stores<br/>UsersManagement ReportsAnalytics<br/>api/admin.ts"]
+        F_MESSAGES["features/messages/<br/>Messages.tsx<br/>api/messages.ts"]
+        F_SHIPPING["features/shipping/<br/>api/shipping.ts"]
+        F_COUPONS["features/coupons/<br/>api/coupons.ts"]
+      end
+
+      WEB_API["src/lib/api/<br/>client.ts types.ts<br/>index.ts (compat barrel)"]
+      WEB_UI["src/components/<br/>Navbar BottomNav<br/>+ ui/ shadcn"]
+    end
+
+    subgraph api["apps/api (Express 5 + esbuild)"]
+      direction TB
+      API_ENTRY["src/index.ts<br/>Express bootstrap"]
+      API_MIDDLEWARE["src/middleware.ts<br/>CORS, auth, CSP, rate-limit"]
+
+      subgraph apiModules["src/modules/ (✅ real)"]
+        direction LR
+        M_AUTH["modules/auth/<br/>routes → controller →<br/>service → repository"]
+        M_ADDRESSES["modules/addresses/<br/>r/c/s/repo"]
+        M_CART["modules/cart/"]
+        M_COUPONS["modules/coupons/"]
+        M_MESSAGES["modules/messages/"]
+        M_NOTIFICATIONS["modules/notifications/"]
+        M_SHIPPING["modules/shipping/"]
+        M_STATS["modules/stats/"]
+        M_STORE_FOLLOWERS["modules/store-followers/"]
+        M_WISHLIST["modules/wishlist/"]
+        M_ADMIN["modules/admin/<br/>(wrapper → routes/admin.ts)"]
+        M_AUTH2FA["modules/auth-2fa/"]
+        M_CATALOG["modules/catalog/"]
+        M_ORDERS["modules/orders/"]
+        M_PAYMENTS["modules/payments/"]
+        M_REFUNDS["modules/refunds/"]
+        M_REVIEWS["modules/reviews/"]
+        M_SELLER["modules/seller/"]
+      end
+
+      API_ROUTES_LEGACY["src/routes/<br/>(compatibility shims)"]
+      API_LIB["src/lib/<br/>shared.ts validation.ts<br/>error-codes.ts pg-wrapper<br/>partial-token reset-token<br/>totp backup-codes ratelimit"]
+      API_DB["src/db/pg-wrapper.ts"]
+    end
+
+    subgraph mcp["apps/mcp-server"]
+      direction TB
+      MCP_ENTRY["src/index.ts<br/>MCP SDK"]
+    end
+
+    subgraph e2e["apps/e2e"]
+      direction TB
+      E2E_PS["phase00..15*.ps1<br/>phase scripts"]
+    end
+  end
+
+  subgraph packages["packages/ — npm workspaces"]
+    direction TB
+
+    subgraph shared["packages/shared/"]
+      direction LR
+      PKG_SHARED_TYPES["src/types/index.ts<br/>Product Order User ...<br/>✅ real shared types"]
+      PKG_SHARED_CONST["src/constants.ts<br/>SUPPORTED_LANGUAGES<br/>USER_ROLES ORDER_STATUSES"]
+    end
+
+    subgraph db["packages/db/"]
+      direction LR
+      DB_SCHEMA["schema.sql + schema-extra.sql"]
+      DB_VIEWS["views.sql + functions.sql"]
+      DB_TRIG["triggers.sql + roles.sql"]
+      DB_SEED["seed.sql"]
+      DB_MIG["migrations/<br/>0001..0030 (30 files)"]
+    end
+
+    subgraph tsconfig["packages/typescript-config/"]
+      direction LR
+      TS_BASE["base.json<br/>ES2023 strict"]
+      TS_REACT["react.json<br/>jsx: react-jsx"]
+      TS_NODE["node.json<br/>Node.js + NodeNext"]
+    end
+
+    subgraph eslint["packages/eslint-config/"]
+      direction LR
+      ES_BASE["react.js<br/>+ react-refresh"]
+      ES_NODE["node.js<br/>+ tseslint"]
+    end
+  end
+
+  subgraph external["External Services"]
+    direction TB
+    POSTGRES[("PostgreSQL 17<br/>noufex_db<br/>host: host.docker.internal")]
+  end
+
+  subgraph root["Repo Root"]
+    direction TB
+    ROOT_PKG["package.json<br/>workspaces: apps/* packages/*"]
+    ROOT_TURBO["turbo.json<br/>dev / build / typecheck<br/>lint / test / clean"]
+    ROOT_HUSKY[".husky/pre-commit<br/>+ lint-staged"]
+    ROOT_SCRIPTS["scripts/db/<br/>db-setup.cjs drop-test-db.cjs<br/>gen-seed-hashes.cjs"]
+  end
+
+  %% Edges — user to web
+  USER --> WEB_MAIN
+
+  %% Edges — features use API + UI
+  F_AUTH --> WEB_API
+  F_PRODUCTS --> WEB_API
+  F_CART --> WEB_API
+  F_CHECKOUT --> WEB_API
+  F_ORDERS --> WEB_API
+  F_HOME --> WEB_API
+  F_CUSTOMER --> WEB_API
+  F_SELLER --> WEB_API
+  F_ADMIN --> WEB_API
+  F_MESSAGES --> WEB_API
+  F_SHIPPING --> WEB_API
+  F_COUPONS --> WEB_API
+  WEB_API --> WEB_UI
+  WEB_ROUTES --> WEB_API
+
+  %% Edges — web → api (HTTP via /api proxy on :8080 → :3000)
+  WEB_API -.->|HTTP /api/*<br/>fetch| API_ENTRY
+
+  %% Edges — api internals
+  API_ENTRY --> API_MIDDLEWARE
+  API_MIDDLEWARE --> M_AUTH & M_ADDRESSES & M_CART & M_COUPONS & M_MESSAGES & M_NOTIFICATIONS & M_SHIPPING & M_STATS & M_STORE_FOLLOWERS & M_WISHLIST & M_ADMIN & M_AUTH2FA & M_CATALOG & M_ORDERS & M_PAYMENTS & M_REFUNDS & M_REVIEWS & M_SELLER
+  M_AUTH --> API_LIB
+  M_CART --> API_LIB
+  M_ORDERS --> API_LIB
+  M_SELLER --> API_LIB
+  M_ADMIN --> API_ROUTES_LEGACY
+  M_AUTH2FA --> API_ROUTES_LEGACY
+  M_CATALOG --> API_ROUTES_LEGACY
+  M_ORDERS --> API_ROUTES_LEGACY
+  M_PAYMENTS --> API_ROUTES_LEGACY
+  M_REFUNDS --> API_ROUTES_LEGACY
+  M_REVIEWS --> API_ROUTES_LEGACY
+  M_SELLER --> API_ROUTES_LEGACY
+  API_LIB --> API_DB
+  API_DB -.->|pg / TLS| POSTGRES
+  API_ROUTES_LEGACY --> API_DB
+
+  %% Edges — packages
+  ROOT_PKG --> apps
+  ROOT_PKG --> packages
+  apps --> TS_REACT & TS_NODE & ES_BASE & ES_NODE
+  apps --> PKG_SHARED_TYPES
+  API_DB --> DB_SCHEMA
+  API_DB --> DB_MIG
+  ROOT_SCRIPTS --> DB_SCHEMA & DB_SEED & DB_MIG
+  ROOT_SCRIPTS -.->|psql| POSTGRES
+  ROOT_TURBO -.->|task pipeline| apps
+
+  %% Edges — MCP / E2E
+  MCP_ENTRY -.->|psql / read-only| POSTGRES
+  E2E_PS -.->|HTTP| API_ENTRY
+  E2E_PS -.->|HTTP| WEB_MAIN
+  ROOT_HUSKY -.->|lint-staged| apps
+
+  %% Docker
+  DOCKERFILE --> COMPOSE
+  COMPOSE --> ENTRY
+  ENTRY --> API_ENTRY
+
+  %% Style: real ✅ green, mock ❌ red, mixed ⚠️ amber
+  classDef real fill:#d4f7d4,stroke:#2e7d32,color:#1b5e20
+  classDef mock fill:#ffd6d6,stroke:#c62828,color:#7f1d1d
+  classDef mixed fill:#fff3c4,stroke:#f9a825,color:#5d4037
+  classDef pkg fill:#e1f5fe,stroke:#0277bd,color:#01579b
+  classDef ext fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+
+  class F_AUTH,F_PRODUCTS,F_CART,F_CHECKOUT,F_ORDERS,F_HOME,F_CUSTOMER,F_SELLER,F_ADMIN,F_MESSAGES,F_SHIPPING,F_COUPONS real
+  class M_AUTH,M_ADDRESSES,M_CART,M_COUPONS,M_MESSAGES,M_NOTIFICATIONS,M_SHIPPING,M_STATS,M_STORE_FOLLOWERS,M_WISHLIST,M_ADMIN,M_AUTH2FA,M_CATALOG,M_ORDERS,M_PAYMENTS,M_REFUNDS,M_REVIEWS,M_SELLER real
+  class PKG_SHARED_TYPES,PKG_SHARED_CONST,DB_SCHEMA,DB_MIG,DB_SEED,TS_BASE,TS_REACT,TS_NODE,ES_BASE,ES_NODE real
+  class WEB_API,WEB_UI,API_ENTRY,API_MIDDLEWARE,API_LIB,API_DB,API_ROUTES_LEGACY,WEB_MAIN,WEB_ROUTES,MCP_ENTRY,E2E_PS real
+  class POSTGRES ext
+  class ROOT_PKG,ROOT_TURBO,ROOT_HUSKY,ROOT_SCRIPTS,DOCKERFILE,COMPOSE,ENTRY pkg

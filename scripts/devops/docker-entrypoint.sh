@@ -1,19 +1,16 @@
 #!/bin/sh
 # ============================================================================
-# Nouf-ex API container entrypoint.
+# Nouf-ex API container entrypoint (monorepo layout).
 # ----------------------------------------------------------------------------
 # PostgreSQL runs externally (on the host). Docker may start the container
 # before Postgres is ready, so we poll the DB until it accepts connections
-# (up to 60 s). Then we exec the API.
+# (up to 60 s). Then we exec the API from the new path /app/apps/api/dist/.
 # ============================================================================
 set -eu
 
 echo "[entrypoint] Nouf-ex API container starting..."
 echo "[entrypoint] Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}..."
 
-# Wait up to 60 s for the DB to accept a TCP connection. We use a small
-# Node script (already in the image) instead of installing psql or
-# pg_isready.
 node -e "
 const net = require('net');
 const host = process.env.DB_HOST || 'host.docker.internal';
@@ -49,12 +46,8 @@ function attempt() {
 
 echo "[entrypoint] Starting Nouf-ex API server on port ${API_PORT:-3000}..."
 cd /app
-# Run the esbuild-bundled CJS output (server/index.js) produced by
-# the build stage of the Dockerfile. The bundle resolves every
-# relative import at build time, so we don't need a tsx loader
-# hook at runtime. The source (.ts/.cts) files are intentionally
-# NOT shipped in the image — the bundle is self-contained and
-# shipping the source would just bloat the image and re-open the
-# CJS↔ESM interop problem if a future entrypoint called them
-# directly.
-exec node server/index.js
+# Run the esbuild-bundled ESM output produced by the build stage of
+# the Dockerfile. The bundle resolves every relative import at build
+# time so we don't need a tsx loader at runtime. The source files
+# are intentionally NOT shipped in the image.
+exec node apps/api/dist/index.js

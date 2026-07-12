@@ -1,0 +1,1 @@
+export { storeFollowersRouter } from '../modules/store-followers/routes.ts';

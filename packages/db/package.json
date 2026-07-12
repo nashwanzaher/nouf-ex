@@ -1,0 +1,27 @@
+{
+	"name": "@noufex/db",
+	"description": "Nouf-ex PostgreSQL schema, migrations, and seed data",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=20.18.0",
+		"npm": ">=10.0.0"
+	},
+	"scripts": {
+		"db:setup": "node ../../scripts/db/db-setup.cjs",
+		"migrate": "node ../../scripts/db/migrate.cjs",
+		"seed": "psql -f seed.sql",
+		"clean": "rm -rf node_modules/.tmp"
+	},
+	"files": [
+		"schema.sql",
+		"schema-extra.sql",
+		"functions.sql",
+		"triggers.sql",
+		"views.sql",
+		"roles.sql",
+		"seed.sql",
+		"migrations/**/*"
+	]
+}

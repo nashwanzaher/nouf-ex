@@ -1,0 +1,8 @@
+{
+	"extends": "@noufex/typescript-config/base.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	}
+}

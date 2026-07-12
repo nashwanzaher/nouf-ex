@@ -1,0 +1,1 @@
+export { statsRouter } from '../modules/stats/routes.ts';

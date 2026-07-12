@@ -1,0 +1,77 @@
+# ============================================================================
+# Docker MCP Gateway — Nouf-ex workspace
+# ----------------------------------------------------------------------------
+# Runs the Docker MCP Gateway on port 8811 with SSE transport. The Gateway
+# reads docker/mcp-gateway/catalog.yaml and spawns one stdio child per
+# registered MCP server (here: apps/mcp-server, built into /app/dist inside
+# the gateway image).
+#
+# Usage:
+#   docker compose -f docker/mcp-gateway/docker-compose.yml up -d
+#   docker compose -f docker/mcp-gateway/docker-compose.yml logs -f
+#   curl http://localhost:8811/health          # → "ok"
+#   curl -N http://localhost:8811/sse          # MCP SSE stream
+#
+# The Gateway is the ONLY thing exposed on 8811 — the apps/api Express
+# server stays on 3000 (via the root docker-compose.yml) and is reached
+# by the MCP server through the gateway's internal Docker network.
+# ============================================================================
+services:
+  mcp-gateway:
+    # Official Docker MCP Gateway image. Latest tag is a rolling image that
+    # pulls the catalog from the local volume at startup; pinning to a
+    # specific digest is recommended for production.
+    image: docker/mcp-gateway:latest
+    container_name: noufex-mcp-gateway
+    restart: on-failure:5
+    pull_policy: missing
+    ports:
+      # SSE transport listens on 8811. Path /sse is the MCP endpoint,
+      # path /health is the liveness probe (declared in catalog.yaml).
+      - '127.0.0.1:8811:8811'
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    env_file:
+      # .env at the repo root supplies DATABASE_URL and (optionally)
+      # ALLOW_DB_WRITE. The gateway injects DATABASE_URL into the stdio
+      # child process per the catalog.yaml `env` mapping.
+      - path: ../../.env
+        required: false
+    environment:
+      # Tell the gateway where to find the project-scoped catalog.
+      # The Gateway composes this list with the built-in catalog at
+      # ~/.docker/mcp/catalogs/docker-mcp.yaml.
+      MCP_CATALOG_PATHS: "/etc/docker/mcp/catalog.yaml:/catalogs/noufex.yaml"
+      GATEWAY_PORT: '8811'
+      GATEWAY_TRANSPORT: 'sse'
+      LOG_LEVEL: 'info'
+    volumes:
+      # Project-scoped catalog — the file we just wrote.
+      - ./catalog.yaml:/catalogs/noufex.yaml:ro
+      # Built MCP server bundle (apps/mcp-server/dist/index.js). The repo
+      # must be built locally first:
+      #   npm run build -w @noufex/mcp-server
+      # Then the gateway container can exec it via the command in the
+      # catalog.yaml entry.
+      - ../../apps/mcp-server/dist:/app/dist:ro
+      # Source tree, exposed read-only so the stdio child can read .ts
+      # files for code_search / api_routes tools.
+      - ../..:/repo:ro
+    networks:
+      - noufex-mcp
+    healthcheck:
+      test:
+        - 'CMD-SHELL'
+        - 'wget -q --spider http://localhost:8811/health || exit 1'
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+networks:
+  noufex-mcp:
+    name: noufex-mcp
+    driver: bridge

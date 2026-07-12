@@ -20,11 +20,11 @@
 const path = require('node:path');
 let Client;
 try {
-	({ Client } = require(path.join(__dirname, '..', 'app', 'node_modules', 'pg')));
+	({ Client } = require(path.join(__dirname, '..', '..', 'node_modules', 'pg')));
 } catch (err) {
 	throw new Error(
-		'Cannot resolve `pg` from app/node_modules. ' +
-			'Run `cd app && npm install` first, then re-run this script.',
+		'Cannot resolve `pg` from the monorepo node_modules. ' +
+			'Run `npm install` at the repo root first, then re-run this script.',
 	);
 }
 

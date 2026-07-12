@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <linearGradient id="dgold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#D4A853"/>
+      <stop offset="50%" style="stop-color:#F5E6C8"/>
+      <stop offset="100%" style="stop-color:#D4A853"/>
+    </linearGradient>
+  </defs>
+  <polygon points="24,4 44,24 24,44 4,24" fill="none" stroke="url(#dgold)" stroke-width="2"/>
+  <polygon points="24,8 40,24 24,40 8,24" fill="url(#dgold)" opacity="0.3"/>
+  <polygon points="24,12 36,24 24,36 12,24" fill="url(#dgold)"/>
+  <text x="24" y="41" font-family="Cairo, sans-serif" font-size="6" font-weight="700" fill="#1A1612" text-anchor="middle">ماسي</text>
+</svg>

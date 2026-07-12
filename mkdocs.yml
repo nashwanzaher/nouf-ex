@@ -187,6 +187,7 @@ nav:
       - architecture/database.md
       - architecture/er-diagram.md
       - architecture/security.md
+      - architecture/workflow.md
     - Testing:
       - testing/README.md
       - testing/overview.md

@@ -1,5 +1,5 @@
 # ============================================================================
-# Nouf-ex — API container (connects to an existing external PostgreSQL 17).
+# Nouf-ex — API container (monorepo build, connects to external PostgreSQL 17).
 # ----------------------------------------------------------------------------
 # The Postgres server is NOT created here. It must already exist on the host
 # (or on another reachable network) and contain the `noufex_db` database.
@@ -34,37 +34,19 @@ services:
       NODE_ENV: production
       API_PORT: '3000'
       HOST: 0.0.0.0
-      # App connects as the dedicated least-privilege role. Values are
-      # sourced from .env (see env_file above); defaults match Docker
-      # Desktop. On Linux, host.docker.internal maps to the host
-      # gateway via extra_hosts below.
       DB_HOST: ${DB_HOST:-host.docker.internal}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-noufex_db}
       DB_USER: ${DB_USER:-noufex_app}
       DB_PASSWORD: ${DB_PASSWORD}
       DATABASE_URL: ${DATABASE_URL}
-      # DB_SSL defaults to true (secure-by-default). The noufex_db
-      # server already accepts TLS via the standard `sslmode=require`
-      # in DATABASE_URL; to opt out locally set DB_SSL=false in .env.
       DB_SSL: ${DB_SSL:-true}
       SERVE_STATIC: 'true'
-      # SPA bundle is copied to /app/dist in the build stage. The
-      # server's __dirname inside the esbuild bundle is /app/server
-      # (the bundle's location), so the default STATIC_PATH would
-      # resolve to /app/server/dist which is wrong. Pin it to the
-      # copy target explicitly.
-      STATIC_PATH: /app/dist
-      # HMAC signing key for the auth bearer tokens. Required in
-      # production (≥32 chars). Generate one with:
-      #   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+      # SPA bundle ships at apps/web/dist in the new monorepo layout.
+      STATIC_PATH: /app/apps/web/dist
       AUTH_SECRET: ${AUTH_SECRET}
-      # Comma-separated list of allowed CORS origins. The server
-      # default works for local dev; override here for production.
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      # Set TRUST_PROXY to 'true' / '1' / 'loopback' / CIDR list when
-      # running behind nginx, k8s ingress, or a load balancer.
       TRUST_PROXY: ${TRUST_PROXY:-}
     extra_hosts:
       - 'host.docker.internal:host-gateway'

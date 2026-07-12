@@ -1,0 +1,38 @@
+{
+	"name": "@noufex/root",
+	"description": "Nouf-ex — Yemen & Middle East B2B/B2C marketplace monorepo",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=20.18.0",
+		"npm": ">=10.0.0"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev": "turbo run dev --parallel",
+		"build": "turbo run build",
+		"typecheck": "turbo run typecheck",
+		"lint": "turbo run lint",
+		"test": "turbo run test",
+		"clean": "turbo run clean"
+	},
+	"devDependencies": {
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.8",
+		"turbo": "^2.5.0"
+	},
+	"packageManager": "npm@10.9.0",
+	"lint-staged": {
+		"*.{ts,tsx,cts}": [
+			"eslint --fix --max-warnings=0",
+			"prettier --write"
+		],
+		"*.{js,cjs,mjs,json,md,css}": [
+			"prettier --write"
+		]
+	}
+}

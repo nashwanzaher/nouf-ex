@@ -1,0 +1,1 @@
+export { messagesRouter } from '../modules/messages/routes.ts';

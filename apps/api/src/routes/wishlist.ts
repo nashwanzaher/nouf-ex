@@ -1,0 +1,1 @@
+export { wishlistRouter } from '../modules/wishlist/routes.ts';

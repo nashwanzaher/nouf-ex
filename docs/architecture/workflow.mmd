@@ -1,0 +1,50 @@
+%% Nouf-ex — Workflow & Operational Flow Diagram
+%% يحتوي على 4 رسوم بيانية توضح آلية عمل المنصة من الجوانب المختلفة.
+
+%% ============================================================
+%% 1) النظام العام — من المتصفح إلى قاعدة البيانات (Deployment View)
+%% ============================================================
+graph TB
+    subgraph Internet["🌐 الإنترنت"]
+        direction TB
+        Browser["👤 المتصفح<br/>PWA · React 19<br/>i18next (ar/en/zh)"]
+    end
+
+    subgraph Proxy["🔒 Reverse Proxy (nginx)"]
+        direction TB
+        TLS["TLS termination<br/>HSTS · Let's Encrypt"]
+    end
+
+    subgraph Docker["🐳 Docker Container (node:20-alpine)"]
+        direction TB
+        Tini["tini (PID 1)"]
+        EP["docker-entrypoint.sh"]
+        Express["⚙️ Express 5 API<br/>:3000<br/>──────────────────<br/>• Middleware chain<br/>• CSP nonced + HSTS<br/>• Rate-limit<br/>• Auth (HttpOnly cookie)"]
+        SPA["📦 Vite-built SPA<br/>apps/web/dist<br/>React 19 · Router 7<br/>Tailwind · shadcn/ui"]
+        MCP["🤖 MCP Server<br/>@modelcontextprotocol/sdk<br/>read-only introspection"]
+    end
+
+    subgraph Host["🖥️ Host Machine"]
+        direction TB
+        PG[("🐘 PostgreSQL 17<br/>database: noufex_db<br/>──────────────────<br/>• 32 tables<br/>• 32 triggers<br/>• 4 views<br/>• 30 migrations<br/>──────────────────<br/>roles: noufex_app<br/>        noufex_owner<br/>        noufex_readonly")]
+    end
+
+    Browser -->|"HTTPS<br/>(credentials: include)"| TLS
+    TLS -->|"proxy_pass<br/>X-Forwarded-For"| Tini
+    Tini --> EP
+    EP --> Express
+    Express -->|"express.static()"| SPA
+    Express -->|"fallback /<br/>index.html"| SPA
+    Express -->|"pg.Pool (TLS)"| PG
+    MCP -->|"read-only<br/>pg queries"| PG
+
+    classDef ext fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef proxy fill:#fff3e0,stroke:#f57c00,color:#e65100
+    classDef container fill:#f3e5f5,stroke:#7b1fa2,color:#4a148c
+    classDef db fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
+    classDef client fill:#fce4ec,stroke:#c2185b,color:#880e4f
+
+    class Browser client
+    class TLS proxy
+    class Tini,EP,Express,SPA,MCP container
+    class PG db

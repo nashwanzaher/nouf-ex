@@ -1,0 +1,1 @@
+export { shippingRouter } from '../modules/shipping/routes.ts';

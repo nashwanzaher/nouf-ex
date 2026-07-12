@@ -114,11 +114,11 @@ async function runApply(users, { dryRun }) {
 	loadEnv();
 	let Client;
 	try {
-		({ Client } = require(path.join(__dirname, '..', 'app', 'node_modules', 'pg')));
+		({ Client } = require(path.join(__dirname, '..', '..', 'node_modules', 'pg')));
 	} catch (err) {
 		throw new Error(
-			'pg is not resolvable from app/node_modules. Run `npm install` first, ' +
-				'or invoke with --print to get the SQL instead.'
+			'pg is not resolvable from the monorepo node_modules. Run `npm install` ' +
+				'at the repo root first, or invoke with --print to get the SQL instead.'
 		);
 	}
 	const url = resolveDatabaseUrl();

@@ -29,25 +29,24 @@
 const fs = require('fs');
 const path = require('path');
 
-// Resolve `pg` (and `dotenv`) from app/node_modules — the project keeps
-// its single node_modules in app/ alongside the front-end and back-end
-// code, so the root-level scripts need to walk up two directories to
-// reach app/node_modules. A clear error is thrown if `pg` is missing
-// so the user knows to run `npm install` from the app/ directory.
+// Resolve `pg` (and `dotenv`) from the monorepo root's hoisted
+// node_modules. npm workspaces hoist every dep to /node_modules at
+// the repo root, so the scripts/ folder (one level deep) can reach
+// them by walking up one directory.
 let Client, dotenv;
 try {
-	({ Client } = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'pg')));
-	dotenv = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'dotenv'));
+	({ Client } = require(path.join(__dirname, '..', '..', 'node_modules', 'pg')));
+	dotenv = require(path.join(__dirname, '..', '..', 'node_modules', 'dotenv'));
 } catch (err) {
 	throw new Error(
-		'Cannot resolve `pg` / `dotenv` from app/node_modules. ' +
-			'Run `cd app && npm install` first, then re-run this script.'
+		'Cannot resolve `pg` / `dotenv` from the monorepo node_modules. ' +
+			'Run `npm install` at the repo root first, then re-run this script.'
 	);
 }
 
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 
-const DB_DIR = path.resolve(__dirname, '..', '..', 'database');
+const DB_DIR = path.resolve(__dirname, '..', '..', 'packages', 'db');
 const MIGRATIONS = path.join(DB_DIR, 'migrations');
 
 const PIPELINE = [

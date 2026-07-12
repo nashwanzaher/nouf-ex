@@ -1,0 +1,13 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "Nouf-ex Node.js TypeScript config",
+	"extends": "./base.json",
+	"compilerOptions": {
+		"lib": ["ES2023"],
+		"types": ["node"],
+		"allowJs": true,
+		"checkJs": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true
+	}
+}

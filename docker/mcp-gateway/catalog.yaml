@@ -1,0 +1,224 @@
+# ============================================================================
+# Docker MCP Gateway — Nouf-ex Catalog
+# ----------------------------------------------------------------------------
+# Registers the apps/mcp-server workspace as a known MCP server inside the
+# Docker MCP Gateway. The Gateway runs as a single container on port 8811
+# with SSE transport, multiplexes all registered tools behind one URL, and
+# exposes a /health endpoint for liveness probes.
+#
+# The Gateway discovers this catalog from:
+#   - ~/.docker/mcp/catalogs/docker-mcp.yaml (built-in, read-only)
+#   - <repo>/docker/mcp-gateway/catalog.yaml (project-scoped, this file)
+#
+# Tools listed here are the canonical names an MCP client (Claude Desktop,
+# Cursor, Continue.dev, …) calls. They are implemented in
+# apps/mcp-server/src/{db,code,api,docs}-tools.ts and exposed via stdio.
+# ============================================================================
+
+name: noufex-mcp
+displayName: Nouf-ex MCP Server
+description: |
+  Read-only introspection of the Nouf-ex monorepo: PostgreSQL queries
+  (db_*), source-tree navigation (code_*), Express route extraction
+  (api_*), and docs/* search (docs_*). Built from apps/mcp-server/ in the
+  monorepo (packages @noufex/mcp-server). All five registered tools are
+  real — they hit a live PostgreSQL instance and read the actual file tree;
+  no fixtures, no mocks.
+
+# ---------------------------------------------------------------------------
+# Transport: stdio. The Gateway spawns `node /app/dist/index.js` per session
+# and proxies MCP messages between the SSE listener (port 8811) and the
+# stdio child. No HTTP port is opened by the server itself.
+# ---------------------------------------------------------------------------
+transport: stdio
+command: ["node", "/app/dist/index.js"]
+args: []
+
+# ---------------------------------------------------------------------------
+# Mount points — the Gateway bind-mounts the host workspace into the
+# container at /repo so the stdio process can read source files and the
+# .env file lives at /repo/.env.
+# ---------------------------------------------------------------------------
+mounts:
+  - source: ".."
+    target: "/repo"
+    read_only: true
+  - source: "../.env"
+    target: "/repo/.env"
+    read_only: true
+
+# ---------------------------------------------------------------------------
+# Environment — DATABASE_URL is required for the db_query / db_schema tools.
+# Injected by docker-compose from the host's .env (see env_file there).
+# ---------------------------------------------------------------------------
+env:
+  DATABASE_URL: "${DATABASE_URL}"
+  PROJECT_ROOT: "/repo"
+  NODE_ENV: "production"
+
+# ---------------------------------------------------------------------------
+# Health probe — the Gateway exposes its own /health on port 8811, which
+# checks that the stdio child is reachable AND has completed MCP
+# `initialize` handshake. We declare the path here so `docker mcp gateway
+# run` knows what to monitor.
+# ---------------------------------------------------------------------------
+healthcheck:
+  path: "/health"
+  port: 8811
+  interval: "30s"
+  timeout: "5s"
+  retries: 3
+
+# ---------------------------------------------------------------------------
+# Tools — 5 representative entry points implemented in the MCP server.
+# Each entry maps a JSON-Schema input to the corresponding Zod schema in
+# apps/mcp-server/src/{db,code,api,docs}-tools.ts.
+# ---------------------------------------------------------------------------
+tools:
+  # ── 1. db_query — run a read-only SQL statement against noufex_db.
+  # Implemented in db-tools.ts. Refuses INSERT/UPDATE/DELETE/ALTER unless
+  # the caller passes `read_only: false` AND the env var ALLOW_DB_WRITE=1.
+  - name: db_query
+    description: |
+      Execute a SQL query against the noufex_db PostgreSQL database.
+      SELECT / WITH / EXPLAIN / SHOW are always allowed. Mutating
+      statements require read_only=false AND ALLOW_DB_WRITE=1.
+    inputSchema:
+      type: object
+      properties:
+        sql:
+          type: string
+          description: "SQL statement. Parameterized via $1, $2, … placeholders."
+        params:
+          type: array
+          description: "Optional positional parameters for the prepared statement."
+          items:
+            type: ["string", "number", "boolean", "null"]
+        read_only:
+          type: boolean
+          description: "When false, allow INSERT/UPDATE/DELETE (requires ALLOW_DB_WRITE=1)."
+          default: true
+        limit:
+          type: integer
+          description: "Maximum rows to return (default 1000, hard cap 10000)."
+          default: 1000
+      required: ["sql"]
+    annotations:
+      readOnlyHint: true
+      destructiveHint: false
+      idempotentHint: true
+
+  # ── 2. db_schema — return the full schema (tables, columns, indexes) for
+  # the live database. Implemented in db-tools.ts; reads from
+  # information_schema + pg_indexes.
+  - name: db_schema
+    description: |
+      Return the full database schema: every table in the public schema,
+      its columns (name, type, nullable, default), primary keys, foreign
+      keys, and indexes. Output is JSON, suitable for generating typed
+      clients or ER diagrams.
+    inputSchema:
+      type: object
+      properties:
+        table:
+          type: string
+          description: "Optional table name; when set, only that table is returned."
+      additionalProperties: false
+    annotations:
+      readOnlyHint: true
+      idempotentHint: true
+
+  # ── 3. code_search — grep the source tree. Implemented in code-tools.ts.
+  # Uses ripgrep when available, falls back to a Node-native scanner.
+  - name: code_search
+    description: |
+      Regex search across the monorepo source tree (apps/*/src, packages/*/src,
+      scripts/). Returns matching lines with file:line:content format.
+      Excludes node_modules, dist, coverage, and .git.
+    inputSchema:
+      type: object
+      properties:
+        pattern:
+          type: string
+          description: "ECMAScript-flavored regex."
+        path:
+          type: string
+          description: "Optional directory to scope the search to (default: repo root)."
+        include:
+          type: string
+          description: "Glob (e.g. '*.ts') to limit by file extension."
+        max_results:
+          type: integer
+          default: 200
+      required: ["pattern"]
+    annotations:
+      readOnlyHint: true
+      idempotentHint: true
+
+  # ── 4. api_routes — extract every Express route registered in
+  # apps/api/src/index.ts and the modules/* routers. Implemented in
+  # api-tools.ts; statically parses the imports + router.*() calls.
+  - name: api_routes
+    description: |
+      Return every HTTP route exposed by the Nouf-ex API: method, path,
+      middleware chain, source file and line number. Parsed from the
+      actual index.ts + modules/*/controller.ts at query time.
+    inputSchema:
+      type: object
+      properties:
+        method:
+          type: string
+          description: "Filter by HTTP method (GET, POST, …)."
+        path_prefix:
+          type: string
+          description: "Filter by URL prefix (e.g. '/api/auth')."
+      additionalProperties: false
+    annotations:
+      readOnlyHint: true
+      idempotentHint: true
+
+  # ── 5. docs_search — full-text search across docs/*.md. Implemented in
+  # docs-tools.ts. Returns the matched paragraphs plus surrounding
+  # context.
+  - name: docs_search
+    description: |
+      Search the docs/ folder (architecture, ADRs, runbooks, COOKBOOK.md).
+      Returns up to 20 snippets with file path and matched paragraph.
+    inputSchema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Free-text query (case-insensitive substring match)."
+        max_results:
+          type: integer
+          default: 20
+      required: ["query"]
+    annotations:
+      readOnlyHint: true
+      idempotentHint: true
+
+# ---------------------------------------------------------------------------
+# Resources — read-only file blobs the Gateway can serve to MCP clients that
+# support the resources capability. Not required for the 5 tools above, but
+# useful for clients that want to fetch the full architecture document.
+# ---------------------------------------------------------------------------
+resources:
+  - name: architecture
+    uri: "file:///repo/docs/architecture.mmd"
+    description: "Mermaid source for the Nouf-ex architecture diagram."
+    mimeType: "text/vnd.mermaid"
+
+# ---------------------------------------------------------------------------
+# Prompts — pre-built conversation starters that exercise the tools.
+# ---------------------------------------------------------------------------
+prompts:
+  - name: audit-monorepo
+    description: "Walk through every workspace and report its current health."
+    arguments: []
+  - name: trace-request
+    description: "Follow a user request from SPA → API route → DB query."
+    arguments:
+      - name: route
+        description: "HTTP method + path, e.g. 'GET /api/products'."
+        required: true

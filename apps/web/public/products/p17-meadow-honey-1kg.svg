@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Meadow Honey 1kg">
+  <defs>
+    <linearGradient id="bg-17" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f4e61c" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#8a8107" stop-opacity="1"/>
+    </linearGradient>
+    <radialGradient id="glow-17" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#FFD27D" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FFD27D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg-17)"/>
+  <rect width="800" height="800" fill="url(#glow-17)"/>
+  <circle cx="400" cy="340" r="220" fill="#3D1E00" fill-opacity="0.08"/>
+  <circle cx="400" cy="340" r="150" fill="#3D1E00" fill-opacity="0.10"/>
+  <text x="400" y="395" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif" font-size="240" font-weight="800" fill="#3D1E00" fill-opacity="0.92">M</text>
+  <text x="400" y="595" text-anchor="middle" font-family="system-ui, sans-serif" font-size="38" font-weight="700" fill="#3D1E00" fill-opacity="0.96">Meadow Honey 1kg</text>
+  <text x="400" y="650" text-anchor="middle" font-family="'Cairo', 'Amiri', system-ui, sans-serif" font-size="32" font-weight="500" fill="#3D1E00" fill-opacity="0.78" direction="rtl">عسل المراعي 1 كغ</text>
+  <rect x="40" y="720" width="720" height="40" rx="20" fill="#3D1E00" fill-opacity="0.12"/>
+  <text x="400" y="748" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="#3D1E00" fill-opacity="0.85" letter-spacing="4">NOUF-EX  ·  PRODUCT #17</text>
+</svg>

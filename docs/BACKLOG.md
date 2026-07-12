@@ -49,9 +49,18 @@
       *(✅ **مُنفَّذ** — `broadcastLimiter` في `lib/shared.ts`،
       مطبّق في `routes/admin-extras.ts:417`، حد 10/ساعة/admin)*
 
-- [ ] **Settings schema validation** — `adminSettingUpdateSchema.value` حالياً
-      يقبل أي نص. أضف validation لكل setting key معروف (مثلاً: `DEFAULT_CURRENCY`
-      يجب أن يكون 3 أحرف، `FLAT_SHIPPING_COST` يجب أن يكون رقم موجب).
+- [x] ✅ **Settings schema validation** — **مُنفَّذ** في
+      `apps/api/src/lib/settings-validation.ts` (184 سطر، commit 5ff8e87).
+      - `DEFAULT_CURRENCY`: ISO 4217 3-letter uppercase code
+      - `FREE_SHIPPING_THRESHOLD` / `FLAT_SHIPPING_COST`: non-negative integer
+      - `AUDIT_CLEANUP_ADMIN_DAYS`: 1..3650 days
+      - `AUDIT_CLEANUP_SEARCH_DAYS`: 1..365 days
+      - `AUDIT_CLEANUP_TZ`: IANA timezone
+      - Unknown keys: forward-compatible (any non-empty ≤2000 chars)
+
+- [x] ✅ **Rate-limit broadcast endpoint** — **مُنفَّذ** بالفعل في `shared.ts:107`
+      (`broadcastLimiter: 10/hour/admin`). مُطبَّق في `routes/admin-extras.ts:442`
+      على `POST /api/admin/notifications/broadcast`.
 
 ### Frontend
 - [ ] **React Query / SWR** — استبدال `useDataHook` في `hooks/useApi.ts` بـ
@@ -350,6 +359,8 @@
 - ✅ **Audit log retention** في `lib/audit-scheduler.ts` (165 سطر، node-cron 03:00 UTC)
 - ✅ **Settings value redaction** في `lib/settings-redact.ts` (165 سطر)
 - ✅ **Auto-cleanup orphaned coupon_usage** (commit a94552a) — P0 #4 DONE
+- ✅ **Settings schema validation** (commit 5ff8e87) — P0 #5 DONE
+- ✅ **Rate-limit broadcast endpoint** (broadcastLimiter 10/hour) — P0 #6 DONE
 - ✅ **Login screen overhaul v2** بمقاييس Alibaba/Taobao/Amazon (808 سطر TSX + 526 سطر CSS)
 - ✅ **Register screen overhaul v2** (651 سطر TSX، password strength meter، validation متطابق مع backend)
 - ✅ **إنشاء 7 ملفات توثيق ناقصة**:
@@ -806,13 +817,13 @@
 
 ## 📝 خارطة طريق مقترحة للربع القادم
 
-### Sprint 1 (P0 - الأمان) — الحالة: 4/7 ✅ DONE (3 متبقي)
+### Sprint 1 (P0 - الأمان) — الحالة: 6/7 ✅ DONE (1 متبقي)
 1. ✅ **CSRF tokens** — DONE (commit b153c4c)
 2. ✅ **Settings value redaction** — DONE
 3. ✅ **Audit log retention cron** — DONE
 4. ✅ **coupon_usage cleanup** — DONE (commit a94552a)
-5. ⏳ **Settings schema validation** (يوم واحد) — P0 متبقي
-6. ⏳ **Rate-limit broadcast endpoint** (يوم واحد) — P0 متبقي
+5. ✅ **Settings schema validation** — DONE (commit 5ff8e87)
+6. ✅ **Rate-limit broadcast endpoint** — مُنفَّذ مسبقاً (broadcastLimiter في shared.ts)
 7. ⏳ **Backend tests for new admin endpoints** (يومان) — P0 متبقي
 
 ### Sprint 2 (P1 - UX) — الحالة: 2/4 ✅ DONE

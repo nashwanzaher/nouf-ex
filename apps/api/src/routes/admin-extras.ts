@@ -30,6 +30,7 @@ import {
 	adminBroadcastSchema,
 	adminSettingUpdateSchema,
 } from '../lib/shared.ts';
+import { validateSettingValue } from '../lib/settings-validation.ts';
 
 export const adminExtrasRouter = Router();
 
@@ -521,7 +522,22 @@ adminExtrasRouter.patch(
 			const v = validate(adminSettingUpdateSchema, req.body);
 			if (!v.ok) return sendError(res, v.error, 400);
 			const key = String(req.params.key ?? '');
-			const newValue = v.data.value;
+			if (!key || key.length > 64) {
+				return sendError(res, 'Invalid setting key', 400, 'SETTING_KEY_INVALID');
+			}
+			// P0 fix 2026-07-12: per-key validation. Previously the body
+			// accepted any non-empty string, so an admin could save
+			// "FOO_BAR" as DEFAULT_CURRENCY and break checkout. Now each
+			// known key has a typed validator in
+			// apps/api/src/lib/settings-validation.ts.
+			let canonicalValue: string;
+			try {
+				canonicalValue = validateSettingValue(key, v.data.value);
+			} catch (e) {
+				// HttpError from the validator — forward to the client
+				// as a 400 with the actionable error message.
+				throw e;
+			}
 			// SECURITY (P0, 2026-07-12): audit-log redaction for
 			// sensitive setting values. The literal `value` is NEVER
 			// persisted to `admin_audit_log.old_values` /
@@ -531,7 +547,7 @@ adminExtrasRouter.patch(
 			// The audit row is reduced to `{ value: '[REDACTED]' }` or
 			// `{ value: '[unchanged]' }` if the value didn't change.
 			const oldValue = await readSettingDirect(key);
-			const { old_values, new_values } = diffSettingValue(key, oldValue, newValue);
+			const { old_values, new_values } = diffSettingValue(key, oldValue, canonicalValue);
 			await db
 				.prepare(
 					`INSERT INTO app_settings (key, value, updated_at)
@@ -539,7 +555,7 @@ adminExtrasRouter.patch(
 					 ON CONFLICT (key) DO UPDATE
 					   SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
 				)
-				.run(key, newValue);
+				.run(key, canonicalValue);
 			await writeAuditLog(req, 'set_setting', 'setting', key, old_values, new_values);
 			// The HTTP response intentionally echoes back the redacted
 			// representation, not the plaintext, so a GET /settings
@@ -547,7 +563,7 @@ adminExtrasRouter.patch(
 			// browser cache.
 			return sendSuccess(res, {
 				key,
-				value: redactSettingValue(key, newValue),
+				value: redactSettingValue(key, canonicalValue),
 			});
 		} catch (err) {
 			return sendError(res, err);

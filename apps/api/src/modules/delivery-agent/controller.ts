@@ -1,20 +1,20 @@
 import type { Request, Response } from 'express';
-import { sendError, sendSuccess } from '../../lib/shared.ts';
+import { sendError, sendSuccess, requireAuth } from '../../lib/shared.ts';
 import * as service from './service.ts';
 
 export function attachDeliveryAgentRoutes(router: import('express').Router) {
-	router.post('/register', registerHandler);
-	router.get('/profile', profileHandler);
-	router.patch('/profile', updateProfileHandler);
-	router.post('/location', updateLocationHandler);
-	router.get('/orders', ordersHandler);
-	router.get('/orders/:id', orderDetailHandler);
-	router.get('/dashboard', dashboardHandler);
-	router.get('/available-orders', availableOrdersHandler);
-	router.post('/orders/:id/accept', acceptOrderHandler);
-	router.post('/orders/:id/status', updateStatusHandler);
-	router.post('/go-online', goOnlineHandler);
-	router.post('/go-offline', goOfflineHandler);
+	router.post('/register', requireAuth, registerHandler);
+	router.get('/profile', requireAuth, profileHandler);
+	router.patch('/profile', requireAuth, updateProfileHandler);
+	router.post('/location', requireAuth, updateLocationHandler);
+	router.get('/orders', requireAuth, ordersHandler);
+	router.get('/orders/:id', requireAuth, orderDetailHandler);
+	router.get('/dashboard', requireAuth, dashboardHandler);
+	router.get('/available-orders', requireAuth, availableOrdersHandler);
+	router.post('/orders/:id/accept', requireAuth, acceptOrderHandler);
+	router.post('/orders/:id/status', requireAuth, updateStatusHandler);
+	router.post('/go-online', requireAuth, goOnlineHandler);
+	router.post('/go-offline', requireAuth, goOfflineHandler);
 }
 
 async function registerHandler(req: Request, res: Response) {

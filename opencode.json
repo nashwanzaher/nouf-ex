@@ -1,0 +1,63 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-sonnet-4-6",
+  "small_model": "anthropic/claude-haiku-3-5",
+  "default_agent": "build",
+  "shell": "powershell",
+  "logLevel": "INFO",
+  "share": "manual",
+  "autoupdate": "notify",
+  "snapshot": true,
+  "instructions": [
+    "AGENTS.md",
+    "ARCHITECTURE.md"
+  ],
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
+  "references": {
+    "docs": {
+      "path": "docs",
+      "description": "Use for product behavior and documentation conventions"
+    },
+    "architecture": {
+      "path": "ARCHITECTURE.md",
+      "description": "Use for monorepo architecture and component structure"
+    }
+  },
+  "plugin": [
+    "opencode-typescript",
+    "opencode-react",
+    "opencode-expo"
+  ],
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "git *": "allow",
+      "npm *": "ask",
+      "npx *": "ask",
+      "expo *": "ask",
+      "eas *": "ask",
+      "turbo *": "allow",
+      "*": "ask"
+    },
+    "external_directory": {
+      "~/projects/**": "allow",
+      "*": "ask"
+    }
+  },
+  "lsp": true,
+  "formatter": true,
+  "experimental": {
+    "primary_tools": ["edit", "bash"],
+    "mcp_timeout": 30000
+  },
+  "tool_output": {
+    "max_lines": 200,
+    "max_bytes": 8192
+  },
+  "compaction": {
+    "auto": true,
+    "tail_turns": 15
+  }
+}

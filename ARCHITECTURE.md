@@ -1476,7 +1476,14 @@ TRUST_PROXY=
 
 ### 8.1 Backend Tests (`apps/api/src/tests/`)
 
-**31 ملف Vitest** يختبر الـ API:
+**35 ملف Vitest** (33 test files + 2 helper files مثل `test-token.ts`):
+
+**نتائج 2026-07-14:** 617/622 test يمر (99.2%)، 35 ملف test.
+الـ 5 المتبقية هي flaky/timing-dependent:
+- auth-router: rate-limiting (429 vs 400 expected after repeated runs)
+- cart-router: DB-state-dependent test
+- payments-router: rate-limit timing test
+- security-fixes: CTE query pattern check
 
 | الفئة | الملفات |
 |---|---|
@@ -1487,7 +1494,9 @@ TRUST_PROXY=
 
 ### 8.2 Frontend Tests (`apps/web/src/`)
 
-**38 ملف test** موزعة:
+**38 ملف test** (298 test):
+
+**نتائج 2026-07-14:** 298/298 test يمر (100%)، 38 ملف test. كلها خضراء.
 
 | الفئة | العدد | الأمثلة |
 |---|---|---|

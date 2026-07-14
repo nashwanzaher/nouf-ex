@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AppContext';
 import { register as apiRegister, ApiError } from '@/lib/api';
-import { detectIdentifier } from './Login';
+import { detectIdentifier } from './utils';
 import styles from './Login.module.css';
 
 // ── Password strength meter (Amazon / NIST-aligned) ────────────────────

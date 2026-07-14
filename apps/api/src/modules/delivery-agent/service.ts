@@ -22,7 +22,17 @@ export async function getAgentProfile(userId: number) {
 	return agent;
 }
 
-export async function updateAgentProfile(userId: number, data: Partial<repo.DeliveryAgent>) {
+interface UpdateAgentInput {
+	vehicle_type?: string;
+	vehicle_plate?: string;
+	license_number?: string;
+	status?: 'active' | 'offline' | 'busy' | 'suspended';
+	current_lat?: number;
+	current_lng?: number;
+	avatar?: string;
+}
+
+export async function updateAgentProfile(userId: number, data: UpdateAgentInput) {
 	const agent = await repo.findAgentByUserId(userId);
 	if (!agent) {
 		throw new Error('Agent profile not found');
@@ -86,7 +96,7 @@ export async function getAvailableOrders(userId: number, lat?: number, lng?: num
 		throw new Error('You must be online to view available orders');
 	}
 
-	return repo.getAvailableOrders(lat, lng, 15);
+	return repo.getAvailableOrders(lat, lng);
 }
 
 export async function acceptOrder(userId: number, orderId: number) {
@@ -135,7 +145,7 @@ export async function goOnline(userId: number) {
 	if (!agent) {
 		throw new Error('Agent profile not found');
 	}
-	await repo.updateAgent(userId, { status: 'active', is_online: true, is_on_duty: true });
+	await repo.updateAgent(userId, { status: 'active' });
 	return true;
 }
 
@@ -144,6 +154,6 @@ export async function goOffline(userId: number) {
 	if (!agent) {
 		throw new Error('Agent profile not found');
 	}
-	await repo.updateAgent(userId, { status: 'offline', is_online: false, is_on_duty: false });
+	await repo.updateAgent(userId, { status: 'offline' });
 	return true;
 }

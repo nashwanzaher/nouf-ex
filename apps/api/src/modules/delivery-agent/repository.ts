@@ -77,14 +77,14 @@ export interface EarningsRow {
 }
 
 export async function findAgentByUserId(userId: number): Promise<AgentRow | null> {
-	const row = await db.prepare(`
+	const row = (await db.prepare(`
 		SELECT
 			da.*,
 			u.id as user_id, u.email, u.full_name, u.phone, u.avatar, u.preferred_language
 		FROM delivery_agents da
 		JOIN users u ON u.id = da.user_id
 		WHERE da.user_id = ?
-	`).get(userId) as AgentRow | undefined;
+	`).get(userId)) as AgentRow | undefined;
 	return row ?? null;
 }
 
@@ -93,13 +93,12 @@ export async function createAgent(userId: number, input: {
 	vehicle_plate?: string;
 	license_number?: string;
 }): Promise<AgentRow> {
-	const result = await db.prepare(`
+	const result = (await db.prepare(`
 		INSERT INTO delivery_agents (user_id, vehicle_type, vehicle_plate, license_number, status)
 		VALUES (?, ?, ?, ?, 'offline')
 		RETURNING *
-	`).get(userId, input.vehicle_type || 'motorcycle', input.vehicle_plate || '', input.license_number || '') as AgentRow;
+	`).get(userId, input.vehicle_type || 'motorcycle', input.vehicle_plate || '', input.license_number || '')) as unknown as AgentRow;
 
-	// Update user role to delivery_agent
 	await db.prepare(`UPDATE users SET role = 'delivery_agent' WHERE id = ?`).run(userId);
 
 	return result;
@@ -129,16 +128,16 @@ export async function updateAgent(agentId: number, input: {
 	fields.push('updated_at = CURRENT_TIMESTAMP');
 	params.push(agentId);
 
-	return db.prepare(`UPDATE delivery_agents SET ${fields.join(', ')} WHERE id = ? RETURNING *`).get(...params) as AgentRow | null;
+	return (await db.prepare(`UPDATE delivery_agents SET ${fields.join(', ')} WHERE id = ? RETURNING *`).get(...params)) as unknown as AgentRow | null;
 }
 
 export async function findAgentByAgentId(agentId: number): Promise<AgentRow | null> {
-	return db.prepare(`
+	return (await db.prepare(`
 		SELECT da.*, u.id as user_id, u.email, u.full_name, u.phone, u.avatar, u.preferred_language
 		FROM delivery_agents da
 		JOIN users u ON u.id = da.user_id
 		WHERE da.id = ?
-	`).get(agentId) as AgentRow | null;
+	`).get(agentId)) as unknown as AgentRow | null;
 }
 
 export async function updateLocation(userId: number, lat: number, lng: number): Promise<void> {
@@ -173,7 +172,7 @@ export async function getAssignedOrders(agentId: number, status?: string): Promi
 
 	query += ' ORDER BY daa.assigned_at DESC';
 
-	return db.prepare(query).all(...params) as OrderSummaryRow[];
+	return (await db.prepare(query).all(...params)) as unknown as OrderSummaryRow[];
 }
 
 export async function getOrderById(agentId: number, orderId: number): Promise<OrderSummaryRow | null> {
@@ -194,13 +193,13 @@ export async function getOrderById(agentId: number, orderId: number): Promise<Or
 }
 
 export async function getOrderItems(orderId: number): Promise<OrderItemRow[]> {
-	return db.prepare(`
+	return (await db.prepare(`
 		SELECT oi.id, oi.product_id, oi.product_name as product_name, oi.quantity, oi.unit_price, oi.total_price,
 			p.main_image
 		FROM order_items oi
 		LEFT JOIN products p ON p.id = oi.product_id
 		WHERE oi.order_id = ?
-	`).all(orderId) as OrderItemRow[];
+	`).all(orderId)) as unknown as OrderItemRow[];
 }
 
 export async function getStats(agentId: number): Promise<StatsRow> {
@@ -232,7 +231,7 @@ export async function getStats(agentId: number): Promise<StatsRow> {
 }
 
 export async function getEarningsHistory(agentId: number, days: number): Promise<EarningsRow[]> {
-	return db.prepare(`
+	return (await db.prepare(`
 		SELECT
 			DATE(o.delivered_at) as date,
 			SUM(o.shipping_cost) as earnings,
@@ -242,7 +241,7 @@ export async function getEarningsHistory(agentId: number, days: number): Promise
 		WHERE daa.agent_id = ? AND o.status = 'delivered' AND o.delivered_at >= DATE('now', ? || ' days')
 		GROUP BY DATE(o.delivered_at)
 		ORDER BY date DESC
-	`).all(agentId, -days) as EarningsRow[];
+	`).all(agentId, -days)) as unknown as EarningsRow[];
 }
 
 export async function getAvailableOrders(lat?: number, lng?: number): Promise<OrderSummaryRow[]> {
@@ -273,7 +272,7 @@ export async function getAvailableOrders(lat?: number, lng?: number): Promise<Or
 
 	query += ` LIMIT 20`;
 
-	return db.prepare(query).all() as OrderSummaryRow[];
+	return (await db.prepare(query).all()) as unknown as OrderSummaryRow[];
 }
 
 export async function assignOrder(agentId: number, orderId: number): Promise<boolean> {

@@ -120,6 +120,15 @@ export default defineConfig({
 						'@': path.resolve(__dirname, './src'),
 					},
 				},
+				esbuild: {
+					// Explicit JSX automatic runtime for the DOM project.
+					// Vitest 4 does NOT merge project-level esbuild config
+					// with top-level — projects without an esbuild block
+					// fall back to defaults (classic runtime → "React is
+					// not defined" at test time).
+					jsx: 'automatic',
+					jsxImportSource: 'react',
+				},
 				test: {
 					name: 'dom',
 					environment: 'happy-dom',

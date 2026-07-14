@@ -15,7 +15,7 @@
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"lint": "eslint .",
 		"test": "vitest run",
-		"clean": "rm -rf dist node_modules/.tmp"
+		"clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true});require('node:fs').rmSync('node_modules/.tmp',{recursive:true,force:true})\""
 	},
 	"dependencies": {
 		"@types/node-cron": "^3.0.11",

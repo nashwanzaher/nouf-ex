@@ -56,8 +56,6 @@ const PIPELINE = [
 	['views', 'views.sql'],
 	['functions', 'functions.sql'],
 	['triggers', 'triggers.sql'],
-	['roles', 'roles.sql'],
-	['seed', 'seed.sql'],
 ];
 
 function resolveDatabaseUrl() {
@@ -78,7 +76,16 @@ async function applyFile(client, label, relPath) {
 		console.warn(`[db:setup] (skip) ${label}: ${relPath} not found`);
 		return;
 	}
-	const sql = fs.readFileSync(file, 'utf8');
+	let sql = fs.readFileSync(file, 'utf8');
+	// Substitute psql-style variables `:'VAR_NAME'` with single-quoted
+	// env values so files written for `psql -v` still work via node-pg.
+	// (Only roles.sql currently uses these; falls back to DB_PASSWORD
+	// for any missing var so dev setups with a single password keep
+	// working.)
+	sql = sql.replace(/:'([A-Z_][A-Z0-9_]*)'/g, (_match, name) => {
+		const value = process.env[name] || process.env.DB_PASSWORD || 'CHANGE_ME';
+		return `'${String(value).replace(/'/g, "''")}'`;
+	});
 	console.log(`[db:setup] applying ${label}  (${relPath}, ${sql.length} bytes)…`);
 	await client.query(sql);
 }
@@ -139,18 +146,26 @@ async function main() {
 
 	try {
 		for (const [label, relPath] of PIPELINE) {
-			// seed.sql is gated by a GUC and is dev/test only.
-			// Production deploys skip this step because the file
-			// contains demo credentials (admin123, customer123, etc.).
-			if (label === 'seed') {
-				if (process.env.NODE_ENV === 'production') {
-					console.warn(
-						'[db:setup] (skip) seed: NODE_ENV=production ' +
-							'— seed.sql contains demo credentials and will not run.'
-					);
-					continue;
-				}
-				// Latch the GUC that seed.sql's safety check looks for.
+			await applyFile(client, label, relPath);
+		}
+		// Apply migrations BEFORE roles/seed because roles.sql GRANTs
+		// reference tables that are introduced by migrations
+		// (e.g. rate_limit_buckets in 0004, used_jtis in 0010,
+		// webhook_events in 0020, app_settings in 0023, delivery_agents
+		// in 0031, etc.) and seed.sql INSERTs into those tables too.
+		await applyPendingMigrations(client);
+		await applyFile(client, 'roles', 'roles.sql');
+
+		// seed.sql is gated by a GUC and is dev/test only.
+		// Production deploys skip this step because the file
+		// contains demo credentials (admin123, customer123, etc.).
+		if (process.env.NODE_ENV === 'production') {
+			console.warn(
+				'[db:setup] (skip) seed: NODE_ENV=production ' +
+					'— seed.sql contains demo credentials and will not run.'
+			);
+		} else {
+			// Latch the GUC that seed.sql's safety check looks for.
 // SECURITY (fix 2026-07-04): use plain SET, not SET LOCAL.
 // SET LOCAL only persists inside a transaction; db-setup.cjs
 // runs `applyFile` in autocommit mode, so the previous SET LOCAL
@@ -161,11 +176,9 @@ async function main() {
 // `current_setting(...) IS DISTINCT FROM 'on'`, so the literal
 // value MUST be the string 'on' — PostgreSQL's custom GUC
 // validator will reject any other value.
-				await client.query("SET noufex.allow_seed = 'on'");
-			}
-			await applyFile(client, label, relPath);
+			await client.query("SET noufex.allow_seed = 'on'");
+			await applyFile(client, 'seed', 'seed.sql');
 		}
-		await applyPendingMigrations(client);
 		console.log('[db:setup] done.');
 	} finally {
 		await client.end();

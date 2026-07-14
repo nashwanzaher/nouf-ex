@@ -20,7 +20,7 @@
  *   - Verified-purchase badge + seller badge
  *   - i18n-driven UI labels in en / ar / zh
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import {

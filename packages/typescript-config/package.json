@@ -9,6 +9,6 @@
 		"node.json"
 	],
 	"scripts": {
-		"clean": "rm -rf node_modules/.tmp"
+		"clean": "node -e \"require('node:fs').rmSync('node_modules/.tmp',{recursive:true,force:true})\""
 	}
 }

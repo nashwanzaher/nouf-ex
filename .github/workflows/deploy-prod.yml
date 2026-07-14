@@ -81,9 +81,9 @@ jobs:
       - name: Upload artefacts to production
         run: |
           ssh -o StrictHostKeyChecking=accept-new ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} \
-            "mkdir -p /opt/noufex/build/app/dist /opt/noufex/build/app/server"
-          scp -r build/app/dist/. ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/noufex/build/app/dist/
-          scp build/app/server/index.js ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/noufex/build/app/server/
+            "mkdir -p /opt/noufex/build/apps/web/dist /opt/noufex/build/apps/api/dist"
+          scp -r build/apps/web/dist/. ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/noufex/build/apps/web/dist/
+          scp -r build/apps/api/dist/. ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/noufex/build/apps/api/dist/
 
       - name: Apply env + restart stack on production
         env:
@@ -94,24 +94,27 @@ jobs:
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} <<'EOF'
             set -e
             cd /opt/noufex
-            
-            # Create backup before deploy
-            if [ -d "app/server" ]; then
-              cp -r app/server app/server.bak.$(date +%s) 2>/dev/null || true
-              cp -r app/dist app/dist.bak.$(date +%s) 2>/dev/null || true
+
+            # Create backup before deploy (monorepo layout since 2026-07-11).
+            if [ -d "apps/api/dist" ]; then
+              cp -r apps/api/dist apps/api/dist.bak.$(date +%s) 2>/dev/null || true
+              cp -r apps/web/dist apps/web/dist.bak.$(date +%s) 2>/dev/null || true
             fi
-            
-            (cd app && npm ci --no-audit --no-fund && npm run db:setup)
-            mv build/app/dist/* app/dist/ 2>/dev/null || true
-            mv build/app/server/index.js app/server/
+
+            # db:setup runs as the postgres superuser, not as the app role.
+            (node scripts/db/db-setup.cjs)
+            # Replace the freshly-built artefacts in-place.
+            rm -rf apps/web/dist apps/api/dist
+            mv build/apps/web/dist apps/web/dist
+            mv build/apps/api/dist apps/api/dist
             rm -rf build
             cat > .env <<EOT
 NODE_ENV=production
 API_PORT=3000
 HOST=0.0.0.0
 SERVE_STATIC=true
-STATIC_PATH=/app/dist
-DB_HOST=${DB_HOST:-localhost}
+STATIC_PATH=/app/apps/web/dist
+DB_HOST=${DB_HOST:-host.docker.internal}
 DB_PORT=${DB_PORT:-5432}
 DB_NAME=${DB_NAME:-noufex_db}
 DB_USER=${DB_USER:-noufex_app}
@@ -122,7 +125,7 @@ ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://noufex.example.com}
 LOG_LEVEL=info
 EOT
             cd /opt/noufex
-            docker compose restart noufex
+            docker compose up -d --force-recreate noufex
           EOF
 
       - name: Wait + smoke checks with rollback
@@ -154,19 +157,19 @@ EOT
             ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} <<'RBEOF'
               set -e
               cd /opt/noufex
-              LATEST_BAK=$(ls -td app/server.bak.* 2>/dev/null | head -1)
-              LATEST_DIST=$(ls -td app/dist.bak.* 2>/dev/null | head -1)
-              if [ -n "$LATEST_BAK" ]; then
-                rm -rf app/server
-                mv "$LATEST_BAK" app/server
-                echo "Server rolled back"
+              LATEST_API_BAK=$(ls -td apps/api/dist.bak.* 2>/dev/null | head -1)
+              LATEST_WEB_BAK=$(ls -td apps/web/dist.bak.* 2>/dev/null | head -1)
+              if [ -n "$LATEST_API_BAK" ]; then
+                rm -rf apps/api/dist
+                mv "$LATEST_API_BAK" apps/api/dist
+                echo "API bundle rolled back"
               fi
-              if [ -n "$LATEST_DIST" ]; then
-                rm -rf app/dist
-                mv "$LATEST_DIST" app/dist
+              if [ -n "$LATEST_WEB_BAK" ]; then
+                rm -rf apps/web/dist
+                mv "$LATEST_WEB_BAK" apps/web/dist
                 echo "Static files rolled back"
               fi
-              docker compose restart noufex
+              docker compose up -d --force-recreate noufex
             RBEOF
             echo "::error::Rollback completed"
             exit 1

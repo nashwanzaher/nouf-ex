@@ -12,7 +12,7 @@
 		"db:setup": "node ../../scripts/db/db-setup.cjs",
 		"migrate": "node ../../scripts/db/migrate.cjs",
 		"seed": "psql -f seed.sql",
-		"clean": "rm -rf node_modules/.tmp"
+		"clean": "node -e \"require('node:fs').rmSync('node_modules/.tmp',{recursive:true,force:true})\""
 	},
 	"files": [
 		"schema.sql",

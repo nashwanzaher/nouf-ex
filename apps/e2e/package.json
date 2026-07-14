@@ -6,6 +6,6 @@
 	"scripts": {
 		"test": "pwsh -NoProfile -File ./run-all.ps1",
 		"test:health": "pwsh -NoProfile -File ./e2e/phase00_health_auth.ps1",
-		"clean": "rm -rf reports"
+		"clean": "node -e \"require('node:fs').rmSync('reports',{recursive:true,force:true})\""
 	}
 }

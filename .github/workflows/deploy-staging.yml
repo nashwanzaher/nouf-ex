@@ -46,7 +46,9 @@ permissions:
   actions: read
 
 env:
-  APP_DIR: app
+  # Monorepo layout (since 2026-07-11). The build artefacts are produced
+  # at apps/web/dist + apps/api/dist, NOT app/dist + app/server (legacy).
+  APP_DIR: apps
   REMOTE_DIR: /opt/noufex
 
 jobs:
@@ -82,11 +84,11 @@ jobs:
       - name: Verify artefacts
         run: |
           set -e
-          test -f build/${{ env.APP_DIR }}/dist/index.html || { echo "::error::missing dist/index.html"; exit 1; }
-          test -f build/${{ env.APP_DIR }}/server/index.js || { echo "::error::missing server/index.js"; exit 1; }
+          test -f build/apps/web/dist/index.html || { echo "::error::missing apps/web/dist/index.html"; exit 1; }
+          test -f build/apps/api/dist/index.js   || { echo "::error::missing apps/api/dist/index.js"; exit 1; }
           echo "Artefacts present:"
-          ls -la build/${{ env.APP_DIR }}/dist | head -3
-          ls -la build/${{ env.APP_DIR }}/server | head -3
+          ls -la build/apps/web/dist | head -3
+          ls -la build/apps/api/dist | head -3
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -96,12 +98,12 @@ jobs:
       - name: Upload artefacts to staging
         run: |
           ssh -o StrictHostKeyChecking=accept-new ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} \
-            "mkdir -p ${{ env.REMOTE_DIR }}/build/${{ env.APP_DIR }}/dist \
-                     ${{ env.REMOTE_DIR }}/build/${{ env.APP_DIR }}/server"
-          scp -r build/${{ env.APP_DIR }}/dist/. \
-            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:${{ env.REMOTE_DIR }}/build/${{ env.APP_DIR }}/dist/
-          scp build/${{ env.APP_DIR }}/server/index.js \
-            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:${{ env.REMOTE_DIR }}/build/${{ env.APP_DIR }}/server/
+            "mkdir -p ${{ env.REMOTE_DIR }}/build/apps/web/dist \
+                     ${{ env.REMOTE_DIR }}/build/apps/api/dist"
+          scp -r build/apps/web/dist/. \
+            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:${{ env.REMOTE_DIR }}/build/apps/web/dist/
+          scp -r build/apps/api/dist/. \
+            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:${{ env.REMOTE_DIR }}/build/apps/api/dist/
 
       - name: Apply env + restart stack
         env:
@@ -112,11 +114,13 @@ jobs:
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} <<'EOF'
             set -e
             cd ${{ env.REMOTE_DIR }}
-            # 1. Make sure the staging DB is migrated.
-            (cd app && npm ci --no-audit --no-fund && npm run db:setup)
+            # 1. Apply schema migrations + seed. db-setup runs as the
+            #    postgres superuser; it's idempotent and safe to re-run.
+            (node scripts/db/db-setup.cjs)
             # 2. Atomically swap the new artefacts in.
-            mv build/app/dist/* app/dist/ 2>/dev/null || true
-            mv build/app/server/index.js app/server/
+            rm -rf apps/web/dist apps/api/dist
+            mv build/apps/web/dist apps/web/dist
+            mv build/apps/api/dist apps/api/dist
             rm -rf build
             # 3. Re-create the env file with the staging values.
             cat > .env <<EOT
@@ -124,8 +128,8 @@ NODE_ENV=production
 API_PORT=3000
 HOST=0.0.0.0
 SERVE_STATIC=true
-STATIC_PATH=/app/dist
-DB_HOST=\${DB_HOST:-localhost}
+STATIC_PATH=/app/apps/web/dist
+DB_HOST=\${DB_HOST:-host.docker.internal}
 DB_PORT=\${DB_PORT:-5432}
 DB_NAME=\${DB_NAME:-noufex_db}
 DB_USER=\${DB_USER:-noufex_app}
@@ -137,7 +141,7 @@ LOG_LEVEL=info
 EOT
             # 4. Restart the API + nginx (compose).
             cd ${{ env.REMOTE_DIR }}
-            docker compose restart noufex || docker compose up -d
+            docker compose up -d --force-recreate noufex
             echo "Stack restarted."
 
       - name: Wait for API to come back up

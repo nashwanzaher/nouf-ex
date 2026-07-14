@@ -76,13 +76,20 @@ export function loadProject(): ProjectContext {
 		root,
 		databaseUrl,
 		paths: {
-			app: path.join(root, 'app'),
-			server: path.join(root, 'app', 'server'),
-			database: path.join(root, 'database'),
+			// Monorepo layout (since 2026-07-11):
+			//   - Express API source:  apps/api/src/
+			//   - DB SQL files:        packages/db/
+			//   - Docs:                docs/
+			// We keep the legacy keys (`app`, `server`, `database`) as
+			// aliases pointing at the new locations so tool code can
+			// stay readable.
+			app: path.join(root, 'apps', 'api'),
+			server: path.join(root, 'apps', 'api', 'src'),
+			database: path.join(root, 'packages', 'db'),
 			docs: path.join(root, 'docs'),
-			apiServerTs: path.join(root, 'app', 'server', 'index.ts'),
-			middlewareTs: path.join(root, 'app', 'server', 'middleware.ts'),
-			dbWrapper: path.join(root, 'app', 'server', 'db', 'pg-wrapper.cjs'),
+			apiServerTs: path.join(root, 'apps', 'api', 'src', 'index.ts'),
+			middlewareTs: path.join(root, 'apps', 'api', 'src', 'middleware.ts'),
+			dbWrapper: path.join(root, 'apps', 'api', 'src', 'db', 'pg-wrapper.ts'),
 		},
 	};
 }

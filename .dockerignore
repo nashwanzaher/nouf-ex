@@ -42,8 +42,11 @@ coverage/
 
 # Provisioning / scripts not needed at runtime
 database/
-scripts/
 app/scripts/
+# Keep the docker entrypoint in the build context. Everything else
+# under scripts/ is for the host (db setup, lint, typecheck, etc.) and
+# does NOT need to ship in the runtime image.
+!scripts/devops/docker-entrypoint.sh
 
 # MCP server (separate process, runs on host, not in this image)
 mcp-server/

@@ -34,12 +34,18 @@ services:
       NODE_ENV: production
       API_PORT: '3000'
       HOST: 0.0.0.0
-      DB_HOST: ${DB_HOST:-host.docker.internal}
+      # Force the DB host to host.docker.internal so the container reaches
+      # the host's Postgres via the `extra_hosts` mapping below, regardless
+      # of the value the developer has set in .env for local dev (which is
+      # usually 127.0.0.1 — that resolves to the container itself!).
+      DB_HOST: host.docker.internal
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-noufex_db}
       DB_USER: ${DB_USER:-noufex_app}
       DB_PASSWORD: ${DB_PASSWORD}
-      DATABASE_URL: ${DATABASE_URL}
+      # Rewrite DATABASE_URL using the overridden DB_HOST so the app uses
+      # the same value as DB_HOST above (avoids host/port mismatch).
+      DATABASE_URL: postgresql://${DB_USER:-noufex_app}:${DB_PASSWORD}@host.docker.internal:${DB_PORT:-5432}/${DB_NAME:-noufex_db}
       DB_SSL: ${DB_SSL:-true}
       SERVE_STATIC: 'true'
       # SPA bundle ships at apps/web/dist in the new monorepo layout.

@@ -231,7 +231,7 @@ describe('authRouter — POST /api/auth/logout', () => {
 		// The exact code depends on whether requireAuth fails before
 		// or after the DB lookup; both AUTH_REQUIRED and AUTH_INVALID
 		// are acceptable evidence of the gate firing.
-		expect(['AUTH_REQUIRED', 'AUTH_INVALID']).toContain(meRes.body.code);
+		expect(['AUTH_REQUIRED', 'AUTH_INVALID', 'TOKEN_REVOKED']).toContain(meRes.body.code);
 	});
 });
 
@@ -271,11 +271,15 @@ describe('authRouter — POST /api/auth/change-password', () => {
 				};
 			}
 			if (upper.startsWith('UPDATE USERS SET PASSWORD_HASH')) {
+				// Production code may combine password_hash + token_version
+				// bump into one UPDATE (setPasswordHashAndBumpVersion).
+				const hasTokenBump = upper.includes('TOKEN_VERSION = TOKEN_VERSION + 1');
 				return {
 					run: async (newHash: string) => {
 						lastWrittenHash = newHash;
 						storedHash = newHash;
 						passwordUpdateCount += 1;
+						if (hasTokenBump) tokenVersionBumpCount += 1;
 						return { rowCount: 1, lastInsertRowid: null };
 					},
 					get: async () => undefined,

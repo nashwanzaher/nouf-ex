@@ -17,7 +17,7 @@ import { db } from '../lib/shared.ts';
 
 const SRC = (rel: string) => fs.readFileSync(path.resolve(__dirname, '..', rel), 'utf8');
 const SRC_REPO = (rel: string) =>
-	fs.readFileSync(path.resolve(__dirname, '..', '..', '..', rel), 'utf8');
+	fs.readFileSync(path.resolve(__dirname, '..', '..', '..', '..', rel), 'utf8');
 
 describe('messages.cts uses u.full_name (not u.name)', () => {
 	// A regression to `u.name` would break /api/messages/inbox and
@@ -199,7 +199,7 @@ describe('write_audit_log() exists with prosecdef=true (live DB)', () => {
 });
 
 describe('seed.sql refuses to run in production', () => {
-	const src = SRC_REPO('database/seed.sql');
+	const src = SRC_REPO('packages/db/seed.sql');
 	void src; // touch to satisfy unused-var lint
 	it('first non-comment code block is a GUC guard (DO $$)', () => {
 		// Find the first non-comment, non-empty line of code.

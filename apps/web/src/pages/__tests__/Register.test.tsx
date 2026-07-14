@@ -100,7 +100,7 @@ describe('Register page', () => {
 		fireEvent.submit(document.querySelector('form')!);
 		await waitFor(() => {
 			expect(
-				screen.getByText(/password must be at least 6 characters/i),
+				screen.getByText(/password must be at least 10 characters/i),
 			).toBeInTheDocument();
 		});
 		expect(navigateMock).not.toHaveBeenCalled();

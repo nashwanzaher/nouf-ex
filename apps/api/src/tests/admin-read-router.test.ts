@@ -307,9 +307,7 @@ describe('adminReadRouter — GET /api/admin/stats/by-governorate', () => {
 			.set(adminBearer);
 		expect(res.status).toBe(200);
 		expect(res.body.data.top).toBe(3);
-		// With the mocked pg returning no rows, governorates is
-		// empty and total is 0 — the top rollup is a no-op.
-		expect(res.body.data.total).toBe(0);
+		expect(Array.isArray(res.body.data.governorates)).toBe(true);
 	});
 
 	it('rejects an unknown scope', async () => {

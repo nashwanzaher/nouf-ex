@@ -10,8 +10,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// app/server/tests/ → app/server → app → project root
-const ROOT = resolve(__dirname, '..', '..', '..');
+// apps/api/src/tests/ → apps/api/src → apps/api → apps → root
+const ROOT = resolve(__dirname, '..', '..', '..', '..');
 
 function readSql(relPath: string): string {
 	const abs = resolve(ROOT, relPath);
@@ -23,7 +23,7 @@ function readSql(relPath: string): string {
 
 describe('SQL schema files', () => {
 	describe('database/schema.sql (master schema)', () => {
-		const sql = readSql('database/schema.sql');
+		const sql = readSql('packages/db/schema.sql');
 
 		it('exists and is non-empty', () => {
 			expect(sql.length).toBeGreaterThan(100);
@@ -67,7 +67,7 @@ describe('SQL schema files', () => {
 	});
 
 	describe('database/schema-extra.sql (extra tables)', () => {
-		const sql = readSql('database/schema-extra.sql');
+		const sql = readSql('packages/db/schema-extra.sql');
 
 		it('exists and is non-empty', () => {
 			expect(sql.length).toBeGreaterThan(50);
@@ -107,7 +107,7 @@ describe('SQL schema files', () => {
 	});
 
 	describe('database/seed.sql (data dump)', () => {
-		const sql = readSql('database/seed.sql');
+		const sql = readSql('packages/db/seed.sql');
 
 		it('exists and contains INSERT statements', () => {
 			expect(sql.length).toBeGreaterThan(1000);

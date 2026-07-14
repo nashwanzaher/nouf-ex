@@ -34,6 +34,15 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/context/AppContext', () => ({
+	useApp: () => ({
+		state: {
+			lang: 'en',
+			dir: 'ltr',
+			user: { id: '7', full_name: 'Ahmed', email: 'ahmed@gmail.com', role: 'customer' },
+			toasts: [],
+		},
+		addToast: vi.fn(),
+	}),
 	useAuth: () => ({
 		user: { id: '7', name: 'Ahmed', email: 'ahmed@gmail.com', role: 'customer' },
 		isAuthenticated: true,

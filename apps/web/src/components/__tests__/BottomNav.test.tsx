@@ -60,17 +60,20 @@ describe('BottomNav', () => {
 	it('caps the cart badge at 99+', async () => {
 		// Reset modules so we can re-mock with a different cart count.
 		vi.resetModules();
-		vi.doMock('@/context/CartContext', () => ({
+		vi.doMock('@/features/cart/context/CartContext', () => ({
 			useCart: () => ({ cartCount: 250 }),
 		}));
 		const { default: BottomNavReloaded } = await import('../BottomNav');
+		const { AppProvider } = await import('@/context/AppContext');
 		render(
 			<MemoryRouter initialEntries={['/checkout']}>
-				<BottomNavReloaded />
+				<AppProvider>
+					<BottomNavReloaded />
+				</AppProvider>
 			</MemoryRouter>,
 		);
 		expect(screen.getByText('99+')).toBeInTheDocument();
-		vi.doUnmock('@/context/CartContext');
+		vi.doUnmock('@/features/cart/context/CartContext');
 		vi.resetModules();
 	});
 

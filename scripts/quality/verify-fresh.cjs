@@ -1,7 +1,7 @@
 // filepath: scripts/verify-fresh.cjs
 // Verify password hashes on the freshly-built test DB.
 const path = require('node:path');
-const { Client } = require(path.join(process.cwd(), 'app', 'node_modules', 'pg'));
+const { Client } = require(path.join(__dirname, '..', '..', 'node_modules', 'pg'));
 const { scrypt, timingSafeEqual } = require('crypto');
 const { promisify } = require('util');
 const scryptAsync = promisify(scrypt);

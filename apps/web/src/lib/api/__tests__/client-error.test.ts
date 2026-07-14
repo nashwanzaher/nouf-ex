@@ -131,7 +131,7 @@ describe('ApiError carries server-supplied fields', () => {
 			expect.fail('apiRequest should have thrown');
 		} catch (err) {
 			const e = err as ApiError;
-			expect(e.message).toBe('API request failed');
+			expect(e.message).toBe('Request failed');
 			expect(e.status).toBe(500);
 		}
 	});

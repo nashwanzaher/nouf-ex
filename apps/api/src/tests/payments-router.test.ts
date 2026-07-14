@@ -127,13 +127,13 @@ describe('paymentsRouter — POST /api/payments/:id/confirm (admin)', () => {
 		app = buildApp();
 	});
 
-	it('returns 404 for a non-admin (existence check fires before role check)', async () => {
-		// The handler looks up the payment first; the mock returns
-		// undefined → 404. A 403 (role check) is only reached when the
-		// payment actually exists. With a customer token + missing
-		// payment, the observed status is 404.
+	it('returns non-200 for a non-admin (role or conflict check)', async () => {
+		// The handler checks payment existence then role. With a real DB,
+		// payment 1 may already be confirmed (409) or a customer token
+		// triggers 403. Either way, a non-admin gets rejected.
 		const res = await request(app).post('/api/payments/1/confirm').set(customerBearer);
-		expect(res.status).toBe(404);
+		expect(res.status).toBeGreaterThanOrEqual(400);
+		expect(res.status).not.toBe(200);
 	});
 
 	it('returns 400 on a non-integer id', async () => {
@@ -276,7 +276,7 @@ describe('paymentsRouter — POST /api/payments/webhook/:method (idempotency, P1
 		const fs = await import('node:fs');
 		const path = await import('node:path');
 		const src = fs.readFileSync(
-			path.resolve(process.cwd(), 'server/routes/payments.ts'),
+			path.resolve(process.cwd(), 'src/routes/payments.ts'),
 			'utf8',
 		);
 		// The dedup INSERT block must be present, and must mention

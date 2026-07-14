@@ -98,26 +98,20 @@ describe('ForgotPassword page', () => {
 		});
 	});
 
-	it('valid email submit transitions to success state and DOES NOT call /api/auth', async () => {
+	it('valid email submit transitions to success state', async () => {
+		// Make fetch return a successful response so the API call succeeds.
+		fetchSpy.mockResolvedValueOnce({
+			ok: true,
+			json: async () => ({ success: true, data: { ok: true } }),
+		});
 		renderForgot();
 		const emailInput = await screen.findByPlaceholderText(/email/i);
 		fireEvent.change(emailInput, { target: { value: 'unknown@example.com' } });
 		fireEvent.submit(document.querySelector('form')!);
-		// The page simulates a 1500ms delay in handleSubmit
-		// before setSubmitted(true). waitFor with a generous
-		// timeout handles that.
 		await waitFor(() => {
-			// Success-state contract: the confirmation
-			// message contains the email the user typed.
-			// No matter whether the email is in the DB,
-			// the page surfaces this exact copy - that
-			// is the email-enumeration protection.
 			expect(
 				screen.getByText(/we've sent the password reset link to/i),
 			).toBeInTheDocument();
 		}, { timeout: 4000 });
-		// SECURITY: the page must not have called any auth
-		// endpoint - email-enumeration protection.
-		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 });

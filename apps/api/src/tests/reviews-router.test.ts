@@ -126,7 +126,7 @@ describe('reviewsRouter — POST /api/reviews', () => {
 		it('accepts a full review body with title + comment — passes validation', async () => {
 			const res = await request(app).post('/api/reviews').set(bearer).send({
 				productId: 1,
-				storeId: 2,
+				storeId: 1,
 				rating: 4,
 				title: 'Solid product',
 				comment: 'Would buy again.',

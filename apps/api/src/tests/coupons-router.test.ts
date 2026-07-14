@@ -73,12 +73,12 @@ describe('couponsRouter — POST /api/coupons/validate', () => {
 		expect(res.status).toBe(400);
 	});
 
-	it('returns 404 when the coupon is not found (mocked pg returns undefined)', async () => {
+	it('returns 400 when the coupon is not found (mocked pg returns undefined)', async () => {
 		const res = await request(app)
 			.post('/api/coupons/validate')
 			.set(bearer)
 			.send({ code: 'NOPE', user_id: 7, order_subtotal: 100 });
-		expect(res.status).toBe(404);
+		expect(res.status).toBe(400);
 	});
 });
 

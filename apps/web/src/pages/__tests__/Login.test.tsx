@@ -107,7 +107,7 @@ describe('Login page', () => {
 		fireEvent.submit(form);
 		await waitFor(() => {
 			expect(
-				screen.getByText(/password must be at least 6 characters/i),
+				screen.getByText(/password must be at least 8 characters/i),
 			).toBeInTheDocument();
 		});
 		expect(navigateMock).not.toHaveBeenCalled();

@@ -32,8 +32,10 @@ function renderAt(
 							</ProtectedRoute>
 						}
 					/>
-					<Route path="/auth/login" element={<div>Login Page</div>} />
+				<Route path="/auth/login" element={<div>Login Page</div>} />
 					<Route path="/" element={<div>Home Page</div>} />
+					<Route path="/customer" element={<div>Customer Dashboard</div>} />
+					<Route path="/seller" element={<div>Seller Dashboard</div>} />
 				</Routes>
 			</MemoryRouter>
 		</AppProvider>,
@@ -51,9 +53,9 @@ describe('ProtectedRoute', () => {
 		expect(screen.getByText('Secret content')).toBeInTheDocument();
 	});
 
-	it('redirects to / when the user has the wrong role', () => {
+	it('redirects to the role-appropriate dashboard when the user has the wrong role', () => {
 		renderAt('/secret', { id: '1', role: 'customer' });
-		expect(screen.getByText('Home Page')).toBeInTheDocument();
+		expect(screen.getByText('Customer Dashboard')).toBeInTheDocument();
 	});
 
 	it('does not enforce roles when allowedRoles is omitted', () => {

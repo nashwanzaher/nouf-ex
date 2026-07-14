@@ -84,6 +84,27 @@ const mobileTabs: MobileTab[] = [
 	{ icon: Menu, labelKey: 'seller.more', path: null },
 ];
 
+/**
+ * Resolve a sidebar badge to a renderable string.
+ *
+ * The sidebar renders `t(item.badgeKey, item.badgeParams ?? {})` directly.
+ * Real i18next treats the 2nd arg as interpolation values and returns a
+ * string, but the smoke-test mock (and any broken translation key) returns
+ * the params object verbatim — so `{ count: 8 }` lands in the DOM and
+ * React throws "Objects are not valid as a React child (found: object
+ * with keys {})". This helper guarantees the result is always a string
+ * by falling back to the key itself when the value isn't a string.
+ */
+function resolveBadgeText(
+	item: NavItem,
+	t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+	if (item.badge != null) return item.badge;
+	if (!item.badgeKey) return '';
+	const value = t(item.badgeKey, item.badgeParams ?? {});
+	return typeof value === 'string' ? value : item.badgeKey;
+}
+
 interface DashboardShellProps {
 	children: ReactNode;
 	title: string;
@@ -194,7 +215,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 											)}
 										>
 											{item.badgeKey
-												? t(item.badgeKey, item.badgeParams ?? {})
+												? resolveBadgeText(item, t)
 												: item.badge}
 										</span>
 									)}
@@ -461,7 +482,7 @@ export default function DashboardShell({ children, title, breadcrumb }: Dashboar
 													)}
 												>
 													{item.badgeKey
-														? t(item.badgeKey, item.badgeParams ?? {})
+														? resolveBadgeText(item, t)
 														: item.badge}
 												</span>
 											)}

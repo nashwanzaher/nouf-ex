@@ -22,6 +22,13 @@ vi.mock('react-i18next', () => ({
 	}),
 }));
 
+vi.mock('@/context/AppContext', () => ({
+	useApp: () => ({
+		state: { lang: 'en', dir: 'ltr', user: null, toasts: [] },
+		dispatch: () => undefined,
+	}),
+}));
+
 function renderFooter() {
 	return render(
 		<MemoryRouter>

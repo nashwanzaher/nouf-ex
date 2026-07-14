@@ -1,3 +1,3 @@
-Set-Location $PSScriptRoot\..\app
+Set-Location $PSScriptRoot\..\..  # repo root
 npm run typecheck
 $LASTEXITCODE > "$PSScriptRoot\_tc_exit.txt"

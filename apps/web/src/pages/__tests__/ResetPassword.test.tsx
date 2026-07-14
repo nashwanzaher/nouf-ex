@@ -79,14 +79,14 @@ describe('ResetPassword page', () => {
 		});
 	});
 
-	it('shows "Password must be at least 6 characters" on a short password', async () => {
+	it('shows "Password must be at least 10 characters" on a short password', async () => {
 		renderReset();
 		fireEvent.change(await getNewPasswordInput(), { target: { value: '123' } });
 		fireEvent.change(await getConfirmInput(), { target: { value: '123' } });
 		fireEvent.submit(document.querySelector('form')!);
 		await waitFor(() => {
 			expect(
-				screen.getByText(/password must be at least 6 characters/i),
+				screen.getByText(/password must be at least 10 characters/i),
 			).toBeInTheDocument();
 		});
 	});

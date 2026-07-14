@@ -31,9 +31,9 @@ function buildApp(): Express {
 }
 
 describe('notificationsRouter — auth gate', () => {
-	it('GET /:userId → 401 without token', async () => {
+	it('GET / → 401 without token', async () => {
 		const app = buildApp();
-		const res = await request(app).get('/api/notifications/7');
+		const res = await request(app).get('/api/notifications');
 		expect(res.status).toBe(401);
 	});
 
@@ -57,7 +57,7 @@ describe('notificationsRouter — GET /:userId', () => {
 	});
 
 	it('returns 200 with an array envelope', async () => {
-		const res = await request(app).get('/api/notifications/7').set(bearer);
+		const res = await request(app).get('/api/notifications').set(bearer);
 		expect(res.status).toBe(200);
 		expect(res.body).toMatchObject({ success: true });
 		expect(Array.isArray(res.body.data)).toBe(true);

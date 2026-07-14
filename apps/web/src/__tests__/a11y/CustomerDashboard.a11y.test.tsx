@@ -20,7 +20,7 @@ import React from 'react';
  * runtime contrast ratios reliably.
  */
 
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import type { RunOptions } from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import {
@@ -32,14 +32,13 @@ import {
     it,
     vi,
 } from 'vitest';
-import { axe } from 'vitest-axe';
 import {
     installFetchSpy,
     uninstallFetchSpy,
 } from '../../../mocks/fetch-spy';
 
 // Shared axe options — see file header for the rationale.
-const axeOptions: RunOptions = {
+const _axeOptions: RunOptions = {
 	rules: {
 		'color-contrast': { enabled: false },
 	},
@@ -119,7 +118,7 @@ describe('A11y: CustomerDashboard', () => {
 	// (1) OrderTimeline: list role + step labels rendered
 	// ────────────────────────────────────────────────────────────
 	it('OrderTimeline renders list role with step labels for each order', async () => {
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/customer']}>
 				<AppProvider>
 					<CustomerDashboard />
@@ -141,7 +140,7 @@ describe('A11y: CustomerDashboard', () => {
 	// (2) StatusBadge: visible status text rendered
 	// ────────────────────────────────────────────────────────────
 	it('StatusBadge renders visible status text for each order', async () => {
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/customer']}>
 				<AppProvider>
 					<CustomerDashboard />
@@ -162,7 +161,7 @@ describe('A11y: CustomerDashboard', () => {
 		// (English locale). Full Arabic locale testing requires a
 		// deeper AppProvider + i18n integration that is beyond
 		// the scope of this a11y test file.
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/customer']}>
 				<AppProvider>
 					<CustomerDashboard />
@@ -177,7 +176,7 @@ describe('A11y: CustomerDashboard', () => {
 	// (4) List role is present in the DOM
 	// ────────────────────────────────────────────────────────────
 	it('Each OrderTimeline renders inside a list role', async () => {
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/customer']}>
 				<AppProvider>
 					<CustomerDashboard />
@@ -190,3 +189,5 @@ describe('A11y: CustomerDashboard', () => {
 		expect(lists.length).toBeGreaterThanOrEqual(2);
 	});
 });
+
+

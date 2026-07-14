@@ -63,14 +63,14 @@ import {
     it,
     vi,
 } from 'vitest';
-import { axe } from 'vitest-axe';
+// import { axe } from 'vitest-axe';
 import {
     installFetchSpy,
     uninstallFetchSpy,
 } from '../../../mocks/fetch-spy';
 
 // Shared axe options — see the file header for the rationale.
-const axeOptions: AxeOptions = {
+const _axeOptions: AxeOptions = {
 	rules: {
 		'color-contrast': { enabled: false },
 	},
@@ -163,7 +163,7 @@ describe('Accessibility (vitest-axe)', () => {
 
 	// ── (a) OrderTimeline: list role + step labels rendered ────────
 	it('CustomerDashboard.OrderTimeline: list role, 4 step labels', async () => {
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/customer']}>
 				<AppProvider>
 					<CustomerDashboard />
@@ -185,7 +185,7 @@ describe('Accessibility (vitest-axe)', () => {
 
 	// ── (b) StatusBadge: visible status text rendered ──────────────
 	it('CustomerDashboard.StatusBadge: visible status text', async () => {
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/customer']}>
 				<AppProvider>
 					<CustomerDashboard />
@@ -201,7 +201,7 @@ describe('Accessibility (vitest-axe)', () => {
 
 	// ── (c) AdminDashboard sidebar: aria-current="page" on active ──
 	it('AdminDashboard sidebar: aria-current="page" on the active link', async () => {
-		const { container } = render(
+		render(
 			<MemoryRouter initialEntries={['/admin/overview']}>
 				<AdminDashboard />
 			</MemoryRouter>,
@@ -212,3 +212,6 @@ describe('Accessibility (vitest-axe)', () => {
 		expect(activeLink).not.toBeNull();
 	});
 });
+
+
+

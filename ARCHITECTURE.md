@@ -36,7 +36,7 @@ nouf-ex/
 │   └── e2e/      @noufex/e2e         PowerShell phase scripts     (no runtime)
 │
 ├── packages/                 # 4 مكتبات مشتركة
-│   ├── db/        @noufex/db         7 SQL files + 30 migrations
+│   ├── db/        @noufex/db         7 SQL files + 32 migrations
 │   ├── shared/    @noufex/shared     types + constants
 │   ├── typescript-config/ @noufex/typescript-config  tsconfig presets
 │   └── eslint-config/ @noufex/eslint-config          eslint presets
@@ -68,7 +68,7 @@ graph LR
   end
 
   subgraph pkgs["packages/"]
-    DB["@noufex/db<br/>SQL + 30 migrations"]
+      DB["@noufex/db<br/>SQL + 32 migrations"]
     SHD["@noufex/shared<br/>types + constants"]
     TSC["@noufex/typescript-config"]
     ESC["@noufex/eslint-config"]
@@ -986,7 +986,7 @@ format on-disk: 'scrypt$<saltB64>$<keyB64>'
 
 ## 5. Database (`packages/db`)
 
-### 5.1 الملفات الـ 7 + 30 migration
+### 5.1 الملفات الـ 7 + 32 migration
 
 | الملف | الغرض |
 |---|---|
@@ -998,9 +998,9 @@ format on-disk: 'scrypt$<saltB64>$<keyB64>'
 | `roles.sql` | noufex_owner, noufex_app, noufex_readonly + GRANTs — 170 سطر |
 | `seed.sql` | 10 users + 18 categories + 7 stores + 24 products + 8 orders + ... — 706 سطر |
 
-**Migrations مرقّمة `0001_baseline.sql` ... `0030_updated_at_triggers.sql`** تُطبَّق عبر `npm run db:setup`.
+**Migrations مرقّمة `0001_baseline.sql` ... `0031_delivery_agent_tables.sql`** تُطبَّق عبر `npm run db:setup`.
 
-### 5.2 الجداول الـ 32 (موزعة على 7 ملفات SQL + 30 migration):
+### 5.2 الجداول الـ 34 (موزعة على 7 ملفات SQL + 32 migration):
 
 **المستخدمون والمصادقة:**
 - `users` (id, email CITEXT, password_hash, full_name, phone, role, status, is_verified, two_factor_enabled, preferred_language, gender, token_version, last_login, deleted_at, ...)
@@ -1082,15 +1082,17 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 9. **`trg_stores_refresh_followers_count()`** — يُحدّث `stores.followers_count`
 10. **`trg_stores_refresh_sales_count()`** — على `delivered` يزيد `sales_count`
 
-### 5.5 Triggers المعرّفة (16 trigger):
+### 5.5 Triggers المعرّفة (43 trigger):
 
-- 1× dynamic loop على كل جدول فيه `updated_at` (يولّد `trg_<table>_set_updated_at`)
+- 17× dynamic loop على كل جدول فيه `updated_at` (يولّد `trg_<table>_set_updated_at`)
 - 2× على `orders` (state_machine قبل timeline)
 - 1× على `order_items` (decrement_stock)
 - 6× على `reviews` (refresh_rating ins/upd/del × 2 = 6 triggers لـ product + store stats)
 - 3× على `products` (refresh_store_count ins/upd/del)
 - 1× على `refunds` (resolve_payments)
 - 3× على `store_followers` (refresh_count ins/upd/del)
+- 2× على `delivery_agents` (updated_at + delivery_agent_assignments)
+- 8× على tables أُضيفت في migrations (0021, 0024, 0030, 0031)
 
 ### 5.6 Views (4):
 
@@ -1542,15 +1544,15 @@ TRUST_PROXY=
 
 | القياس | القيمة | كيف تم التحقق |
 |---|---|---|
-| Frontend features | 12 | `ls apps/web/src/features/` |
-| Backend modules | 18 | `ls apps/api/src/modules/` |
+| Frontend features | 13 | `apps/web/src/features/` |
+| Backend modules | 19 | `apps/api/src/modules/` |
 | Routes in App.tsx | 33 | `grep -c "lazyPage" apps/web/src/App.tsx` |
 | SQL base files | 7 | `ls packages/db/*.sql` |
-| Migrations | 30 | `ls packages/db/migrations/` |
-| DB tables | **32** | `grep -r "CREATE TABLE" packages/db/*.sql packages/db/migrations/*.sql` |
+| Migrations | **32** | `ls packages/db/migrations/` |
+| DB tables | **34** | `grep -r "CREATE TABLE" packages/db/*.sql packages/db/migrations/*.sql` |
 | PL/pgSQL functions (في functions.sql) | 8 | `grep -c "CREATE OR REPLACE FUNCTION" packages/db/functions.sql` |
 | PL/pgSQL functions (في migrations) | +6 | `admin_set_app_setting`, `cleanup_audit_logs`, `consume_rate_limit`, `cleanup_rate_limits`, `cleanup_used_jtis`, `write_audit_log` |
-| **Triggers** | **32** | 17 dynamic (`trg_<table>_set_updated_at`) + 15+ explicit |
+| **Triggers** | **43** | 17 dynamic (`trg_<table>_set_updated_at`) + 26 explicit |
 | Views | 4 | `v_product_with_store`, `v_store_stats`, `v_order_summary`, `v_low_stock` |
 | Roles | 4 | `postgres`, `noufex_owner`, `noufex_app`, `noufex_readonly` |
 | MCP tool families | 4 | `db-tools`, `code-tools`, `api-tools`, `docs-tools` |
@@ -1563,16 +1565,16 @@ TRUST_PROXY=
 | Frontend components (shared) | 12+ | `Layout, Navbar, BottomNav, Footer, ErrorBoundary, Toast, ProtectedRoute, Skeletons, ProductImage` |
 | shadcn/ui primitives | 10 | avatar, badge, button, card, dialog, input, label, separator, switch, tabs, textarea |
 | **Frontend custom hooks** | **30+** | `useDataHook + useProducts/useStores/useHomeStats/useAdmin*/...` |
-| **Backend tests (Vitest)** | **31** | في `apps/api/src/tests/` |
+| **Backend tests (Vitest)** | **35** | في `apps/api/src/tests/` |
 | **Frontend tests (Vitest)** | **38** | في `apps/web/src/__tests__/` + components/hooks/lib/... |
-| **E2E phase scripts** | **18** | `apps/e2e/e2e/phase*.ps1` |
+| **E2E phase scripts** | **19** | `apps/e2e/e2e/phase*.ps1` |
 | **Agent skills** | **20** | `.github/skills/` |
 | **Agent definitions** | **12** | `.github/agents/` |
 | **CI jobs** | **7** | `.github/workflows/ci.yml` |
 | Docker stages | 4 | `deps`, `api-build`, `web-build`, `runtime` |
 | Shared workspaces | 4 | `db`, `shared`, `typescript-config`, `eslint-config` |
 | Middleware exports | 14+ | في `apps/api/src/middleware.ts` |
-| API routers mounted | 18 | في `apps/api/src/index.ts` |
+| API routers mounted | 19 | في `apps/api/src/index.ts` |
 | API routes (in modules + routes/) | 60+ | مجموع endpoints |
 | Zod schemas | 30+ | في `lib/validation.ts` |
 | **lib utilities** | 15 | `auth`, `error-codes`, `ratelimit`, `audit`, `totp`, `validation`, `reset-token`, `partial-token`, `settings`, `search`, `json`, `sql-helpers`, `notifications/*`, `payments/*`, `backup-codes`, `types` |
@@ -1636,6 +1638,8 @@ TRUST_PROXY=
 - 12 GET endpoints + 1 POST maintenance + 5 PATCH mutations
 
 ### أخرى:
+- `/api/delivery-agent/*` (12 routes: register, profile, location, orders, dashboard, available-orders, accept, status, go-online, go-offline)
+- `/api/customer/reviews/*` (pending-reviews + my-reviews)
 - `/api/store-followers/*` (3 routes)
 - `/api/payments/*` (4 routes: methods, webhook, create, order/:id, :id/confirm)
 - `/api/coupons/*` (validate, redeem)

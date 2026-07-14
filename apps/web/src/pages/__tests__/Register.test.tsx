@@ -57,10 +57,10 @@ function getEmailInput(): Promise<HTMLInputElement> {
 	return screen.findByPlaceholderText(/your@email\.com/i) as Promise<HTMLInputElement>;
 }
 function getPasswordInput(): Promise<HTMLInputElement> {
-	return screen.findByPlaceholderText(/^password$/i) as Promise<HTMLInputElement>;
+	return screen.findByPlaceholderText(/at least 10 characters/i) as Promise<HTMLInputElement>;
 }
 function getConfirmInput(): Promise<HTMLInputElement> {
-	return screen.findByPlaceholderText(/confirm password/i) as Promise<HTMLInputElement>;
+	return screen.findByPlaceholderText(/re-enter your password/i) as Promise<HTMLInputElement>;
 }
 
 describe('Register page', () => {

@@ -72,7 +72,8 @@
 		"happyBuyers": "[AR] عملاء سعداء",
 		"searchPlaceholder": "搜索产品...",
 		"allCategories": "全部分类",
-		"cartLabel": "购物车"
+		"cartLabel": "购物车",
+		"deliveryAgent": "لوحة مندوب التوصيل"
 	},
 	"auth": {
 		"loginTitle": "登录",
@@ -556,7 +557,58 @@
 			"inTransit": "配送中",
 			"delivered": "已送达",
 			"cancelled": "取消/退货"
-		}
+		},
+		"goOnline": "بدء العمل",
+		"goOffline": "إيقاف العمل",
+		"agentStatus": {
+			"offline": "غير متصل",
+			"active": "متاح",
+			"busy": "مشغول",
+			"suspended": "معلق",
+			"on_break": "استراحة"
+		},
+		"vehicleType": "نوع المركبة",
+		"vehicle": {
+			"motorcycle": "دراجة نارية",
+			"bicycle": "دراجة هوائية",
+			"car": "سيارة",
+			"van": "فانو",
+			"truck": "شاحنة",
+			"scooter": "سكوتر"
+		},
+		"registerAgent": "تسجيل كمندوب",
+		"noProfileTitle": "لم يتم تسجيل المندوب بعد",
+		"noProfileSubtitle": "يرجى إكمال ملفك الشخصي لبدء استلام الطلبات",
+		"todayEarnings": "أرباح اليوم",
+		"completedToday": "تم التوصيل اليوم",
+		"avgDeliveryTime": "متوسط وقت التوصيل",
+		"rating": "التقييم",
+		"minutes": "دقيقة",
+		"pendingPickup": "بانتظار الاستلام",
+		"outForDelivery": "قيد التوصيل",
+		"delivered": "تم التوصيل",
+		"cancelledReturns": "ملغاة/مرتجعة",
+		"performanceScore": "مؤشر الأداء",
+		"onTimeDelivery": "التوصيل في الوقت المحدد",
+		"cancelRate": "معدل الإلغاء",
+		"tipsTitle": "نصيحة",
+		"tipsBody": "حافظ على التوصيل في الوقت المحدد واستجابة سريعة للطلبات لتحسين تقييمك",
+		"earningsChart": "مخطط الأرباح",
+		"vsPrevPeriod": "مقارنة بالفترة السابقة",
+		"dailyEarnings": "الأرباح اليومية",
+		"quickActions": "إجراءات سريعة",
+		"viewOrders": "طلباتي",
+		"availableOrders": "طلبات متاحة",
+		"earnings": "الأرباح",
+		"ratings": "التقييمات",
+		"wallet": "المحفظة",
+		"profile": "الملف الشخصي",
+		"enableLocation": "تفعيل الموقع",
+		"orderDetail": "تفاصيل الطلب",
+		"backToOrders": "العودة للطلبات",
+		"period7d": "٧ أيام",
+		"period30d": "٣٠ يوم",
+		"period90d": "٩٠ يوم"
 	},
 	"customer": {
 		"orders": "我的订单",
@@ -1041,7 +1093,12 @@
 		"categoriesHeading": "商品分类",
 		"newArrivals": "新品上市",
 		"topMerchants": "顶级制造商",
-		"readyToShip": "现货供应",
+		"readyToShip": {
+			"title": "现货供应",
+			"subtitle": "可立即发货的商品",
+			"fastDelivery": "极速配送",
+			"inStock": "有货"
+		},
 		"readyBadge": "现货",
 		"trustShopNow": "立即购物",
 		"trustBannerDesc": "放心购物，享受买家保障。安全支付、灵活退换、全程物流支持。",
@@ -1125,12 +1182,6 @@
 			"countdown": "倒计时",
 			"sold": "已售",
 			"remaining": "剩余"
-		},
-		"readyToShip": {
-			"title": "现货供应",
-			"subtitle": "可立即发货的商品",
-			"fastDelivery": "极速配送",
-			"inStock": "有货"
 		},
 		"trendingSearches": {
 			"label": "热门搜索",
@@ -1280,7 +1331,16 @@
 		"statSellers": "10K+ 商家",
 		"statProducts": "500K+ 商品",
 		"statSecurePayment": "安全支付",
-		"viewMore": "查看更多"
+		"viewMore": "查看更多",
+		"passwordMinLength10": "Password must be at least 10 characters",
+		"passwordMaxLength": "Password must be at most 128 characters",
+		"passwordComplexity": "Password must include lowercase, uppercase, digit, and symbol",
+		"passwordsMatch": "Passwords match",
+		"nameMinLength": "Name must be at least 2 characters",
+		"nameMaxLength": "Name is too long",
+		"invalidPhone": "Please enter a valid phone number",
+		"signIn": "Sign in",
+		"fullName": "Full name"
 	},
 	"authLogin": {
 		"brandName": "Nouf-ex",

@@ -23,7 +23,7 @@ describe('messages.cts uses u.full_name (not u.name)', () => {
 	// A regression to `u.name` would break /api/messages/inbox and
 	// /sent at runtime with "column u.name does not exist". The
 	// users table only has `full_name`.
-	const src = SRC('routes/messages.ts');
+	const src = SRC('modules/messages/repository.ts');
 	it('references u.full_name', () => {
 		expect(src).toMatch(/u\.full_name/);
 	});

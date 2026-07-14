@@ -1,15 +1,19 @@
 # Nouf-ex — المهام التنفيذية المتبقية (Backlog)
 # ============================================================
-# **آخر تحديث:** 2026-07-12 (بعد إصلاح Login + 4 commits نظيفة)
+# **آخر تحديث:** 2026-07-14 (جلسة إصلاح شاملة + 3 commits مُدفوعة)
 # **الفرع:** `fix/routes-cts-to-ts-2026-07-06`
 # **Commits الأخيرة:**
-#   - 26e5e0d chore(scripts): add test scripts for Login screen and i18n verification
-#   - f4369ae docs(architecture): add comprehensive architecture documentation
-#   - e533b09 feat(auth): comprehensive Login screen overhaul v2 (Alibaba/Taobao/Amazon parity)
-#   - b153c4c feat(security): add CSRF protection, audit retention scheduler, and settings redaction
-# **الحالة العامة:** ✅ TypeScript نظيف · ✅ ESLint نظيف · ✅ Build نجح · ✅ 4 commits pushed
-# **عدد الجداول الفعلي:** 32 (وليس 28 كما كان مكتوباً سابقاً)
-# **عدد الـ Triggers الفعلي:** 32 (17 dynamic + 15 explicit)
+#   - 7216280 chore: add opencode.json (AI tool config referencing .github/agents/)
+#   - ea260bb fix: cross-platform clean scripts, db-setup reorder, TypeScript cast fixes
+#   - b804f1a fix: docker-compose host.docker.internal + .dockerignore + env.example paths
+#   - 2b78fc2 fix: resolve lint errors, refactor auth utilities, update i18n consistency
+#   - 0794884 chore(scripts): remove stale test artifact (scripts/test-p0.ps1)
+#   - 2c670ac docs(backlog): mark P0 #7 backend tests as DONE — P0 Sprint 1 complete
+# **الحالة العامة:** ✅ TypeScript نظيف · ✅ ESLint نظيف · ✅ Build نجح · ✅ DB مُجهَّز (34 جدول)
+# **عدد الجداول الفعلي:** 34 (مع delivery_agents و 3 جداول إضافية من migration 0031)
+# **عدد الـ Triggers الفعلي:** 43 (17 dynamic + 26 explicit)
+# **عدد الـ Tests الفعلي:** 597 backend + 298 frontend = **895 إجمالي**
+# **حالة الاختبارات:** 15 من 597 backend failing · 34 من 298 frontend failing (انظر STATUS_2026-07-14.md)
 
 هذا الملف يُلخّص المهام المتبقية التي لم تُنفَّذ بعد (إما لأنها تتطلب
 صلاحيات Admin، أو لأنها تحسينات اختيارية، أو لأنها منخفضة الأولوية).
@@ -852,3 +856,141 @@
 2. Vitest coverage لـ admin-extras.ts (599 سطر جديدة)
 2. Backup automation
 3. CI/CD للـ docs/audit
+
+---
+
+## 📌 Sprint 5 (ما بعد 2026-07-14) — المهام المُحدَّدة من جلسة الإصلاح
+
+> **الناتج من جلسة 2026-07-14:** تم إصلاح 13 مشكلة حرجة (راجع
+> `CHANGELOG.md [Unreleased]` و `docs/STATUS_2026-07-14.md` للتفاصيل).
+> المهام أدناه **لم تُنفَّذ بعد** وتحتاج إلى جلسات منفصلة.
+
+### 🟠 P0 — عالية الأولوية (يجب حلها قبل Production)
+
+#### Backend
+- [ ] **إصلاح 15 failing tests في `apps/api/src/tests/`** —
+      `wishlist-router`, `notifications-router`, `coupons-router`,
+      `cart-router`, `payments-router`, `reviews-router`,
+      `auth-router`, `admin-read-router`. كلها failures بسبب:
+      الاختبارات تُمَسْكِن الـ pg (`mock`) لتُرجع `undefined` لكن
+      الـ routes الحديثة تتعامل مع `undefined` كـ empty array.
+      الإصلاح: تحدّيث الاختبارات لتطابق السلوك الجديد.
+
+#### Frontend
+- [ ] **إصلاح 3 real bugs في Seller pages** —
+      `apps/web/src/features/seller/components/SellerProducts.tsx`,
+      `SellerOrders.tsx`, `SellerAnalytics.tsx` يرسمون empty object
+      كـ child (`Error: Objects are not valid as a React child`).
+      مصدر المشكلة على الأرجح في `useDataHook` عند خلط فهارس jsonb
+      مع array.
+
+- [ ] **إصلاح 24 DOM-content drift في tests** —
+      `Footer.test.tsx`, `Register.test.tsx`, `ResetPassword.test.tsx`,
+      `Wishlist.test.tsx`, إلخ. النصوص/aria-labels تغيّرت بعد i18n v2
+      لكن الاختبارات لم تُحدَّث. الإصلاح: استبدال النصوص القديمة
+      بنصوص v2 أو إضافة `data-testid`.
+
+#### DevOps
+- [ ] **`apps/e2e/run-all.ps1` مفقود** — `apps/e2e/package.json`
+      يشير إلى script غير موجود. الإصلاح: إنشاء run-all.ps1 يستدعي
+      phase00..phase17 بالتسلسل، أو حذف entry الـ `test` من
+      `package.json`.
+
+- [ ] **5 scripts في `scripts/quality/` تشير إلى legacy `app/` path**
+      — `test.ps1`, `typecheck.ps1`, `lint.ps1`, `format.ps1`,
+      `format-check.ps1`. كلها `Set-Location $PSScriptRoot\..\app`.
+      الإصلاح: `Set-Location $PSScriptRoot\..\..` (الـ repo root)
+      أو حذف نهائياً والاعتماد على `npm run test/typecheck/lint`.
+
+### 🟡 P1 — متوسطة الأولوية (الأسبوع القادم)
+
+- [ ] **`scripts/quality/verify-fresh.cjs` يستخدم `app/node_modules/pg`**
+      — يجب تحديثه إلى `path.join(__dirname, '..', '..', 'node_modules', 'pg')`.
+
+- [ ] **`scripts/quality/test-stack.ps1` يتأكد فقط من 5 endpoints بدون
+      التحقق من شكل الـ JSON** — أضف assertions لـ body shape.
+
+- [ ] **6 ملفات root-level .md قديمة (تاريخ 2025-02-17)** —
+      `DOCUMENTATION_INDEX.md`, `EXAMINATION_COMPLETE.md`,
+      `FIX_GUIDE.md`, `PROJECT_HEALTH_REPORT.md`,
+      `PROJECT_MANAGEMENT.md`, `TECH_STACK_SUMMARY.md`. كلها
+      تشير إلى legacy `app/` paths وإصدارات قديمة. الإما: حذف
+      أو تحديث بأرقام 2026-07-14.
+
+- [ ] **وثائق `apps/api/src/modules/delivery-agent/` مفقودة** —
+      هذا الـ module يُغطّى في tests لكن لا يوجد قسم مخصّص في
+      ARCHITECTURE.md.
+
+- [ ] **ARCHITECTURE.md يقول "31 backend tests" بينما الفعلي 597 test
+      في 35 ملف** — تحديث قسم "8.1 Backend Tests".
+
+### 🟢 P2 — تحسينات (الربع القادم)
+
+- [ ] **`apps/mobile` workspace معطّل** — يستخدم TypeScript 6.0.3 غير
+      متوافق مع باقي الـ monorepo (5.9.3). اتخاذ قرار: إصلاح
+      أو أرشفة.
+
+- [ ] **MCP server بدون tests** — إضافة smoke tests لـ
+      `loadProject()` و `isSafeReadOnlySql()` و `safeResolve()`.
+
+- [ ] **`scripts/quality/test-summary.cjs` يستخدم cwd الحالي** —
+      يجب أن يحدد workspace صريح.
+
+- [ ] **استبدال `useDataHook` بـ TanStack Query** (مذكور في
+      BACKLOG.md §P0 Frontend) — تحسين caching/refetch/optimistic
+      updates في admin tables.
+
+- [ ] **Image optimization** مع srcset للـ products.
+
+- [ ] **CI/CD للـ docs/audit** المذكور في Sprint 4.
+
+---
+
+## 📊 ملخص حالة المشروع بعد 2026-07-14
+
+| المقياس | القيمة | المصدر |
+|---|---|---|
+| Workspace packages | 5 (api, web, mcp-server, e2e + mobile disabled) | `apps/` |
+| Shared packages | 4 (db, shared, typescript-config, eslint-config) | `packages/` |
+| Database tables | **34** (was 32) | `packages/db/` + migration 0031 |
+| PL/pgSQL functions | 107 | `pg_database` |
+| Triggers | 43 | `pg_database` |
+| Backend Vitest files | **35** (33 active tests + 2 helpers) | `apps/api/src/tests/` |
+| Backend tests passing | **582/597** (97.5%) | run 2026-07-14 |
+| Frontend Vitest files | **38** | `apps/web/src/**/*.test.tsx` |
+| Frontend tests passing | **264/298** (88.6%) | run 2026-07-14 |
+| E2E PowerShell phases | 18 phase + 19 smoke | `apps/e2e/e2e/` |
+| Docker image | `noufex:latest` (1.37GB on disk, ~259MB compressed) | built 2026-07-14 |
+| Live API endpoints | 60+ (`apps/api/src/index.ts`) | routes table |
+| GitHub workflows | 5 (ci, deploy-prod, deploy-staging, docs, link-check) | `.github/workflows/` |
+| Last commit | `7216280` (2026-07-14) | `git log` |
+
+---
+
+## ✅ ما تم إنجازه في جلسة 2026-07-14 (تلخيص)
+
+**13 إصلاح رئيسي + 3 commits مُدفوعة إلى `fix/routes-cts-to-ts-2026-07-06`:**
+
+1. ✅ إصلاح توافق Node 24 ↔ Turbo (EFTYPE) — توثيق استخدام Node 20 LTS
+2. ✅ إصلاح `db-setup.cjs` ليحل متغيرات psql `:VAR` عبر dotenv
+3. ✅ إعادة ترتيب pipeline في db-setup: migrations → roles → seed
+4. ✅ توسيع `schema_migrations.version` إلى VARCHAR(100)
+5. ✅ إصلاح `seed.sql`: إضافة `deal_ends_at` للمنتجات، قلب إشارة fee transactions
+6. ✅ إصلاح 9 TypeScript casts في `delivery-agent/` module
+7. ✅ إصلاح `apps/web/vitest.config.ts` — إضافة esbuild.jsx:automatic للـ dom project
+8. ✅ إنشاء `apps/api/vitest.config.ts` + `vitest.setup.ts` لتحميل .env
+9. ✅ إصلاح `docker-compose.yml` — `DB_HOST=host.docker.internal` + rewrite DATABASE_URL
+10. ✅ إصلاح `.dockerignore` — السماح بـ `scripts/devops/docker-entrypoint.sh`
+11. ✅ تحديث `apps/mcp-server/src/project.ts` لمسارات monorepo الصحيحة
+12. ✅ تحديث `deploy-prod.yml` و `deploy-staging.yml` لمسارات monorepo (was legacy `app/`)
+13. ✅ استبدال `rm -rf` بـ `fs.rmSync` في كل `clean` scripts (cross-platform)
+
+**الأثر:**
+- Typecheck: 4/4 ✅
+- Backend tests: 0 → 582 passing (+582)
+- Frontend tests: 243 → 264 passing (+21) — 24/24 smoke tests pass now
+- Docker image: built successfully
+- API: all health/stats/products/auth endpoints return 200
+- MCP server: db_stats returns real DB introspection
+
+راجع `docs/STATUS_2026-07-14.md` للتفاصيل الكاملة.

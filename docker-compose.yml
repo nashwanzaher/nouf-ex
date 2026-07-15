@@ -50,6 +50,7 @@ services:
     tmpfs:
       - /tmp:size=64M
       - /app/tmp:size=32M
+      - /app/uploads:size=256M
     # --- Container labels ---
     labels:
       - "com.noufex.service=api"

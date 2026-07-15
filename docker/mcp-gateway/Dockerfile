@@ -42,4 +42,7 @@ USER node
 
 ENV NODE_ENV=production
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e 'import("node:http").then(h => h.get("http://localhost:8811/health", r => { if (r.statusCode !== 200) process.exit(1) }))' || exit 1
+
 ENTRYPOINT ["node", "/app/dist/index.js"]

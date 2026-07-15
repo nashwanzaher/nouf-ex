@@ -10,6 +10,7 @@
  *   - Filenames are randomized to prevent path traversal
  *   - MIME type validation on upload
  *   - Size limits enforced
+ *   - Directory creation is lazy (on first upload, not at module load)
  */
 import fs from 'fs';
 import path from 'path';
@@ -61,10 +62,20 @@ export function generateSafeFilename(originalName: string): string {
 
 /**
  * Ensure upload directory exists.
+ * LAZY: only creates directory on first upload, not at module load time.
+ * This prevents ENOENT errors in read-only Docker containers.
  */
 export function ensureUploadDir(subDir: string): string {
 	const fullPath = path.join(UPLOAD_DIR, subDir);
-	fs.mkdirSync(fullPath, { recursive: true });
+	try {
+		fs.mkdirSync(fullPath, { recursive: true });
+	} catch (err) {
+		// In read-only containers, the directory may already exist
+		// or be provided via tmpfs. Log but don't throw.
+		if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
+			console.warn(`[uploads] Failed to create ${fullPath}: ${(err as Error).message}`);
+		}
+	}
 	return fullPath;
 }
 

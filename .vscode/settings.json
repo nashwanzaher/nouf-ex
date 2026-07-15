@@ -1,6 +1,6 @@
 {
 	// ═══════════════════════════════════════════════════════════════════════════
-	// Nouf-ex VS Code Settings
+	// Noufex VS Code Settings
 	// Frontend: React 19 + Vite 7. API: Node 20 + Express 5. DB: PostgreSQL 17
 	// API runs on :3000, Vite on :5173, PostgreSQL on :5432
 	// Text direction: RTL (Arabic)
@@ -456,7 +456,7 @@
   ],
   "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
   "chat.mcp.serverSampling": {
-    "nouf-ex/.vscode/mcp.json: memory": {
+    "Noufex/.vscode/mcp.json: memory": {
       "allowedModels": [
         "copilot/auto",
         "copilotcli/auto",

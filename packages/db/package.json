@@ -1,6 +1,6 @@
 {
 	"name": "@noufex/db",
-	"description": "Nouf-ex PostgreSQL schema, migrations, and seed data",
+	"description": "Noufex PostgreSQL schema, migrations, and seed data",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",

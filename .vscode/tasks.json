@@ -19,9 +19,9 @@
 			}
 		},
 		{
-			"label": "📜 Show Nouf-ex Container Logs",
+			"label": "📜 Show Noufex Container Logs",
 			"type": "shell",
-			"command": "docker logs -f Nouf-ex",
+			"command": "docker logs -f Noufex",
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
@@ -32,7 +32,7 @@
 			}
 		},
 		{
-			"label": "🛑 Stop Nouf-ex Container",
+			"label": "🛑 Stop Noufex Container",
 			"type": "shell",
 			"command": "docker compose down",
 			"options": {
@@ -45,9 +45,9 @@
 			}
 		},
 		{
-			"label": "🐚 Exec Into Nouf-ex Container",
+			"label": "🐚 Exec Into Noufex Container",
 			"type": "shell",
-			"command": "docker exec -it Nouf-ex sh",
+			"command": "docker exec -it Noufex sh",
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},

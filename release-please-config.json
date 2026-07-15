@@ -7,7 +7,7 @@
     "https://github.com/googleapis/release-please."
   ],
   "release-type": "node",
-  "package-name": "nouf-ex",
+  "package-name": "Noufex",
   "changelog-path": "CHANGELOG.md",
   "versioning": "default",
   "include-component-in-tag": false,
@@ -28,7 +28,7 @@
   "packages": {
     ".": {
       "path": "app",
-      "package-name": "nouf-ex",
+      "package-name": "Noufex",
       "release-type": "node"
     }
   }

@@ -2,7 +2,7 @@
 	"name": "@noufex/mcp-server",
 	"version": "0.1.0",
 	"private": true,
-	"description": "Model Context Protocol server for deep introspection of the Nouf-ex codebase and the noufex_db PostgreSQL database.",
+	"description": "Model Context Protocol server for deep introspection of the Noufex codebase and the noufex_db PostgreSQL database.",
 	"type": "module",
 	"bin": {
 		"noufex-mcp": "dist/index.js"

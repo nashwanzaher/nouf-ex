@@ -3,10 +3,10 @@
 # OpenClaw / OpenCode AI server container
 # ----------------------------------------------------------------------------
 # Runs the opencode-ai headless server inside Docker so it can be managed
-# alongside the nouf-ex stack from Docker Desktop.
+# alongside the Noufex stack from Docker Desktop.
 #
 # Usage:
-#   docker compose -f docker-compose.openclaw.yml up -d --build
+#   docker compose --profile openclaw up -d --build
 #
 # Security hardening (OWASP ASVS, NIST SP 800-53):
 #   - Pinned package version for reproducible builds

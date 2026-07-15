@@ -95,7 +95,7 @@
 			"name": "🐳 Debug Docker API",
 			"type": "docker",
 			"request": "launch",
-			"service": "nouf-ex",
+			"service": "Noufex",
 			"platform": "node",
 			"preLaunchTask": "docker-compose: Build",
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]

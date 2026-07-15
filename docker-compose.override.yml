@@ -31,12 +31,17 @@ services:
       context: .
       dockerfile: docker/openclaw/Dockerfile
     image: noufex-openclaw:latest
-    container_name: Nouf-ex-OpenClaw
+    container_name: noufex-openclaw
     restart: on-failure:5
     profiles:
       - openclaw
     ports:
       - '127.0.0.1:3001:3001'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
     # --- Security hardening (NIST SP 800-53 AC-6) ---
     security_opt:
       - no-new-privileges:true
@@ -75,6 +80,8 @@ services:
       OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:?OPENCODE_SERVER_PASSWORD is required}
       OPENCODE_WORKSPACE: /workspace
     working_dir: /workspace
+    networks:
+      - noufex-internal
     healthcheck:
       test:
         - 'CMD-SHELL'

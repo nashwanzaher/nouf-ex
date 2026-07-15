@@ -1,6 +1,6 @@
 {
 	"name": "@noufex/api",
-	"description": "Nouf-ex Express REST API",
+	"description": "Noufex Express REST API",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",

@@ -29,7 +29,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: noufex:latest
-    container_name: Nouf-ex
+    container_name: noufex
     restart: on-failure:5
     stop_grace_period: 30s
     ports:

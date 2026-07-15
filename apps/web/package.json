@@ -1,6 +1,6 @@
 {
 	"name": "@noufex/web",
-	"description": "Nouf-ex React + Vite storefront, admin, seller, and customer dashboards",
+	"description": "Noufex React + Vite storefront, admin, seller, and customer dashboards",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",

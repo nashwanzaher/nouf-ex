@@ -4,7 +4,7 @@
 > **Versioning:** [Semantic Versioning 2.0.0](https://semver.org/) ·
 > **Last updated:** 2026-07-14
 
-All notable changes to **Nouf-ex** are documented in this file.
+All notable changes to **Noufex** are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
@@ -41,5 +41,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Migrated DB schema through 30 incremental migrations (0001 → 0030); consolidated SSOT.
 - Adopted Diátaxis for documentation, OWASP API Top 10 for security posture, OWASP ASVS 4.0.3 as verifier checklist, IEEE 829 + ISO/IEC/IEEE 29119 + ISTQB CTFL for test documentation.
 
-[Unreleased]: https://github.com/nashwanzaher/nouf-ex/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/nashwanzaher/nouf-ex/releases/tag/v0.1.0
+[Unreleased]: https://github.com/nashwanzaher/Noufex/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/nashwanzaher/Noufex/releases/tag/v0.1.0

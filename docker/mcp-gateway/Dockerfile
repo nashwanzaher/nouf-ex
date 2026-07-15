@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.7
 # ============================================================================
-# Nouf-ex MCP server — OCI image (consumed by docker/mcp-gateway).
+# Noufex MCP server — OCI image (consumed by docker/mcp-gateway).
 # ----------------------------------------------------------------------------
+# Yemen & Middle East B2B/B2C e-commerce marketplace platform.
 # Builds apps/mcp-server to dist/index.js and packages it into a minimal
 # Node 20 alpine image. The gateway spawns one of these per session and
 # proxies MCP messages between SSE (port 8811) and stdio (this container's

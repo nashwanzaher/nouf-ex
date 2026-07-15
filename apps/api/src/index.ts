@@ -55,6 +55,7 @@ import { messagesRouter } from './modules/messages/index.ts';
 import { notificationsRouter } from './modules/notifications/index.ts';
 import { ordersRouter } from './modules/orders/index.ts';
 import { paymentsRouter } from './modules/payments/index.ts';
+import { promotionsRouter } from './modules/promotions/index.ts';
 import { refundsRouter } from './modules/refunds/index.ts';
 import { reviewsRouter } from './modules/reviews/index.ts';
 import { sellerRouter } from './modules/seller/index.ts';
@@ -397,6 +398,7 @@ app.use('/api/shipping', cacheControl(300, shippingRouter)); // shipping = 5min
 app.use('/api/store-followers', storeFollowersRouter);
 app.use('/api/addresses', addressesRouter);
 app.use('/api/uploads', uploadsRouter);
+app.use('/api/promotions', promotionsRouter);
 
 // ═══════════════════════════════════════════════════════════
 // STATIC FILES (Production SPA fallback)

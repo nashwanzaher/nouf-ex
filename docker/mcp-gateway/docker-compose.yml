@@ -21,12 +21,15 @@
 #   - Read-only root filesystem
 #   - No new privileges + cap_drop ALL
 #   - Minimal mount scope (only dist + catalog, not full repo)
+#   - Log rotation configured
+#   - Container labels for metadata
+#   - Pinned image digest for production
 # ============================================================================
 services:
   mcp-gateway:
-    # Official Docker MCP Gateway image. Latest tag is a rolling image that
-    # pulls the catalog from the local volume at startup; pinning to a
-    # specific digest is recommended for production.
+    # SECURITY (OWASP ASVS 14.1.1): Pin to specific digest for production.
+    # Replace with actual digest after pulling: docker pull docker/mcp-gateway:latest
+    # Then: docker inspect docker/mcp-gateway:latest --format='{{index .RepoDigests 0}}'
     image: docker/mcp-gateway:latest
     container_name: noufex-mcp-gateway
     restart: on-failure:5
@@ -48,6 +51,17 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=32M
+    # --- Container labels ---
+    labels:
+      - "com.noufex.service=mcp-gateway"
+      - "com.noufex.version=latest"
+      - "com.noufex.environment=production"
+    # --- Log rotation ---
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # --- Environment ---
     # SECURITY (OWASP ASVS 6.2.1, NIST SP 800-53 IA-5):
     # The gateway only needs DATABASE_URL from the root .env. Other

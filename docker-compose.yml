@@ -49,6 +49,17 @@ services:
     tmpfs:
       - /tmp:size=64M
       - /app/tmp:size=32M
+    # --- Container labels ---
+    labels:
+      - "com.noufex.service=api"
+      - "com.noufex.version=latest"
+      - "com.noufex.environment=production"
+    # --- Log rotation ---
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # --- Network isolation (OWASP ASVS 4.1.1, NIST AC-3) ---
     # Dedicated network prevents other containers from reaching the API.
     # Only the host port 127.0.0.1:3000 is exposed externally.

@@ -47,6 +47,17 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=64M
+    # --- Container labels ---
+    labels:
+      - "com.noufex.service=openclaw"
+      - "com.noufex.version=latest"
+      - "com.noufex.environment=production"
+    # --- Log rotation ---
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       # Bind-mount the project root so OpenClaw can read/edit source files.
       # SECURITY (OWASP ASVS 6.1.3): use :rw for workspace editing but

@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.7
 # ============================================================================
-# Nouf-ex — Monorepo multi-service image.
+# Noufex — Monorepo multi-service image.
 # ----------------------------------------------------------------------------
+# Yemen & Middle East B2B/B2C e-commerce marketplace platform.
 # Builds:
 #   - The Express API from apps/api/ (esbuild → single ESM bundle).
 #   - The React SPA from apps/web/ (vite → apps/web/dist).

@@ -1,6 +1,6 @@
 {
 	"name": "@noufex/root",
-	"description": "Nouf-ex — Yemen & Middle East B2B/B2C marketplace monorepo",
+	"description": "Noufex — Yemen & Middle East B2B/B2C marketplace platform. React 19 + Vite 7 + Express 5 + PostgreSQL 17. Multi-vendor e-commerce with 3-language support (Arabic, English, Chinese), local payment methods, and AI-powered tools.",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",

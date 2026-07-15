@@ -222,7 +222,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 				amount,
 				currency,
 				method: method as PaymentMethod,
-				description: `Nouf-ex order #${order_id}`,
+				description: `Noufex order #${order_id}`,
 			});
 			if (!result.accepted) {
 				return sendError(res, `Provider rejected: ${result.message}`, 402);

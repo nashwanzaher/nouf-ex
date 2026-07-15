@@ -1,5 +1,5 @@
 # ============================================================================
-# Docker MCP Gateway — Nouf-ex Catalog
+# Docker MCP Gateway — Noufex Catalog
 # ----------------------------------------------------------------------------
 # Registers the apps/mcp-server workspace as a known MCP server inside the
 # Docker MCP Gateway. The Gateway runs as a single container on port 8811
@@ -16,9 +16,9 @@
 # ============================================================================
 
 name: noufex-mcp
-displayName: Nouf-ex MCP Server
+displayName: Noufex MCP Server
 description: |
-  Read-only introspection of the Nouf-ex monorepo: PostgreSQL queries
+  Read-only introspection of the Noufex monorepo: PostgreSQL queries
   (db_*), source-tree navigation (code_*), Express route extraction
   (api_*), and docs/* search (docs_*). Built from apps/mcp-server/ in the
   monorepo (packages @noufex/mcp-server). All five registered tools are

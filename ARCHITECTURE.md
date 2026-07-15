@@ -1,8 +1,10 @@
-# Nouf-ex — Architecture (محدّث بالتفاصيل الكاملة)
+# Noufex — Architecture (محدّث بالتفاصيل الكاملة)
 
 > **Source of truth:** هذا المستند محدّث بناءً على قراءة تفصيلية لكل ملف أساسي في المشروع.
 > التحقق من كل سطر عبر قراءة المصدر الفعلي للملفات (وليس التقدير).
 > Commit المرجع: `1c24fcb`، branch `fix/routes-cts-to-ts-2026-07-06`.
+>
+> **Noufex** — Yemen & Middle East B2B/B2C e-commerce marketplace platform.
 
 ---
 

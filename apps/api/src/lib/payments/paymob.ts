@@ -79,7 +79,7 @@ export const paymobProvider: PaymentProvider = {
 				order_id: order.id,
 				billing_data: {
 					apartment: 'NA',
-					email: 'customer@nouf-ex.local',
+					email: 'customer@noufex.local',
 					floor: 'NA',
 					first_name: 'Customer',
 					last_name: String(input.userId),

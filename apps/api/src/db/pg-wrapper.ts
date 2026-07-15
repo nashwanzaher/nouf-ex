@@ -1,6 +1,6 @@
 /**
  * PgDb — a thin async wrapper over `pg.Pool` that mimics the parts of the
- * better-sqlite3 API the Nouf-ex API server relies on:
+ * better-sqlite3 API the Noufex API server relies on:
  *
  *   const db = new PgDb(connectionString);
  *   const rows    = await db.prepare('SELECT * FROM t WHERE id = $1').all(7);

@@ -278,7 +278,7 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 			)
 			.run(secret, arrayLiteral(hashed), user.id);
 
-		const otpauth = otpauthUrl(user.email, secret, 'Nouf-ex');
+		const otpauth = otpauthUrl(user.email, secret, 'Noufex');
 		sendSuccess(
 			res,
 			{

@@ -2,15 +2,15 @@
 # Docker Compose override — adds OpenClaw / OpenCode AI server
 # ----------------------------------------------------------------------------
 # This file is automatically merged with docker-compose.yml by Docker Compose.
-# It adds a headless AI coding assistant container to the nouf-ex stack so both
+# It adds a headless AI coding assistant container to the Noufex stack so both
 # can be started/managed together from Docker Desktop.
 #
 # The service has profile "openclaw" so it does NOT start by default when you
 # run `docker compose up`. Start it explicitly with:
 #   docker compose --profile openclaw up -d --build
 #
-# Or from Docker Desktop: select the nouf-ex project → Containers →
-# Nouf-ex-OpenClaw → Start.
+# Or from Docker Desktop: select the Noufex project → Containers →
+# Noufex-OpenClaw → Start.
 #
 # Access:
 #   - Web UI: http://localhost:3001

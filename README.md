@@ -1,6 +1,7 @@
-# Nouf-ex
+# Noufex
 
 > **منصة تجارة إلكترونية B2B/B2C** موجهة لليمن والشرق الأوسط، مستوحاة من Alibaba/Taobao.
+> **B2B/B2C e-commerce marketplace** for Yemen & the Middle East, inspired by Alibaba/Taobao.
 > React + Vite + Express + PostgreSQL 17، monorepo بـ npm workspaces + Turbo.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -13,9 +14,11 @@
 
 ---
 
-## 🎯 الفكرة
+## 🎯 الفكرة | Vision
 
 منصة تجارة إلكترونية على طراز **Alibaba/Taobao** مصممة خصيصاً للسوق اليمني والشرق أوسط، مع:
+
+A **Taobao-inspired** e-commerce platform designed for the Yemeni & Middle Eastern market, featuring:
 
 - 🌐 **دعم ثلاثي اللغات:** العربية (RTL افتراضي)، الإنجليزية، الصينية
 - 💰 **عملة محلية:** الريال اليمني (YER) كعملة افتراضية
@@ -551,9 +554,9 @@ Conventional Commits مطلوبة لكل commit. release-please يتولى versi
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Nouf-ex",
+  "name": "Noufex",
   "alternateName": "noufex",
-  "description": "B2B/B2C e-commerce marketplace platform for Yemen and the Middle East. React 19 + Vite 7 + Express 5 + PostgreSQL 17.",
+  "description": "B2B/B2C e-commerce marketplace platform for Yemen and the Middle East. Multi-vendor with Arabic/English/Chinese support, local payment methods, and AI tools.",
   "url": "https://github.com/nashwanzaher/nouf-ex",
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "E-commerce Marketplace",

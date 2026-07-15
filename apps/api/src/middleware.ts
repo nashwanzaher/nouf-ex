@@ -1,5 +1,5 @@
 /**
- * Nouf-ex — server-side middlewares
+ * Noufex — server-side middlewares
  *
  * Self-contained security, logging, and error-handling layer. Imported
  * once from `apps/api/src/index.ts` and applied before any route.
@@ -95,7 +95,7 @@ export function configureTrustProxy(app: import('express').Express): void {
 //   - Permissions-Policy                        (deny powerful APIs by default)
 //   - HSTS                                      (force HTTPS, prod only)
 //
-// Plus a strict-ish CSP tuned for the Nouf-ex SPA (React 19 + Vite + WOFF2
+// Plus a strict-ish CSP tuned for the Noufex SPA (React 19 + Vite + WOFF2
 // fonts). Override via the `CSP_DIRECTIVES` env var when needed (e.g. when
 // adding an analytics endpoint).
 export const securityHeaders: RequestHandler = (_req, res, next) => {
@@ -185,7 +185,7 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	// SECURITY (OWASP ASVS 9.1.2): CSP img-src allows images from
 	// trusted CDNs plus data: and blob: for inline assets.
 	// In development, also allow localhost for local image servers.
-	const ALLOWED_IMG_HOSTS = (process.env.CSP_IMG_HOSTS ?? 'cdn.nouf-ex.com,images.nouf-ex.com,fonts.gstatic.com')
+	const ALLOWED_IMG_HOSTS = (process.env.CSP_IMG_HOSTS ?? 'cdn.noufex.com,images.noufex.com,fonts.gstatic.com')
 		.split(',')
 		.map((h) => h.trim())
 		.filter(Boolean);
@@ -195,8 +195,8 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	// API host is allowed.
 	const isDev = process.env.NODE_ENV !== 'production';
 	const defaultConnectHosts = isDev
-		? 'http://localhost:3000,ws://localhost:3000,wss://api.nouf-ex.com,https://api.nouf-ex.com'
-		: 'wss://api.nouf-ex.com,https://api.nouf-ex.com';
+		? 'http://localhost:3000,ws://localhost:3000,wss://api.noufex.com,https://api.noufex.com'
+		: 'wss://api.noufex.com,https://api.noufex.com';
 	const ALLOWED_CONNECT_HOSTS = (process.env.CSP_CONNECT_HOSTS ?? defaultConnectHosts)
 		.split(',')
 		.map((h) => h.trim())

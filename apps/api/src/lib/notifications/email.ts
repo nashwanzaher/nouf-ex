@@ -6,7 +6,7 @@
 // MAIL FROM / RCPT TO / DATA / QUIT). Supports:
 //   - SMTP_HOST, SMTP_PORT (default 587 for STARTTLS, 465 for SMTPS)
 //   - SMTP_USER, SMTP_PASSWORD
-//   - SMTP_FROM (e.g. "Nouf-ex <no-reply@nouf-ex.com>")
+//   - SMTP_FROM (e.g. "Noufex <no-reply@Noufex.com>")
 //   - SMTP_SECURE ("true" to use implicit TLS on port 465)
 //
 // When unconfigured the channel reports ok=false with a clear reason
@@ -97,7 +97,7 @@ async function smtpSend(opts: {
 		});
 	try {
 		await expect('220');
-		await write(`EHLO nouf-ex.local`);
+		await write(`EHLO Noufex.local`);
 		const ehlo = await expect('250');
 		const supportsStartTls = /\bSTARTTLS\b/m.test(ehlo) && !opts.secure;
 		if (supportsStartTls) {
@@ -106,7 +106,7 @@ async function smtpSend(opts: {
 			// Upgrade the plain socket to TLS in-place.
 			sock = await upgradeToTls(sock);
 			// Re-issue EHLO over the encrypted channel.
-			await write(`EHLO nouf-ex.local`);
+			await write(`EHLO Noufex.local`);
 			await expect('250');
 		}
 		if (opts.user && opts.password) {

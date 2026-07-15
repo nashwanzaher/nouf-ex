@@ -84,7 +84,7 @@ function renderEN(
 				body: [
 					`Hi,`,
 					``,
-					`Thanks for your order #${data.orderNumber} on Nouf-ex.`,
+					`Thanks for your order #${data.orderNumber} on Noufex.`,
 					``,
 					`  Total:        ${data.total} YER`,
 					`  Items:        ${data.itemCount}`,
@@ -95,7 +95,7 @@ function renderEN(
 					`Track your order: ${data.trackingUrl}`,
 					``,
 					`Thank you for shopping with us.`,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -109,7 +109,7 @@ function renderEN(
 					``,
 					`It's being prepared for shipment.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -123,7 +123,7 @@ function renderEN(
 					``,
 					`Tracking: ${data.trackingNumber ?? 'pending'}`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -135,7 +135,7 @@ function renderEN(
 					``,
 					`We received your payment of ${data.amount} YER for order #${data.orderNumber}.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -150,7 +150,7 @@ function renderEN(
 					``,
 					`Our team will review and respond within 2 business days.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -164,7 +164,7 @@ function renderEN(
 					``,
 					`The amount will be credited back to your original payment method within 5-10 business days.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -180,7 +180,7 @@ function renderEN(
 					``,
 					`If you have questions, please contact our support.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -195,7 +195,7 @@ function renderEN(
 					``,
 					`Our team will review and respond within 24 hours.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -208,7 +208,7 @@ function renderEN(
 					`The dispute on order #${data.orderNumber} has been resolved.`,
 					`Resolution: ${data.resolution ?? 'see order details'}`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -222,7 +222,7 @@ function renderEN(
 					``,
 					`Comment: ${data.comment ?? '(no comment)'}`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
@@ -238,37 +238,37 @@ function renderEN(
 					``,
 					`Reply: ${data.inboxUrl ?? 'https://noufex.example.com/messages'}`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
 		case 'welcome':
 			return {
-				subject: `Welcome to Nouf-ex, ${data.name ?? ''}!`,
+				subject: `Welcome to Noufex, ${data.name ?? ''}!`,
 				body: [
 					`Hi ${data.name ?? 'there'},`,
 					``,
-					`Welcome to Nouf-ex — the trusted B2B/B2C marketplace for Yemen and the Middle East.`,
+					`Welcome to Noufex — the trusted B2B/B2C marketplace for Yemen and the Middle East.`,
 					``,
 					`Get started: browse products, follow your favorite stores, and enjoy secure payments.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 
 		case 'password_reset':
 			return {
-				subject: `Reset your Nouf-ex password`,
+				subject: `Reset your Noufex password`,
 				body: [
 					`Hi,`,
 					``,
-					`We received a request to reset your Nouf-ex password.`,
+					`We received a request to reset your Noufex password.`,
 					``,
 					`Reset link (valid 1 hour): ${data.resetUrl ?? 'https://noufex.example.com/reset'}`,
 					``,
 					`If you didn't request this, you can safely ignore this email.`,
 					``,
-					`— The Nouf-ex team`,
+					`— The Noufex team`,
 				].join('\n'),
 			};
 	}

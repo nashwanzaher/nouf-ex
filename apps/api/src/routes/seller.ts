@@ -1,5 +1,5 @@
 /**
- * Nouf-ex �?� Seller (merchant self-service) API.
+ * Noufex �?� Seller (merchant self-service) API.
  *
  * Mounted by server/index.ts at `/api/seller`. Every route below
  * requires a `merchant` (or admin) role �?� the middleware chain is

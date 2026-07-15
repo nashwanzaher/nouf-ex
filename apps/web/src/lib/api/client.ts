@@ -1,6 +1,7 @@
 /**
- * Nouf-ex Frontend API Client — base fetch wrapper
+ * Noufex Frontend API Client — base fetch wrapper
  *
+ * Yemen & Middle East B2B/B2C e-commerce marketplace platform.
  * Internal module: provides the typed fetch wrapper and error class used
  * by every domain-specific file (products.ts, orders.ts, etc.). Do NOT
  * import from this file directly — import from `./index.ts` (the public

@@ -1,5 +1,5 @@
 /**
- * Nouf-ex — standardized error codes & canonical messages
+ * Noufex — standardized error codes & canonical messages
  *
  * Centralised catalog of every error code the API can return, plus the
  * user-facing message associated with each one. Used by:

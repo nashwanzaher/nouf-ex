@@ -1,6 +1,7 @@
 # ============================================================================
-# Nouf-ex — API container (monorepo build, connects to external PostgreSQL 17).
+# Noufex — API container (monorepo build, connects to external PostgreSQL 17).
 # ----------------------------------------------------------------------------
+# Yemen & Middle East B2B/B2C e-commerce marketplace platform.
 # The Postgres server is NOT created here. It must already exist on the host
 # (or on another reachable network) and contain the `noufex_db` database.
 #

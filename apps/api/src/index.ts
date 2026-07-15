@@ -1,5 +1,6 @@
 /**
- * Nouf-ex E-commerce REST API Server
+ * Noufex E-commerce REST API Server
+ * Yemen & Middle East B2B/B2C marketplace platform
  * Express + node-postgres (pg) via the PgDb wrapper
  */
 

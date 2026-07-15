@@ -63,6 +63,7 @@ import { statsRouter } from './modules/stats/index.ts';
 import { storeFollowersRouter } from './modules/store-followers/index.ts';
 import { uploadsRouter } from './modules/uploads/index.ts';
 import { wishlistRouter } from './modules/wishlist/index.ts';
+import { createWebSocketServer } from './modules/websocket/index.ts';
 
 // Note: `import 'dotenv/config'` above already loaded .env.
 // Keep this comment as a marker so future readers know not to
@@ -537,6 +538,12 @@ if (__isMainModule) {
 			static_path: STATIC_PATH,
 			env: process.env.NODE_ENV || 'development',
 		});
+
+		// Initialize WebSocket server for real-time messaging
+		if (server) {
+			createWebSocketServer(server);
+			log.info({ msg: 'websocket_started', path: '/ws' });
+		}
 	});
 }
 

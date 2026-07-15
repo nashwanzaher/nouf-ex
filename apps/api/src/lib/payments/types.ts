@@ -16,7 +16,7 @@
 // real money.
 // =============================================================================
 
-export type PaymentMethod = 'cod' | 'card' | 'wallet' | 'bank_transfer' | 'stripe' | 'paymob';
+export type PaymentMethod = 'cod' | 'card' | 'wallet' | 'bank_transfer' | 'stripe' | 'paymob' | 'alipay' | 'wechat_pay';
 
 export interface InitiateInput {
 	orderId: number;

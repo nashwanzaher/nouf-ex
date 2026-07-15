@@ -425,7 +425,7 @@ export const paymentCreateSchema = z
 		order_id: z.number().int().positive(),
 		amount: z.number().nonnegative().max(999_999_999),
 		currency: z.string().trim().length(3).default('YER'),
-		method: z.enum(['cod', 'card', 'wallet', 'bank_transfer', 'stripe', 'paymob']).default('cod'),
+		method: z.enum(['cod', 'card', 'wallet', 'bank_transfer', 'stripe', 'paymob', 'alipay', 'wechat_pay']).default('cod'),
 		transaction_id: z.string().trim().max(200).optional(),
 	})
 	.strict();

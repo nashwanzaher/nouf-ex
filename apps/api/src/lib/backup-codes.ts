@@ -1,5 +1,5 @@
 /**
- * backup-codes.cts — single-use recovery codes for P0-5 (2FA).
+ * backup-codes.ts — single-use recovery codes for P0-5 (2FA).
  *
  * Each user with 2FA enabled gets 10 backup codes at enrollment time.
  * Each code is shown ONCE to the user in plaintext, then hashed with

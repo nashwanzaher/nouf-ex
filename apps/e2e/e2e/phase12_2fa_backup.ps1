@@ -1,6 +1,6 @@
 # ============================================================================
 # PHASE 12: 2FA + Backup Codes + Partial Tokens
-# Tests /api/auth/2fa/* routes (app/server/routes/auth-2fa.cts)
+# Tests /api/auth/2fa/* routes (apps/api/src/routes/auth-2fa.ts)
 # Verifies: setup → enable → login → verify (TOTP) → disable cycle.
 # ============================================================================
 $base = 'http://localhost:3000'
@@ -43,7 +43,7 @@ function Assert($label, $expected, $r) {
 
 # HMAC-SHA1 TOTP implementation (RFC 6238) — duplicated here so the
 # test is self-contained and doesn't require node/python to run.
-# Window: ±1 step (±30s) — matches app/server/lib/totp.cts.
+# Window: ±1 step (±30s) — matches apps/api/src/lib/totp.ts.
 Add-Type -TypeDefinition @"
 using System;
 using System.Collections.Generic;

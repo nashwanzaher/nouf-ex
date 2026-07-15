@@ -1,6 +1,6 @@
 # ============================================================================
 # PHASE 14: Shipping Methods
-# Tests /api/shipping/methods (app/server/routes/shipping.cts)
+# Tests /api/shipping/methods (apps/api/src/routes/shipping.ts)
 # Verifies: list methods, weight-based estimated_total calculation,
 #           edge cases for weight param.
 # ============================================================================

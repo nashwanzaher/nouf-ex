@@ -53,7 +53,7 @@ function isCapsLockOn(ev: KeyboardEvent | React.KeyboardEvent): boolean {
 }
 
 // ── Friendly error mapping ────────────────────────────────────────────────
-// Maps the server's stable machine codes (see lib/error-codes.cts) to
+// Maps the server's stable machine codes (see lib/error-codes.ts) to
 // actionable advice in the user's language via i18n. Generic strings have
 // low recovery rates — actionable ones increase login success by ~18% (Baymard).
 //
@@ -267,10 +267,21 @@ export default function Login() {
 				type: 'success',
 			});
 
-			const explicit =
+			// SECURITY (OWASP ASVS 3.5.1): validate redirect URL is a
+			// relative path to prevent open redirect attacks. An attacker
+			// could craft ?redirect=https://evil.com to steal credentials
+			// after login. We only accept paths starting with '/' that
+			// don't start with '//' (protocol-relative URL) and don't
+			// contain '://' (absolute URL).
+			const rawRedirect =
 				(location.state as LocationState | null)?.from ??
 				new URLSearchParams(location.search).get('redirect');
-			const destination = explicit ?? landingForRole(authUser.role);
+			const isSafeRedirect =
+				rawRedirect &&
+				rawRedirect.startsWith('/') &&
+				!rawRedirect.startsWith('//') &&
+				!rawRedirect.includes('://');
+			const destination = isSafeRedirect ? rawRedirect : landingForRole(authUser.role);
 			navigate(destination, { replace: true });
 		} catch (err) {
 			setLoadingMessage('');

@@ -1,6 +1,6 @@
 # ============================================================================
 # PHASE 6: Coupons + Discounts
-# Tests /api/coupons/* routes (app/server/routes/coupons.cts)
+# Tests /api/coupons/* routes (apps/api/src/routes/coupons.ts)
 # Verifies: validate (active, expired, inactive, below min_order), redeem,
 #           idempotent re-redeem, cross-user redeem protection.
 # ============================================================================

@@ -1,5 +1,5 @@
 /**
- * totp.cts — TOTP (RFC 6238) implementation for P0-5 (2FA).
+ * totp.ts — TOTP (RFC 6238) implementation for P0-5 (2FA).
  *
  * No external dependency. The algorithm:
  *
@@ -22,7 +22,7 @@
  * and the value is human-inspectable in pgAdmin / psql. 160 bits of
  * entropy → 32 base32 chars → 32 chars in the column.
  */
-import { createHmac, randomBytes } from 'crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const TOTP_STEP_SECONDS = 30;
@@ -119,15 +119,13 @@ export function totpAt(secret: string, unixSeconds: number): string {
 	return otp;
 }
 
-/** Constant-time string equality. Returns false on length mismatch
- *  without leaking the length via early-exit. */
+/** Constant-time string equality using Node.js crypto.timingSafeEqual.
+ *  SECURITY (OWASP ASVS 2.6.1): uses the platform's constant-time
+ *  comparison to prevent timing side-channels. Both values are always
+ *  6-digit strings (TOTP_DIGITS), so the length check is a formality. */
 function timingSafeEqualStr(a: string, b: string): boolean {
 	if (a.length !== b.length) return false;
-	let diff = 0;
-	for (let i = 0; i < a.length; i++) {
-		diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-	}
-	return diff === 0;
+	return timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
 
 /** Verify a user-supplied 6-digit code against the secret.

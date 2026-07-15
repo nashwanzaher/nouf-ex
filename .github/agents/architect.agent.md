@@ -3,13 +3,7 @@ name: architect
 description: 'Senior Software Architect for system design, architecture decisions, and technical planning.'
 target: github-copilot
 tools:
-  - code-search
-  - filesystem
-  - github
-  - memory
-  - sequential-thinking
-  - fetch
-  - terminal
+[vscode, execute, read, agent, vscode.mermaid-markdown-features, GitHub.vscode-pull-request-github, ms-azuretools.vscode-containers, ms-python.python, edit, search, web, 'filesystem/*', 'sequential-thinking/*', 'com.figma.mcp/mcp/*', 'io.github.chromedevtools/chrome-devtools-mcp/*', 'github/*', 'mcp_docker/*', 'microsoft/markitdown/*', 'playwright/*', 'pylance-mcp-server/*', browser, todo]
 ---
 
 ## Mandatory Reference

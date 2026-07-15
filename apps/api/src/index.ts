@@ -13,8 +13,8 @@ import express, {
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
-// Side-effect import: must run BEFORE shared.cts is loaded,
-// because shared.cts reads process.env.DATABASE_URL at module
+// Side-effect import: must run BEFORE shared.ts is loaded,
+// because shared.ts reads process.env.DATABASE_URL at module
 // evaluation time and throws if it is missing. A bare
 // `dotenv.config()` call would run too late (after the imports).
 import 'dotenv/config';
@@ -43,13 +43,13 @@ import {
 	stopAuditCleanupScheduler,
 } from './lib/shared.ts';
 import { addressesRouter } from './modules/addresses/index.ts';
-import { adminRouter } from './modules/admin/index.ts';
-import { adminExtrasRouter } from './routes/admin-extras.ts';
+import { adminExtrasRouter, adminRouter } from './modules/admin/index.ts';
 import { auth2faRouter } from './modules/auth-2fa/index.ts';
 import { authRouter } from './modules/auth/index.ts';
 import { cartRouter } from './modules/cart/index.ts';
 import { catalogRouter } from './modules/catalog/index.ts';
 import { couponsRouter } from './modules/coupons/index.ts';
+import { customerReviewsRouter } from './modules/customer-reviews/index.ts';
 import { deliveryAgentRouter } from './modules/delivery-agent/index.ts';
 import { messagesRouter } from './modules/messages/index.ts';
 import { notificationsRouter } from './modules/notifications/index.ts';
@@ -57,7 +57,6 @@ import { ordersRouter } from './modules/orders/index.ts';
 import { paymentsRouter } from './modules/payments/index.ts';
 import { refundsRouter } from './modules/refunds/index.ts';
 import { reviewsRouter } from './modules/reviews/index.ts';
-import { customerReviewsRouter } from './routes/customer-reviews.ts';
 import { sellerRouter } from './modules/seller/index.ts';
 import { shippingRouter } from './modules/shipping/index.ts';
 import { statsRouter } from './modules/stats/index.ts';
@@ -222,11 +221,111 @@ app.get('/api/ready', healthLimiter, async (_req: Request, res: Response) => {
 		if (timeoutId) clearTimeout(timeoutId);
 		checks.db = { ok: false, ms: Date.now() - startedAt, detail: (e as Error).message };
 	}
+
+	// ── Memory check (NIST SP 800-53 SI-4, OWASP ASVS 7.1) ────────────
+	// Detect memory pressure that could cause OOM kills or GC pauses.
+	// Heap limit is typically ~1.5 GB on 64-bit Node; warn at 80%.
+	const mem = process.memoryUsage();
+	const heapUsedMB = Math.round(mem.heapUsed / 1024 / 1024);
+	const heapTotalMB = Math.round(mem.heapTotal / 1024 / 1024);
+	const rssMB = Math.round(mem.rss / 1024 / 1024);
+	const externalMB = Math.round(mem.external / 1024 / 1024);
+	const heapUtilization = mem.heapTotal > 0 ? mem.heapUsed / mem.heapTotal : 0;
+	const memoryOk = heapUtilization < 0.85;
+	checks.memory = {
+		ok: memoryOk,
+		ms: 0,
+		detail: memoryOk
+			? undefined
+			: `heap ${Math.round(heapUtilization * 100)}% (${heapUsedMB}/${heapTotalMB} MB)`,
+	};
+
+	// ── GC pressure detection (NIST SP 800-53 SI-4, OWASP ASVS 7.1) ──
+	// Detect GC pressure that indicates memory churn or leak.
+	// Thresholds:
+	//   - Total pause >500ms → degraded (GC is blocking requests)
+	//   - Major GC >10 in measurement window → degraded (heap is stressed)
+	//   - GC frequency >1/sec sustained → warning (high allocation rate)
+	const gcStats = { major: 0, minor: 0, incremental: 0, totalPauseMs: 0 };
+	try {
+		const { PerformanceObserver } = await import('node:perf_hooks');
+		const obs = new PerformanceObserver((list) => {
+			for (const entry of list.getEntries()) {
+				if (entry.entryType === 'gc') {
+					gcStats.totalPauseMs += entry.duration;
+					// V8 GC kinds: 'major' (mark-sweep), 'minor' (scavenge),
+					// 'incremental', 'commit', 'process_weak_callbacks'
+					const kind = (entry as { kind?: string }).kind;
+					if (kind === 'major') gcStats.major++;
+					else if (kind === 'minor') gcStats.minor++;
+					else gcStats.incremental++;
+				}
+			}
+		});
+		obs.observe({ entryTypes: ['gc'], buffered: true } as never);
+		await new Promise((r) => setImmediate(r));
+		obs.disconnect();
+	} catch {
+		// perf_hooks GC observer not available — skip silently
+	}
+	const gcPauseOk = gcStats.totalPauseMs < 500;
+	const gcMajorOk = gcStats.major <= 10;
+	const gcOk = gcPauseOk && gcMajorOk;
+	const gcDetail = !gcOk
+		? [
+				gcPauseOk ? undefined : `total pause ${Math.round(gcStats.totalPauseMs)}ms`,
+				gcMajorOk ? undefined : `major GCs ${gcStats.major} (heap stressed)`,
+			]
+				.filter(Boolean)
+				.join(', ')
+		: undefined;
+	checks.gc = {
+		ok: gcOk,
+		ms: Math.round(gcStats.totalPauseMs),
+		detail: gcDetail,
+	};
+
+	// ── Event loop lag check ────────────────────────────────────────────
+	// A blocked event loop (>500ms) means the server cannot handle
+	// requests. We measure by scheduling a immediate and checking
+	// how much time elapsed.
+	const loopStart = process.hrtime.bigint();
+	await new Promise((r) => setImmediate(r));
+	const loopLagMs = Number(process.hrtime.bigint() - loopStart) / 1e6;
+	const loopOk = loopLagMs < 500;
+	checks.event_loop = {
+		ok: loopOk,
+		ms: Math.round(loopLagMs),
+		detail: loopOk ? undefined : `event loop lag ${Math.round(loopLagMs)}ms`,
+	};
+
+	// ── Pool connection metrics ─────────────────────────────────────────
+	const poolStats = db.getPoolStats();
+	const poolHealthy = poolStats.totalCount > 0 && poolStats.waitingCount < poolStats.totalCount;
+	checks.pool = {
+		ok: poolHealthy,
+		ms: 0,
+		detail: poolHealthy
+			? undefined
+			: `waiting=${poolStats.waitingCount} total=${poolStats.totalCount}`,
+	};
+
 	const allOk = Object.values(checks).every((c) => c.ok);
 	res.status(allOk ? 200 : 503).json({
 		status: allOk ? 'ready' : 'degraded',
 		uptime_s: Math.round((Date.now() - READY_STARTED_AT) / 1000),
 		checks,
+		pool: {
+			total: poolStats.totalCount,
+			idle: poolStats.idleCount,
+			waiting: poolStats.waitingCount,
+		},
+		memory: {
+			heap_used_mb: heapUsedMB,
+			heap_total_mb: heapTotalMB,
+			rss_mb: rssMB,
+			external_mb: externalMB,
+		},
 	});
 });
 

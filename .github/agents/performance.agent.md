@@ -3,13 +3,7 @@ name: performance
 description: 'Performance Engineer specializing in Core Web Vitals, application optimization, and scalability.'
 target: github-copilot
 tools:
-  - code-search
-  - filesystem
-  - github
-  - memory
-  - sequential-thinking
-  - fetch
-  - terminal
+[vscode, execute, read, agent, vscode.mermaid-markdown-features, GitHub.vscode-pull-request-github, ms-azuretools.vscode-azureresourcegroups, ms-azuretools.vscode-containers, ms-python.python, edit, search, web, 'com.figma.mcp/mcp/*', 'io.github.chromedevtools/chrome-devtools-mcp/*', 'mcp_docker/*', 'playwright/*', 'pylance-mcp-server/*', browser, 'github/*', 'io.github.upstash/context7/*', 'microsoft/markitdown/*', 'sequential-thinking/*', 'minimax-web-search-mcp/*', todo]
 ---
 
 ## Mandatory Reference

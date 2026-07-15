@@ -1,5 +1,5 @@
 /**
- * Unit tests for app/server/lib/backup-codes.cts (P0-5: 2FA).
+ * Unit tests for apps/api/src/lib/backup-codes.ts (P0-5: 2FA).
  *
  * Covers:
  *   - generateBackupCode() — length, alphabet

@@ -64,9 +64,9 @@ async function main() {
 	await call('db_query', { sql: 'DROP TABLE x' }); // should be refused
 
 	console.log('--- Code tools ---');
-	await call('code_tree', { path: 'app/src/pages' });
-	await call('code_read_file', { path: 'app/server/index.ts', max_bytes: 4000 });
-	await call('code_search', { pattern: 'requireAuth', include: 'app/server/**/*.ts' });
+	await call('code_tree', { path: 'apps/web/src/pages' });
+	await call('code_read_file', { path: 'apps/api/src/index.ts', max_bytes: 4000 });
+	await call('code_search', { pattern: 'requireAuth', include: 'apps/api/src/**/*.ts' });
 
 	console.log('--- API tools ---');
 	await call('api_list_endpoints');

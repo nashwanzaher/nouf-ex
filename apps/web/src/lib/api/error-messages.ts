@@ -6,7 +6,7 @@
  * `formatApiError(err, lang)` to format any thrown error.
  *
  * **Why a frontend mirror?** The server returns `code` only (see
- * `app/server/lib/error-codes.ts`); it intentionally does NOT localize
+ * `apps/api/src/lib/error-codes.ts`); it intentionally does NOT localize
  * messages because the SPA already has full i18n support. By
  * keeping the translations on the frontend we avoid a round-trip
  * to the server for every error.

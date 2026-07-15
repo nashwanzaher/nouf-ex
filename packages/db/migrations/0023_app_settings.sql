@@ -27,7 +27,7 @@
 -- All numeric settings are stored as TEXT to keep the schema
 -- flexible; readers parse on load.
 --
--- Application contract (app/server):
+-- Application contract (apps/api/src):
 --   SELECT value FROM app_settings WHERE key = 'DEFAULT_CURRENCY';
 -- Cache for 60s in-process to avoid hammering the DB.
 --
@@ -150,16 +150,15 @@ UPDATE
 -- existing audit trail. We use the SECURITY DEFINER helper
 -- write_audit_log() - the same one used by admin handlers
 -- in the application server.
-PERFORM write_audit_log
-(
-        jsonb_build_object
-('admin_user_id', p_user_id),
+PERFORM write_audit_log(
+        p_user_id,
         'app_setting.update',
         'app_settings',
         p_key,
         NULL,
-        jsonb_build_object
-('value', p_value)
+        jsonb_build_object('value', p_value),
+        NULL,
+        'admin_set_app_setting'
     );
 END
 $$;
@@ -187,7 +186,7 @@ VALUES
   (
     'FLAT_SHIPPING_COST',
     '500',
-    'Flat shipping fee (in minor units) charged when the order subtotal is below FREE_SHIPPING_THRESHOLD. Used by server/routes/orders.cts.',
+    'Flat shipping fee (in minor units) charged when the order subtotal is below FREE_SHIPPING_THRESHOLD. Used by server/routes/orders.ts.',
     NULL
     )
 ON CONFLICT

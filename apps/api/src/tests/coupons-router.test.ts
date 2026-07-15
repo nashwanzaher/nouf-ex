@@ -113,7 +113,7 @@ describe('couponsRouter — POST /api/coupons/redeem', () => {
 		const res = await request(app)
 			.post('/api/coupons/redeem')
 			.set(bearer)
-			.send({ code: 'NOPE', user_id: 7, order_subtotal: 100, order_id: 1 });
+			.send({ code: 'NOPE', order_subtotal: 100, order_id: 1 });
 		expect(res.status).toBe(404);
 	});
 });

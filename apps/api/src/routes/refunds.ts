@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
 import {
 	db,
 	log,
@@ -8,6 +9,7 @@ import {
 	requireAuth,
 	requireRole,
 	refundCreateSchema,
+	ErrorCodes,
 } from '../lib/shared.ts';
 
 export const refundsRouter = Router();
@@ -68,8 +70,8 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 			.get(order_id, userId, amount, reason)) as { id: number };
 
 		// Fire bilingual i18n notifications (customer + merchant).
-		// Best-effort Ù?¤ never blocks the response.
-		// (C.1 in MASTER_PLAN.md Ù?¤ real refund-requested notification)
+		// Best-effort ï¿½?ï¿½ never blocks the response.
+		// (C.1 in MASTER_PLAN.md ï¿½?ï¿½ real refund-requested notification)
 		try {
 			const { onRefundRequested } = await import('../lib/notifications/events.ts');
 			const orderRow = (await db
@@ -113,12 +115,21 @@ refundsRouter.post(
 		try {
 			const id = Number(req.params.id);
 			if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid id', 400);
-			const status = (req.body?.status as string) || '';
-			if (status !== 'approved' && status !== 'rejected') {
-				return sendError(res, 'status must be approved or rejected', 400);
+
+			// SECURITY (OWASP ASVS 5.1.1): validate input with Zod
+			// instead of raw casting. Prevents unexpected fields and
+			// ensures type safety.
+			const resolveSchema = z.object({
+				status: z.enum(['approved', 'rejected']),
+				admin_notes: z.string().trim().max(2000).optional(),
+			});
+			const v = validate(resolveSchema, req.body);
+			if (!v.ok) {
+				return sendError(res, 'Invalid input: ' + v.error, 400, ErrorCodes.VALIDATION_ERROR);
 			}
-			const adminNotes = (req.body?.admin_notes as string | undefined) ?? null;
-			const finalStatus = status === 'approved' ? 'processed' : 'rejected';
+
+			const finalStatus = v.data.status === 'approved' ? 'processed' : 'rejected';
+			const adminNotes = v.data.admin_notes ?? null;
 			const result = (await db
 				.prepare(
 					`UPDATE refunds
@@ -185,7 +196,7 @@ if (finalStatus === 'processed') {
 			}
 
 			// Fire bilingual i18n notification to the customer (best-effort).
-			// (C.1 in MASTER_PLAN.md Ù?¤ real refund-resolved notification)
+			// (C.1 in MASTER_PLAN.md ï¿½?ï¿½ real refund-resolved notification)
 			try {
 				const { onRefundResolved } = await import('../lib/notifications/events.ts');
 				const orderRow = (await db

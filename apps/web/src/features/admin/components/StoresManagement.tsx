@@ -56,7 +56,7 @@ interface StoreRecord {
 }
 
 /** Map the AdminStore shape from /api/admin/stores
- *  (server/routes/admin.cts:95-144) to the table's view model.
+ *  (server/routes/admin.ts:95-144) to the table's view model.
  *  Fields NOT exposed by /api/admin/stores get placeholder values
  *  (em-dash) so the column structure is preserved. */
 function mapAdminStoreToView(store: AdminStore): StoreRecord {
@@ -215,7 +215,7 @@ export default function StoresManagement() {
 		async (target: StoreRecord) => {
 			// active → suspended via is_active=false; suspended → active
 			// requires also setting is_verified (admin endpoint contract
-			// — see server/routes/admin.cts:500-525). When reactivating a
+			// — see server/routes/admin.ts:500-525). When reactivating a
 			// previously-unverified store, fall back to verified=true so
 			// the store comes back into the verified bucket.
 			const nextActive = target.status !== 'active';

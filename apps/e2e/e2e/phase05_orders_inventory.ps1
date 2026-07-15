@@ -1,6 +1,6 @@
 # ============================================================================
 # PHASE 5: Orders + Order Items + Inventory
-# Tests /api/orders/* routes (app/server/routes/orders.cts)
+# Tests /api/orders/* routes (apps/api/src/routes/orders.ts)
 # Verifies: order creation, state machine, stock decrement (trigger),
 #           ownership guard, admin override, MIXED_STORES + PRODUCT_UNAVAILABLE.
 # ============================================================================
@@ -146,9 +146,9 @@ if ($p2) {
         items = $mixedItems; total = $mixedTotal; paymentMethod = 'cod'
     }
     # Note: the API currently returns 400 with no JSON body for this
-    # specific branch (known quirk of orders.cts:121 — sendError is
+    # specific branch (known quirk of orders.ts:121 — sendError is
     # invoked but the response body never serializes). We verify the
-    # status code only; once orders.cts:121 is fixed this can be
+    # status code only; once orders.ts:121 is fixed this can be
     # tightened to also assert code=MIXED_STORES.
     Assert 'POST /api/orders (MIXED_STORES)' 400 $r
     Show 'MIXED_STORES body preview' $r 200

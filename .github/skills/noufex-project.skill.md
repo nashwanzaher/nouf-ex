@@ -425,7 +425,7 @@ Step 5: Verify
 
 ```yaml
 Files to Create/Modify:
-  - app/server/routes/{resource}.ts (endpoint)
+  - apps/api/src/routes/{resource}.ts (endpoint)
   - app/mocks/{resource}.test.ts (tests)
   - database/migrations/{N+1}__{description}.sql (if DB change)
 
@@ -453,8 +453,8 @@ Example:
 
 ```yaml
 Files to Create/Modify:
-  - app/src/pages/{role}/{PageName}.tsx (page component)
-  - app/src/App.tsx (add route)
+  - apps/web/src/pages/{role}/{PageName}.tsx (page component)
+  - apps/web/src/App.tsx (add route)
   - app/mocks/{PageName}.test.tsx (tests)
   - README.md updates (if needed)
 

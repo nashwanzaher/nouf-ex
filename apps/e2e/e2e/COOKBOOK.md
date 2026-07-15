@@ -413,7 +413,7 @@ Assert-Status 'admin reads Alice address → 200' $r 200
 
 **The bug:** a missing `if (req.user.id !== owner && req.user.role !== 'admin')`
 let user A read user B's data. This pattern caught it in
-`app/server/routes/cart.cts` (A.1).
+`apps/api/src/routes/cart.ts` (A.1).
 
 ---
 

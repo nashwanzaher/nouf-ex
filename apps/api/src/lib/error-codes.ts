@@ -8,7 +8,7 @@
  *     `new HttpError(status, msg, { code: ErrorCodes.X })`.
  *   - The global error handler in `server/middleware.ts` to translate
  *     PG / Zod failures into a consistent shape.
- *   - Frontend `ApiError` in `app/src/lib/api/client.ts` (which now
+ *   - Frontend `ApiError` in `apps/web/src/lib/api/client.ts` (which now
  *     carries `code` so callers can branch on it without parsing strings).
  *
  * Closes P3 backlog item R-15 (Standardize error messages, 3h, 🟢 Medium).

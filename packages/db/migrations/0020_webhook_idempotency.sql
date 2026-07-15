@@ -48,7 +48,7 @@ IF NOT EXISTS webhook_events
     transaction_id  VARCHAR(128) NOT NULL,
     event_type      VARCHAR(64)
                     -- Normalised to status names ('succeeded',
-                    -- 'failed', 'refunded'), see payments.cts.
+                    -- 'failed', 'refunded'), see payments.ts.
                     NOT NULL,
     payload         JSONB        NOT NULL,
     processing_state VARCHAR(16)

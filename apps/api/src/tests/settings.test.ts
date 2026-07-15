@@ -3,7 +3,7 @@
  *
  * Pin the contract of the cached app_settings reader that
  * replaced the hardcoded 'YER' / 10000 / 500 literals in
- * orders.cts (commit P1-2 in commit history).
+ * orders.ts (commit P1-2 in commit history).
  *
  * Cases:
  *  (a) Cold cache + DB row present  -> DB value, cached.

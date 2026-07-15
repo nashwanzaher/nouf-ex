@@ -76,9 +76,18 @@ export function rateLimit(windowMs: number, max: number, bucket = 'global') {
 }
 
 /**
- * Pre-configured limiter for the auth surface. 20 hits per 15 minutes
+ * Pre-configured limiter for the auth surface. 10 hits per 15 minutes
  * per IP across `/api/auth/*`. Tight enough that online brute-force
  * attempts are blocked; loose enough that a forgotten-password flow
  * + a typo doesn't lock out a real user.
+ *
+ * SECURITY (OWASP ASVS 2.2.1, NIST SP 800-53 AC-7):
+ *   The previous 20/15min limit allowed ~80 attempts/hour — too
+ *   generous for online brute-force protection. We tighten to 10
+ *   (≈40/hour) which still allows password-reset flows but blocks
+ *   dictionary attacks within reasonable time.
+ *
+ *   Per-IP keying prevents distributed brute-force from a single
+ *   proxy; the DB-backed counter is shared across workers.
  */
-export const authLimiter = rateLimit(15 * 60 * 1000, 20, 'auth');
+export const authLimiter = rateLimit(15 * 60 * 1000, 10, 'auth');

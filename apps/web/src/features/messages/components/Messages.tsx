@@ -2,7 +2,7 @@
  * Messages.tsx — K.6 page (customer / merchant)
  *
  * Inbox / sent / read of the authenticated user's direct messages,
- * served by /api/messages/* (server/routes/messages.cts).
+ * served by /api/messages/* (server/routes/messages.ts).
  *
  * Two-pane layout: thread list on the left, conversation view on
  * the right. Unread count surfaces from getUnreadMessageCount().

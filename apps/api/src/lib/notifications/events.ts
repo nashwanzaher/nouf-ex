@@ -1,7 +1,7 @@
 /**
  * Event-triggered notifications — fire when business events happen.
  *
- * Wires the existing `dispatcher.cts` infrastructure to the order
+ * Wires the existing `dispatcher.ts` infrastructure to the order
  * lifecycle so that:
  *   - Customer receives a notification when they place an order
  *   - Seller receives a notification when an order is placed

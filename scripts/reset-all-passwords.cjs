@@ -9,7 +9,16 @@ const scryptAsync = promisify(scrypt);
 const path = require('path');
 const fs = require('fs');
 
-const newPassword = process.argv[2] || '656650';
+const newPassword = process.argv[2];
+if (!newPassword) {
+	console.error('ERROR: new password required.');
+	console.error('Usage: node scripts/reset-all-passwords.cjs <newPassword>');
+	process.exit(2);
+}
+if (newPassword.length < 12) {
+	console.error('ERROR: password must be at least 12 characters (got ' + newPassword.length + ').');
+	process.exit(2);
+}
 
 // Load .env
 const envPath = path.resolve(__dirname, '..', '.env');

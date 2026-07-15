@@ -1,5 +1,5 @@
 /**
- * Unit tests for app/server/lib/search.cts (P1-1).
+ * Unit tests for apps/api/src/lib/search.ts (P1-1).
  *
  * The tests target the pure helpers (normalizeQuery) and the
  * parameter-building logic. The full SQL execution is covered

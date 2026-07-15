@@ -2,9 +2,9 @@
  * AdminOrders.tsx — K.6 page
  *
  * Lists every order in the system with admin-only force-status
- * controls. Reads via /api/admin/orders (server/routes/admin.cts:
+ * controls. Reads via /api/admin/orders (server/routes/admin.ts:
  * 218-269) and mutates via PATCH /api/admin/orders/:id/status
- * (admin.cts:537-569). Writes to admin_audit_log.
+ * (admin.ts:537-569). Writes to admin_audit_log.
  *
  * "Force status" is the admin override of the seller's normal
  * state-machine transitions (pending → confirmed → shipped →
@@ -31,7 +31,7 @@ import { useApp } from '@/context/AppContext';
 /* ------------------------------------------------------------------ */
 
 // Status enum from /api/admin/orders?status= validator
-// (server/routes/admin.cts:222-232). Same set as the public
+// (server/routes/admin.ts:222-232). Same set as the public
 // /api/orders but spelled in singular form.
 const ORDER_STATUSES = [
 	'pending',

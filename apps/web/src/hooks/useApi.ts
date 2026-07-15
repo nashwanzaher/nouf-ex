@@ -472,7 +472,7 @@ export function useWishlistItems(): HookResult<WishlistItem[]> {
 //
 // P1-7 (real notifications): replaced the localStorage read with a
 // live call to GET /api/notifications/:userId. The server derives the
-// user from the bearer token (see `notifications.cts`) and ignores the
+// user from the bearer token (see `notifications.ts`) and ignores the
 // URL param, so we pass 0 as a placeholder. When the user is not
 // signed in, the API returns 401 — we swallow that and surface an
 // empty array so the page renders a sensible "log in to see your

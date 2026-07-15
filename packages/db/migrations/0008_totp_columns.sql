@@ -9,7 +9,7 @@
 --                            padding. Stored as TEXT (not BYTEA) for
 --                            portability — the value is small (~32
 --                            chars) and base32 is lossless. The
---                            app-side helper (lib/totp.cts) handles
+--                            app-side helper (lib/totp.ts) handles
 --                            the encode/decode.
 --   * totp_backup_codes    : array of scrypt HASHES (never plaintext).
 --                            Each code is a single-use 10-char

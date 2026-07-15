@@ -148,12 +148,19 @@ async function changePasswordHandler(req: Request, res: Response) {
 async function forgotPasswordHandler(req: Request, res: Response) {
 	try {
 		const v = validate(z.object({ email: z.string().email().max(255) }), req.body);
-		if (!v.ok) {
-			return sendSuccess(res, { ok: true }, 200);
-		}
-		const result = await service.forgotPassword(v.data.email);
+		// SECURITY (OWASP ASVS 2.5.1, NIST SP 800-63B §5.1.1.2):
+		// Always call the service regardless of validation success or email
+		// existence. The previous implementation returned early on validation
+		// failure, which leaked timing information (faster response = invalid
+		// email format). We now always call the service with the validated
+		// email (or a dummy on validation failure) so the response time is
+		// constant.
+		const email = v.ok ? v.data.email : 'invalid@placeholder.invalid';
+		const result = await service.forgotPassword(email);
+		// In dev, return the reset token for testing. In prod, always
+		// return { ok: true } regardless of email existence.
 		if (result && process.env.NODE_ENV !== 'production') {
-			log.info({ msg: 'auth.forgot_password.issued', reset_token: result.reset_token });
+			log.info({ msg: 'auth.forgot_password.issued' });
 			return sendSuccess(
 				res,
 				{ ok: true, reset_token: result.reset_token, expires_at: result.expires_at },

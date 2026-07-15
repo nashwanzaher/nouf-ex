@@ -3,7 +3,7 @@
  *
  * Read-only view of `admin_audit_log` (database/schema-extra.sql:188).
  * Every admin write (PATCH /api/admin/users|stores|orders|products|
- * disputes — see server/routes/admin.cts:447-647) writes one row here,
+ * disputes — see server/routes/admin.ts:447-647) writes one row here,
  * so this page is the receipts trail the admin needs to see who
  * changed what and when.
  *
@@ -28,7 +28,7 @@ import { useAdminAuditLog } from '@/hooks/useApi';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-// Action constants match what server/routes/admin.cts:writeAuditLog
+// Action constants match what server/routes/admin.ts:writeAuditLog
 // passes to the INSERT — kept here so the legend at the top of the
 // page can render human labels without an extra fetch.
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {

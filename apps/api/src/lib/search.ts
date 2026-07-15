@@ -1,5 +1,5 @@
 /**
- * search.cts — P1-1 full-text search helpers.
+ * search.ts — P1-1 full-text search helpers.
  *
  * Backs the /api/search endpoint. Uses the STORED generated column
  * `products.search_tsv` (created by migration 0009) and the GIN index

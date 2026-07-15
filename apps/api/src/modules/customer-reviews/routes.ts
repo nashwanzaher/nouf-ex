@@ -13,7 +13,7 @@
  * /api/admin/reviews).
  */
 import { Router, type Request, type Response } from 'express';
-import { db, requireAuth, sendError, sendSuccess } from '../lib/shared.ts';
+import { db, requireAuth, sendError, sendSuccess } from '../../lib/shared.ts';
 
 export const customerReviewsRouter = Router();
 

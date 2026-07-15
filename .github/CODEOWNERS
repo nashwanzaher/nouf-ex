@@ -1,94 +1,92 @@
-# Nouf-ex - CODEOWNERS
-# D.8 in MASTER_PLAN.md - automatic reviewer assignment based on the
-# files a PR touches. GitHub auto-requests review from the listed
-# users/teams when a PR changes a matching path. See
-# https://docs.github.com/en/repositories/managing-your-repository/setting-up-collaboration-on-github-repository/about-code-owners
+# Nouf-ex — CODEOWNERS
+# Automatic reviewer assignment based on the files a PR touches. GitHub
+# auto-requests review from the listed users/teams when a PR changes a
+# matching path. See
+#   https://docs.github.com/en/repositories/managing-your-repository/setting-up-collaboration-on-github-repository/about-code-owners
 #
 # Format: <pattern>   <owner>
 # Patterns use GitHub path glob syntax. The LAST matching rule wins
-# (so order matters - more specific rules should come after more
-# general ones). Lines starting with `#` are comments.
+# (so order matters — more specific rules should come after more general ones).
 
-# === Default: 1 maintainer is required on every PR =============
-/*                                                    @nashwanzaher
+# === Default: maintainer review on every PR =============================
+/*                                                                  @nashwanzaher
 
-# === Security-critical: require extra scrutiny ==================
-/app/server/middleware.ts                          @nashwanzaher
-/app/server/routes/auth.cts                        @nashwanzaher
-/app/server/routes/auth-2fa.cts                    @nashwanzaher
-/app/server/lib/auth.cts                           @nashwanzaher
-/app/server/lib/totp.cts                           @nashwanzaher
-/app/server/lib/backup-codes.cts                    @nashwanzaher
-/app/server/lib/partial-token.cts                  @nashwanzaher
-/app/src/lib/api.ts                                @nashwanzaher
-/app/.env*                                          @nashwanzaher
-SECRETS.md                                          @nashwanzaher
-/docs/architecture/security.md                      @nashwanzaher
+# === Security-critical (auth, tokens, secrets) ==========================
+/apps/api/src/middleware.ts                                       @nashwanzaher
+/apps/api/src/modules/auth/                                       @nashwanzaher
+/apps/api/src/modules/auth-2fa/                                    @nashwanzaher
+/apps/api/src/lib/auth.ts                                         @nashwanzaher
+/apps/api/src/lib/totp.ts                                         @nashwanzaher
+/apps/api/src/lib/backup-codes.ts                                 @nashwanzaher
+/apps/api/src/lib/partial-token.ts                                @nashwanzaher
+/apps/api/src/lib/reset-token.ts                                  @nashwanzaher
+/.env                                                              @nashwanzaher
+/.env.*                                                            @nashwanzaher
+/.github/SECRETS.md                                               @nashwanzaher
+/docs/architecture/security.md                                    @nashwanzaher
 
-# === Database migrations: DBA review ============================
-/database/migrations/                               @nashwanzaher
-/database/roles.sql                                 @nashwanzaher
-/database/README.md                                 @nashwanzaher
+# === Database: schema, migrations, seed ===============================
+/packages/db/                                                      @nashwanzaher
+/packages/db/migrations/                                          @nashwanzaher
+/packages/db/seed.sql                                              @nashwanzaher
+/packages/db/roles.sql                                            @nashwanzaher
 
-# === CI / deployment: DevOps review ============================
-/.github/workflows/                                 @nashwanzaher
-/Dockerfile                                         @nashwanzaher
-/docker-compose.yml                                 @nashwanzaher
-/docs/operations/                                   @nashwanzaher
-/docs/development/ci-cd.md                          @nashwanzaher
+# === CI / deployment: DevOps review ===================================
+/.github/workflows/                                                @nashwanzaher
+/Dockerfile                                                        @nashwanzaher
+/docker-compose.yml                                                @nashwanzaher
+/docker-compose.override.yml                                       @nashwanzaher
+/docker/                                                           @nashwanzaher
+/docs/operations/                                                  @nashwanzaher
 
-# === Database schema: notify DBA team ==========================
-/database/schema.sql                                @nashwanzaher
-/database/schema-extra.sql                          @nashwanzaher
+# === Backend API routes / services / modules ==========================
+/apps/api/src/                                                     @nashwanzaher
+/apps/api/src/routes/                                              @nashwanzaher
+/apps/api/src/modules/                                             @nashwanzaher
+/apps/api/src/lib/                                                 @nashwanzaher
 
-# === API routes: backend team lead ==============================
-/app/server/                                        @nashwanzaher
-/app/server/routes/                                 @nashwanzaher
-/app/server/lib/                                    @nashwanzaher
+# === Frontend (React + Vite) ===========================================
+/apps/web/src/                                                     @nashwanzaher
+/apps/web/src/pages/                                               @nashwanzaher
+/apps/web/src/components/                                          @nashwanzaher
+/apps/web/src/features/                                            @nashwanzaher
+/apps/web/src/hooks/                                               @nashwanzaher
+/apps/web/src/context/                                             @nashwanzaher
+/apps/web/src/lib/                                                 @nashwanzaher
+/apps/web/src/i18n/                                                @nashwanzaher
 
-# === Frontend pages: frontend team lead ========================
-/app/src/pages/                                     @nashwanzaher
-/app/src/components/                                @nashwanzaher
-/app/src/hooks/                                     @nashwanzaher
-/app/src/context/                                   @nashwanzaher
+# === MCP server & AI tooling ==========================================
+/apps/mcp-server/                                                  @nashwanzaher
+/.github/agents/                                                   @nashwanzaher
+/.github/skills/                                                   @nashwanzaher
 
-# === Documentation: docs reviewer ==============================
-/docs/                                               @nashwanzaher
-/app/README.md                                      @nashwanzaher
-/app/server/README.md                               @nashwanzaher
-/README.md                                          @nashwanzaher
-/CONTRIBUTING.md                                   @nashwanzaher
-/CHANGELOG.md                                       @nashwanzaher
+# === Shared packages (db, shared, configs) ============================
+/packages/shared/                                                  @nashwanzaher
+/packages/typescript-config/                                       @nashwanzaher
+/packages/eslint-config/                                           @nashwanzaher
 
-# === Tests: qa team ===========================================
-/tests/                                              @nashwanzaher
-/app/src/**/__tests__/                              @nashwanzaher
-/app/server/tests/                                  @nashwanzaher
-/app/vitest.config.ts                               @nashwanzaher
+# === Documentation =====================================================
+/docs/                                                             @nashwanzaher
+/README.md                                                         @nashwanzaher
+/CHANGELOG.md                                                      @nashwanzaher
+/ARCHITECTURE.md                                                   @nashwanzaher
+/CONTRIBUTING.md                                                   @nashwanzaher
 
-# === MCP server: AI team ========================================
-/mcp-server/                                        @nashwanzaher
-/.github/copilot-instructions.md                    @nashwanzaher
+# === Tests (unit, integration, E2E) ====================================
+/apps/api/src/tests/                                               @nashwanzaher
+/apps/web/src/**/__tests__/                                        @nashwanzaher
+/apps/e2e/                                                         @nashwanzaher
+/packages/db/migrations/                                           @nashwanzaher
 
-# === Tools and scripts: devops team ===========================
-/scripts/                                            @nashwanzaher
-/app/format-check.ps1                               @nashwanzaher
-/app/format.ps1                                     @nashwanzaher
-/app/lint.ps1                                       @nashwanzaher
-/app/tc.ps1                                         @nashwanzaher
-/app/test.ps1                                       @nashwanzaher
+# === Tooling & host scripts ===========================================
+/scripts/                                                          @nashwanzaher
+/scripts/quality/                                                  @nashwanzaher
+/scripts/db/                                                       @nashwanzaher
+/scripts/devops/                                                   @nashwanzaher
+/scripts/maintenance/                                              @nashwanzaher
 
-# === Legacy: history dirs need no review =======================
-# (archive/ removed 2026-07-07)
-# === Auto-merge candidates (Dependabot + lockfiles) ===========
-
-# === Auto-merge candidates (Dependabot + lockfiles) ===========
-# When Dependabot opens a PR, we want to auto-merge after CI
-# passes. The CODEOWNERS for these paths is set to the empty list
-# so no human review is requested.
-/.github/dependabot.yml                              @nashwanzaher
-/package.json                                       @nashwanzaher
-/package-lock.json                                  @nashwanzaher
-/app/package-lock.json                              @nashwanzaher
-/mcp-server/package.json                            @nashwanzaher
-/mcp-server/package-lock.json                       @nashwanzaher
+# === Auto-merge candidates (Dependabot + lockfiles) ===================
+# Empty owner list = no human review; auto-merge after CI.
+/.github/dependabot.yml                                            @nashwanzaher
+/package.json                                                      @nashwanzaher
+/package-lock.json                                                 @nashwanzaher

@@ -2,7 +2,7 @@
  * Nouf-ex — server-side middlewares
  *
  * Self-contained security, logging, and error-handling layer. Imported
- * once from `app/server/index.ts` and applied before any route.
+ * once from `apps/api/src/index.ts` and applied before any route.
  *
  * No external dependencies (helmet-style headers are inlined; structured
  * JSON logging goes to stdout so a future log shipper can pick it up
@@ -31,7 +31,7 @@ export type { AuthRole, TokenPayload };
 declare module 'express-serve-static-core' {
 	interface Request {
 		id?: string;
-		user?: { id: number; role: 'customer' | 'merchant' | 'admin' };
+		user?: { id: number; role: AuthRole };
 	}
 }
 
@@ -337,11 +337,20 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 	const pg = asPg(err);
 	if (pg.code && PG_TRANSLATION[pg.code]) {
 		const t = PG_TRANSLATION[pg.code];
+		// SECURITY (OWASP ASVS 7.1): log the PG detail for debugging
+		// but NEVER return it to the client. The detail often contains
+		// column names, table names, or input values that would aid
+		// an attacker. For 22P02 (invalid input syntax), the detail
+		// includes the malformed value — log it at warn level with
+		// the method + path so SREs can trace the source without
+		// leaking to clients.
 		log.warn({
 			msg: 'pg_error',
 			request_id: requestId,
 			pg_code: pg.code,
 			pg_constraint: pg.constraint,
+			pg_detail: pg.detail,
+			method: req.method,
 			path: req.path,
 		});
 		return res.status(t.status).json({
@@ -405,7 +414,7 @@ export const notFoundHandler: RequestHandler = (req, res) => {
 // =========================================================================
 // Types are now in `./lib/types.ts` (re-exported as `AuthRole` and
 // `TokenPayload`) to break the circular import between this file and
-// `./lib/shared.cts`. Importing here as a type-only keeps runtime
+// `./lib/shared.ts`. Importing here as a type-only keeps runtime
 // output zero-cost under `verbatimModuleSyntax: true`.
 import type { AuthRole, TokenPayload } from './lib/types.js';
 
@@ -695,19 +704,17 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
 		});
 	}
 	const auth = await fetchUserAuth(payload.sub);
-	if (auth === null) {
+	// SECURITY (OWASP ASVS 2.7.1, NIST SP 800-63B §5.2.2):
+	// Both "user deleted" and "token revoked" return the same error
+	// message and code. The previous implementation used distinct
+	// messages ("User not found" vs "Token has been revoked"), which
+	// leaked account deletion status to an attacker holding a
+	// stolen-but-revoked token.
+	if (auth === null || auth.ver !== payload.ver) {
 		return res.status(401).json({
 			success: false,
-			error: 'User not found.',
+			error: 'Invalid or expired token.',
 			code: 'AUTH_INVALID',
-			request_id: req.id,
-		});
-	}
-	if (auth.ver !== payload.ver) {
-		return res.status(401).json({
-			success: false,
-			error: 'Token has been revoked. Please log in again.',
-			code: 'TOKEN_REVOKED',
 			request_id: req.id,
 		});
 	}

@@ -1,7 +1,7 @@
 /**
  * Settings validation helpers (added 2026-07-12 — P0 fix).
  *
- * Why this lives in its own file (and not in validation.cts):
+ * Why this lives in its own file (and not in validation.ts):
  *   - Settings validation is per-key: the same schema cannot cover
  *     "DEFAULT_CURRENCY must be a 3-char ISO code" AND "FLAT_SHIPPING_COST
  *     must be a positive integer string". We want a clear, single-file

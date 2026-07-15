@@ -1,5 +1,5 @@
 /**
- * Unit tests for the pgify SQL placeholder rewriter in pg-wrapper.cts.
+ * Unit tests for the pgify SQL placeholder rewriter in pg-wrapper.ts.
  *
  * The rewriter is the only thing standing between the SQLite-style
  * `?` placeholders used throughout the route handlers and the

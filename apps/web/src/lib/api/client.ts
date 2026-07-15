@@ -27,7 +27,7 @@ export interface ApiResponse<T> {
 	message?: string;
 	error?: string;
 	/** Stable machine-readable code (e.g. `'NOT_FOUND'`, `'VALIDATION_ERROR'`).
-	 *  Defined by `app/server/lib/error-codes.ts` `ErrorCodes`. Use
+	 *  Defined by `apps/api/src/lib/error-codes.ts` `ErrorCodes`. Use
 	 *  `if (err.code === ErrorCodes.NOT_FOUND)` to branch — never parse
 	 *  `err.message`. */
 	code?: string;

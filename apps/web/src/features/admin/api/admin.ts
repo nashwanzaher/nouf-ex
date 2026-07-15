@@ -102,7 +102,7 @@ export async function getAdminAuditLog(
 	if (params.offset !== undefined) q.set('offset', String(params.offset));
 	const qs = q.toString();
 	// Server response shape is { log, total, limit, offset }
-	// (server/routes/admin.cts:364) but client surface uses 'entries'.
+	// (server/routes/admin.ts:364) but client surface uses 'entries'.
 	const raw = await apiRequest<{
 		log: AdminAuditLogEntry[];
 		total: number;

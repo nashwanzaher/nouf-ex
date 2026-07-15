@@ -1,7 +1,7 @@
 # ============================================================================
 # PHASE 13: Notifications + Messages + (Disputes via /api/refunds)
 # Tests /api/notifications/* and /api/messages/* routes
-# (app/server/routes/notifications.cts, messages.cts, refunds.cts)
+# (apps/api/src/routes/notifications.ts, messages.ts, refunds.ts)
 # Verifies: list notifications, mark-read, messages inbox/sent/conversation.
 # ============================================================================
 $base = 'http://localhost:3000'

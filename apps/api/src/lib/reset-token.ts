@@ -1,5 +1,5 @@
 /**
- * reset-token.cts — G7 fix 2026-07-11.
+ * reset-token.ts — G7 fix 2026-07-11.
  *
  * Short-lived HMAC token used by the password-reset flow:
  *   1. POST /api/auth/forgot-password (email) — server always returns
@@ -77,7 +77,12 @@ export async function verifyResetToken(token: string): Promise<{ sub: number } |
 	const expected = base64url(createHmac('sha256', getAuthSecret()).update(body).digest());
 	const expectedBuf = fromBase64url(expected);
 	const sigBuf = fromBase64url(sig);
-	if (expectedBuf.length !== sigBuf.length) return null;
+	// SECURITY (OWASP ASVS 2.6.1): run timingSafeEqual even on length
+	// mismatch to prevent timing side-channel on signature length.
+	if (expectedBuf.length !== sigBuf.length) {
+		timingSafeEqual(expectedBuf, expectedBuf); // dummy run
+		return null;
+	}
 	if (!timingSafeEqual(expectedBuf, sigBuf)) return null;
 
 	let payload: ResetTokenPayload;

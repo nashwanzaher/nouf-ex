@@ -199,9 +199,9 @@ describe('Accessibility (vitest-axe)', () => {
 		expect(allText.length).toBeGreaterThan(0);
 	});
 
-	// ── (c) AdminDashboard sidebar: aria-current="page" on active ──
+// ── (c) AdminDashboard sidebar: aria-current="page" on active ──
 	it('AdminDashboard sidebar: aria-current="page" on the active link', async () => {
-		render(
+		const { container } = render(
 			<MemoryRouter initialEntries={['/admin/overview']}>
 				<AdminDashboard />
 			</MemoryRouter>,

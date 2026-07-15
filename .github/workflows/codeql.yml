@@ -1,0 +1,61 @@
+# ============================================================================
+# Nouf-ex — CodeQL static analysis (security gate)
+# ----------------------------------------------------------------------------
+# Runs GitHub's CodeQL on every push and PR to main/develop, scanning both
+# JavaScript/TypeScript (the api, web, mcp-server workspaces) for security
+# weaknesses mapped to CWE. Findings block merges via the standard
+# "Code scanning results" required-check.
+#
+# Triggers: push to main/develop, every PR. Schedule: weekly on Monday 06:00 UTC.
+# Permission: contents:read (default), security-events:write (to upload SARIF).
+# ============================================================================
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Use the security-and-quality query pack (covers OWASP/CWE Top 25).
+          # Override the default "security-extended" if you need stricter checks.
+          queries: security-and-quality
+          # Exclude generated and vendored artefacts from analysis.
+          paths-ignore:
+            - '**/dist/**'
+            - '**/node_modules/**'
+            - '**/coverage/**'
+            - '**/.turbo/**'
+            - 'apps/web/src/i18n/locales/**'
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+          # Upload SARIF so the GitHub Security tab shows findings.
+          upload: always

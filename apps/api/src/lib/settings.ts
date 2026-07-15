@@ -3,7 +3,7 @@
  * P1-2 (deep audit 2026-06-30).
  *
  * The hardcoded `'YER'` and `10000` / `500` numeric thresholds
- * that used to live inside `routes/orders.cts` made it
+ * that used to live inside `routes/orders.ts` made it
  * impossible to ship a regional deployment that priced in
  * SAR / USD / EGP without a code change. They now live in
  * the `app_settings` key/value table (migration 0023), and
@@ -13,7 +13,7 @@
  * ---------
  * - Single fetch per minute (`CACHE_TTL_MS`). A request that
  *   lands during the cache window is cache-hit and never hits
- *   the DB. Keeps the hot path (orders.cts) on a single
+ *   the DB. Keeps the hot path (orders.ts) on a single
  *   in-process map.
  * - On DB read error: the cache returns the LAST-KNOWN value,
  *   or the built-in `FALLBACK` if the cache is cold. This is

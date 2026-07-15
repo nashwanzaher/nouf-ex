@@ -286,7 +286,7 @@ npm run lint && npm run typecheck && npm run test:unit && npm run build && npm r
 
 **Start log on boot:**
 ```json
-{"ts":"…","level":"info","msg":"server_started","port":3000,"database":"postgresql://noufex_app:***@…","static_path":"/app/dist","env":"production"}
+{"ts":"…","level":"info","msg":"server_started","port":3000,"database":"postgresql://noufex_app:***@…","static_path":"/apps/api/dist","env":"production"}
 ```
 
 ## §2.5 Deployment
@@ -377,7 +377,7 @@ The PostgreSQL server is **not** part of this stack. It must already exist on th
 | Express API | `/apps/api/src/index.ts` (run via `tsx`) |
 | Entrypoint | `/usr/local/bin/noufex-entrypoint.sh` |
 
-The built SPA (if you ran `npm run build` first) is served from `/app/dist` by the same API process.
+The built SPA (if you ran `npm run build` first) is served from `/apps/api/dist` by the same API process.
 
 ```sh
 # From repo root
@@ -935,7 +935,7 @@ We use a simplified **STRIDE** model.
 | Characteristic | Rating | Notes |
 |---|---|---|
 | Functional suitability | A | All advertised features present + tested |
-| Performance efficiency | B | Main SPA chunk ~117 kB gzip (verified from `app/dist/assets/index-*.js`); recharts code-split into its own chunk (~422 kB) only loaded by admin/reports routes |
+| Performance efficiency | B | Main SPA chunk ~117 kB gzip (verified from `apps/api/dist/assets/index-*.js`); recharts code-split into its own chunk (~422 kB) only loaded by admin/reports routes |
 | Compatibility | A | PG 17 standard SQL only |
 | Usability (dev/operator) | B | Excellent DX; some migration-journal drift in git history |
 | Reliability | B | 32 DB triggers enforce invariants (incl. order state machine, atomic coupon redemption, transactions balance); one racy trigger tracked in §5.2 (G-15) |

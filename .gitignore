@@ -4,7 +4,9 @@
 .env
 .env.local
 .env.*.local
-*.env
+.env.*
+!.env.example
+!.env.*.example
 .vs/
 .vscode/*.log
 node_modules/
@@ -21,6 +23,17 @@ __pycache__/
 *.db-wal
 *.log
 coverage/
+# direnv / PSReadLine — never commit shell history that may contain secrets
+.envrc
+.direnv/
+*psreadline_history*
+*PSReadLine_History*
+*.ps1history
+ConsoleHost_history.txt
+# Local Python tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 
 # ============================================================================
 # Monorepo: Turbo cache + workspace dists
@@ -61,6 +74,14 @@ site/                                 # mkdocs build output
 # MCP server (TypeScript → JS)
 # ============================================================================
 apps/mcp-server/dist/
+
+# ============================================================================
+# Generated source bundles — esbuild output (apps/api/dist/index.js) is the
+# authoritative artefact; the in-tree copy at apps/api/src/index.js is a
+# stale build that must never be committed.
+# ============================================================================
+apps/api/src/index.js
+apps/api/src/index.js.map
 
 # ============================================================================
 # Local development artifacts

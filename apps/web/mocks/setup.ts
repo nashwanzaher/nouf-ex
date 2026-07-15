@@ -50,7 +50,7 @@ await import('@testing-library/jest-dom/vitest');
 // construct fresh vi.fn()-backed methods on each `new Pool()` call.
 //
 // R4 fix: `Pool` is instantiated with `new Pool(config)` in
-// `pg-wrapper.cts`, so the mock must be a constructible function. A
+// `pg-wrapper.ts`, so the mock must be a constructible function. A
 // plain `vi.fn().mockImplementation(() => obj)` is callable but NOT
 // constructible (calling it with `new` throws "is not a constructor").
 // We return a constructor-shaped function that supports both call styles

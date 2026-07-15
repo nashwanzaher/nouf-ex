@@ -1,15 +1,15 @@
 /**
- * Nouf-ex Frontend — ErrorCodes catalog (mirrors `app/server/lib/error-codes.ts`)
+ * Nouf-ex Frontend — ErrorCodes catalog (mirrors `apps/api/src/lib/error-codes.ts`)
  *
  * **MIRROR FILE.** The frontend cannot import server-side TypeScript
  * directly (different tsconfig roots, different bundler targets), so
  * the canonical catalog lives on the server and we mirror the
  * constant set here. The two MUST stay in sync — the R-15
- * follow-up invariant test in `app/server/tests/error-codes.test.ts`
+ * follow-up invariant test in `apps/api/src/tests/error-codes.test.ts`
  * asserts the server catalog stays frozen; this file is the
  * equivalent for the frontend.
  *
- * **Sync rule:** if you add a code to `app/server/lib/error-codes.ts`,
+ * **Sync rule:** if you add a code to `apps/api/src/lib/error-codes.ts`,
  * add the same key here + the same status in `ErrorStatuses`. Both
  * files share the same SCREAMING_SNAKE_CASE vocabulary by design —
  * the strings are the wire format.

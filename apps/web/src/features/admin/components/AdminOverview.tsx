@@ -117,7 +117,7 @@ export default function AdminOverview() {
 	const [periodIdx, setPeriodIdx] = useState(1); // index into periodOptions
 	const period = periodOptions[periodIdx];
 
-	// Real stats from /api/admin/stats (server/routes/admin.cts:377-417).
+	// Real stats from /api/admin/stats (server/routes/admin.ts:377-417).
 	// The endpoint aggregates counts, 7-day deltas, and revenue in a
 	// single round-trip via a CTE; falls back to 0s while loading.
 	const { data: stats, loading: statsLoading } = useAdminStats();

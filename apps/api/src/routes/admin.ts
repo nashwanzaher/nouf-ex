@@ -47,7 +47,7 @@ adminRouter.get('/users', ...adminAuth, async (req: Request, res: Response) => {
 	try {
 		const v = validate(
 			paginationSchema.extend({
-				role: z.enum(['customer', 'merchant', 'admin']).optional(),
+				role: z.enum(['customer', 'merchant', 'admin', 'delivery_agent']).optional(),
 				is_active: z.enum(['active', 'suspended', 'banned']).optional(),
 			}),
 			req.query,

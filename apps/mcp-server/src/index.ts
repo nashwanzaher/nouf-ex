@@ -6,7 +6,7 @@
  *
  *   • db_*    — introspection of the noufex_db PostgreSQL database
  *   • code_*  — navigation of the project source tree
- *   • api_*   — extraction of Express routes from app/server/index.ts
+ *   • api_*   — extraction of Express routes from apps/api/src/index.ts
  *   • docs_*  — search and read of docs/*.md
  *
  * Usage:

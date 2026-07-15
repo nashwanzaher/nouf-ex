@@ -26,12 +26,12 @@ description: |
   no fixtures, no mocks.
 
 # ---------------------------------------------------------------------------
-# Transport: stdio. The Gateway spawns `node /app/dist/index.js` per session
+# Transport: stdio. The Gateway spawns `node /apps/api/dist/index.js` per session
 # and proxies MCP messages between the SSE listener (port 8811) and the
 # stdio child. No HTTP port is opened by the server itself.
 # ---------------------------------------------------------------------------
 transport: stdio
-command: ["node", "/app/dist/index.js"]
+command: ["node", "/apps/api/dist/index.js"]
 args: []
 
 # ---------------------------------------------------------------------------

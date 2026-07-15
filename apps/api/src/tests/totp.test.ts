@@ -1,5 +1,5 @@
 /**
- * Unit tests for app/server/lib/totp.cts (P0-5: 2FA).
+ * Unit tests for apps/api/src/lib/totp.ts (P0-5: 2FA).
  *
  * Covers:
  *   - base32 round-trip (encode → decode)

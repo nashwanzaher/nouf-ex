@@ -166,7 +166,7 @@
 	},
 
 	// ─── TypeScript & JavaScript Enhanced ───────────────────────────
-	"js/ts.tsdk.path": "app/node_modules/typescript/lib",
+	"js/ts.tsdk.path": "./node_modules/typescript/lib",
 	"typescript.enablePromptUse": true,
 	"js/ts.preferences.importModuleSpecifier": "non-relative",
 	"js/ts.suggest.autoImports": true,
@@ -182,8 +182,8 @@
 	"js/ts.inlayHints.enumMemberValues.enabled": true,
 	"typescript.tsserver.exclude": [
 		"**/node_modules/**",
-		"app/dist/**",
-		"app/coverage/**",
+		"apps/*/dist/**",
+		"apps/*/coverage/**",
 		"**/*.cjs"
 	],
 	"js/ts.tsserver.experimental.enableProjectDiagnostics": true,
@@ -200,7 +200,7 @@
 	},
 
 	// ─── ESLint & Prettier ──────────────────────────────────────────
-	"eslint.workingDirectories": ["app"],
+	"eslint.workingDirectories": ["apps/api", "apps/web", "apps/mcp-server", "packages"],
 	"eslint.validate": [
 		"javascript",
 		"javascriptreact",
@@ -238,7 +238,7 @@
 		"**/.git": true,
 		"**/node_modules": true,
 		"**/dist": true,
-		"app/server/index.js": true
+		"apps/api/src/index.js": true
 	},
 	"files.watcherExclude": {
 		"**/node_modules/**": true,
@@ -251,7 +251,7 @@
 		"**/dist": true,
 		"**/.git": true,
 		"**/coverage": true,
-		"app/server/index.js": true
+		"apps/api/src/index.js": true
 	},
 
 	// ─── Vitest — discovered automatically by `vitest.explorer` ────

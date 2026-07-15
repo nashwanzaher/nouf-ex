@@ -51,6 +51,9 @@ ordersRouter.get('/', requireAuth, async (req: Request, res: Response) => {
 ordersRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
 	try {
 		const orderId = Number(req.params.id);
+		if (!Number.isInteger(orderId) || orderId <= 0) {
+			return sendError(res, 'Invalid order ID', 400, 'VALIDATION_ERROR');
+		}
 
 		const order = (await db
 			.prepare(
@@ -157,7 +160,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		}
 		const resolvedStoreId = storeResult.storeId;
 
-		// Stock check BEFORE we begin the transaction Ù?¤ gives a cheaper
+		// Stock check BEFORE we begin the transaction ï¿½?ï¿½ gives a cheaper
 		// 400 path than waiting for the FOR UPDATE inside the tx. The
 		// trigger re-validates stock on insert (race-safe).
 		const productById = new Map<
@@ -326,7 +329,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 
 			// SECURITY (C-1): inside the transaction we re-fetch products
 			// and compute the authoritative unit_price server-side. We
-			// never read `item.unitPrice` from the client body Ù?¤ the
+			// never read `item.unitPrice` from the client body ï¿½?ï¿½ the
 			// schema strips it and we re-derive it here from `products`.
 			const productIds = items.map((i) => i.productId);
 			const productRows = (await txDb
@@ -411,7 +414,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 				);
 			}
 			serverSubtotal = Math.round(serverSubtotal * 100) / 100;
-			// Use the server-computed subtotal Ù?¤ never trust the client.
+			// Use the server-computed subtotal ï¿½?ï¿½ never trust the client.
 			// We recompute the totals here to make tampering impossible.
 			// The threshold + flat cost come from the same top-of-handler
 			// `getSetting(...)` cache as the initial INSERT block.
@@ -453,7 +456,7 @@ ordersRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 		// Fire bilingual i18n notifications to the customer AND the merchant
 		// AFTER the transaction has committed. We do this best-effort: any
 		// failure here is logged but never blocks the order response.
-		// (C.1 in MASTER_PLAN.md Ù?¤ real notifications with i18n + merchant alert)
+		// (C.1 in MASTER_PLAN.md ï¿½?ï¿½ real notifications with i18n + merchant alert)
 		try {
 			const { onOrderPlaced } = await import('../lib/notifications/events.ts');
 			// Look up the merchant (store owner) and a product display name

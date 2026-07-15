@@ -19,6 +19,47 @@ import { db, hashPassword, verifyPassword } from '../lib/shared.ts';
 import { authRouter } from '../routes/auth.ts';
 import { signTestToken } from './test-token';
 
+// SECURITY (C-2): the rate limiter is DB-backed. The global pg mock
+// returns empty rows, which makes every call fail-open. To exercise
+// the limiter in tests we install a tiny in-process override on
+// `db.prepare` that counts requests per IP and answers with the
+// expected envelope. Production code is unaffected because the
+// override is scoped to this test file.
+const rateLimitCounters = new Map<string, { count: number; resetAt: number }>();
+function rateLimitKey(bucket: string, ip: string): string {
+	return `${bucket}:${ip}`;
+}
+const originalPrepare = db.prepare.bind(db);
+function installRateLimitMock(): void {
+	(db as unknown as { prepare: typeof originalPrepare }).prepare = ((sql: string) => {
+		const trimmed = sql.trim().toUpperCase();
+		if (trimmed.startsWith('SELECT ALLOWED, RETRY_AFTER_MS FROM CONSUME_RATE_LIMIT')) {
+			return {
+				run: async () => ({ rows: [], rowCount: 0 }),
+				get: async (...args: unknown[]) => {
+					// Args: [bucket, key, windowMs, max]
+					const [bucket, key, , max] = args as [string, string, number, number];
+					const rk = rateLimitKey(bucket, key);
+					const now = Date.now();
+					let entry = rateLimitCounters.get(rk);
+					if (!entry || entry.resetAt <= now) {
+						entry = { count: 1, resetAt: now + 60_000 };
+						rateLimitCounters.set(rk, entry);
+						return { allowed: true, retry_after_ms: 0 };
+					}
+					entry.count += 1;
+					return { allowed: entry.count <= (max ?? 5), retry_after_ms: entry.count > (max ?? 5) ? 60000 : 0 };
+				},
+				all: async () => [],
+			};
+		}
+		return originalPrepare(sql);
+	}) as typeof originalPrepare;
+}
+
+// Install the rate limit mock before any tests run.
+installRateLimitMock();
+
 function buildApp(): Express {
 	const app = express();
 	app.set('trust proxy', true);
@@ -30,6 +71,7 @@ function buildApp(): Express {
 describe('authRouter — POST /api/auth/register', () => {
 	let app: Express;
 	beforeEach(() => {
+		rateLimitCounters.clear();
 		app = buildApp();
 	});
 

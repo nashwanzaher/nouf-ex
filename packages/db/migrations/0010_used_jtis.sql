@@ -1,7 +1,7 @@
 -- =============================================================================
 -- 0010_used_jtis.sql — replay protection for partial 2FA tokens
 -- =============================================================================
--- Mirrors the in-memory Map that used to live in app/server/lib/partial-token.cts.
+-- Mirrors the in-memory Map that used to live in apps/api/src/lib/partial-token.ts.
 -- Moving it to Postgres lets multiple server replicas share the "already-used"
 -- set so a partial_token cannot be replayed across instances (the previous
 -- in-memory Map was per-process — two replicas behind a load balancer would

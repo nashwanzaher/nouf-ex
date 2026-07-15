@@ -1,5 +1,5 @@
 # PHASE 4: Cart (auth: Bearer)
-# Tests /api/cart/* routes (app/server/routes/cart.cts)
+# Tests /api/cart/* routes (apps/api/src/routes/cart.ts)
 $base = 'http://localhost:3000'
 $ErrorActionPreference = 'Stop'
 

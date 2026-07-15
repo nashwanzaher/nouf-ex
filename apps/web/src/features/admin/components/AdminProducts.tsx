@@ -6,8 +6,8 @@
  *  - Toggle is_featured (promote on the home page)
  *  - Move to a new category
  *
- * Reads via /api/admin/products (server/routes/admin.cts:149-213)
- * and mutates via PATCH /api/admin/products/:id (admin.cts:571-602).
+ * Reads via /api/admin/products (server/routes/admin.ts:149-213)
+ * and mutates via PATCH /api/admin/products/:id (admin.ts:571-602).
  * Writes to admin_audit_log (visible on the /admin/audit-log page).
  */
 import { useState, useMemo, useCallback } from 'react';

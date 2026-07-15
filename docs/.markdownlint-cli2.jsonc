@@ -63,7 +63,7 @@
     "#temp-*/**",
     "#.next/**",
     "#.nuxt/**",
-    "#app/dist/**",
+    "#apps/api/dist/**",
     "#app/coverage/**",
     "#tests/**",
     "#tests/e2e/**",

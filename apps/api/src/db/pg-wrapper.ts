@@ -403,11 +403,82 @@ export class PgDb {
 			};
 		}
 		this.pool = new Pool(config);
+
+		// ── Pool crash recovery ──────────────────────────────────────────
+		// SECURITY (NIST SI-16, OWASP ASVS 7.1): the pool emits an
+		// 'error' event when a client is disconnected by the server
+		// (e.g. "terminating connection due to administrator command",
+		// "connection reset by peer", "server closed the connection
+		// unexpectedly"). Without this handler, the error propagates as
+		// an unhandled exception and can crash the Node.js process.
+		//
+		// The pg Pool already removes the dead client from the pool and
+		// creates a fresh one on the next query. Our job here is to:
+		//   1. Prevent the unhandled error from crashing the process.
+		//   2. Log the event so SREs can correlate DB restarts with
+		//      application behavior.
+		//   3. Avoid logging at 'error' level for expected server-side
+		//      disconnects (DB restarts, connection pool recycling).
+		this.pool.on('error', (err, _client) => {
+			// The client is already removed from the pool by pg.
+			// Log at 'warn' for expected disconnects, 'error' for
+			// unexpected ones.
+			const isExpected =
+				err.message?.includes('terminating connection') ||
+				err.message?.includes('connection reset') ||
+				err.message?.includes('server closed the connection') ||
+				err.message?.includes('EOF') ||
+				err.message?.includes('ECONNRESET');
+
+			if (isExpected) {
+				// Don't log at error level — this is a normal part of
+				// DB lifecycle (restarts, pool recycling).
+				if (process.env.LOG_LEVEL === 'debug') {
+					console.warn(
+						`[pg-pool] expected client disconnect: ${err.message}`,
+					);
+				}
+			} else {
+				console.error(
+					`[pg-pool] unexpected client error: ${err.message}`,
+					{ stack: err.stack },
+				);
+			}
+		});
 	}
 
 	/** Redact password from a postgres:// URL — safe to log. */
 	static redactUrl(url: string): string {
 		return url.replace(/:[^:@/]+@/, ':***@');
+	}
+
+	/**
+	 * Pool health check — verifies the pool can connect and execute
+	 * a simple query. Returns true if healthy, false otherwise.
+	 *
+	 * SECURITY (OWASP ASVS 7.1): used by the /api/ready endpoint
+	 * and the background sweeper to detect pool degradation before
+	 * it affects user requests.
+	 */
+	async isHealthy(): Promise<boolean> {
+		try {
+			const result = await this.pool.query('SELECT 1 AS ok');
+			return result.rows[0]?.ok === 1;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Pool statistics — returns current pool state for monitoring.
+	 * Used by the /api/ready endpoint to surface connection health.
+	 */
+	getPoolStats(): { totalCount: number; idleCount: number; waitingCount: number } {
+		return {
+			totalCount: this.pool.totalCount,
+			idleCount: this.pool.idleCount,
+			waitingCount: this.pool.waitingCount,
+		};
 	}
 
 	prepare(sql: string): PgStatement {

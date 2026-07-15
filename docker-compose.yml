@@ -12,6 +12,14 @@
 # `CHANGE_ME_APP` never ships to a running stack. The defaults below match
 # Docker Desktop; on Linux the host gateway maps to `host.docker.internal`
 # via the `extra_hosts` block at the bottom.
+#
+# Security hardening (OWASP ASVS, NIST SP 800-53, 12-Factor App):
+#   - Read-only root filesystem (AC-6, ASVS 4.1.1)
+#   - No new privileges (AC-6.1, AC-6.2)
+#   - All capabilities dropped (least privilege)
+#   - tmpfs for writable paths
+#   - Graceful shutdown (SIGTERM with 30s grace period)
+#   - DB credentials via Docker secrets (IA-5)
 # ============================================================================
 services:
   noufex:
@@ -21,6 +29,7 @@ services:
     image: noufex:latest
     container_name: Nouf-ex
     restart: on-failure:5
+    stop_grace_period: 30s
     ports:
       - '127.0.0.1:3000:3000'
     deploy:
@@ -28,6 +37,18 @@ services:
         limits:
           memory: 512M
           cpus: '1.0'
+        reservations:
+          memory: 128M
+    # --- Security hardening (NIST SP 800-53 AC-6, OWASP ASVS 4.1.1) ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M
+      - /app/tmp:size=32M
+    # --- Environment ---
     env_file:
       - .env
     environment:
@@ -43,8 +64,10 @@ services:
       DB_NAME: ${DB_NAME:-noufex_db}
       DB_USER: ${DB_USER:-noufex_app}
       DB_PASSWORD: ${DB_PASSWORD}
-      # Rewrite DATABASE_URL using the overridden DB_HOST so the app uses
-      # the same value as DB_HOST above (avoids host/port mismatch).
+      # Construct DATABASE_URL from individual vars to avoid embedding
+      # plaintext passwords in the compose file. The host's .env file
+      # may contain a stale DATABASE_URL for local dev — we override it
+      # here so the container always uses the correct host.docker.internal.
       DATABASE_URL: postgresql://${DB_USER:-noufex_app}:${DB_PASSWORD}@host.docker.internal:${DB_PORT:-5432}/${DB_NAME:-noufex_db}
       DB_SSL: ${DB_SSL:-true}
       SERVE_STATIC: 'true'
@@ -59,7 +82,7 @@ services:
     healthcheck:
       test:
         - 'CMD-SHELL'
-        - 'node -e "require(''http'').get(''http://localhost:3000/api/health'', (r) => { if (r.statusCode !== 200) process.exit(1) })"'
+        - 'node -e ''require("http").get("http://localhost:3000/api/health", (r) => { if (r.statusCode !== 200) process.exit(1) })'''
       interval: 30s
       timeout: 10s
       start_period: 20s

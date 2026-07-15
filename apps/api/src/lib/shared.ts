@@ -170,7 +170,7 @@ export { getProductWithParsedFields, parseJson } from './json.js';
 // coupon COLUMN meta have been moved to ./validation.ts.
 // `computeCouponDiscount` intentionally stays here because it needs
 // the `db` connection, which would otherwise create a circular
-// import (validation.ts → shared.cts → validation.ts).
+// import (validation.ts → shared.ts → validation.ts).
 export {
     addressSchema, adminBroadcastSchema, adminCategoryCreateSchema, adminCategoryUpdateSchema,
     adminCouponCreateSchema, adminCouponUpdateSchema, adminDisputeUpdateSchema, adminOrderStatusSchema,
@@ -182,7 +182,7 @@ export {
 
 // `computeCouponDiscount` lives here (not in validation.ts) because
 // it calls `db` — keeping it out of validation.ts avoids a circular
-// import: validation.ts → shared.cts → validation.ts.
+// import: validation.ts → shared.ts → validation.ts.
 export async function computeCouponDiscount(
 	coupon: { type: string; value: number; max_discount: number | null },
 	orderSubtotal: number,

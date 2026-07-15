@@ -5,7 +5,7 @@
  *   - listing the directory tree
  *   - searching source files for a regex
  *   - reading any file under the project root
- *   - enumerating every HTTP route declared in `app/server/index.ts`
+ *   - enumerating every HTTP route declared in `apps/api/src/index.ts`
  */
 import { z } from 'zod';
 import path from 'node:path';
@@ -126,7 +126,7 @@ export function buildCodeTools(ctx: ProjectContext): ToolSpec[] {
 			'Search source files for a regex. Returns up to max_results matching lines with file paths and 1-based line numbers.',
 		schema: z.object({
 			pattern: z.string().min(1).describe('Regex or literal string.'),
-			include: z.string().optional().describe('Glob to restrict (e.g. app/server/**/*.ts).'),
+			include: z.string().optional().describe('Glob to restrict (e.g. apps/api/src/**/*.ts).'),
 			exclude: z.string().optional().describe('Glob to exclude (e.g. **/*.test.ts).'),
 			max_results: z.number().int().positive().optional().default(60),
 			context: z

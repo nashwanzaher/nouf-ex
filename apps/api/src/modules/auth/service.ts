@@ -11,6 +11,7 @@ import {
 	type AuthRole,
 } from '../../lib/shared.ts';
 import { signAuthToken, setAuthCookie, clearAuthCookie } from '../../middleware.ts';
+import { log } from '../../lib/shared.ts';
 import * as repo from './repository.ts';
 
 let DUMMY_SCRYPT_HASH: string | null = null;
@@ -18,11 +19,108 @@ hashPassword('__login_timing_dummy__').then((h) => {
 	DUMMY_SCRYPT_HASH = h;
 });
 
+// ── Account-level brute-force protection ───────────────────────────────
+// SECURITY (OWASP ASVS 2.2.1, NIST SP 800-53 AC-7):
+//   Per-IP rate limiting (authLimiter) protects against distributed
+//   brute-force, but a single IP targeting many accounts needs a
+//   second layer. We track consecutive failed logins per normalized
+//   email and apply exponential backoff:
+//     1-3 failures:  no delay
+//     4-6 failures:  1s delay
+//     7-9 failures:  3s delay
+//     10+ failures:  5s delay (capped)
+//   After 15 consecutive failures, the account is soft-locked for
+//   15 minutes (all attempts return AUTH_INVALID immediately).
+//   Successful login resets the counter.
+//
+//   The map is in-process (not shared across workers), which is
+//   acceptable: with k8s replicas, the attacker hits a different
+//   worker each time, but the per-IP authLimiter already limits
+//   total attempts to 10/15min per IP. This layer adds per-email
+//   throttling on top.
+
+interface AccountFailureEntry {
+	count: number;
+	blockedUntil: number | null;
+	lastFailureAt: number;
+}
+const accountFailures = new Map<string, AccountFailureEntry>();
+const MAX_FAILURES_BEFORE_LOCK = 15;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_BACKOFF_MS = 5_000;
+
+// Evict stale entries every 5 minutes to prevent unbounded memory growth.
+setInterval(() => {
+	const now = Date.now();
+	for (const [email, entry] of accountFailures) {
+		// Remove entries older than 30 minutes (lock window + buffer)
+		if (now - entry.lastFailureAt > 30 * 60 * 1000) {
+			accountFailures.delete(email);
+		}
+	}
+}, 5 * 60 * 1000).unref();
+
+function normalizeEmail(email: string): string {
+	return email.toLowerCase().trim();
+}
+
+function getAccountFailureEntry(email: string): AccountFailureEntry | undefined {
+	return accountFailures.get(normalizeEmail(email));
+}
+
+function recordLoginFailure(email: string): void {
+	const key = normalizeEmail(email);
+	const now = Date.now();
+	const existing = accountFailures.get(key);
+
+	if (existing) {
+		existing.count++;
+		existing.lastFailureAt = now;
+		if (existing.count >= MAX_FAILURES_BEFORE_LOCK && !existing.blockedUntil) {
+			existing.blockedUntil = now + LOCK_DURATION_MS;
+			log.warn({
+				msg: 'account_locked',
+				email: key,
+				failures: existing.count,
+				lock_expires: new Date(existing.blockedUntil).toISOString(),
+			});
+		}
+	} else {
+		accountFailures.set(key, {
+			count: 1,
+			blockedUntil: null,
+			lastFailureAt: now,
+		});
+	}
+}
+
+function clearLoginFailures(email: string): void {
+	accountFailures.delete(normalizeEmail(email));
+}
+
+function getAccountBackoffMs(email: string): number {
+	const entry = getAccountFailureEntry(email);
+	if (!entry || entry.count < 4) return 0;
+	if (entry.count < 7) return 1_000;
+	if (entry.count < 10) return 3_000;
+	return MAX_BACKOFF_MS;
+}
+
+function isAccountLocked(email: string): boolean {
+	const entry = getAccountFailureEntry(email);
+	if (!entry || !entry.blockedUntil) return false;
+	if (Date.now() < entry.blockedUntil) return true;
+	// Lock expired — clear it
+	entry.blockedUntil = null;
+	entry.count = 0;
+	return false;
+}
+
 export type SafeUser = {
 	id: number;
 	email: string;
 	full_name: string;
-	role: 'customer' | 'merchant' | 'admin';
+	role: AuthRole;
 };
 
 export async function register(input: {
@@ -54,19 +152,41 @@ export async function login(input: {
 	password: string;
 }): Promise<LoginResult> {
 	const { email, password } = input;
-	const user = await repo.findUserByEmail(email);
 
-	if (!user) {
+	// SECURITY (OWASP ASVS 2.2.1, NIST SP 800-53 AC-7):
+	// Check account-level lockout before any DB work.
+	if (isAccountLocked(email)) {
+		// Still run dummy scrypt to preserve constant-time behavior.
 		if (DUMMY_SCRYPT_HASH) {
 			await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
 		}
 		throw new HttpError(401, 'Invalid email or password', { code: 'AUTH_INVALID' });
 	}
 
-	const ok = await verifyPassword(password, user.password_hash);
-	if (!ok) {
+	// Apply exponential backoff for accounts with repeated failures.
+	const backoffMs = getAccountBackoffMs(email);
+	if (backoffMs > 0) {
+		await new Promise((r) => setTimeout(r, backoffMs));
+	}
+
+	const user = await repo.findUserByEmail(email);
+
+	if (!user) {
+		if (DUMMY_SCRYPT_HASH) {
+			await verifyPassword(password, DUMMY_SCRYPT_HASH).catch(() => false);
+		}
+		recordLoginFailure(email);
 		throw new HttpError(401, 'Invalid email or password', { code: 'AUTH_INVALID' });
 	}
+
+	const ok = await verifyPassword(password, user.password_hash);
+	if (!ok) {
+		recordLoginFailure(email);
+		throw new HttpError(401, 'Invalid email or password', { code: 'AUTH_INVALID' });
+	}
+
+	// Successful login — clear all failure tracking for this account.
+	clearLoginFailures(email);
 
 	await repo.updateLastLogin(user.id);
 

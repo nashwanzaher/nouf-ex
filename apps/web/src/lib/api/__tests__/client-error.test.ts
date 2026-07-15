@@ -9,7 +9,7 @@
  *
  * Closes the "code propagation" half of P3 backlog item R-15
  * (Standardize error messages). The server-side half lives in
- * `app/server/tests/error-codes.test.ts`.
+ * `apps/api/src/tests/error-codes.test.ts`.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

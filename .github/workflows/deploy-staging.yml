@@ -47,7 +47,7 @@ permissions:
 
 env:
   # Monorepo layout (since 2026-07-11). The build artefacts are produced
-  # at apps/web/dist + apps/api/dist, NOT app/dist + app/server (legacy).
+  # at apps/web/dist + apps/api/dist, NOT apps/api/dist + apps/api/src (legacy).
   APP_DIR: apps
   REMOTE_DIR: /opt/noufex
 

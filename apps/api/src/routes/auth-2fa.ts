@@ -1,31 +1,31 @@
 /**
- * auth-2fa.cts Ù?¤ 2FA endpoints (P0-5)
+ * auth-2fa.ts ï¿½?ï¿½ 2FA endpoints (P0-5)
  *
  * Mounted at /api/auth/2fa. All endpoints are JSON-in / JSON-out.
  * The endpoints form a small state machine:
  *
- *   Ù¤îÙ¤? setup (Bearer) Ù¤?Ù¤?
- *   Ù¤é returns secret, otpauth URL, backup codes (NOT yet active)
- *   Ù¤é
- *   Ù¤£Ù¤? enable (Bearer) Ù¤? must verify the FIRST TOTP code
- *   Ù¤é within this session to confirm enrollment. Sets
- *   Ù¤é two_factor_enabled = TRUE and totp_enabled_at = now().
- *   Ù¤é
- *   Ù¤é  Ùù?Ù¤?Ù¤? enrollment complete Ù¤?Ù¤?Ùû?
- *   Ù¤é
- *   Ù¤£Ù¤? verify (partial_token) Ù¤? on login, user with 2FA enabled
- *   Ù¤é submits a TOTP or backup code here. On success, returns a
- *   Ù¤é real bearer token (same shape as POST /api/auth/login).
- *   Ù¤é
- *   Ù¤£Ù¤? disable (Bearer) Ù¤? user submits their PASSWORD to confirm.
- *   Ù¤é Clears two_factor_enabled, totp_secret, and backup codes.
- *   Ù¤é
- *   Ù¤¤Ù¤? backup-codes/regenerate (Bearer) Ù¤? issues a fresh batch of
+ *   Ù¤ï¿½Ù¤? setup (Bearer) Ù¤?Ù¤?
+ *   Ù¤ï¿½ returns secret, otpauth URL, backup codes (NOT yet active)
+ *   Ù¤ï¿½
+ *   Ù¤ï¿½Ù¤? enable (Bearer) Ù¤? must verify the FIRST TOTP code
+ *   Ù¤ï¿½ within this session to confirm enrollment. Sets
+ *   Ù¤ï¿½ two_factor_enabled = TRUE and totp_enabled_at = now().
+ *   Ù¤ï¿½
+ *   Ù¤ï¿½  ï¿½ï¿½?Ù¤?Ù¤? enrollment complete Ù¤?Ù¤?ï¿½ï¿½?
+ *   Ù¤ï¿½
+ *   Ù¤ï¿½Ù¤? verify (partial_token) Ù¤? on login, user with 2FA enabled
+ *   Ù¤ï¿½ submits a TOTP or backup code here. On success, returns a
+ *   Ù¤ï¿½ real bearer token (same shape as POST /api/auth/login).
+ *   Ù¤ï¿½
+ *   Ù¤ï¿½Ù¤? disable (Bearer) Ù¤? user submits their PASSWORD to confirm.
+ *   Ù¤ï¿½ Clears two_factor_enabled, totp_secret, and backup codes.
+ *   Ù¤ï¿½
+ *   Ù¤ï¿½Ù¤? backup-codes/regenerate (Bearer) Ù¤? issues a fresh batch of
  *      10 codes and invalidates the old ones.
  *
- * The TOTP + backup-codes helpers live in `../lib/totp.cts` and
- * `../lib/backup-codes.cts`. The single-use "partial token" that
- * bridges login Ù?ú 2fa verify lives in `../lib/partial-token.cts`.
+ * The TOTP + backup-codes helpers live in `../lib/totp.ts` and
+ * `../lib/backup-codes.ts`. The single-use "partial token" that
+ * bridges login ï¿½?ï¿½ 2fa verify lives in `../lib/partial-token.ts`.
  */
 import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
@@ -38,6 +38,7 @@ import {
 import { ErrorCodes } from '../lib/error-codes.ts';
 import { verifyPartialToken } from '../lib/partial-token.ts';
 import { db, HttpError, log, requireAuth, sendError, sendSuccess, verifyPassword } from '../lib/shared.ts';
+import type { AuthRole } from '../lib/types.ts';
 import { generateSecret, otpauthUrl, verifyTotp } from '../lib/totp.ts';
 import { signAuthToken, setAuthCookie } from '../middleware.ts';
 
@@ -76,7 +77,7 @@ const verifySchema = z.object({
 
 /** Increment-and-check via the DB-backed `consume_rate_limit()`
  *  function. Returns true if the request is within budget, false
- *  if it is rate-limited. On DB error we FAIL OPEN Ù?¤ a transient
+ *  if it is rate-limited. On DB error we FAIL OPEN ï¿½?ï¿½ a transient
  *  outage should not lock users out of their own accounts; the
  *  tradeoff is a brief window of higher attack surface during
  *  outages, which is preferable to a self-DoS. The error is
@@ -147,7 +148,7 @@ const RATE_LIMITS = {
  *  via the DB-backed `consume_rate_limit()`. Async because the
  *  lookup goes over the wire to Postgres. The middleware runs
  *  BEFORE requireAuth on each protected route so an attacker
- *  without a valid token still burns the bucket Ù?¤ the goal of
+ *  without a valid token still burns the bucket ï¿½?ï¿½ the goal of
  *  the limiter is to bound *attempts*, not successful calls. */
 function rateLimitMiddleware(
 	bucket: string,
@@ -206,7 +207,7 @@ export async function __reset2faRateLimitsForTests(): Promise<void> {
 	try {
 		await db.prepare("DELETE FROM rate_limit_buckets WHERE bucket LIKE '2fa_%'").run();
 	} catch {
-		/* ignore Ù?¤ best effort */
+		/* ignore ï¿½?ï¿½ best effort */
 	}
 }
 
@@ -215,7 +216,7 @@ interface UserRow {
 	id: number;
 	email: string;
 	full_name: string;
-	role: 'customer' | 'merchant' | 'admin';
+	role: AuthRole;
 	two_factor_enabled: boolean;
 	totp_secret: string | null;
 	totp_backup_codes: string[] | null;
@@ -244,11 +245,11 @@ function publicUser(u: UserRow): Record<string, unknown> {
 	};
 }
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-// 1) setup Ù?¤ generate secret + otpauth URL + backup codes.
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+// 1) setup ï¿½?ï¿½ generate secret + otpauth URL + backup codes.
 //    NOT yet active: the secret is saved on the row but
 //    two_factor_enabled is still false until /enable is called.
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const user = await loadUser(req.user!.id);
@@ -264,7 +265,7 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 		const secret = generateSecret();
 		const backupCodes = generateBackupCodes();
 		// Hash the backup codes BEFORE storing. The plaintext is
-		// returned to the user ONCE Ù?¤ we never store it.
+		// returned to the user ONCE ï¿½?ï¿½ we never store it.
 		const hashed = await Promise.all(backupCodes.map(hashBackupCode));
 		await db
 			.prepare(
@@ -281,9 +282,9 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 		sendSuccess(
 			res,
 			{
-				secret, // base32 Ù?¤ for manual entry into the authenticator
-				otpauth_url: otpauth, // otpauth:// Ù?¤ for QR-code generation by the client
-				backup_codes: backupCodes, // plaintext Ù?¤ show to the user ONCE
+				secret, // base32 ï¿½?ï¿½ for manual entry into the authenticator
+				otpauth_url: otpauth, // otpauth:// ï¿½?ï¿½ for QR-code generation by the client
+				backup_codes: backupCodes, // plaintext ï¿½?ï¿½ show to the user ONCE
 				instructions:
 					'1. Open your authenticator app (Google Authenticator, Authy, etc.).\n' +
 					'2. Either scan a QR of otpauth_url OR enter the secret manually.\n' +
@@ -298,10 +299,10 @@ auth2faRouter.post('/setup', limitSetup, requireAuth, async (req: Request, res: 
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-// 2) enable Ù?¤ confirm enrollment with a TOTP code.
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+// 2) enable ï¿½?ï¿½ confirm enrollment with a TOTP code.
 //    The secret must already be on the row (via /setup).
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = enableSchema.safeParse(req.body);
@@ -341,18 +342,18 @@ auth2faRouter.post('/enable', limitEnable, requireAuth, async (req: Request, res
 			res,
 			{ user: publicUser({ ...user, two_factor_enabled: true }) },
 			200,
-			'2FA enabled. Save your backup codes Ù?¤ they are not shown again.',
+			'2FA enabled. Save your backup codes ï¿½?ï¿½ they are not shown again.',
 		);
 	} catch (err) {
 		sendError(res, err);
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-// 3) verify Ù?¤ exchange a partial token + TOTP/backup code for
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+// 3) verify ï¿½?ï¿½ exchange a partial token + TOTP/backup code for
 //    a real bearer token. Used by the login page when 2FA is
 //    enabled on the account.
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) => {
 	try {
 		const v = verifySchema.safeParse(req.body);
@@ -430,10 +431,10 @@ auth2faRouter.post('/verify', limitVerify, async (req: Request, res: Response) =
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-// 4) disable Ù?¤ turn 2FA off. Requires the user's PASSWORD so
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+// 4) disable ï¿½?ï¿½ turn 2FA off. Requires the user's PASSWORD so
 //    a stolen session token alone cannot disable 2FA.
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, res: Response) => {
 	try {
 		const v = disableSchema.safeParse(req.body);
@@ -474,14 +475,14 @@ auth2faRouter.post('/disable', limitDisable, requireAuth, async (req: Request, r
 	}
 });
 
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
-// 5) backup-codes/regenerate Ù?¤ issue a fresh batch of 10 codes
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
+// 5) backup-codes/regenerate ï¿½?ï¿½ issue a fresh batch of 10 codes
 //    and invalidate the old ones. Requires authentication (a
-//    stolen session token can rotate codes Ù?¤ the threat model
+//    stolen session token can rotate codes ï¿½?ï¿½ the threat model
 //    is "attacker has my session AND wants to lock me out",
 //    which is acceptable; rotating codes does NOT weaken
 //    authentication because the TOTP secret is unchanged).
-// ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?ÙÜ?
+// ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?
 auth2faRouter.post(
 	'/backup-codes/regenerate',
 	limitBackupCodes,
@@ -507,7 +508,7 @@ auth2faRouter.post(
 				res,
 				{ backup_codes: newCodes },
 				200,
-				'New backup codes generated. Save them Ù?¤ they are not shown again.',
+				'New backup codes generated. Save them ï¿½?ï¿½ they are not shown again.',
 			);
 		} catch (err) {
 			sendError(res, err);

@@ -14,9 +14,43 @@
 import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { db } from '../lib/shared.ts';
 import { stubProvider } from '../lib/payments/stub.ts';
 import { paymentsRouter } from '../routes/payments.ts';
 import { signTestToken } from './test-token';
+
+// Rate limit mock (same pattern as auth-router.test.ts)
+const rateLimitCounters = new Map<string, { count: number; resetAt: number }>();
+function rateLimitKey(bucket: string, ip: string): string {
+	return `${bucket}:${ip}`;
+}
+const originalPrepare = db.prepare.bind(db);
+function installRateLimitMock(): void {
+	(db as unknown as { prepare: typeof originalPrepare }).prepare = ((sql: string) => {
+		const trimmed = sql.trim().toUpperCase();
+		if (trimmed.startsWith('SELECT ALLOWED, RETRY_AFTER_MS FROM CONSUME_RATE_LIMIT')) {
+			return {
+				run: async () => ({ rows: [], rowCount: 0 }),
+				get: async (...args: unknown[]) => {
+					const [bucket, key, , max] = args as [string, string, number, number];
+					const rk = rateLimitKey(bucket, key);
+					const now = Date.now();
+					let entry = rateLimitCounters.get(rk);
+					if (!entry || entry.resetAt <= now) {
+						entry = { count: 1, resetAt: now + 60_000 };
+						rateLimitCounters.set(rk, entry);
+						return { allowed: true, retry_after_ms: 0 };
+					}
+					entry.count += 1;
+					return { allowed: entry.count <= (max ?? 5), retry_after_ms: entry.count > (max ?? 5) ? 60000 : 0 };
+				},
+				all: async () => [],
+			};
+		}
+		return originalPrepare(sql);
+	}) as typeof originalPrepare;
+}
+installRateLimitMock();
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
 const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });
@@ -30,6 +64,10 @@ function buildApp(): Express {
 	app.use('/api/payments', paymentsRouter);
 	return app;
 }
+
+beforeEach(() => {
+	rateLimitCounters.clear();
+});
 
 describe('paymentsRouter — auth gate', () => {
 	it('POST / → 401 without token', async () => {
@@ -332,7 +370,7 @@ describe('paymentsRouter — POST /api/payments/webhook/:method (idempotency, P1
 /* ------------------------------------------------------------------ */
 // The webhook endpoint is rate-limited at 120 requests / minute / IP
 // (see `webhookLimiter = rateLimit(60_000, 120, 'webhook')` in
-// payments.cts). 100 rapid requests stay below the cap, so we expect
+// payments.ts). 100 rapid requests stay below the cap, so we expect
 // the natural per-request response (400 "Webhook signature rejected"
 // from the stub) for every call and ZERO 429s.
 //

@@ -1,5 +1,5 @@
 # PHASE 3: Search + Filters + Pagination
-# Tests /api/search (app/server/routes/catalog.cts:387)
+# Tests /api/search (apps/api/src/routes/catalog.ts:387)
 # FTS via search_tsv (database/migrations/0009_search_backend.sql)
 $base = 'http://localhost:3000'
 $ErrorActionPreference = 'Stop'

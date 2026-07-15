@@ -1,5 +1,5 @@
 /**
- * partial-token.cts — short-lived HMAC token used to bridge the
+ * partial-token.ts — short-lived HMAC token used to bridge the
  * password and TOTP steps of a 2FA-protected login.
  *
  * Flow:
@@ -91,7 +91,12 @@ export async function verifyPartialToken(token: string): Promise<{ sub: number }
 	const expected = base64url(createHmac('sha256', getAuthSecret()).update(body).digest());
 	const expectedBuf = fromBase64url(expected);
 	const sigBuf = fromBase64url(sig);
-	if (expectedBuf.length !== sigBuf.length) return null;
+	// SECURITY (OWASP ASVS 2.6.1): run timingSafeEqual even on length
+	// mismatch to prevent timing side-channel on signature length.
+	if (expectedBuf.length !== sigBuf.length) {
+		timingSafeEqual(expectedBuf, expectedBuf); // dummy run
+		return null;
+	}
 	if (!timingSafeEqual(expectedBuf, sigBuf)) return null;
 
 	let payload: PartialTokenPayload;

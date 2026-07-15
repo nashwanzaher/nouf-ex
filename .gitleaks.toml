@@ -1,0 +1,73 @@
+# ============================================================================
+# Nouf-ex — gitleaks rules (project-local secret patterns)
+# ----------------------------------------------------------------------------
+# Adds app-specific patterns to the default gitleaks ruleset. Edit `extends`
+# to fall back to public presets; the rules below are tuned for the patterns
+# the 2026-07-15 security audit found in our source tree.
+# ============================================================================
+
+title = "Nouf-ex gitleaks rules"
+
+# Inherit the default gitleaks ruleset (catches AWS, GitHub, Stripe, etc.)
+[extend]
+useDefault = true
+
+# ─── Project-specific patterns ──────────────────────────────────────
+[[rules]]
+id = "noufex-auth-secret"
+description = "Nouf-ex AUTH_SECRET (HMAC signing key, must be ≥32 chars in production)"
+regex = '''(?i)(?:AUTH_SECRET\s*=\s*|authSecret\s*[:=]\s*['"`])([A-Za-z0-9+/=_\-]{32,})['"`]?'''
+keywords = ["AUTH_SECRET", "authSecret"]
+entropy = 3.5
+tags = ["noufex", "secret"]
+
+[[rules]]
+id = "noufex-db-url"
+description = "PostgreSQL connection string with embedded password"
+regex = '''postgresql://[a-zA-Z0-9_]+:([^@\s/]+)@[^\s"'`]+'''
+keywords = ["postgresql://"]
+entropy = 2.5
+tags = ["noufex", "database", "credential"]
+
+[[rules]]
+id = "noufex-paymob-key"
+description = "Paymob payment-gateway API key"
+regex = '''(?i)(?:PAYMOB_API_KEY|PAYMOB_HMAC)\s*=\s*['"`]([a-zA-Z0-9_\-]{16,})['"`]'''
+keywords = ["PAYMOB_API_KEY", "PAYMOB_HMAC"]
+tags = ["noufex", "payment"]
+
+[[rules]]
+id = "noufex-stripe-key"
+description = "Stripe secret key (sk_live_*, sk_test_*)"
+regex = '''sk_(live|test)_[a-zA-Z0-9]{24,}'''
+keywords = ["sk_live_", "sk_test_"]
+tags = ["payment", "stripe"]
+
+[[rules]]
+id = "noufex-hardcoded-password"
+description = "Suspicious hardcoded password literal in scripts"
+regex = '''(?i)(?:newPassword|new_password|PASSWORD|postgres|root)\s*=\s*['"`]([a-zA-Z0-9!@#$%^&*]{6,})['"`]'''
+keywords = ["newPassword", "PASSWORD", "postgres"]
+entropy = 2.0
+tags = ["noufex", "credential"]
+
+[[rules]]
+id = "noufex-jwt-secret"
+description = "JWT signing secret inline in code"
+regex = '''(?i)(?:jwt\.sign|jsonwebtoken|signAuthToken)\s*\([^)]*['"`]([a-zA-Z0-9_\-]{16,})['"`]'''
+keywords = ["jwt.sign", "jsonwebtoken", "signAuthToken"]
+tags = ["noufex", "jwt"]
+
+# ─── Allowlist ──────────────────────────────────────────────────────
+# Files / paths that are allowed to contain placeholders.
+
+[allowlist]
+description = "Allow placeholder/example values in docs and .env.example"
+paths = [
+  '''\.env\.example$''',
+  '''docs/.*\.md$''',
+  '''CHANGELOG\.md$''',
+  '''ARCHITECTURE\.md$''',
+  '''\.github/workflows/.*\.yml$''',  # CI test credentials
+  '''packages/db/seed\.sql$''',        # seed user emails
+]

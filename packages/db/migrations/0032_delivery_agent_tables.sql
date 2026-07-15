@@ -63,18 +63,23 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS current_latitude NUMERIC(9,6);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS current_longitude NUMERIC(9,6);
 
 -- Trigger to update updated_at on delivery_agents
+DROP TRIGGER IF EXISTS trg_delivery_agents_updated_at ON delivery_agents;
 CREATE TRIGGER trg_delivery_agents_updated_at
 BEFORE UPDATE ON delivery_agents
 FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 -- Trigger to update updated_at on delivery_agent_assignments
+DROP TRIGGER IF EXISTS trg_delivery_agent_assignments_updated_at ON delivery_agent_assignments;
 CREATE TRIGGER trg_delivery_agent_assignments_updated_at
 BEFORE UPDATE ON delivery_agent_assignments
 FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 -- Function to calculate agent earnings
 CREATE OR REPLACE FUNCTION calculate_agent_earnings(p_agent_id INTEGER, p_start_date DATE, p_end_date DATE)
-RETURNS NUMERIC(12,2) LANGUAGE plpgsql AS $$
+RETURNS NUMERIC(12,2) LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
 DECLARE
 	v_earnings NUMERIC(12,2);
 BEGIN
@@ -99,7 +104,10 @@ RETURNS TABLE(
 	total_earnings NUMERIC(12,2),
 	avg_rating NUMERIC(2,1),
 	avg_delivery_time INTERVAL
-) LANGUAGE plpgsql AS $$
+) LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
 BEGIN
 	RETURN QUERY
 	SELECT

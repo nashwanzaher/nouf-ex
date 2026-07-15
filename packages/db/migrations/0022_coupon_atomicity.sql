@@ -5,7 +5,7 @@
 --
 -- BACKGROUND
 -- ----------
--- The previous flow: the application code (server/routes/orders.cts)
+-- The previous flow: the application code (server/routes/orders.ts)
 -- loads the coupon row with `FOR UPDATE`, checks
 -- `usage_limit / usage_count` and per-user limits in the
 -- application transaction, and only THEN INSERTs into

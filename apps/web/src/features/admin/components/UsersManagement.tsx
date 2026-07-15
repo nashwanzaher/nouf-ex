@@ -31,7 +31,7 @@ type UserRole = 'customer' | 'merchant' | 'admin';
 
 /**
  * View model for the table. Mirrors the AdminUser shape from
- * /api/admin/users (server/routes/admin.cts:46-58) but renames a
+ * /api/admin/users (server/routes/admin.ts:46-58) but renames a
  * few fields and drops columns the admin users endpoint does not
  * expose (governorate / store / ordersCount).
  */

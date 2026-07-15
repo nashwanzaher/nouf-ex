@@ -1,7 +1,7 @@
 # ============================================================================
 # PHASE 7: Payments + Transactions + Refunds
 # Tests /api/payments/* and /api/refunds/* routes
-# (app/server/routes/payments.cts, refunds.cts)
+# (apps/api/src/routes/payments.ts, refunds.ts)
 # Verifies: methods list, payment creation, idempotency, confirm (admin),
 #           refund flow, role enforcement.
 # ============================================================================
@@ -267,7 +267,7 @@ $r = Call POST "/api/refunds/$refundId/resolve" $hAdmin @{ status = 'invalid_sta
 Assert 'POST /api/refunds/:id/resolve (invalid status)' 400 $r
 
 $r = Call POST "/api/refunds/$refundId/resolve" $hAdmin @{ status = 'approved' }
-# Known issue: refunds.cts:74-87 inserts into `transactions` but the
+# Known issue: refunds.ts:74-87 inserts into `transactions` but the
 # payments.update requires status='completed' (we only have 'pending'),
 # so the happy path may 500 in the demo seed. Accept either 200 or 500.
 if ($r.status -eq 200) {

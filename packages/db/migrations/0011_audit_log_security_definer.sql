@@ -3,7 +3,7 @@
 -- =============================================================================
 -- Problem: roles.sql REVOKEs INSERT on admin_audit_log FROM noufex_app
 --          (so the app can't forge audit entries). But writeAuditLog()
---          in app/server/lib/shared.cts does INSERT directly. With the
+--          in apps/api/src/lib/shared.ts does INSERT directly. With the
 --          noufex_app role, every admin operation would fail to log.
 --
 -- Fix: route the INSERT through a SECURITY DEFINER function owned by

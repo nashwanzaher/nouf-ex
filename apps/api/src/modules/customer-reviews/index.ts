@@ -1,0 +1,1 @@
+export { customerReviewsRouter } from './routes.ts';

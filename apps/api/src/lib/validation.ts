@@ -1,5 +1,5 @@
 /**
- * Zod validation schemas, extracted from `shared.cts` as part of
+ * Zod validation schemas, extracted from `shared.ts` as part of
  * the P0-1 god object refactor (2026-07-03).
  *
  * Contents:
@@ -14,11 +14,11 @@
  *     client's `storeId`).
  *   - Coupon *static* helpers (`COUPON_COLUMNS`, `CouponRow` type).
  *     The DB-backed `computeCouponDiscount` helper intentionally
- *     stays in `shared.cts` because it needs the `db` connection,
+ *     stays in `shared.ts` because it needs the `db` connection,
  *     which would otherwise create a circular import (validation
  *     → shared → validation).
  *   - `validate<T>(schema, body)` — the standard route-level
- *     Zod-validator wrapper extracted from `shared.cts` in
+ *     Zod-validator wrapper extracted from `shared.ts` in
  *     P0-1 phase 7 (2026-07-04). Returns a tagged union so
  *     the caller can branch on `ok` without a try/catch.
  */
@@ -34,7 +34,7 @@ import { z } from 'zod';
  * inference flows through the schema's own `_output` type even when
  * the schema is re-exported across a `.cts` / `.ts` module
  * boundary (which is the case here: every schema is re-exported
- * from `./shared.cts`).
+ * from `./shared.ts`).
  */
 export function validate<T extends z.ZodSchema>(
 	schema: T,
@@ -204,7 +204,9 @@ export function evaluatePasswordStrength(password: string, email?: string): stri
 
 // ── Auth schemas ─────────────────────────────────────────────────────────
 
-export const emailSchema = z.string().email().max(255);
+// SECURITY (OWASP ASVS 5.1.1): trim whitespace from email to prevent
+// lookup mismatches (e.g. " user@example.com " vs "user@example.com").
+export const emailSchema = z.string().trim().email().max(255);
 
 export const passwordSchema = z
 	.string()
@@ -235,16 +237,22 @@ export const registerSchema = z
 		// 'customer' — the API contract is "ask for any role, we keep
 		// the safe one". Rejecting 'admin' at parse time would leak the
 		// existence of admin-only fields to the client.
-		role: z.enum(['customer', 'merchant', 'admin']).optional(),
+		role: z.enum(['customer', 'merchant', 'admin', 'delivery_agent']).optional(),
 	})
+	.strict()
 	.refine((data) => evaluatePasswordStrength(data.password, data.email) === null, {
 		message: 'Password does not meet strength requirements.',
 		path: ['password'],
 	});
-export const loginSchema = z.object({
-	email: emailSchema,
-	password: z.string().min(1).max(128),
-});
+
+// SECURITY (OWASP ASVS 5.1.1): .strict() prevents mass-assignment
+// attacks where an attacker sends extra fields (e.g. {email, password, role: 'admin'}).
+export const loginSchema = z
+	.object({
+		email: emailSchema,
+		password: z.string().min(1).max(128),
+	})
+	.strict();
 
 // ── Orders / order items ─────────────────────────────────────────────────
 
@@ -355,13 +363,15 @@ export function resolveOrderStoreId(
 
 // ── Reviews ──────────────────────────────────────────────────────────────
 
-export const reviewSchema = z.object({
-	productId: z.number().int().positive(),
-	storeId: z.number().int().positive().optional(),
-	rating: z.number().int().min(1).max(5),
-	title: z.string().trim().max(200).optional(),
-	comment: z.string().trim().max(2000).optional(),
-});
+export const reviewSchema = z
+	.object({
+		productId: z.number().int().positive(),
+		storeId: z.number().int().positive().optional(),
+		rating: z.number().int().min(1).max(5),
+		title: z.string().trim().max(200).optional(),
+		comment: z.string().trim().max(2000).optional(),
+	})
+	.strict();
 
 // ── Addresses ────────────────────────────────────────────────────────────
 
@@ -408,28 +418,36 @@ export const passwordChangeSchema = z
 
 // ── Payments ─────────────────────────────────────────────────────────────
 
-export const paymentCreateSchema = z.object({
-	order_id: z.number().int().positive(),
-	amount: z.number().nonnegative(),
-	currency: z.string().length(3).default('YER'),
-	method: z.enum(['cod', 'card', 'wallet', 'bank_transfer', 'stripe', 'paymob']).default('cod'),
-	transaction_id: z.string().trim().max(200).optional(),
-});
+// SECURITY (OWASP ASVS 5.1.1): .strict() prevents mass-assignment.
+// amount is bounded by the server (price * quantity), not the client.
+export const paymentCreateSchema = z
+	.object({
+		order_id: z.number().int().positive(),
+		amount: z.number().nonnegative().max(999_999_999),
+		currency: z.string().trim().length(3).default('YER'),
+		method: z.enum(['cod', 'card', 'wallet', 'bank_transfer', 'stripe', 'paymob']).default('cod'),
+		transaction_id: z.string().trim().max(200).optional(),
+	})
+	.strict();
 
 // ── Refunds ──────────────────────────────────────────────────────────────
 
-export const refundCreateSchema = z.object({
-	order_id: z.number().int().positive(),
-	amount: z.number().nonnegative(),
-	reason: z.string().trim().min(3).max(1000),
-});
+export const refundCreateSchema = z
+	.object({
+		order_id: z.number().int().positive(),
+		amount: z.number().nonnegative().max(999_999_999),
+		reason: z.string().trim().min(3).max(1000),
+	})
+	.strict();
 
 // ── Coupons ──────────────────────────────────────────────────────────────
 
-export const couponRedeemSchema = z.object({
-	code: z.string().trim().min(1).max(50),
-	order_subtotal: z.number().nonnegative(),
-});
+export const couponRedeemSchema = z
+	.object({
+		code: z.string().trim().min(1).max(50),
+		order_subtotal: z.number().nonnegative(),
+	})
+	.strict();
 
 /** Pick the columns we read from the coupons table. Centralised so
  *  the validate and orders paths stay in sync if we add columns. */
@@ -466,7 +484,7 @@ export const paginationSchema = z.object({
 export const adminUserUpdateSchema = z
 	.object({
 		status: z.enum(['active', 'suspended', 'banned']).optional(),
-		role: z.enum(['customer', 'merchant', 'admin']).optional(),
+		role: z.enum(['customer', 'merchant', 'admin', 'delivery_agent']).optional(),
 		is_verified: z.boolean().optional(),
 		email_verified: z.boolean().optional(),
 		phone_verified: z.boolean().optional(),

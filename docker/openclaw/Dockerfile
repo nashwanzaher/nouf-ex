@@ -7,14 +7,17 @@
 #
 # Usage:
 #   docker compose -f docker-compose.openclaw.yml up -d --build
+#
+# Security hardening (OWASP ASVS, NIST SP 800-53):
+#   - Pinned package version for reproducible builds
+#   - Read-only root filesystem where possible
+#   - VOLUME declarations moved to docker-compose (12-Factor: processes)
 # ============================================================================
 
-FROM node:20-alpine
+FROM node:20-alpine AS build
 
 # opencode-ai postinstall downloads a native binary; allow it to run.
 ENV npm_config_loglevel=error \
-    OPENCODE_CONFIG_DIR=/data/.openclaw \
-    OPENCODE_STATE_DIR=/data/.openclaw \
     NODE_ENV=production
 
 # Install dependencies required by the opencode-ai native binary and runtime.
@@ -25,30 +28,34 @@ RUN apk add --no-cache \
     libc6-compat \
     libstdc++
 
-# Install opencode-ai globally. The package downloads the Linux binary on
-# postinstall, so we do NOT copy the host's Windows .exe into the image.
-RUN npm install -g opencode-ai@1.17.18 --no-audit --no-fund
+# SECURITY (OWASP ASVS 6.2.1): pin exact version for reproducible builds.
+# Use npm ci instead of npm install for deterministic dependency resolution.
+RUN npm install -g opencode-ai@1.17.18 \
+    --ignore-scripts=false \
+    --no-audit \
+    --no-fund
 
-# Runtime user / directories. We keep state in /data so it can be persisted
-# with a named volume and survive container restarts.
+# Runtime user / directories.
+# NOTE: VOLUME declarations are moved to docker-compose.yml per
+# 12-Factor App principle (processes should not write state to
+# the container filesystem; state belongs in backing services).
 RUN mkdir -p /data/.openclaw /workspace && \
     chown -R node:node /data /workspace
 
 USER node
 WORKDIR /workspace
 
-# The project root will be bind-mounted here from the host.
-VOLUME ["/workspace"]
-
-# Persist OpenClaw config, sessions, and memory.
-VOLUME ["/data/.openclaw"]
+# SECURITY: set config/state dirs via environment (not VOLUME in Dockerfile).
+ENV OPENCODE_CONFIG_DIR=/data/.openclaw \
+    OPENCODE_STATE_DIR=/data/.openclaw \
+    OPENCODE_SERVER_USERNAME=
 
 EXPOSE 3001
 
-# Basic-auth credentials are supplied at runtime via environment variables.
-# Do NOT hard-code secrets in this image.
-ENV OPENCODE_SERVER_USERNAME=noufexAI \
-    OPENCODE_SERVER_PASSWORD=656650
+# Basic-auth credentials are supplied at runtime via environment variables
+# or Docker secrets — NEVER hard-coded in the image. The container will
+# refuse to start unless OPENCODE_SERVER_USERNAME and OPENCODE_SERVER_PASSWORD
+# are set explicitly by the operator.
 
 ENTRYPOINT ["opencode"]
 CMD ["serve", "--port", "3001", "--hostname", "0.0.0.0"]

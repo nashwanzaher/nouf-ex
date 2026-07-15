@@ -1,6 +1,6 @@
 /**
  * Tiny helpers for assembling parameterised SQL at runtime,
- * extracted from `shared.cts` as part of the P0-1 god object
+ * extracted from `shared.ts` as part of the P0-1 god object
  * refactor (Phase 7, 2026-07-04).
  *
  * Currently only `buildUpdateSet` lives here. Future helpers in

@@ -2,7 +2,7 @@ import React from 'react';
 /**
  * Accessibility (a11y) tests — CustomerDashboard.
  *
- * This file complements `app/src/pages/__tests__/a11y.test.tsx` (the
+ * This file complements `apps/web/src/pages/__tests__/a11y.test.tsx` (the
  * smoke-level a11y check added in P2-09). The goal here is depth:
  *   - Re-verify the OrderTimeline list semantics with multiple orders
  *     and different active indices.

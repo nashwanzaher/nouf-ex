@@ -2,13 +2,14 @@
  * Auth repository — pure database access for users / sessions.
  */
 import { db } from '../../lib/shared.ts';
+import type { AuthRole } from '../../lib/types.ts';
 
 export type AuthUserRow = {
 	id: number;
 	email: string;
 	full_name: string;
 	avatar: string | null;
-	role: 'customer' | 'merchant' | 'admin';
+	role: AuthRole;
 	status: string;
 	is_verified: boolean;
 	phone: string | null;

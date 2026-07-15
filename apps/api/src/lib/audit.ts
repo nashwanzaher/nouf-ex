@@ -1,5 +1,5 @@
 /**
- * Audit-log writer + secret redactor, extracted from `shared.cts`
+ * Audit-log writer + secret redactor, extracted from `shared.ts`
  * as part of the P0-1 god object refactor (Phase 5, 2026-07-04).
  *
  * Two surfaces live here:
@@ -21,7 +21,7 @@
  * what lands in the audit table.
  *
  * NOTE on circular imports: this file imports `db` from
- * `./shared.cts` (top-level — fine because `db` is created
+ * `./shared.ts` (top-level — fine because `db` is created
  * synchronously at module-load time and the audit writer only
  * references it inside the async function bodies). The
  * structured `log()` is imported lazily inside `writeAuditLog`

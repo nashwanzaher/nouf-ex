@@ -650,7 +650,7 @@ export { getProductWithParsedFields, parseJson } from './json';
 export async function computeCouponDiscount(coupon, orderSubtotal) { ... }
 ```
 
-### 4.5.1 مكتبة `lib/auth.ts` — Password Hashing (مُستخرَجة من shared.cts في 2026-07-03)
+### 4.5.1 مكتبة `lib/auth.ts` — Password Hashing (مُستخرَجة من shared.ts في 2026-07-03)
 
 **scrypt مع salt عشوائي 16 bytes + key 64 bytes (256-bit):**
 - `hashPassword(password)` → يُرجع `'scrypt$<saltB64>$<keyB64>'`
@@ -1281,7 +1281,7 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 | `api_get_endpoint` | تفاصيل endpoint واحد + excerpt من المصدر |
 | `api_search` | بحث في المسارات (substring match) |
 
-- يُحلّل `app/server/index.ts` بـ regex للـ `app.METHOD('/path', ...)` patterns
+- يُحلّل `apps/api/src/index.ts` بـ regex للـ `app.METHOD('/path', ...)` patterns
 - يكتشف middleware تلقائياً عبر heuristics (PascalCase tokens)
 - يحسب auth type (`public`, `authed`, `role:admin`, `role:merchant`)
 - Cache على routes (mtime-based)
@@ -1299,7 +1299,7 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 **`catalog.yaml` (224 سطر):**
 - `name: noufex-mcp`
 - `transport: stdio`
-- `command: ["node", "/app/dist/index.js"]`
+- `command: ["node", "/apps/api/dist/index.js"]`
 - mounts: `..` و `../.env` (read_only)
 - env: `DATABASE_URL, PROJECT_ROOT=/repo, NODE_ENV=production`
 - **5 tools** (منفصلة عن الـ 22 في catalog، تمثل الواجهة الرسمية لـ clients):
@@ -1313,7 +1313,7 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 
 **`Dockerfile` (44 سطر) — 2 stages:**
 1. `build` — `node:20-alpine` + `npm ci --workspaces` + `tsc -p tsconfig.json`
-2. `runtime` — `node:20-alpine` + `USER node` + `node /app/dist/index.js`
+2. `runtime` — `node:20-alpine` + `USER node` + `node /apps/api/dist/index.js`
 
 **`docker-compose.yml`:** يستمع على **:8811** مع SSE transport، Bearer token، `/health` endpoint
 

@@ -7,11 +7,11 @@
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["run", "--prefix", "app", "dev"],
+			"runtimeArgs": ["run", "--workspace", "@noufex/web", "dev"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
 			"skipFiles": ["<node_internals>/**"],
-			"preLaunchTask": "📦 Install Dependencies (app/)"
+			"preLaunchTask": "📦 Install Dependencies (root)"
 		},
 
 		// ─── API Server ─────────────────────────────────────────────────
@@ -20,7 +20,7 @@
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["run", "--prefix", "app", "api"],
+			"runtimeArgs": ["run", "--workspace", "@noufex/api", "dev"],
 			"env": {
 				"NODE_ENV": "development",
 				"NODE_OPTIONS": "--inspect=9229"
@@ -34,7 +34,7 @@
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["run", "--prefix", "app", "api:prod"],
+			"runtimeArgs": ["run", "--workspace", "@noufex/api", "start"],
 			"env": {
 				"NODE_ENV": "production",
 				"NODE_OPTIONS": "--inspect=9229"
@@ -52,14 +52,14 @@
 			"port": 9229,
 			"restart": true,
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-			"localRoot": "${workspaceFolder}/app",
+			"localRoot": "${workspaceFolder}/apps/api",
 			"remoteRoot": "/app"
 		},
 		{
-			"name": "🔌 Attach to Vite (5173)",
+			"name": "🔌 Attach to Vite (8080)",
 			"type": "node",
 			"request": "attach",
-			"port": 5173,
+			"port": 8080,
 			"restart": true,
 			"skipFiles": ["<node_internals>/**"]
 		},
@@ -70,7 +70,7 @@
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["run", "--prefix", "app", "test", "--", "${relativeFile}"],
+			"runtimeArgs": ["run", "--workspace", "@noufex/api", "test", "--", "${relativeFile}"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
@@ -80,7 +80,7 @@
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "npm",
-			"runtimeArgs": ["run", "--prefix", "app", "test:ui"],
+			"runtimeArgs": ["run", "--workspace", "@noufex/api", "test:ui"],
 			"console": "integratedTerminal",
 			"internalConsoleOptions": "neverOpen",
 			"serverReadyAction": {

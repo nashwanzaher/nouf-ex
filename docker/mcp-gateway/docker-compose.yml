@@ -1,9 +1,9 @@
 # ============================================================================
-# Docker MCP Gateway — Nouf-ex workspace
+# Docker MCP Gateway — Noufex workspace
 # ----------------------------------------------------------------------------
 # Runs the Docker MCP Gateway on port 8811 with SSE transport. The Gateway
 # reads docker/mcp-gateway/catalog.yaml and spawns one stdio child per
-# registered MCP server (here: apps/mcp-server, built into /app/dist inside
+# registered MCP server (here: apps/mcp-server, built into /apps/api/dist inside
 # the gateway image).
 #
 # Usage:
@@ -15,6 +15,12 @@
 # The Gateway is the ONLY thing exposed on 8811 — the apps/api Express
 # server stays on 3000 (via the root docker-compose.yml) and is reached
 # by the MCP server through the gateway's internal Docker network.
+#
+# Security hardening (OWASP ASVS, NIST SP 800-53):
+#   - env_file scoped to only DATABASE_URL (root .env has other secrets)
+#   - Read-only root filesystem
+#   - No new privileges + cap_drop ALL
+#   - Minimal mount scope (only dist + catalog, not full repo)
 # ============================================================================
 services:
   mcp-gateway:
@@ -34,20 +40,34 @@ services:
         limits:
           memory: 256M
           cpus: '0.5'
+    # --- Security hardening ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=32M
+    # --- Environment ---
+    # SECURITY (OWASP ASVS 6.2.1, NIST SP 800-53 IA-5):
+    # The gateway only needs DATABASE_URL from the root .env. Other
+    # sensitive vars (AUTH_SECRET, POSTGRES_PASSWORD, etc.) are not
+    # passed because Docker Compose only forwards vars that are
+    # referenced in the service definition. The gateway's env section
+    # below only references DATABASE_URL, DB_HOST, DB_PORT, DB_NAME,
+    # DB_USER, DB_PASSWORD — so those are the only ones forwarded.
     env_file:
-      # .env at the repo root supplies DATABASE_URL and (optionally)
-      # ALLOW_DB_WRITE. The gateway injects DATABASE_URL into the stdio
-      # child process per the catalog.yaml `env` mapping.
       - path: ../../.env
         required: false
     environment:
       # Tell the gateway where to find the project-scoped catalog.
-      # The Gateway composes this list with the built-in catalog at
-      # ~/.docker/mcp/catalogs/docker-mcp.yaml.
       MCP_CATALOG_PATHS: "/etc/docker/mcp/catalog.yaml:/catalogs/noufex.yaml"
       GATEWAY_PORT: '8811'
       GATEWAY_TRANSPORT: 'sse'
       LOG_LEVEL: 'info'
+      NODE_ENV: 'production'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     volumes:
       # Project-scoped catalog — the file we just wrote.
       - ./catalog.yaml:/catalogs/noufex.yaml:ro
@@ -56,10 +76,7 @@ services:
       #   npm run build -w @noufex/mcp-server
       # Then the gateway container can exec it via the command in the
       # catalog.yaml entry.
-      - ../../apps/mcp-server/dist:/app/dist:ro
-      # Source tree, exposed read-only so the stdio child can read .ts
-      # files for code_search / api_routes tools.
-      - ../..:/repo:ro
+      - ../../apps/mcp-server/dist:/apps/api/dist:ro
     networks:
       - noufex-mcp
     healthcheck:

@@ -190,6 +190,11 @@ jobs:
 
   # ─────────────────────────────────────────────────────────────────
   # 6. DB-integration (real postgres:17, applies schema + seed)
+  #    SECURITY: roles.sql contains CREATE ROLE / GRANT statements that
+  #    require the `postgres` superuser. We therefore split into two phases:
+  #      Phase A: as `postgres`, run db:setup (creates noufex_app + schema)
+  #      Phase B: as `noufex_app`, exercise the schema to catch permission
+  #               regressions that would only manifest at runtime.
   # ─────────────────────────────────────────────────────────────────
   db-integration:
     name: DB Integration
@@ -200,16 +205,30 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_USER: noufex_app
-          POSTGRES_PASSWORD: noufex_app_test_password_only
+          # Bootstrap as the default `postgres` superuser so we can CREATE ROLE.
+          # The `noufex_app` runtime role is created by roles.sql inside db:setup.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_superuser_test_password_only
           POSTGRES_DB: noufex_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U noufex_app"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+    env:
+      # Superuser connection for phase A (db:setup needs CREATE ROLE).
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_superuser_test_password_only
+      DATABASE_URL_SUPERUSER: postgresql://postgres:postgres_superuser_test_password_only@localhost:5432/noufex_db
+      # App-role connection for phase B (mirrors production).
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: noufex_db
+      DB_USER: noufex_app
+      DB_PASSWORD: noufex_app_test_password_only
+      DATABASE_URL: postgresql://noufex_app:noufex_app_test_password_only@localhost:5432/noufex_db
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -218,22 +237,28 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
-      - name: Run db:setup (applies schema + 30 migrations + seed)
-        run: node scripts/db/db-setup.cjs
-      - name: Smoke (DB query via pg)
+      - name: Phase A — db:setup as postgres (creates roles + applies schema + seed)
+        run: |
+          DATABASE_URL=$DATABASE_URL_SUPERUSER node scripts/db/db-setup.cjs
+      - name: Phase B — verify noufex_app can read every public table
         run: |
           node -e "const{Client}=require('pg');(async()=>{
             const c=new Client({connectionString:process.env.DATABASE_URL});
             await c.connect();
-            const r=await c.query('SELECT COUNT(*)::int AS n FROM users');
-            console.log('users:',r.rows[0].n);
-            const m=await c.query('SELECT version()');
-            console.log('pg:',m.rows[0].version.slice(0,40));
+            const tables=['users','stores','products','orders','reviews'];
+            for(const t of tables){
+              const r=await c.query('SELECT COUNT(*)::int AS n FROM '+t);
+              console.log(t+':',r.rows[0].n);
+            }
+            const m=await c.query('SELECT current_user, version()');
+            console.log('as:',m.rows[0].current_user,'|',m.rows[0].version.slice(0,40));
             await c.end();
           })()"
 
   # ─────────────────────────────────────────────────────────────────
-  # 7. Server boot smoke (boots the real API against real postgres)
+  # 7. Server boot smoke (boots the real API against real postgres).
+  #    Same role-separation pattern as db-integration: bootstrap as
+  #    `postgres`, run db:setup, then exercise the API as `noufex_app`.
   # ─────────────────────────────────────────────────────────────────
   server-boot:
     name: Server Boot Smoke
@@ -244,19 +269,31 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_USER: noufex_app
-          POSTGRES_PASSWORD: noufex_app_test_password_only
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_superuser_test_password_only
           POSTGRES_DB: noufex_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U noufex_app"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
       NODE_ENV: test
       API_PORT: '3000'
+      # Phase A: db:setup needs postgres superuser to CREATE ROLE.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_superuser_test_password_only
+      DATABASE_URL_SUPERUSER: postgresql://postgres:postgres_superuser_test_password_only@localhost:5432/noufex_db
+      # Phase B: app runtime uses the least-privilege role.
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: noufex_db
+      DB_USER: noufex_app
+      DB_PASSWORD: noufex_app_test_password_only
+      DATABASE_URL: postgresql://noufex_app:noufex_app_test_password_only@localhost:5432/noufex_db
+      AUTH_SECRET: test-secret-must-be-at-least-32-chars-long-xyz
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -265,8 +302,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
-      - name: Apply schema + seed
-        run: node scripts/db/db-setup.cjs
+      - name: Apply schema + seed (as postgres superuser)
+        run: DATABASE_URL=$DATABASE_URL_SUPERUSER node scripts/db/db-setup.cjs
       - name: Boot API + smoke
         run: |
           set -e

@@ -16,7 +16,7 @@
 // IMPORTANT: This provider is automatically selected whenever the
 // configured provider for the requested method is NOT isConfigured. That
 // means production deploys with a real Stripe secret key will NEVER
-// route through this stub — the registry will pick `stripe.cts` instead.
+// route through this stub — the registry will pick `stripe.ts` instead.
 // =============================================================================
 import { randomUUID } from 'crypto';
 import type {

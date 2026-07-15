@@ -10,6 +10,7 @@ import {
     paymentCreateSchema,
     rateLimit,
     requireAuth,
+    requireRole,
     sendError,
     sendSuccess,
     validate,
@@ -23,12 +24,12 @@ export const paymentsRouter = Router();
 // requests could saturate CPU even though every request 400s out.
 // We allow 120 req/min/IP (2 Hz sustained, with burst headroom for
 // legitimate provider retries). The limiter is in-memory and
-// resets on process restart Ù?¤ that's fine because the goal is
+// resets on process restart ï¿½?ï¿½ that's fine because the goal is
 // rate limiting, not counting, and the bucket is keyed on IP
 // which is also re-acquired on restart.
 const webhookLimiter = rateLimit(60_000, 120, 'webhook');
 
-// GET /api/payments/methods Ù?¤ surfaces which providers are live so the
+// GET /api/payments/methods ï¿½?ï¿½ surfaces which providers are live so the
 // client UI can grey out methods that aren't actually wired up.
 paymentsRouter.get('/methods', (_req: Request, res: Response) => {
 	try {
@@ -38,14 +39,14 @@ paymentsRouter.get('/methods', (_req: Request, res: Response) => {
 	}
 });
 
-// POST /api/payments/webhook/:method Ù?¤ entrypoint for provider callbacks.
+// POST /api/payments/webhook/:method ï¿½?ï¿½ entrypoint for provider callbacks.
 // We accept both Stripe-style (sig in body) and Paymob-style (sig in
 // query) webhooks; the chosen provider's verifyWebhook() decides.
 //
 // P1-1 (2026-07-04, deep audit 2026-06-30): this endpoint is now
 // idempotent via the `webhook_events` dedup table (see migration
 // 0020). The dedup key is (provider, event_id, transaction_id,
-// event_type) Ù?¤ an UNIQUE constraint we claim atomically with
+// event_type) ï¿½?ï¿½ an UNIQUE constraint we claim atomically with
 // `INSERT ... ON CONFLICT DO NOTHING`. The matching payments UPDATE
 // and the dedup-row "processed" flag transition happen inside the
 // same transaction so concurrent duplicates update at most once.
@@ -63,7 +64,7 @@ paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res
 		if (!verification.valid || !verification.status || !verification.transactionId) {
 			return sendError(res, 'Webhook signature rejected', 400);
 		}
-		// Normalise the dedup inputs. event_id is optional Ù?¤ Stripe
+		// Normalise the dedup inputs. event_id is optional ï¿½?ï¿½ Stripe
 		// provides one, Paymob does not. When absent we fall back
 		// to the transaction_id so we still have a stable key.
 		const eventId =
@@ -151,7 +152,7 @@ paymentsRouter.post('/webhook/:method', webhookLimiter, async (req: Request, res
 				.run(claimed.id);
 			if (!upd) {
 				// No matching local payment row yet (provider beat
-				// the checkout flow Ù?¤ rare but documented). The
+				// the checkout flow ï¿½?ï¿½ rare but documented). The
 				// webhook is still 200: the dedup row prevents
 				// future retries from re-applying.
 				log.warn({
@@ -234,7 +235,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 		} else if (method === 'cod') {
 			initialStatus = 'pending';
 		} else {
-			// card / wallet / bank_transfer Ù?¤ record pending; admin will
+			// card / wallet / bank_transfer ï¿½?ï¿½ record pending; admin will
 			// mark complete after out-of-band verification.
 			initialStatus = 'pending';
 		}
@@ -287,9 +288,9 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 			// also iframe-based. The webhook updates these after the
 			// user completes payment.
 			if (provider.isConfigured) {
-				// Real provider Ù?¤ wait for webhook. Don't update orders.
+				// Real provider ï¿½?ï¿½ wait for webhook. Don't update orders.
 			} else {
-				// Stub provider Ù?¤ mark as paid so the demo flow works.
+				// Stub provider ï¿½?ï¿½ mark as paid so the demo flow works.
 				await db
 					.prepare(
 						`UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE id = ?`,
@@ -347,7 +348,7 @@ paymentsRouter.get('/order/:orderId', requireAuth, async (req: Request, res: Res
 	}
 });
 
-paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Response) => {
+paymentsRouter.post('/:id/confirm', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid payment id', 400);
@@ -364,10 +365,6 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 			.get(payment.order_id)) as { customer_id: number } | undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
 
-		if (req.user!.role !== 'admin') {
-			return sendError(res, 'Forbidden', 403);
-		}
-
 		const result = (await db
 			.prepare(
 				`UPDATE payments SET status = 'completed', paid_at = NOW(), updated_at = NOW()
@@ -382,7 +379,7 @@ paymentsRouter.post('/:id/confirm', requireAuth, async (req: Request, res: Respo
 			.run(result.order_id);
 
 		// Fire bilingual i18n notification to the customer (best-effort).
-		// (C.1 in MASTER_PLAN.md Ù?¤ real payment confirmation notification)
+		// (C.1 in MASTER_PLAN.md ï¿½?ï¿½ real payment confirmation notification)
 		try {
 			const { onPaymentConfirmed } = await import('../lib/notifications/events.ts');
 			const orderRow = (await db

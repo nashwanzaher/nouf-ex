@@ -1,6 +1,6 @@
 /**
  * Integration tests for the seller self-service router
- * (app/server/routes/seller.cts).
+ * (apps/api/src/routes/seller.ts).
  *
  * C.3 in MASTER_PLAN.md — closes the 12 missing seller endpoints
  * documented in phase10_merchant_flow.ps1 §3.

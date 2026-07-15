@@ -1,5 +1,5 @@
 /**
- * Unit tests for app/server/lib/partial-token.cts.
+ * Unit tests for apps/api/src/lib/partial-token.ts.
  *
  * Covers:
  *   - sign → verify round-trip
@@ -23,7 +23,7 @@ beforeEach(() => {
 	CONSUMED_JTIS.clear();
 });
 
-vi.mock('../lib/shared.cts', () => {
+vi.mock('../lib/shared.ts', () => {
 	return {
 		db: {
 			prepare: (_sql: string) => ({
@@ -42,7 +42,7 @@ vi.mock('../lib/shared.cts', () => {
 // so it can honour the single-use contract.
 import { db as realDb } from '../lib/shared.ts';
 // Cast through unknown so the test can monkey-patch prepare() — the
-// real `db` type from shared.cts is strictly typed and doesn't allow
+// real `db` type from shared.ts is strictly typed and doesn't allow
 // reassignment of its members. We don't type this as `any` because
 // eslint flags it.
 type DbLike = { prepare: (sql?: string) => unknown };

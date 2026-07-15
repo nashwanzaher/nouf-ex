@@ -1,6 +1,6 @@
 # ============================================================================
 # PHASE 15: Audit Logs + Security Events
-# Tests /api/admin/audit-log (app/server/routes/admin.cts)
+# Tests /api/admin/audit-log (apps/api/src/routes/admin.ts)
 # Verifies: admin can view audit log, role enforcement, ordering.
 # ============================================================================
 $base = 'http://localhost:3000'

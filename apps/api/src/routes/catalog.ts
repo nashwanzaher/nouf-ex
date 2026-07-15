@@ -199,11 +199,14 @@ catalogRouter.get('/products/deals', async (_req: Request, res: Response) => {
  */
 catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params;
+		const id = Number(req.params.id);
+		if (!Number.isInteger(id) || id <= 0) {
+			return sendError(res, 'Invalid product ID', 400, 'VALIDATION_ERROR');
+		}
 
 		const product = (await db
 			.prepare('SELECT * FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
-			.get(Number(id))) as Record<string, unknown> | undefined;
+			.get(id)) as Record<string, unknown> | undefined;
 
 		if (!product) {
 			return sendError(res, 'Product not found', 404);
@@ -227,10 +230,10 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
          ORDER BY r.created_at DESC
          LIMIT ? OFFSET ?`,
 			)
-			.all(Number(id), reviewLimit, reviewOffset)) as Record<string, unknown>[];
+			.all(id, reviewLimit, reviewOffset)) as Record<string, unknown>[];
 
 		// Get images
-		const images = await getProductImages(Number(id));
+		const images = await getProductImages(id);
 		const productParsed = getProductWithParsedFields(product);
 
 		return sendSuccess(res, {
@@ -342,7 +345,10 @@ catalogRouter.get('/stores/:id', async (req: Request, res: Response) => {
  */
 catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => {
 	try {
-		const { id } = req.params;
+		const storeId = Number(req.params.id);
+		if (!Number.isInteger(storeId) || storeId <= 0) {
+			return sendError(res, 'Invalid store ID', 400, 'VALIDATION_ERROR');
+		}
 		// R4 fix: `await` was missing �?� `.all()` returns a Promise, so
 		// `sendSuccess` was wrapping a Promise in the success envelope
 		// and the client received `{ data: <Promise> }`. Same shape of
@@ -357,7 +363,7 @@ catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => 
          WHERE r.store_id = ? AND r.is_visible = TRUE
          ORDER BY r.created_at DESC`,
 			)
-			.all(Number(id))) as Record<string, unknown>[];
+			.all(storeId)) as Record<string, unknown>[];
 		return sendSuccess(res, reviews);
 	} catch (err) {
 		return sendError(res, err);
@@ -443,7 +449,7 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 			);
 		}
 		// The query logic �?� FTS ranking, filters, pagination, store
-		// join �?� lives in lib/search.cts so it can be unit-tested
+		// join �?� lives in lib/search.ts so it can be unit-tested
 		// without spinning up an Express app. The router is the thin
 		// HTTP wrapper: parse �?� call �?� log �?� respond.
 		const result = await runSearch(q, {

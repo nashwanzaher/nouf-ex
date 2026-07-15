@@ -1,11 +1,11 @@
 <!doctype html>
 <!--
   Nouf-ex SPA entry point.
-  - lang="ar" / dir="rtl" must match the PWA manifest (`app/dist/manifest.webmanifest`)
-    and the production HTML (`app/dist/index.html`). Keeping these three
+  - lang="ar" / dir="rtl" must match the PWA manifest (`apps/api/dist/manifest.webmanifest`)
+    and the production HTML (`apps/api/dist/index.html`). Keeping these three
     in sync prevents FOUC (Flash of Unstyled Content) between the static
     page load and the runtime i18n hydration.
-  - In production, the server (`app/server/index.ts` → SPA fallback handler)
+  - In production, the server (`apps/api/src/index.ts` → SPA fallback handler)
     injects a per-request CSP nonce onto every <script>/<style> tag. The
     dev bundle (`/src/main.tsx`) does not need one — Vite's dev server
     serves the module graph over the same-origin ws connection.

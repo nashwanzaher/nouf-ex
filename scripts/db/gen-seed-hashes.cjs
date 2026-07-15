@@ -74,7 +74,7 @@ function parseArgs(argv) {
 
 async function generateHash(password) {
 	const salt = randomBytes(16);
-	// Match the server's hashPassword() in app/server/index.ts — pass
+	// Match the server's hashPassword() in apps/api/src/index.ts — pass
 	// the raw Buffer to scrypt, base64-encode both halves for storage.
 	const derivedKey = await scryptAsync(password, salt, SCRYPT_KEYLEN);
 	return `scrypt$${salt.toString('base64')}$${derivedKey.toString('base64')}`;

@@ -28,11 +28,18 @@ export async function listForUser(userId: number) {
 }
 
 export async function findExisting(userId: number, productId: number, variant: Record<string, unknown> | null) {
+	// Cast the variant parameter to text for comparison because
+	// PostgreSQL cannot implicitly cast JS null/undefined to JSONB
+	// in parameterized queries — passing `null` directly causes
+	// 22P02 (invalid_input_syntax_for_type_json). The COALESCE
+	// trick converts JSONB NULL → '' text so the comparison is
+	// type-safe on both sides.
+	const variantParam = variant == null ? '' : JSON.stringify(variant);
 	return (await db
 		.prepare(
-			'SELECT * FROM cart_items WHERE user_id = ? AND product_id = ? AND COALESCE(variant, \'\') = COALESCE(?, \'\')',
+			"SELECT * FROM cart_items WHERE user_id = ? AND product_id = ? AND variant::text = ?",
 		)
-		.get(userId, productId, variant)) as Record<string, unknown> | undefined;
+		.get(userId, productId, variantParam)) as Record<string, unknown> | undefined;
 }
 
 export async function insertCartItem(input: {

@@ -1,9 +1,9 @@
 /**
  * Auth helpers — password hashing and verification.
  *
- * Extracted from `shared.cts` on 2026-07-03 as part of the god object
+ * Extracted from `shared.ts` on 2026-07-03 as part of the god object
  * refactor (Finding 1 from the deep audit). Self-contained — does NOT
- * import from `db` or `shared.cts`, so it can be moved or tested
+ * import from `db` or `shared.ts`, so it can be moved or tested
  * in isolation. The only runtime dep is the Node built-in `crypto`
  * module via the `promisify` helper.
  *
@@ -15,7 +15,7 @@
  *     short-circuits false on anything else)
  *
  * Where this is used:
- *   - auth.cts: register (initial hash), login (verify), change-password
+ *   - auth.ts: register (initial hash), login (verify), change-password
  *   - any other route that mutates `users.password_hash` directly
  */
 

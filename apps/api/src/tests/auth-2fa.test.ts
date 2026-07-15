@@ -1,5 +1,5 @@
 /**
- * Integration tests for app/server/routes/auth-2fa.cts (P0-5: 2FA).
+ * Integration tests for apps/api/src/routes/auth-2fa.ts (P0-5: 2FA).
  *
  * Mounts the router in a fresh Express app and uses supertest to
  * verify the request contract. We don't stub the auth middleware

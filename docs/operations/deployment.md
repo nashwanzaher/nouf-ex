@@ -104,8 +104,8 @@ The `deploy-prod.yml` will:
 2. **Check tag is ancestor of main** (prevent direct-to-prod commits)
 3. **Download the build artefact** from the latest successful `ci.yml` run
 4. **SSH to the production host** and upload the artefact
-5. **Atomically swap** `app/dist/` and `app/server/`
-6. **Backup the previous version** to `app/server.bak.<timestamp>` and `app/dist.bak.<timestamp>`
+5. **Atomically swap** `apps/api/dist/` and `apps/api/src/`
+6. **Backup the previous version** to `apps/api/src.bak.<timestamp>` and `apps/api/dist.bak.<timestamp>`
 7. **Wait up to 60s** for the API to come back up
 8. **Smoke check** `/api/health`, `/api/ready`, `/api/stats/home` — all must return 200
 9. **Automatic rollback** if any check fails
@@ -154,9 +154,9 @@ Vite dev server (`:8080`) proxies `/api/*` to the Express API (`:3000`). The bro
 ### Automatic (in `deploy-prod.yml`)
 
 When smoke checks fail after a deploy, the workflow:
-1. Lists the latest `app/server.bak.<ts>` and `app/dist.bak.<ts>`
-2. `rm -rf app/server && mv <bak> app/server`
-3. `rm -rf app/dist && mv <bak> app/dist`
+1. Lists the latest `apps/api/src.bak.<ts>` and `apps/api/dist.bak.<ts>`
+2. `rm -rf apps/api/src && mv <bak> apps/api/src`
+3. `rm -rf apps/api/dist && mv <bak> apps/api/dist`
 4. `docker compose restart noufex`
 5. Exits with non-zero → GitHub shows red ✗
 
@@ -170,8 +170,8 @@ ssh deploy@prod-host
 cd /opt/noufex
 
 # Option A: roll back to the immediately previous version
-LATEST=$(ls -td app/server.bak.* | head -1)
-rm -rf app/server && mv "$LATEST" app/server
+LATEST=$(ls -td apps/api/src.bak.* | head -1)
+rm -rf apps/api/src && mv "$LATEST" apps/api/src
 docker compose restart noufex
 
 # Option B: re-deploy a specific previous tag
@@ -200,7 +200,7 @@ See [monitoring.md](monitoring.md) for details (TODO).
 ## 8. Backup & restore
 
 - **Database backups**: see [backup-restore.md](backup-restore.md) (TODO)
-- **File backups**: not needed — `app/dist/` and `app/server/` are reproducible from git
+- **File backups**: not needed — `apps/api/dist/` and `apps/api/src/` are reproducible from git
 - **Logs**: shipped to external storage; not stored locally long-term
 
 ---

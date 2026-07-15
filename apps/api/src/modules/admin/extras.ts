@@ -29,8 +29,8 @@ import {
 	adminCouponUpdateSchema,
 	adminBroadcastSchema,
 	adminSettingUpdateSchema,
-} from '../lib/shared.ts';
-import { validateSettingValue } from '../lib/settings-validation.ts';
+} from '../../lib/shared.ts';
+import { validateSettingValue } from '../../lib/settings-validation.ts';
 
 export const adminExtrasRouter = Router();
 

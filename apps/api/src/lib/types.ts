@@ -15,8 +15,12 @@
  */
 
 /** The set of role strings that the auth subsystem recognises.
- *  Used by `requireRole(...allowed)` to gate route access. */
-export type AuthRole = 'customer' | 'merchant' | 'admin';
+ *  Used by `requireRole(...allowed)` to gate route access.
+ *
+ *  SECURITY (DB-CRITICAL): must match the CHECK constraint on
+ *  users.role in schema.sql: ('customer','merchant','admin','delivery_agent').
+ *  Adding a new role requires updating BOTH this type AND the SQL constraint. */
+export type AuthRole = 'customer' | 'merchant' | 'admin' | 'delivery_agent';
 
 /** Decoded payload of a signed HMAC-SHA256 Bearer token.
  *

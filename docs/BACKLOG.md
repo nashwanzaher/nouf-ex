@@ -688,7 +688,7 @@
 
 ### ج. الجودة (Code Quality)
 
-1. **God object refactor:** ✅ shared.cts تم تفكيكه إلى 15 ملف متخصص
+1. **God object refactor:** ✅ shared.ts تم تفكيكه إلى 15 ملف متخصص
    (god object refactor P0-1، 2026-07-03)
 2. **E2E test coverage:** ✅ 18 phase scripts + cookbook مع 16 وصفة
 3. **CI/CD pipeline:** ✅ 7 jobs في `.github/workflows/ci.yml` (lint, typecheck, test, build, db-integration, server-boot, mcp-server)

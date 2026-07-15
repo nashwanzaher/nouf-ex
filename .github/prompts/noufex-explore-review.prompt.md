@@ -47,20 +47,20 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 
 ### المرحلة 3 — طبقة الخادم (Backend) (15 دقيقة)
 
-- اقرأ [app/server/index.ts](../../app/server/index.ts) و [app/server/middleware.ts](../../app/server/middleware.ts).
-- اقرأ [app/server/lib/shared.cts](../../app/server/lib/shared.cts).
-- استعرض **كل** المسارات في [app/server/routes/](../../app/server/routes/) (18 ملف).
+- اقرأ [apps/api/src/index.ts](../../apps/api/src/index.ts) و [apps/api/src/middleware.ts](../../apps/api/src/middleware.ts).
+- اقرأ [apps/api/src/lib/shared.ts](../../apps/api/src/lib/shared.ts).
+- استعرض **كل** المسارات في [apps/api/src/routes/](../../apps/api/src/routes/) (18 ملف).
 - حدد: نقاط النهاية، المصادقة، الصلاحيات، rate limiting، مخططات التحقق (zod).
-- اقرأ [app/server/db/pg-wrapper.cts](../../app/server/db/pg-wrapper.cts).
+- اقرأ [apps/api/src/db/pg-wrapper.ts](../../apps/api/src/db/pg-wrapper.ts).
 
 ### المرحلة 4 — الواجهة الأمامية (15 دقيقة)
 
-- اقرأ [app/src/App.tsx](../../app/src/App.tsx) و [app/src/main.tsx](../../app/src/main.tsx).
-- اقرأ [app/src/lib/api.ts](../../app/src/lib/api.ts) و [app/src/lib/utils.ts](../../app/src/lib/utils.ts).
-- اقرأ [app/src/context/AppContext.tsx](../../app/src/context/AppContext.tsx) و [CartContext.tsx](../../app/src/context/CartContext.tsx).
-- اقرأ [app/src/hooks/useApi.ts](../../app/src/hooks/useApi.ts).
-- استعرض [app/src/pages/](../../app/src/pages/) بالكامل (admin, auth, customer, seller, Home).
-- اقرأ [app/src/i18n/](../../app/src/i18n/) (ar.json / en.json / zh.json) — لاحظ النواقص.
+- اقرأ [apps/web/src/App.tsx](../../apps/web/src/App.tsx) و [apps/web/src/main.tsx](../../apps/web/src/main.tsx).
+- اقرأ [apps/web/src/lib/api.ts](../../apps/web/src/lib/api.ts) و [apps/web/src/lib/utils.ts](../../apps/web/src/lib/utils.ts).
+- اقرأ [apps/web/src/context/AppContext.tsx](../../apps/web/src/context/AppContext.tsx) و [CartContext.tsx](../../apps/web/src/context/CartContext.tsx).
+- اقرأ [apps/web/src/hooks/useApi.ts](../../apps/web/src/hooks/useApi.ts).
+- استعرض [apps/web/src/pages/](../../apps/web/src/pages/) بالكامل (admin, auth, customer, seller, Home).
+- اقرأ [apps/web/src/i18n/](../../apps/web/src/i18n/) (ar.json / en.json / zh.json) — لاحظ النواقص.
 
 ### المرحلة 5 — الجودة والمخاطر (10 دقائق)
 
@@ -128,12 +128,12 @@ tools: ['codebase', 'usages', 'problems', 'changes']
 
 | الطبقة            | الملف الأهم                                                  |
 | ----------------- | ------------------------------------------------------------ |
-| نقطة دخول الخادم  | [app/server/index.ts](../../app/server/index.ts)             |
-| نقطة دخول الواجهة | [app/src/App.tsx](../../app/src/App.tsx)                     |
+| نقطة دخول الخادم  | [apps/api/src/index.ts](../../apps/api/src/index.ts)             |
+| نقطة دخول الواجهة | [apps/web/src/App.tsx](../../apps/web/src/App.tsx)                     |
 | Schema كامل       | [database/schema.sql](../../database/schema.sql)             |
 | Schema إضافي      | [database/schema-extra.sql](../../database/schema-extra.sql) |
-| Middleware        | [app/server/middleware.ts](../../app/server/middleware.ts)   |
-| API client        | [app/src/lib/api/client.ts](../../app/src/lib/api/client.ts) |
+| Middleware        | [apps/api/src/middleware.ts](../../apps/api/src/middleware.ts)   |
+| API client        | [apps/web/src/lib/api/client.ts](../../apps/web/src/lib/api/client.ts) |
 | Roadmap           | [docs/planning/REMEDIATION_ROADMAP_2026-Q3.md](../../docs/planning/REMEDIATION_ROADMAP_2026-Q3.md) |
 | معمارية           | [docs/architecture/overview.md](../../docs/architecture/overview.md) |
 | اختبارات          | [docs/testing/README.md](../../docs/testing/README.md) |

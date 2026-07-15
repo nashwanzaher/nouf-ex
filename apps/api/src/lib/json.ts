@@ -1,5 +1,5 @@
 /**
- * JSON-typed DB column helpers, extracted from `shared.cts` as
+ * JSON-typed DB column helpers, extracted from `shared.ts` as
  * part of the P0-1 god object refactor (Phase 6, 2026-07-04).
  *
  * Postgres `JSONB` and `TEXT[]` columns are returned to JS as

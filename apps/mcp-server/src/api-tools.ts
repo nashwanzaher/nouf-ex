@@ -1,7 +1,7 @@
 /**
  * API introspection tools for the Nouf-ex MCP server.
  *
- * Parses `app/server/index.ts` and extracts every Express route
+ * Parses `apps/api/src/index.ts` and extracts every Express route
  * declaration so an LLM can answer questions like
  *   "which routes require auth?"
  *   "what does GET /api/products/:id return?"
@@ -188,7 +188,7 @@ export function buildApiTools(ctx: ProjectContext): ToolSpec[] {
 	const listEndpoints: ToolSpec = {
 		name: 'api_list_endpoints',
 		description:
-			'List every Express route declared in app/server/index.ts (verb, path, auth requirement, file line).',
+			'List every Express route declared in apps/api/src/index.ts (verb, path, auth requirement, file line).',
 		schema: z.object({
 			method: z
 				.string()
@@ -232,7 +232,7 @@ export function buildApiTools(ctx: ProjectContext): ToolSpec[] {
 			if (!route) {
 				return {
 					content: [
-						{ type: 'text', text: `No endpoint ${verb} ${p} found in app/server/index.ts.` },
+						{ type: 'text', text: `No endpoint ${verb} ${p} found in apps/api/src/index.ts.` },
 					],
 				};
 			}

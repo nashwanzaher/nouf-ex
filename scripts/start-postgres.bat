@@ -1,8 +1,16 @@
 @echo off
 REM Nouf-ex — Postgres launcher
 REM Starts the local Postgres cluster and pgAdmin.
-REM The cluster data directory is at C:\Users\zaher\.noufex-pg-data (clean initdb,
-REM superuser password 656650, listening on 127.0.0.1:5435).
+REM The cluster data directory is at C:\Users\zaher\.noufex-pg-data. The
+REM superuser password is read from PG_SUPERUSER_PASSWORD in the host's
+REM environment (do not hard-code it here). Default listen port: 5435.
+
+if "%PG_SUPERUSER_PASSWORD%"=="" (
+    echo [ERR] PG_SUPERUSER_PASSWORD is not set in the environment.
+    echo        Set it before running this script, e.g.:
+    echo            setx PG_SUPERUSER_PASSWORD "your-secret"
+    exit /b 1
+)
 
 set PG_HOME=C:\Program Files\PostgreSQL\17
 set PGDATA=C:\Users\zaher\.noufex-pg-data
@@ -41,4 +49,4 @@ echo Connections pre-configured in pgAdmin:
 echo   Server: Nouf-ex (local)
 echo   Host:   127.0.0.1:5435
 echo   DB:     noufex_db
-echo   User:   postgres / 656650
+echo   User:   postgres / ^<set via PG_SUPERUSER_PASSWORD^>

@@ -73,9 +73,9 @@
 		{
 			"label": "🧱 Apply Schema + Seed (db:setup)",
 			"type": "shell",
-			"command": "npm run db:setup",
+			"command": "node scripts/db/db-setup.cjs",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [],
 			"presentation": {
@@ -84,11 +84,11 @@
 			}
 		},
 		{
-			"label": "📦 Install Dependencies (app/)",
+			"label": "📦 Install Dependencies (root)",
 			"type": "shell",
 			"command": "npm install --no-audit --no-fund",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [],
 			"presentation": {
@@ -99,9 +99,9 @@
 		{
 			"label": "📝 TypeScript Type Check",
 			"type": "shell",
-			"command": "npx tsc --noEmit -p tsconfig.app.json",
+			"command": "npm run typecheck",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [
 				"$tsc"
@@ -114,9 +114,9 @@
 		{
 			"label": "🔨 Build API Server (esbuild)",
 			"type": "shell",
-			"command": "npx esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=server/index.js --packages=external",
+			"command": "npm run build --workspace @noufex/api",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [],
 			"presentation": {
@@ -127,9 +127,9 @@
 		{
 			"label": "🎨 Build Frontend (Vite)",
 			"type": "shell",
-			"command": "npm run build",
+			"command": "npm run build --workspace @noufex/web",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [],
 			"presentation": {
@@ -142,7 +142,7 @@
 			"type": "shell",
 			"command": "npm test",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [
 				"$vitest"
@@ -161,7 +161,7 @@
 			"type": "shell",
 			"command": "npm run test:watch",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [
 				"$vitest"
@@ -177,7 +177,7 @@
 			"type": "shell",
 			"command": "npm run test:coverage",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [
 				"$vitest"
@@ -190,9 +190,9 @@
 		{
 			"label": "🧹 Lint (ESLint)",
 			"type": "shell",
-			"command": "npx eslint .",
+			"command": "npm run lint",
 			"options": {
-				"cwd": "${workspaceFolder}/app"
+				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": [
 				"$eslint-stylish"
@@ -217,7 +217,7 @@
 			"isBackground": true
 		},
 		{
-			"label": "🎨 Start Vite Dev Server (5173)",
+			"label": "🎨 Start Vite Dev Server (8080)",
 			"type": "shell",
 			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/maintenance/start-vite.bat\"",
 			"options": {
@@ -233,7 +233,7 @@
 		{
 			"label": "🧪 Test Stack (smoke)",
 			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/test-stack.ps1\"",
+			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/quality/test-stack.ps1\"",
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
@@ -274,7 +274,7 @@
 		{
 			"label": "📊 Markdownlint Stats by Rule",
 			"type": "shell",
-			"command": "powershell -ExecutionPolicy Bypass -File \"c:\\Users\\zaher\\Desktop\\nouf-ex\\scripts\\analyze-markdownlint.ps1\"",
+			"command": "powershell -ExecutionPolicy Bypass -File \"${workspaceFolder}/scripts/quality/analyze-markdownlint.ps1\"",
 			"args": [],
 			"isBackground": false,
 			"group": "test"

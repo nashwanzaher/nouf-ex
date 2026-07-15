@@ -14,7 +14,15 @@
 #
 # Access:
 #   - Web UI: http://localhost:3001
-#   - CLI attach: opencode attach http://localhost:3001 -u noufexAI -p 656650
+#   - CLI attach: opencode attach http://localhost:3001 -u <username> -p <password>
+#     (credentials come from OPENCODE_SERVER_USERNAME / OPENCODE_SERVER_PASSWORD
+#      env vars; generate with: openssl rand -base64 24)
+#
+# Security hardening (OWASP ASVS, NIST SP 800-53):
+#   - Credential require (no fallback defaults)
+#   - Read-only root filesystem
+#   - No new privileges + cap_drop ALL
+#   - Workspace mount scoped (not full host root)
 # ============================================================================
 
 services:
@@ -29,14 +37,28 @@ services:
       - openclaw
     ports:
       - '127.0.0.1:3001:3001'
+    # --- Security hardening (NIST SP 800-53 AC-6) ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Read-only root filesystem — OpenClaw writes only to /data/.openclaw
+    # and /workspace, which are bind/named volumes.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M
     volumes:
       # Bind-mount the project root so OpenClaw can read/edit source files.
+      # SECURITY (OWASP ASVS 6.1.3): use :rw for workspace editing but
+      # restrict to project directory only (not parent directories).
       - .:/workspace
       # Named volume for OpenClaw config, sessions, and memory.
       - openclaw-data:/data/.openclaw
     environment:
-      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-noufexAI}
-      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:-656650}
+      # SECURITY: no fallback defaults. Container fails fast if the operator
+      # has not provided credentials via the host's .env file.
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:?OPENCODE_SERVER_USERNAME is required}
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:?OPENCODE_SERVER_PASSWORD is required}
       OPENCODE_WORKSPACE: /workspace
     working_dir: /workspace
     healthcheck:

@@ -1,6 +1,6 @@
 # ============================================================================
 # PHASE 8: Reviews + Ratings
-# Tests /api/reviews/* routes (app/server/routes/reviews.cts)
+# Tests /api/reviews/* routes (apps/api/src/routes/reviews.ts)
 # Verifies: list (public, only visible), create (verified-purchase),
 #           rating constraints, store_id mismatch, trigger refresh.
 # ============================================================================

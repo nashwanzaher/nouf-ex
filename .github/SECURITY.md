@@ -33,7 +33,7 @@ We follow a **coordinated disclosure** model:
 
 ### What to include
 
-- **Affected component** (`apps/api/src/routes/payments.cts` etc.)
+- **Affected component** (`apps/api/src/routes/payments.ts` etc.)
 - **Attack vector** (network, authenticated, requires-physical, etc.)
 - **Steps to reproduce** — minimal `curl` snippet, screenshot, or test code
 - **Impact** — what can an attacker do, on whose data, with what privilege

@@ -34,7 +34,6 @@ import {
 // Re-use the single shared DB pool (shared.ts creates it once from
 // DATABASE_URL). Creating a second PgDb here would double the max
 // connection count and waste resources.
-import { PgDb } from './db/pg-wrapper.ts';
 import { db } from './lib/shared.ts';
 import cookieParser from 'cookie-parser';
 import {
@@ -534,10 +533,15 @@ if (__isMainModule) {
 	// after the DB pool is up but before the first request lands.
 	startAuditCleanupScheduler();
 	server = app.listen(PORT, () => {
+		// SECURITY (OWASP ASVS 7.1): Log only host:port/db, not the full
+		// connection string which may contain credentials.
+		const dbInfo = env.DB_HOST
+			? `${env.DB_HOST}:${env.DB_PORT || 5432}/${env.DB_NAME || 'noufex_db'}`
+			: 'via DATABASE_URL';
 		log.info({
 			msg: 'server_started',
 			port: PORT,
-			database: env.DATABASE_URL ? PgDb.redactUrl(env.DATABASE_URL) : 'via DB_* vars',
+			database: dbInfo,
 			static_path: STATIC_PATH,
 			env: process.env.NODE_ENV || 'development',
 		});

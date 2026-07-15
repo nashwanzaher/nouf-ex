@@ -59,10 +59,13 @@ services:
         max-size: "10m"
         max-file: "3"
     volumes:
-      # Bind-mount the project root so OpenClaw can read/edit source files.
-      # SECURITY (OWASP ASVS 6.1.3): use :rw for workspace editing but
-      # restrict to project directory only (not parent directories).
-      - .:/workspace
+      # SECURITY (OWASP ASVS 6.1.3): Mount only specific subdirectories
+      # needed for code editing, not the full project root which includes
+      # .env, .git, node_modules, and other sensitive files.
+      - ./apps:/workspace/apps
+      - ./packages:/workspace/packages
+      - ./scripts:/workspace/scripts
+      - ./docs:/workspace/docs
       # Named volume for OpenClaw config, sessions, and memory.
       - openclaw-data:/data/.openclaw
     environment:

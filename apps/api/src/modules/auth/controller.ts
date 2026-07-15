@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ErrorCodes } from '../../lib/error-codes.ts';
 import {
 	authLimiter,
+	passwordResetLimiter,
 	loginSchema,
 	passwordChangeSchema,
 	profileUpdateSchema,
@@ -25,8 +26,8 @@ export function attachAuthRoutes(router: import('express').Router) {
 	router.get('/me', requireAuth, meHandler);
 	router.patch('/me', requireAuth, updateProfileHandler);
 	router.post('/change-password', requireAuth, changePasswordHandler);
-	router.post('/forgot-password', authLimiter, forgotPasswordHandler);
-	router.post('/reset-password', authLimiter, resetPasswordHandler);
+	router.post('/forgot-password', passwordResetLimiter, forgotPasswordHandler);
+	router.post('/reset-password', passwordResetLimiter, resetPasswordHandler);
 }
 
 async function registerHandler(req: Request, res: Response) {

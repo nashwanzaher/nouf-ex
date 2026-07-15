@@ -91,3 +91,14 @@ export function rateLimit(windowMs: number, max: number, bucket = 'global') {
  *   proxy; the DB-backed counter is shared across workers.
  */
 export const authLimiter = rateLimit(15 * 60 * 1000, 10, 'auth');
+
+/**
+ * Pre-configured limiter for password reset endpoints.
+ * 3 attempts per hour per IP — stricter than general auth to prevent
+ * password reset abuse.
+ *
+ * SECURITY (OWASP ASVS 2.5.1, NIST SP 800-53 AC-7):
+ *   Password reset is a sensitive operation that should be heavily
+ *   rate-limited to prevent account enumeration and abuse.
+ */
+export const passwordResetLimiter = rateLimit(60 * 60 * 1000, 3, 'password_reset');

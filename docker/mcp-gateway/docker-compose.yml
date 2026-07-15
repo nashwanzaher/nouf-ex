@@ -24,6 +24,7 @@
 #   - Log rotation configured
 #   - Container labels for metadata
 #   - Pinned image digest for production
+#   - Dedicated network isolation
 # ============================================================================
 services:
   mcp-gateway:
@@ -64,15 +65,9 @@ services:
         max-file: "3"
     # --- Environment ---
     # SECURITY (OWASP ASVS 6.2.1, NIST SP 800-53 IA-5):
-    # The gateway only needs DATABASE_URL from the root .env. Other
-    # sensitive vars (AUTH_SECRET, POSTGRES_PASSWORD, etc.) are not
-    # passed because Docker Compose only forwards vars that are
-    # referenced in the service definition. The gateway's env section
-    # below only references DATABASE_URL, DB_HOST, DB_PORT, DB_NAME,
-    # DB_USER, DB_PASSWORD — so those are the only ones forwarded.
-    env_file:
-      - path: ../../.env
-        required: false
+    # Only pass the variables the gateway needs. The root .env file
+    # contains AUTH_SECRET and other sensitive vars that the gateway
+    # doesn't need.
     environment:
       # Tell the gateway where to find the project-scoped catalog.
       MCP_CATALOG_PATHS: "/etc/docker/mcp/catalog.yaml:/catalogs/noufex.yaml"
@@ -80,6 +75,8 @@ services:
       GATEWAY_TRANSPORT: 'sse'
       LOG_LEVEL: 'info'
       NODE_ENV: 'production'
+      # Database connection - constructed from individual vars
+      DATABASE_URL: postgresql://${DB_USER:-noufex_app}:${DB_PASSWORD}@host.docker.internal:${DB_PORT:-5432}/${DB_NAME:-noufex_db}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     volumes:

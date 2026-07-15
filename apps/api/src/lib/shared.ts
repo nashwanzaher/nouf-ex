@@ -66,7 +66,7 @@ export const db = new PgDb(_databaseUrl);
 // is actually invoked on a request — past module-load time —
 // so the cycle never becomes a real problem.
 // ═══════════════════════════════════════════════════════════
-export { authLimiter, rateLimit } from './ratelimit.js';
+export { authLimiter, passwordResetLimiter, rateLimit } from './ratelimit.js';
 
 // ═══════════════════════════════════════════════════════════
 // CSRF protection (P0, 2026-07-12) — exported so `index.ts` can

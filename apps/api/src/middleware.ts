@@ -182,11 +182,22 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	// when the project adopts a new image CDN. The env-overridable
 	// pattern lets deployments add custom CDNs without code
 	// changes — same as ALLOWED_ORIGINS.
+	// SECURITY (OWASP ASVS 9.1.2): CSP img-src allows images from
+	// trusted CDNs plus data: and blob: for inline assets.
+	// In development, also allow localhost for local image servers.
 	const ALLOWED_IMG_HOSTS = (process.env.CSP_IMG_HOSTS ?? 'cdn.nouf-ex.com,images.nouf-ex.com,fonts.gstatic.com')
 		.split(',')
 		.map((h) => h.trim())
 		.filter(Boolean);
-	const ALLOWED_CONNECT_HOSTS = (process.env.CSP_CONNECT_HOSTS ?? 'wss://api.nouf-ex.com,https://api.nouf-ex.com')
+	// SECURITY (OWASP ASVS 9.1.2): CSP connect-src must include
+	// localhost in development for API calls when served through
+	// the API (not Vite proxy). In production, only the official
+	// API host is allowed.
+	const isDev = process.env.NODE_ENV !== 'production';
+	const defaultConnectHosts = isDev
+		? 'http://localhost:3000,ws://localhost:3000,wss://api.nouf-ex.com,https://api.nouf-ex.com'
+		: 'wss://api.nouf-ex.com,https://api.nouf-ex.com';
+	const ALLOWED_CONNECT_HOSTS = (process.env.CSP_CONNECT_HOSTS ?? defaultConnectHosts)
 		.split(',')
 		.map((h) => h.trim())
 		.filter(Boolean);
@@ -963,6 +974,7 @@ const envSchema = zod.object({
 	DB_USER: zod.string().optional(),
 	DB_PASSWORD: zod.string().optional(),
 	DB_SSL: zod.enum(['true', 'false']).default('false'),
+	DB_SSL_REJECT_UNAUTHORIZED: zod.enum(['true', 'false']).default('true'),
 	ALLOWED_ORIGINS: zod.string().default('http://localhost:3000,http://localhost:5173'),
 	STATIC_PATH: zod.string().optional(),
 	SERVE_STATIC: zod.enum(['true', 'false']).default('true'),

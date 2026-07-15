@@ -6,7 +6,7 @@
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": ["dist/**", ".next/**"]
+			"outputs": ["dist/**"]
 		},
 		"typecheck": {
 			"dependsOn": ["^build"]

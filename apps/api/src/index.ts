@@ -61,6 +61,7 @@ import { sellerRouter } from './modules/seller/index.ts';
 import { shippingRouter } from './modules/shipping/index.ts';
 import { statsRouter } from './modules/stats/index.ts';
 import { storeFollowersRouter } from './modules/store-followers/index.ts';
+import { uploadsRouter } from './modules/uploads/index.ts';
 import { wishlistRouter } from './modules/wishlist/index.ts';
 
 // Note: `import 'dotenv/config'` above already loaded .env.
@@ -394,6 +395,7 @@ app.use('/api/stats', cacheControl(30, statsRouter)); // stats = 30s edge cache
 app.use('/api/shipping', cacheControl(300, shippingRouter)); // shipping = 5min
 app.use('/api/store-followers', storeFollowersRouter);
 app.use('/api/addresses', addressesRouter);
+app.use('/api/uploads', uploadsRouter);
 
 // ═══════════════════════════════════════════════════════════
 // STATIC FILES (Production SPA fallback)
@@ -404,6 +406,10 @@ if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true'
 	// can inject the CSP nonce). The `index: false` flag stops express.static
 	// from serving index.html for "/" automatically.
 	app.use(express.static(STATIC_PATH, { index: false }));
+
+	// Serve uploaded files
+	const uploadsDir = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads');
+	app.use('/uploads', express.static(uploadsDir));
 
 	app.get('/{*splat}', (req: Request, res: Response, next: NextFunction) => {
 		if (req.path.startsWith('/api/')) return next();

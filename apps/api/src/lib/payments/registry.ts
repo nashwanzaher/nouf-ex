@@ -2,9 +2,9 @@
 // Payment provider registry
 // =============================================================================
 // Selects a PaymentProvider for a given method. When a real provider
-// (Stripe / Paymob / Alipay / WeChat Pay) is configured AND its env vars
-// are present, it wins. Otherwise the stub provider is used so the rest of
-// the app still works end-to-end during development.
+// (Stripe / Paymob / Alipay / WeChat Pay / Yemeni wallets) is configured
+// AND its env vars are present, it wins. Otherwise the stub provider is
+// used so the rest of the app still works end-to-end during development.
 //
 // Methods that have NO provider registered at all (wallet, bank_transfer,
 // card) return null — the caller treats that as "this method cannot be
@@ -16,14 +16,25 @@ import { stripeProvider } from './stripe.ts';
 import { paymobProvider } from './paymob.ts';
 import { alipayProvider } from './alipay.ts';
 import { wechatPayProvider } from './wechat-pay.ts';
+import { jibProvider } from './jib.ts';
+import { alkarimiProvider } from './alkarimi.ts';
+import { jawaliProvider } from './jawali.ts';
+import { flooskProvider } from './floosk.ts';
+import { yemenWalletProvider } from './yemen-wallet.ts';
 import type { PaymentMethod, PaymentProvider } from './types.ts';
 
 const REGISTRY: Record<PaymentMethod, PaymentProvider | null> = {
-	// Real providers — only active when env keys are configured.
+	// International providers — only active when env keys are configured.
 	stripe: stripeProvider,
 	paymob: paymobProvider,
 	alipay: alipayProvider,
 	wechat_pay: wechatPayProvider,
+	// Yemeni wallet providers — only active when env keys are configured.
+	jib: jibProvider,
+	alkarimi: alkarimiProvider,
+	jawali: jawaliProvider,
+	floosk: flooskProvider,
+	yemen_wallet: yemenWalletProvider,
 	// Offline / cash methods — never go through a network provider.
 	// They are handled directly by the payments route (record + wait
 	// for admin confirmation).
@@ -32,6 +43,12 @@ const REGISTRY: Record<PaymentMethod, PaymentProvider | null> = {
 	wallet: null,
 	bank_transfer: null,
 };
+
+/** Methods that have a real network provider (not null, not stub). */
+const PROVIDER_METHODS: PaymentMethod[] = [
+	'stripe', 'paymob', 'alipay', 'wechat_pay',
+	'jib', 'alkarimi', 'jawali', 'floosk', 'yemen_wallet',
+];
 
 /**
  * Returns the provider that should handle `method`. Falls back to the
@@ -55,7 +72,7 @@ export function selectProvider(method: PaymentMethod): PaymentProvider | null {
 
 /** True if the method has any provider (real or stub) wired in. */
 export function hasProvider(method: PaymentMethod): boolean {
-	return method === 'stripe' || method === 'paymob' || method === 'alipay' || method === 'wechat_pay';
+	return PROVIDER_METHODS.includes(method);
 }
 
 /** Surface configured providers for /api/payments/methods (admin UI). */
@@ -64,7 +81,26 @@ export function listProviders(): Array<{
 	displayName: string;
 	live: boolean;
 }> {
-	return (['stripe', 'paymob', 'alipay', 'wechat_pay'] as PaymentMethod[]).map((m) => ({
+	return PROVIDER_METHODS.map((m) => ({
+		method: m,
+		displayName: REGISTRY[m]!.displayName,
+		live: REGISTRY[m]!.isConfigured,
+	}));
+}
+
+/** Get all available payment methods (including offline). */
+export function getAllPaymentMethods(): PaymentMethod[] {
+	return Object.keys(REGISTRY) as PaymentMethod[];
+}
+
+/** Get Yemeni wallet providers only. */
+export function getYemeniProviders(): Array<{
+	method: PaymentMethod;
+	displayName: string;
+	live: boolean;
+}> {
+	const yemeniMethods: PaymentMethod[] = ['jib', 'alkarimi', 'jawali', 'floosk', 'yemen_wallet'];
+	return yemeniMethods.map((m) => ({
 		method: m,
 		displayName: REGISTRY[m]!.displayName,
 		live: REGISTRY[m]!.isConfigured,

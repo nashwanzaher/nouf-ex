@@ -329,7 +329,9 @@ app.get('/api/ready', healthLimiter, async (_req: Request, res: Response) => {
 	});
 });
 
-// Background sweeper — evict expired rate-limit + used_jti rows every minute
+// Background sweeper — evict expired rate-limit + used_jti rows every minute.
+// Jitter prevents multiple replicas from sweeping at the same instant.
+const SWEEP_INTERVAL_MS = 60_000 + Math.random() * 10_000; // 60-70s jitter
 setInterval(async () => {
 	try {
 		const r = (await db.prepare('SELECT cleanup_rate_limits() AS n').get()) as
@@ -343,7 +345,7 @@ setInterval(async () => {
 		// have dropped the cleanup functions.
 		log.warn({ msg: 'background_sweeper_error', error: (err as Error).message });
 	}
-}, 60 * 1000).unref();
+}, SWEEP_INTERVAL_MS).unref();
 
 // ── Router mounts ─────────────────────────────────────────────────────────
 

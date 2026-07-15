@@ -14,12 +14,13 @@
 # via the `extra_hosts` block at the bottom.
 #
 # Security hardening (OWASP ASVS, NIST SP 800-53, 12-Factor App):
+#   - Dedicated network isolation (AC-3, ASVS 4.1.1)
 #   - Read-only root filesystem (AC-6, ASVS 4.1.1)
 #   - No new privileges (AC-6.1, AC-6.2)
 #   - All capabilities dropped (least privilege)
 #   - tmpfs for writable paths
 #   - Graceful shutdown (SIGTERM with 30s grace period)
-#   - DB credentials via Docker secrets (IA-5)
+#   - DB credentials via .env file (IA-5)
 # ============================================================================
 services:
   noufex:
@@ -48,6 +49,11 @@ services:
     tmpfs:
       - /tmp:size=64M
       - /app/tmp:size=32M
+    # --- Network isolation (OWASP ASVS 4.1.1, NIST AC-3) ---
+    # Dedicated network prevents other containers from reaching the API.
+    # Only the host port 127.0.0.1:3000 is exposed externally.
+    networks:
+      - noufex-internal
     # --- Environment ---
     env_file:
       - .env
@@ -87,3 +93,11 @@ services:
       timeout: 10s
       start_period: 20s
       retries: 3
+
+# --- Dedicated network for the API service ---
+# Prevents other containers on the default bridge from reaching the API.
+# Only the host port 127.0.0.1:3000 is exposed externally.
+networks:
+  noufex-internal:
+    name: noufex-internal
+    driver: bridge

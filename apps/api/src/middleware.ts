@@ -103,6 +103,11 @@ export const securityHeaders: RequestHandler = (_req, res, next) => {
 	res.setHeader('X-Frame-Options', 'DENY');
 	res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 	res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+	// SECURITY (OWASP ASVS 9.1.2): disable legacy XSS auditor.
+	// Modern browsers have deprecated X-XSS-Protection, but setting
+	// it to '0' explicitly disables the legacy auditor which can be
+	// exploited. This is the recommended value per OWASP.
+	res.setHeader('X-XSS-Protection', '0');
 	// SECURITY (L-5, 2026-07-02): expanded Permissions-Policy.
 	// The previous 3-capability denylist left powerful APIs
 	// (payment, USB, MIDI, screen-wake-lock, serial, bluetooth,
@@ -961,7 +966,7 @@ const envSchema = zod.object({
 	ALLOWED_ORIGINS: zod.string().default('http://localhost:3000,http://localhost:5173'),
 	STATIC_PATH: zod.string().optional(),
 	SERVE_STATIC: zod.enum(['true', 'false']).default('true'),
-	AUTH_SECRET: zod.string().optional(),
+	AUTH_SECRET: zod.string().min(32, 'AUTH_SECRET must be at least 32 characters'),
 	LOG_LEVEL: zod.enum(['debug', 'info', 'warn', 'error']).default('info'),
 	TRUST_PROXY: zod.string().optional(),
 });

@@ -23,6 +23,7 @@ wait_for_db() {
   local port="${DB_PORT:-5432}"
   local start=$(date +%s)
   local timeout=60
+  local delay=1
 
   while true; do
     local now=$(date +%s)
@@ -55,7 +56,10 @@ wait_for_db() {
       fi
     fi
 
-    sleep 1
+    # Exponential backoff: 1s, 2s, 4s, 5s (capped)
+    sleep $delay
+    delay=$((delay * 2))
+    if [ "$delay" -gt 5 ]; then delay=5; fi
   done
 }
 

@@ -1000,9 +1000,9 @@ format on-disk: 'scrypt$<saltB64>$<keyB64>'
 | `roles.sql` | noufex_owner, noufex_app, noufex_readonly + GRANTs — 170 سطر |
 | `seed.sql` | 10 users + 18 categories + 7 stores + 24 products + 8 orders + ... — 706 سطر |
 
-**Migrations مرقّمة `0001_baseline.sql` ... `0031_delivery_agent_tables.sql`** تُطبَّق عبر `npm run db:setup`.
+**Migrations مرقّمة `0001_baseline.sql` ... `0035_yemeni_payment_methods.sql`** تُطبَّق عبر `npm run db:setup`.
 
-### 5.2 الجداول الـ 34 (موزعة على 7 ملفات SQL + 32 migration):
+### 5.2 الجداول الـ 34 (موزعة على 7 ملفات SQL + 35 migration):
 
 **المستخدمون والمصادقة:**
 - `users` (id, email CITEXT, password_hash, full_name, phone, role, status, is_verified, two_factor_enabled, preferred_language, gender, token_version, last_login, deleted_at, ...)
@@ -1119,7 +1119,7 @@ ro_tables := ['admin_audit_log','inventory_log','transactions','search_logs'];
 - ahmed@gmail.com / customer123
 - fatima@spice-yemen.com / merchant123
 
-### 5.8 Migrations التفصيلية (30 migration):
+### 5.8 Migrations التفصيلية (35 migration):
 
 | # | الوصف | الملفات الرئيسية |
 |---|---|---|
@@ -1547,10 +1547,10 @@ TRUST_PROXY=
 | القياس | القيمة | كيف تم التحقق |
 |---|---|---|
 | Frontend features | 13 | `apps/web/src/features/` |
-| Backend modules | 19 | `apps/api/src/modules/` |
+| Backend modules | 23 | `apps/api/src/modules/` |
 | Routes in App.tsx | 33 | `grep -c "lazyPage" apps/web/src/App.tsx` |
 | SQL base files | 7 | `ls packages/db/*.sql` |
-| Migrations | **32** | `ls packages/db/migrations/` |
+| Migrations | **35** | `ls packages/db/migrations/` |
 | DB tables | **34** | `grep -r "CREATE TABLE" packages/db/*.sql packages/db/migrations/*.sql` |
 | PL/pgSQL functions (في functions.sql) | 8 | `grep -c "CREATE OR REPLACE FUNCTION" packages/db/functions.sql` |
 | PL/pgSQL functions (في migrations) | +6 | `admin_set_app_setting`, `cleanup_audit_logs`, `consume_rate_limit`, `cleanup_rate_limits`, `cleanup_used_jtis`, `write_audit_log` |
@@ -1567,7 +1567,7 @@ TRUST_PROXY=
 | Frontend components (shared) | 12+ | `Layout, Navbar, BottomNav, Footer, ErrorBoundary, Toast, ProtectedRoute, Skeletons, ProductImage` |
 | shadcn/ui primitives | 10 | avatar, badge, button, card, dialog, input, label, separator, switch, tabs, textarea |
 | **Frontend custom hooks** | **30+** | `useDataHook + useProducts/useStores/useHomeStats/useAdmin*/...` |
-| **Backend tests (Vitest)** | **35** | في `apps/api/src/tests/` |
+| **Backend tests (Vitest)** | **36** | في `apps/api/src/tests/` |
 | **Frontend tests (Vitest)** | **38** | في `apps/web/src/__tests__/` + components/hooks/lib/... |
 | **E2E phase scripts** | **19** | `apps/e2e/e2e/phase*.ps1` |
 | **Agent skills** | **20** | `.github/skills/` |

@@ -219,11 +219,10 @@ export { API_BASE };
 // Re-export the frontend-mirrored catalog so call sites can do:
 //   import { ErrorCodes, isErrorCode } from '@/lib/api';
 // The mirror is in `./error-codes.ts` (see that file for the sync rule).
-// Note: we import the local `isErrorCode` under a private alias to
-// avoid the public re-export below colliding with the
-// helper in `./error-codes.ts` (it has a different signature).
-import { isErrorCode as _isErrorCode } from './error-codes';
-export { ErrorCodes, ErrorStatuses } from './error-codes';
+// The 2-arg overload (value + expected code OR array) lives there too —
+// this file only re-exports it as the single, canonical implementation
+// to avoid the historical `_isErrorCode` alias collision.
+export { ErrorCodes, ErrorStatuses, isErrorCode } from './error-codes';
 
 // ─── Error helpers (R-15 follow-up §50) ──────────────────
 // These let call sites branch on the stable machine-readable `code`
@@ -249,26 +248,4 @@ export { ErrorCodes, ErrorStatuses } from './error-codes';
  */
 export function isApiError(err: unknown): err is ApiError {
 	return err instanceof ApiError;
-}
-
-/**
- * Type guard: does this `unknown` (typically `err.code` on an
- * `ApiError`) match one of our known error codes? Combines well
- * with `isApiError`:
- *
- *   if (isApiError(err) && isErrorCode(err.code, ErrorCodes.NOT_FOUND)) {
- *     // narrow to `ErrorCode` here
- *   }
- *
- * The second arg can be either a single code or an array of codes:
- *
- *   if (isErrorCode(err.code, [ErrorCodes.UNAUTHORIZED, ErrorCodes.FORBIDDEN])) { ... }
- */
-export function isErrorCode(
-	value: unknown,
-	expected: string | readonly string[],
-): boolean {
-	if (!_isErrorCode(value)) return false;
-	if (typeof expected === 'string') return value === expected;
-	return (expected as readonly string[]).includes(value);
 }

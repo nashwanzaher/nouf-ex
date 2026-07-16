@@ -47,7 +47,7 @@ A **Taobao-inspired** e-commerce platform designed for the Yemeni & Middle Easte
 | **PWA** | vite-plugin-pwa + Workbox | 1.3.0 |
 | **Charts** | recharts | 2.15.4 |
 | **Animation** | framer-motion + gsap | 12.40 / 3.15 |
-| **Container** | Docker (node:20-alpine + tini) | — |
+| **Container** | Docker (node:20.19-alpine + tini) | — |
 | **Tests** | Vitest + Supertest + axe-core | 4.1.9 |
 
 ---
@@ -367,10 +367,10 @@ npm run dev
 
 | Stage | Base | Output |
 |---|---|---|
-| 1. `deps` | node:20-alpine | `/build/node_modules` |
-| 2. `api-build` | node:20-alpine | `apps/api/dist/index.js` (esbuild ESM) |
-| 3. `web-build` | node:20-alpine | `apps/web/dist/` (vite) |
-| 4. `runtime` | node:20-alpine + tini | الصورة النهائية |
+| 1. `deps` | node:20.19-alpine | `/build/node_modules` |
+| 2. `api-build` | node:20.19-alpine | `apps/api/dist/index.js` (esbuild ESM) |
+| 3. `web-build` | node:20.19-alpine | `apps/web/dist/` (vite) |
+| 4. `runtime` | node:20.19-alpine + tini | الصورة النهائية |
 
 ### docker-compose.yml:
 - `noufex` service → `:3000`
@@ -561,7 +561,7 @@ Conventional Commits مطلوبة لكل commit. release-please يتولى versi
   "applicationCategory": "BusinessApplication",
   "applicationSubCategory": "E-commerce Marketplace",
   "operatingSystem": "Cross-platform (Node.js 20.18+, PostgreSQL 17)",
-  "softwareRequirements": "Node.js >= 20.18.0, npm >= 10.0.0, PostgreSQL 17",
+  "softwareRequirements": "Node.js ^20.19.0 || >=22.12.0, npm >= 10.0.0, PostgreSQL 17",
   "programmingLanguage": ["TypeScript", "SQL", "PL/pgSQL"],
   "runtimePlatform": ["Node.js", "Vite", "Express"],
   "license": "https://github.com/nashwanzaher/nouf-ex/blob/main/LICENSE",

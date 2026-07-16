@@ -141,11 +141,11 @@ export default function ProductDetail() {
 			type: 'ADD',
 			payload: {
 				productId: String(product.id),
-				name: product.name_ar,
+				name: getName(product),
 				price: product.price,
 				quantity: qty,
 				image: product.main_image || '',
-				merchantName: store?.store_name || '',
+				merchantName: getStoreName(store),
 			},
 		});
 		setAdded(true);

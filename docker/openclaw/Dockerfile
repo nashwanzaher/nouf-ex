@@ -14,7 +14,7 @@
 #   - VOLUME declarations moved to docker-compose (12-Factor: processes)
 # ============================================================================
 
-FROM node:20-alpine AS build
+FROM node:20.19-alpine AS build
 
 # opencode-ai postinstall downloads a native binary; allow it to run.
 ENV npm_config_loglevel=error \

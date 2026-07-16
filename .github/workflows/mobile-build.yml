@@ -1,0 +1,78 @@
+# ============================================================================
+# Noufex — Mobile build (Expo / EAS)
+# ----------------------------------------------------------------------------
+# Phase 5 of the competitive-architecture-analysis. Triggers EAS Build
+# for the preview profile on every push to develop, and the production
+# profile on tagged releases.
+#
+# The preview job is the smoke check — the production job is gated on
+# the main branch and a `v*` tag (see the release workflow).
+# ============================================================================
+
+name: Mobile Build
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/shared/**'
+      - '.github/workflows/mobile-build.yml'
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/shared/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: Expo preview build (both platforms)
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build preview (iOS + Android)
+        run: |
+          cd apps/mobile
+          npx eas build --profile preview --platform all --non-interactive --no-wait
+
+  production:
+    name: Expo production build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build production (iOS + Android)
+        run: |
+          cd apps/mobile
+          npx eas build --profile production --platform all --non-interactive --no-wait
+          echo "EAS builds submitted. Track them at https://expo.dev/builds"

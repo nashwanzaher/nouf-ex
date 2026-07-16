@@ -68,7 +68,7 @@ export default function SellerAnalytics() {
 					bg: 'bg-[rgba(16,185,129,0.1)]',
 					label: t('seller.statRevenue', 'Total Revenue'),
 					value: analytics?.total_revenue ? formatMoney(analytics.total_revenue) : '٠',
-					suffix: ' ر.ي',
+					suffix: '',
 				},
 				{
 					icon: ShoppingBag,
@@ -86,7 +86,7 @@ export default function SellerAnalytics() {
 					value: analytics?.total_revenue && analytics?.total_orders
 						? formatMoney(Math.round(analytics.total_revenue / analytics.total_orders))
 						: '٠',
-					suffix: ' ر.ي',
+					suffix: '',
 				},
 				{
 					icon: Users,

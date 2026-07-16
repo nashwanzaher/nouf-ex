@@ -375,7 +375,7 @@ export function AddProductDialog({ open, onClose, onSaved }: AddProductDialogPro
 											)}
 										/>
 										<span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] text-[#6B6B6B] font-cairo">
-											ر.ي
+											{t('product.currency', 'ر.ي')}
 										</span>
 									</div>
 									{errors.price && (

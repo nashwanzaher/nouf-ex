@@ -29,7 +29,7 @@ Nouf-ex is a **B2B/B2C e-commerce marketplace** targeting **Yemen and the Middle
 | **PWA** | vite-plugin-pwa + Workbox | 1.3.0 |
 | **Charts** | recharts | 2.15.4 |
 | **Tests** | Vitest + Supertest + axe-core | 4.1.9 |
-| **Container** | Docker (node:20-alpine + tini) | — |
+| **Container** | Docker (node:20.19-alpine + tini) | — |
 | **AI tooling** | MCP server + Docker MCP Gateway | 1.0.4 |
 
 ---

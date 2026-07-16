@@ -1,27 +1,21 @@
 # ============================================================================
-# Noufex — API container (monorepo build, connects to external PostgreSQL 17).
+# Noufex — Full platform stack (API + Redis + RabbitMQ + Elasticsearch).
 # ----------------------------------------------------------------------------
 # Yemen & Middle East B2B/B2C e-commerce marketplace platform.
 # The Postgres server is NOT created here. It must already exist on the host
 # (or on another reachable network) and contain the `noufex_db` database.
 #
-# The container connects as the least-privilege role `noufex_app`. The
-# `postgres` superuser is only used to run `npm run db:setup` once on the
-# host (creates the role + schema + seed).
+# The API connects as the least-privilege role `noufex_app`. The
+# `postgres` superuser is only used to run `npm run db:setup` once on
+# the host (creates the role + schema + seed).
 #
-# All secrets come from the host's .env file (gitignored) so the placeholder
-# `CHANGE_ME_APP` never ships to a running stack. The defaults below match
-# Docker Desktop; on Linux the host gateway maps to `host.docker.internal`
-# via the `extra_hosts` block at the bottom.
+# Companion services (Phase 1-3, competitive-architecture-analysis):
+#   - redis:        hot data cache + session cache + rate-limit fast path
+#   - rabbitmq:     async message queue (notifications, search indexer, analytics)
+#   - elasticsearch:advanced search with multi-language analyzers + faceted
 #
-# Security hardening (OWASP ASVS, NIST SP 800-53, 12-Factor App):
-#   - Dedicated network isolation (AC-3, ASVS 4.1.1)
-#   - Read-only root filesystem (AC-6, ASVS 4.1.1)
-#   - No new privileges (AC-6.1, AC-6.2)
-#   - All capabilities dropped (least privilege)
-#   - tmpfs for writable paths
-#   - Graceful shutdown (SIGTERM with 30s grace period)
-#   - DB credentials via .env file (IA-5)
+# Each companion has its own healthcheck, dedicated network, resource
+# limits and security hardening that mirrors the API container.
 # ============================================================================
 services:
   noufex:
@@ -41,7 +35,6 @@ services:
           cpus: '1.0'
         reservations:
           memory: 128M
-    # --- Security hardening (NIST SP 800-53 AC-6, OWASP ASVS 4.1.1) ---
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -51,66 +44,295 @@ services:
       - /tmp:size=64M
       - /app/tmp:size=32M
       - /app/uploads:size=256M
-    # --- Container labels ---
     labels:
       - "com.noufex.service=api"
       - "com.noufex.version=latest"
       - "com.noufex.environment=production"
-    # --- Log rotation ---
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
-    # --- Network isolation (OWASP ASVS 4.1.1, NIST AC-3) ---
-    # Dedicated network prevents other containers from reaching the API.
-    # Only the host port 127.0.0.1:3000 is exposed externally.
     networks:
       - noufex-internal
-    # --- Environment ---
     env_file:
       - .env
     environment:
       NODE_ENV: production
       API_PORT: '3000'
       HOST: 0.0.0.0
-      # Force the DB host to host.docker.internal so the container reaches
-      # the host's Postgres via the `extra_hosts` mapping below, regardless
-      # of the value the developer has set in .env for local dev (which is
-      # usually 127.0.0.1 — that resolves to the container itself!).
       DB_HOST: host.docker.internal
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-noufex_db}
       DB_USER: ${DB_USER:-noufex_app}
       DB_PASSWORD: ${DB_PASSWORD}
-      # Construct DATABASE_URL from individual vars to avoid embedding
-      # plaintext passwords in the compose file. The host's .env file
-      # may contain a stale DATABASE_URL for local dev — we override it
-      # here so the container always uses the correct host.docker.internal.
       DATABASE_URL: postgresql://${DB_USER:-noufex_app}:${DB_PASSWORD}@host.docker.internal:${DB_PORT:-5432}/${DB_NAME:-noufex_db}
       DB_SSL: ${DB_SSL:-true}
       SERVE_STATIC: 'true'
-      # SPA bundle ships at apps/web/dist in the new monorepo layout.
       STATIC_PATH: /app/apps/web/dist
       AUTH_SECRET: ${AUTH_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TRUST_PROXY: ${TRUST_PROXY:-}
+      # Phase 1
+      REDIS_URL: redis://redis:6379
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-noufex:}
+      # Phase 2
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-noufex_app}:${RABBITMQ_PASSWORD:-CHANGE_ME_RABBIT}@rabbitmq:5672/${RABBITMQ_VHOST:-noufex}
+      RABBITMQ_PREFETCH: ${RABBITMQ_PREFETCH:-10}
+      # Phase 3
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX_PREFIX: ${ELASTICSEARCH_INDEX_PREFIX:-noufex}
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     healthcheck:
       test:
         - 'CMD-SHELL'
-        - 'node -e ''import("node:http").then(h => h.get("http://localhost:3000/api/health", r => { if (r.statusCode !== 200) process.exit(1) }))'''
+        - 'node -e "import(\"node:http\").then(h => h.get(\"http://localhost:3000/api/health\", r => { if (r.statusCode !== 200) process.exit(1) }))"'
       interval: 30s
       timeout: 10s
       start_period: 20s
       retries: 3
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
 
-# --- Dedicated network for the API service ---
-# Prevents other containers on the default bridge from reaching the API.
-# Only the host port 127.0.0.1:3000 is exposed externally.
+  # ──────────────────────────────────────────────────────────────────────
+  # Phase 2 — Worker container (Tier 1.4)
+  #   Separate process for the RabbitMQ consumers so a
+  #   `docker restart noufex-api` never kills in-flight jobs.
+  #   Scale with `docker compose up --scale noufex-worker=3`.
+  # ──────────────────────────────────────────────────────────────────────
+  noufex-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: noufex-worker:latest
+    container_name: noufex-worker
+    restart: on-failure:5
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: '0.75'
+        reservations:
+          memory: 96M
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=32M
+    labels:
+      - "com.noufex.service=worker"
+      - "com.noufex.version=latest"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - noufex-internal
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-noufex_db}
+      DB_USER: ${DB_USER:-noufex_app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DATABASE_URL: postgresql://${DB_USER:-noufex_app}:${DB_PASSWORD}@host.docker.internal:${DB_PORT:-5432}/${DB_NAME:-noufex_db}
+      DB_SSL: ${DB_SSL:-true}
+      AUTH_SECRET: ${AUTH_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REDIS_URL: redis://redis:6379
+      REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-noufex:}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-noufex_app}:${RABBITMQ_PASSWORD:-CHANGE_ME_RABBIT}@rabbitmq:5672/${RABBITMQ_VHOST:-noufex}
+      RABBITMQ_PREFETCH: ${RABBITMQ_PREFETCH:-10}
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX_PREFIX: ${ELASTICSEARCH_INDEX_PREFIX:-noufex}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test:
+        - 'CMD-SHELL'
+        - 'kill -0 1'
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Phase 1 — Redis (hot data cache + session cache + rate-limit)
+  # ──────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.4-alpine
+    container_name: noufex-redis
+    restart: on-failure:5
+    command:
+      - 'redis-server'
+      - '--save'
+      - '60'
+      - '1'
+      - '--loglevel'
+      - 'warning'
+      - '--maxmemory'
+      - '256mb'
+      - '--maxmemory-policy'
+      - 'allkeys-lru'
+      - '--appendonly'
+      - 'yes'
+    networks:
+      - noufex-internal
+    deploy:
+      resources:
+        limits:
+          memory: 320M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Phase 2 — RabbitMQ (async messaging)
+  # ──────────────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: noufex-rabbitmq
+    restart: on-failure:5
+    hostname: noufex-rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-noufex_app}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-CHANGE_ME_RABBIT}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-noufex}
+      RABBITMQ_LOGS: '-'
+    networks:
+      - noufex-internal
+    ports:
+      - '127.0.0.1:15672:15672' # management UI (local only)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-log:/var/log/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Phase 3 — Elasticsearch (advanced search)
+  # ──────────────────────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: noufex-elasticsearch
+    restart: on-failure:5
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: 'false'
+      ES_JAVA_OPTS: '-Xms512m -Xmx512m'
+      cluster.name: noufex-cluster
+      bootstrap.memory_lock: 'true'
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - noufex-internal
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+          cpus: '1.0'
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=128M
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ['CMD-SHELL', "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ──────────────────────────────────────────────────────────────────────
+# Dedicated internal network — only exposes the API on host port 3000.
+# Companion services (redis, rabbitmq, elasticsearch) are reachable
+# only from containers on this network, NOT from the host directly
+# (except the RabbitMQ management UI which is bound to 127.0.0.1).
+# ──────────────────────────────────────────────────────────────────────
 networks:
   noufex-internal:
     name: noufex-internal
     driver: bridge
+
+# ──────────────────────────────────────────────────────────────────────
+# Named volumes for stateful services. Host paths can be substituted
+# for backup / migration (see ./scripts/devops for helpers).
+# ──────────────────────────────────────────────────────────────────────
+volumes:
+  redis-data:
+    name: noufex-redis-data
+  rabbitmq-data:
+    name: noufex-rabbitmq-data
+  rabbitmq-log:
+    name: noufex-rabbitmq-log
+  es-data:
+    name: noufex-es-data

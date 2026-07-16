@@ -2,7 +2,7 @@
 
 > **Format:** [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/) ·
 > **Versioning:** [Semantic Versioning 2.0.0](https://semver.org/) ·
-> **Last updated:** 2026-07-14
+> **Last updated:** 2026-07-15
 
 All notable changes to **Noufex** are documented in this file.
 
@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Security
 - **Fixed: delivery-agent module had no auth middleware on 12 routes.** Every handler called `req.user!.id` but `requireAuth` was never added to the router. Added `requireAuth` to all 12 routes (`register`, `profile`, `location`, `orders`, `dashboard`, `available-orders`, `accept`, `status`, `go-online`, `go-offline`). Found via systematic controller audit (19 modules checked → 3 missing auth, 2 legitimately public).
 - `docker-compose.yml` overrides `DATABASE_URL` inside the container to a `host.docker.internal` URL so the host's actual database password never leaves the host's `.env`.
+
+### Changed (2026-07-15 — Critical-Gap sweep)
+- **Engines bumped to satisfy Vite 7's hard requirement** (`^20.19.0 || >=22.12.0`). Every `package.json`, the root `.nvmrc` / `.node-version`, the root `Dockerfile` (4 stages), `docker/mcp-gateway/Dockerfile` (2 stages), `docker/openclaw/Dockerfile`, `.github/workflows/ci.yml` (`NODE_VERSION: '20.19'`), and `.github/workflows/link-check.yml` were updated. Closes the G7 critical gap reported in the 2026-07-15 audit.
+- **`isErrorCode` consolidation in `apps/web/src/lib/api/`.** The 2-arg ergonomic overload now lives in `error-codes.ts` as the single source of truth (overload signature `isErrorCode(value, expected)`). `client.ts` re-exports it via `export { isErrorCode } from './error-codes'`. The historical `_isErrorCode` private-alias hack has been removed. Closes the G5 critical gap; tests still pass 34/34.
+- **Audit verified that the following reported gaps are already closed in the current tree:** G1 (`+undefined` statistics — fixed via `safe-format.ts#safeNumber` + `StatsMarquee.tsx:35` fallback to `+٠`), G2 (`NaN%` — fixed via `safe-format.ts#discountPercent` / `renderPriceBlock`), G3 (`formRef` — already declared at `features/seller/components/SellerProducts.tsx:111`), G4 (378 TypeScript errors — both `apps/web` and `apps/api` and `apps/mcp-server` `tsc --noEmit` report **zero errors**), G6 (179/64 i18n missing keys — `consistency.test.ts` reports `ar.json: 1352 keys | en.json: 1352 keys | zh.json: 1352 keys`, 9/9 tests green), G8 (.env — present at the repo root), G10 (Docker Desktop — installed and on `PATH`).
+- **Backend tests still healthy: 618/622 passing (3 skipped, 1 known-flaky in `payments-router.test.ts`).** Frontend lib tests 122/122, i18n 9/9, API client+error 34/34.
 
 ### Changed
 - Frontend tests moved from 264/298 → **298/298 (100% passing)** after 11 fixes across 13 files: i18n locale sync (1352 keys per file), placeholder matchers for v2 Register/ResetPassword forms, AppProvider wrappers for a11y tests, `useServerWishlist` mock added, AppContext mock via `importOriginal` for coexistence with real `AppProvider`.

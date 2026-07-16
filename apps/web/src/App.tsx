@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SEOHead } from './components/SEOHead';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProductGridSkeleton } from './components/Skeletons';
@@ -128,6 +129,11 @@ export default function App() {
 	return (
 		<AppProvider>
 			<CartProvider>
+				<SEOHead
+					title="Noufex — Yemen & Middle East Marketplace"
+					description="B2B/B2C e-commerce marketplace connecting Yemeni merchants and customers. Buy authentic Yemeni products with Trade Assurance."
+					type="website"
+				/>
 				<Layout>
 					<ErrorBoundary>
 						<Suspense fallback={<ProductGridSkeleton count={6} />}>

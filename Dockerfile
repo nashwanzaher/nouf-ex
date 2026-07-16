@@ -22,7 +22,7 @@
 # ----------------------------------------------------------------------------
 # Stage 1: install npm dependencies (workspace-wide).
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:20.19-alpine AS deps
 
 ENV npm_config_loglevel=error \
     npm_config_fetch_timeout=1800000 \
@@ -49,7 +49,7 @@ RUN npm ci --no-audit --no-fund \
 # ----------------------------------------------------------------------------
 # Stage 2: build the Express API bundle (esbuild, ESM, external deps).
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS api-build
+FROM node:20.19-alpine AS api-build
 
 WORKDIR /build
 COPY --from=deps /build/node_modules ./node_modules
@@ -59,7 +59,7 @@ COPY apps/api/ ./apps/api/
 RUN cd /build/apps/api && npx esbuild src/index.ts \
         --bundle \
         --platform=node \
-        --target=node20 \
+        --target=node20.19 \
         --format=esm \
         --outfile=/build/apps/api/dist/index.js \
         --packages=external
@@ -67,7 +67,7 @@ RUN cd /build/apps/api && npx esbuild src/index.ts \
 # ----------------------------------------------------------------------------
 # Stage 3: build the React SPA bundle (vite, hashed assets, PWA precache).
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS web-build
+FROM node:20.19-alpine AS web-build
 
 WORKDIR /build
 COPY --from=deps /build/node_modules ./node_modules
@@ -79,7 +79,7 @@ RUN cd /build/apps/web && npx vite build
 # ----------------------------------------------------------------------------
 # Stage 4: runtime image — API + SPA + node user + tini + healthcheck.
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS runtime
+FROM node:20.19-alpine AS runtime
 
 RUN apk add --no-cache tini
 

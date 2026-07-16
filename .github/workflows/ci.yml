@@ -38,7 +38,7 @@ permissions:
 env:
   # Node version used by all jobs. Pinned to 20 to match the Dockerfile
   # and the local-dev docs.
-  NODE_VERSION: '20'
+  NODE_VERSION: '20.19'
   # Connection for the integration tests. `noufex_app` is the runtime
   # role (least privilege) so we catch schema/permission regressions.
   DB_HOST: localhost

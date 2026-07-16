@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<title>Noufex API — Documentation</title>
+	<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
+	<style>
+		body { margin: 0; padding: 0; }
+		.topbar { display: none; }
+		.swagger-ui .info { margin: 20px 0; }
+		.swagger-ui .info hgroup h1 { font-size: 28px; }
+	</style>
+</head>
+<body>
+	<div id="swagger-ui"></div>
+	<script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" crossorigin></script>
+	<script>
+		// Bootstrap Swagger UI with our OpenAPI document (loaded
+		// from /api/openapi.json). This is the standard pattern from
+		// swagger-api/swagger-ui — hosted on unpkg so we don't have
+		// to bundle a 1.5 MB asset into the API container.
+		window.onload = () => {
+			window.ui = SwaggerUIBundle({
+				url: '/api/openapi.json',
+				dom_id: '#swagger-ui',
+				deepLinking: true,
+				displayRequestDuration: true,
+				filter: true,
+				tryItOutEnabled: false, // we have CSRF — don't let
+				                       // the public doc send cookies
+				                       // to mutations
+				persistAuthorization: true,
+			});
+		};
+	</script>
+</body>
+</html>

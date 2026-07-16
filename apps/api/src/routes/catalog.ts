@@ -1,5 +1,5 @@
-/**
- * Catalog routes �?� Products, Stores, Categories.
+﻿/**
+ * Catalog routes ï؟½?ï؟½ Products, Stores, Categories.
  *
  * The three groups are the public read-mostly surface of the storefront:
  *   - Products (list, featured, deals, single with store+reviews+images)
@@ -7,7 +7,7 @@
  *   - Categories (tree with counts, single with products)
  *
  * All endpoints are public (no auth) and read-only (no writes). They
- * live together because the SQL joins them tightly �?� every product
+ * live together because the SQL joins them tightly ï؟½?ï؟½ every product
  * pulls in its store + reviews + images, and every category pulls
  * in its products. Splitting them would force the consumer to issue
  * one extra round-trip per page.
@@ -17,13 +17,20 @@
  * to `GET /api/products`).
  */
 import { Router, type Request, type Response } from 'express';
+import { cacheWrapCluster } from '../lib/cache.ts';
 import { logSearch, normalizeQuery, runSearch } from '../lib/search.ts';
 import { db, getProductWithParsedFields, log, sendError, sendSuccess } from '../lib/shared.ts';
 import * as middleware from '../middleware.ts';
 
+const CACHE_TTL_PRODUCT = 300;
+const CACHE_TTL_STORE = 300;
+const CACHE_TTL_CATEGORY = 3_600;
+const CACHE_TTL_FEATURED = 300;
+const CACHE_TTL_DEALS = 60;
+
 export const catalogRouter = Router();
 
-// ٤?٤?٤? Product helpers ٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?٤?
+// ظ¤?ظ¤?ظ¤? Product helpers ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?ظ¤?
 /** Get all product images sorted by `sort_order`. */
 const getProductImages = async (productId: number) => {
 	return db
@@ -33,7 +40,7 @@ const getProductImages = async (productId: number) => {
 
 /** Count the same WHERE clause with no LIMIT/OFFSET. Only used as a
  *  fallback when the page came back empty (so the window function
- *  has no row to attach `total_count` to) �?� in that case the
+ *  has no row to attach `total_count` to) ï؟½?ï؟½ in that case the
  *  unfiltered total must be queried separately. */
 async function countProducts(where: string[], params: (string | number)[]): Promise<number> {
 	const row = (await db
@@ -42,9 +49,9 @@ async function countProducts(where: string[], params: (string | number)[]): Prom
 	return row ? Number(row.c) : 0;
 }
 
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 // PRODUCTS
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 
 /**
  * GET /api/products
@@ -160,15 +167,20 @@ catalogRouter.get('/products', async (req: Request, res: Response) => {
 /**
  * GET /api/products/featured
  * Curated featured products (used by the homepage hero).
+ *
+ * Phase 1: cached for 5 min. Invalidated on product PATCH in the seller
+ * route via `cacheBust('catalog:featured:')`.
  */
 catalogRouter.get('/products/featured', async (_req: Request, res: Response) => {
 	try {
-		const rows = (await db
-			.prepare(
-				'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC LIMIT 10',
-			)
-			.all()) as Record<string, unknown>[];
-		const products = rows.map(getProductWithParsedFields);
+		const products = await cacheWrapCluster('catalog:featured:v1', CACHE_TTL_FEATURED, async () => {
+			const rows = (await db
+				.prepare(
+					'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC LIMIT 10',
+				)
+				.all()) as Record<string, unknown>[];
+			return rows.map(getProductWithParsedFields);
+		});
 		return sendSuccess(res, products);
 	} catch (err) {
 		return sendError(res, err);
@@ -181,12 +193,14 @@ catalogRouter.get('/products/featured', async (_req: Request, res: Response) => 
  */
 catalogRouter.get('/products/deals', async (_req: Request, res: Response) => {
 	try {
-		const rows = (await db
-			.prepare(
-				'SELECT * FROM products WHERE is_active = 1 AND deal_discount > 0 ORDER BY deal_discount DESC LIMIT 10',
-			)
-			.all()) as Record<string, unknown>[];
-		const products = rows.map(getProductWithParsedFields);
+		const products = await cacheWrapCluster('catalog:deals:v1', CACHE_TTL_DEALS, async () => {
+			const rows = (await db
+				.prepare(
+					'SELECT * FROM products WHERE is_active = 1 AND deal_discount > 0 ORDER BY deal_discount DESC LIMIT 10',
+				)
+				.all()) as Record<string, unknown>[];
+			return rows.map(getProductWithParsedFields);
+		});
 		return sendSuccess(res, products);
 	} catch (err) {
 		return sendError(res, err);
@@ -204,41 +218,50 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 			return sendError(res, 'Invalid product ID', 400, 'VALIDATION_ERROR');
 		}
 
-		const product = (await db
-			.prepare('SELECT * FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
-			.get(id)) as Record<string, unknown> | undefined;
-
-		if (!product) {
+		const cached = await cacheWrapCluster(
+			`catalog:product:${id}:v1`,
+			CACHE_TTL_PRODUCT,
+			async () => {
+				const product = (await db
+					.prepare('SELECT * FROM products WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
+					.get(id)) as Record<string, unknown> | undefined;
+				if (!product) return null;
+				const store = (await db
+					.prepare('SELECT * FROM stores WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
+					.get(product.store_id as number)) as Record<string, unknown> | undefined;
+				return { product, store };
+			},
+		);
+		if (!cached) {
 			return sendError(res, 'Product not found', 404);
 		}
 
-		// Get store info
-		const store = (await db
-			.prepare('SELECT * FROM stores WHERE id = ? AND is_active = TRUE AND deleted_at IS NULL')
-			.get(product.store_id as number)) as Record<string, unknown> | undefined;
-
-		// Get reviews (only visible �?� hidden/spam reviews are not exposed)
-		// Paginated to avoid unbounded responses for products with many reviews.
+		// Reviews are deliberately NOT cached â€” they update frequently.
 		const reviewLimit = Math.max(1, Math.min(50, Number(req.query.reviewLimit) || 20));
 		const reviewOffset = Math.max(0, Number(req.query.reviewOffset) || 0);
-		const reviews = (await db
-			.prepare(
-				`SELECT r.*, u.full_name as customer_name, u.avatar as customer_avatar
+		const [reviews, images] = await Promise.all([
+			db
+				.prepare(
+					`SELECT r.*, u.full_name as customer_name, u.avatar as customer_avatar
          FROM reviews r
          LEFT JOIN users u ON r.customer_id = u.id
          WHERE r.product_id = ? AND r.is_visible = TRUE
          ORDER BY r.created_at DESC
          LIMIT ? OFFSET ?`,
-			)
-			.all(id, reviewLimit, reviewOffset)) as Record<string, unknown>[];
+				)
+				.all(id, reviewLimit, reviewOffset) as Promise<Record<string, unknown>[]>,
+			cacheWrapCluster(
+				`catalog:product:${id}:images:v1`,
+				CACHE_TTL_PRODUCT,
+				async () => await getProductImages(id),
+			),
+		]);
 
-		// Get images
-		const images = await getProductImages(id);
-		const productParsed = getProductWithParsedFields(product);
+		const productParsed = getProductWithParsedFields(cached.product);
 
-		return sendSuccess(res, {
+return sendSuccess(res, {
 			...productParsed,
-			store,
+			store: cached.store,
 			reviews,
 			images,
 		});
@@ -247,9 +270,9 @@ catalogRouter.get('/products/:id', async (req: Request, res: Response) => {
 	}
 });
 
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 // STORES
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 
 /**
  * GET /api/stores
@@ -293,40 +316,46 @@ catalogRouter.get('/stores/:id', async (req: Request, res: Response) => {
 			return sendError(res, 'Invalid store id', 400);
 		}
 
-		const store = (await db
-			.prepare(
-				`SELECT id, owner_id, store_name, store_name_en, store_name_zh, slug,
-				        description, description_en, description_zh, logo, banner,
-				        location, governorate, trust_level, response_rate, on_time_delivery,
-				        commission_rate, rating, review_count, products_count, sales_count,
-				        followers_count, since_year, is_active, is_verified, created_at, updated_at
-				   FROM stores
-				  WHERE id = $1`,
-			)
-			.get(storeId)) as Record<string, unknown> | undefined;
-
-		if (!store) {
+		const cached = await cacheWrapCluster(
+			`catalog:store:${storeId}:v1`,
+			CACHE_TTL_STORE,
+			async () => {
+				const store = (await db
+					.prepare(
+						`SELECT id, owner_id, store_name, store_name_en, store_name_zh, slug,
+						        description, description_en, description_zh, logo, banner,
+						        location, governorate, trust_level, response_rate, on_time_delivery,
+						        commission_rate, rating, review_count, products_count, sales_count,
+						        followers_count, since_year, is_active, is_verified, created_at, updated_at
+						   FROM stores
+						  WHERE id = $1`,
+					)
+					.get(storeId)) as Record<string, unknown> | undefined;
+				if (!store) return null;
+				const products = (await db
+					.prepare(
+						`SELECT id, store_id, category_id, name_ar, name_en, name_zh, description,
+						        description_en, description_zh, price, original_price, currency,
+						        stock, moq, weight, tax_rate, is_digital, main_image, features,
+						        specifications, badges, rating, review_count, sold_count, view_count,
+						        is_active, is_featured, deal_discount, deal_ends_at, deleted_at,
+						        created_at, updated_at
+						   FROM products
+						  WHERE store_id = $1 AND is_active = 1
+						 ORDER BY created_at DESC
+						 LIMIT 100`,
+					)
+					.all(storeId)) as Record<string, unknown>[];
+				return { store, products };
+			},
+		);
+		if (!cached) {
 			return sendError(res, 'Store not found', 404);
 		}
 
-		const products = (await db
-			.prepare(
-				`SELECT id, store_id, category_id, name_ar, name_en, name_zh, description,
-				        description_en, description_zh, price, original_price, currency,
-				        stock, moq, weight, tax_rate, is_digital, main_image, features,
-				        specifications, badges, rating, review_count, sold_count, view_count,
-				        is_active, is_featured, deal_discount, deal_ends_at, deleted_at,
-				        created_at, updated_at
-				   FROM products
-				  WHERE store_id = $1 AND is_active = 1
-				 ORDER BY created_at DESC
-				 LIMIT 100`,
-			)
-			.all(storeId)) as Record<string, unknown>[];
-
 		return sendSuccess(res, {
-			...store,
-			products: products.map(getProductWithParsedFields),
+			...cached.store,
+			products: cached.products.map(getProductWithParsedFields),
 		});
 	} catch (err) {
 		log.error({ msg: 'stores/:id', request_id: req.id, error: (err as Error).message });
@@ -349,11 +378,11 @@ catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => 
 		if (!Number.isInteger(storeId) || storeId <= 0) {
 			return sendError(res, 'Invalid store ID', 400, 'VALIDATION_ERROR');
 		}
-		// R4 fix: `await` was missing �?� `.all()` returns a Promise, so
+		// R4 fix: `await` was missing ï؟½?ï؟½ `.all()` returns a Promise, so
 		// `sendSuccess` was wrapping a Promise in the success envelope
 		// and the client received `{ data: <Promise> }`. Same shape of
 		// bug as the original `wishlist` Promise-leak flagged in
-		// docs/audit/code-review-fixes-2026-06-23.md ?�1.
+		// docs/audit/code-review-fixes-2026-06-23.md ?ï؟½1.
 		const reviews = (await db
 			.prepare(
 				`SELECT r.*, u.full_name as customer_name, u.avatar as customer_avatar, p.name_en as product_name
@@ -370,34 +399,43 @@ catalogRouter.get('/stores/:id/reviews', async (req: Request, res: Response) => 
 	}
 });
 
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 // CATEGORIES
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 
 /**
  * GET /api/categories
  * Full category tree with per-category product counts (active products only).
+ *
+ * Phase 1: cached for 1 h. Categories are admin-managed and change
+ * rarely; bust via `cacheDel('catalog:categories:tree:v1')` from
+ * admin routes.
  */
 catalogRouter.get('/categories', async (_req: Request, res: Response) => {
 	try {
-		const categories = await db
-			.prepare(
-				`SELECT c.*, COUNT(p.id) as product_count
+		const categories = await cacheWrapCluster(
+			'catalog:categories:tree:v1',
+			CACHE_TTL_CATEGORY,
+			async () =>
+				db
+					.prepare(
+						`SELECT c.*, COUNT(p.id) as product_count
          FROM categories c
          LEFT JOIN products p ON c.id = p.category_id AND p.is_active = 1
          GROUP BY c.id
          ORDER BY c.sort_order ASC`,
-			)
-			.all();
+					)
+					.all(),
+		);
 		return sendSuccess(res, categories);
 	} catch (err) {
 		return sendError(res, err);
 	}
 });
 
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
-// SEARCH �?� P1-1: full-text search backend
-// ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
+// SEARCH ï؟½?ï؟½ P1-1: full-text search backend
+// ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?ï؟½ï؟½?
 
 /**
  * GET /api/search
@@ -422,7 +460,7 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
  *
  * Side effects
  *   Writes a row to `search_logs` with the query, result count, and
- *   the duration. The log is best-effort �?� a failure to insert must
+ *   the duration. The log is best-effort ï؟½?ï؟½ a failure to insert must
  *   never break the user-facing search.
  *
  * Implementation notes
@@ -432,7 +470,7 @@ catalogRouter.get('/categories', async (_req: Request, res: Response) => {
  *     plain `ts_rank` because it gives a better relevance spread on
  *     short queries like "honey" vs long queries like "spice".
  *   - The full-text match is the hard gate. A result MUST hit the
- *     FTS �?� category/price filters narrow the set further, but
+ *     FTS ï؟½?ï؟½ category/price filters narrow the set further, but
  *     they don't broaden it. This is the right behaviour for a
  *     search engine: returning "everything in this category" when
  *     the user typed a query is the classic relevance bug.
@@ -448,45 +486,130 @@ catalogRouter.get('/search', async (req: Request, res: Response) => {
 				middleware.ErrorCodes.VALIDATION_ERROR,
 			);
 		}
-		// The query logic �?� FTS ranking, filters, pagination, store
-		// join �?� lives in lib/search.ts so it can be unit-tested
-		// without spinning up an Express app. The router is the thin
-		// HTTP wrapper: parse �?� call �?� log �?� respond.
-		const result = await runSearch(q, {
+		const limit = Number.isFinite(Number(req.query.limit))
+			? Math.max(1, Math.min(100, Number(req.query.limit)))
+			: 20;
+		const offset = Math.max(0, Number(req.query.offset) || 0);
+		const userId = (req as { user?: { id: number } }).user?.id ?? null;
+		const requestId = (req as { id?: string }).id ?? null;
+
+		// Phase 3: Elasticsearch-first when configured. Falls back to
+		// PostgreSQL FTS (lib/search.ts) on ES outage. Same response
+		// shape so the frontend never sees a difference.
+		const { searchProducts } = await import('../lib/search-index.ts');
+		const esResult = await searchProducts(q, {
 			category: req.query.category ? String(req.query.category) : undefined,
 			storeId: req.query.store ? Number(req.query.store) : undefined,
 			minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
 			maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
 			sort:
 				(req.query.sort as
-					'relevance' | 'price_asc' | 'price_desc' | 'newest' | undefined) ?? 'relevance',
-			limit: req.query.limit !== undefined ? Number(req.query.limit) : undefined,
-			offset: req.query.offset !== undefined ? Number(req.query.offset) : undefined,
+					| 'relevance'
+					| 'price_asc'
+					| 'price_desc'
+					| 'newest'
+					| 'best_selling'
+					| undefined) ?? 'relevance',
+			limit,
+			offset,
 		});
 
-		// Best-effort analytics log (see logSearch() �?� failures never
-		// break the user-facing search).
-		const userId = (req as { user?: { id: number } }).user?.id ?? null;
-		const requestId = (req as { id?: string }).id ?? null;
-		await logSearch(q, normalizeQuery(q), result.total, result.took_ms, userId, requestId);
+		if (esResult.source === 'unavailable') {
+			const result = await runSearch(q, {
+				category: req.query.category ? String(req.query.category) : undefined,
+				storeId: req.query.store ? Number(req.query.store) : undefined,
+				minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+				maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+				sort:
+					(req.query.sort as
+						| 'relevance'
+						| 'price_asc'
+						| 'price_desc'
+						| 'newest'
+						| undefined) ?? 'relevance',
+				limit,
+				offset,
+			});
+			await logSearch(q, normalizeQuery(q), result.total, result.took_ms, userId, requestId);
+			const products = result.hits.map((r) => {
+				const { rank: _r, ...rest } = r;
+				void _r;
+				return getProductWithParsedFields(rest as unknown as Record<string, unknown>);
+			});
+			return sendSuccess(res, {
+				query: q,
+				total: result.total,
+				limit,
+				offset,
+				duration_ms: result.took_ms,
+				source: 'postgresql',
+				products,
+			});
+		}
 
-		// Strip the bookkeeping columns (rank) before serializing.
-		const products = result.hits.map((r) => {
-			const { rank: _r, ...rest } = r;
-			void _r;
-			return getProductWithParsedFields(rest as unknown as Record<string, unknown>);
-		});
+		const { publish } = await import('../lib/queue.ts');
+		void publish('noufex.analytics', 'analytics.events', {
+			kind: 'search',
+			payload: {
+				query: q,
+				normalized: normalizeQuery(q),
+				resultCount: esResult.total,
+				durationMs: esResult.took_ms,
+				userId,
+				requestId,
+			},
+			ts: new Date().toISOString(),
+		}).catch(() => void 0);
 
-		sendSuccess(res, {
+		return sendSuccess(res, {
 			query: q,
-			total: result.total,
-			limit: Number.isFinite(Number(req.query.limit))
-				? Math.max(1, Math.min(100, Number(req.query.limit)))
-				: 20,
-			offset: Math.max(0, Number(req.query.offset) || 0),
-			duration_ms: result.took_ms,
-			products,
+			total: esResult.total,
+			limit,
+			offset,
+			duration_ms: esResult.took_ms,
+			source: 'elasticsearch',
+facets: esResult.facets,
+			products: esResult.hits,
 		});
+	} catch (err) {
+		sendError(res, err);
+	}
+});
+
+/**
+ * GET /api/search/suggest?q=...
+ * Autocomplete for the search box. Returns up to 10 product names.
+ * Backed by the ES `completion` suggester when available.
+ */
+catalogRouter.get('/search/suggest', async (req: Request, res: Response) => {
+	try {
+		const q = String(req.query.q ?? '').trim();
+		const { suggestProducts } = await import('../lib/search-index.ts');
+		const suggestions = await suggestProducts(q);
+		return sendSuccess(res, { suggestions });
+	} catch (err) {
+		sendError(res, err);
+	}
+});
+
+/**
+ * GET /api/search/stores?...
+ * Store search with optional geo filter. Backed by ES geo_point +
+ * multi-language text matching.
+ */
+catalogRouter.get('/search/stores', async (req: Request, res: Response) => {
+	try {
+		const { searchStores } = await import('../lib/search-index.ts');
+		const lat = Number(req.query.lat);
+		const lon = Number(req.query.lon);
+		const hasGeo = Number.isFinite(lat) && Number.isFinite(lon);
+		const results = await searchStores({
+			q: req.query.q ? String(req.query.q) : undefined,
+			governorate: req.query.governorate ? String(req.query.governorate) : undefined,
+			near: hasGeo ? { lat, lon, distanceKm: Number(req.query.distanceKm ?? 50) } : undefined,
+			limit: req.query.limit !== undefined ? Number(req.query.limit) : 20,
+		});
+		return sendSuccess(res, { stores: results });
 	} catch (err) {
 		sendError(res, err);
 	}

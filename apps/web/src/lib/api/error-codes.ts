@@ -61,13 +61,31 @@ export const ErrorCodes = {
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
 /**
- * Runtime type guard for `unknown` → `ErrorCode`. Use this when
- * reading `err.code` from an `ApiError` that came over the wire:
+ * Runtime type guard for `unknown` → `ErrorCode`. Two-argument overload
+ * accepts a single expected code OR an array of codes:
  *
- *   if (isErrorCode(err.code)) { ... }  // narrows to ErrorCode
+ *   if (isErrorCode(err.code)) { ... }                       // narrows to ErrorCode
+ *   if (isErrorCode(err.code, ErrorCodes.NOT_FOUND)) { ... }  // exact match
+ *   if (isErrorCode(err.code, [ErrorCodes.UNAUTHORIZED,
+ *                              ErrorCodes.FORBIDDEN])) { ... } // any-of match
+ *
+ * This is the SOLE source of truth for both shapes — `client.ts`
+ * re-exports it without redefinition so callers can `import { isErrorCode }
+ * from '@/lib/api'` regardless of which submodule they intend to use.
  */
-export function isErrorCode(value: unknown): value is ErrorCode {
-	return typeof value === 'string' && value in ErrorCodes;
+export function isErrorCode(value: unknown): value is ErrorCode;
+export function isErrorCode(value: unknown, expected: ErrorCode | ErrorCode[]): boolean;
+export function isErrorCode(
+	value: unknown,
+	expected?: ErrorCode | ErrorCode[],
+): value is ErrorCode {
+	if (typeof value !== 'string') return false as never;
+	if (!(value in ErrorCodes)) return false as never;
+	if (expected === undefined) return true as never;
+	if (Array.isArray(expected)) {
+		return (expected as ErrorCode[]).includes(value as ErrorCode);
+	}
+	return value === expected;
 }
 
 /**

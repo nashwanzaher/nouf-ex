@@ -1,0 +1,65 @@
+/**
+ * EAS Build configuration (Phase 5).
+ *
+ * Two profiles:
+ *   - preview: internal distribution via ad-hoc / APK
+ *   - production: App Store + Play Store builds
+ *
+ * EAS Build runs the same monorepo install (npm ci --workspaces)
+ * as the Docker image, then `expo prebuild` generates the native
+ * android/ and ios/ directories. The CI workflow at .github/workflows/
+ * mobile-build.yml (to be added in a follow-up) calls these profiles.
+ */
+{
+	"cli": {
+		"version": ">= 12.0.0",
+		"appVersionSource": "local"
+	},
+	"build": {
+		"base": {
+			"node": "20.19.0",
+			"npm": "10.9.0",
+			"env": {
+				"NODE_ENV": "production"
+			},
+			"android": {
+				"image": "latest",
+				"gradle": "8.7"
+			},
+			"ios": {
+				"image": "latest",
+				"distribution": "internal"
+			}
+		},
+		"preview": {
+			"extends": "base",
+			"distribution": "internal",
+			"channel": "preview",
+			"env": {
+				"EXPO_PUBLIC_API_URL": "https://staging-api.noufex.com"
+			}
+		},
+		"production": {
+			"extends": "base",
+			"distribution": "store",
+			"channel": "production",
+			"autoIncrement": true,
+			"env": {
+				"EXPO_PUBLIC_API_URL": "https://api.noufex.com"
+			}
+		}
+	},
+	"submit": {
+		"production": {
+			"android": {
+				"serviceAccountKeyPath": "./secrets/play-store-key.json",
+				"track": "internal",
+				"releaseStatus": "draft"
+			},
+			"ios": {
+				"ascAppIdentifier": "com.noufex.mobile",
+				"appleTeamId": "${APPLE_TEAM_ID}"
+			}
+		}
+	}
+}

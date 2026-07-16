@@ -23,7 +23,7 @@ graph TB
         TLS["TLS termination<br/>HSTS · Let's Encrypt"]
     end
 
-    subgraph Docker["🐳 Docker Container (node:20-alpine)"]
+    subgraph Docker["🐳 Docker Container (node:20.19-alpine)"]
         direction TB
         Tini["tini (PID 1)"]
         EP["docker-entrypoint.sh"]

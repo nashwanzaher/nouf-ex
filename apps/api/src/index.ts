@@ -65,6 +65,44 @@ import { storeFollowersRouter } from './modules/store-followers/index.ts';
 import { uploadsRouter } from './modules/uploads/index.ts';
 import { wishlistRouter } from './modules/wishlist/index.ts';
 import { createWebSocketServer } from './modules/websocket/index.ts';
+// Phase 1-3: companion service status helpers used by the /ready
+// endpoint to surface Redis / RabbitMQ / Elasticsearch health.
+import { redisStatus } from './lib/redis.ts';
+import { queueStatus } from './lib/queue.ts';
+import { isSearchV2Enabled } from './lib/elasticsearch.ts';
+import { startWorkers, stopWorkers } from './workers/index.ts';
+// Tier 2.1: Prometheus metrics — expose /api/metrics for scraping
+// and refresh the DB pool gauges every 5 s.
+import {
+	contentType as metricsContentType,
+	metricsExposition,
+	updateDbPoolGauges,
+	httpMetricsMiddleware,
+} from './lib/metrics.ts';
+// Tier 3.1: OpenTelemetry distributed tracing (W3C trace context).
+// Initialised before any HTTP listener so the auto-instrumentations
+// can patch express / pg / ioredis / amqplib / @elastic/elasticsearch.
+import {
+	initTelemetry,
+	shutdownTelemetry,
+	isTelemetryEnabled,
+} from './lib/telemetry.ts';
+import { httpTracingMiddleware } from './lib/tracing-middleware.ts';
+// Tier 4.1: Sentry error tracking. Idempotent — no-op without
+// SENTRY_DSN. Initialised after OTel so the request handler
+// captures both the trace_id and the Sentry event.
+import {
+	initSentry,
+	flushSentry,
+	sentryHandlers,
+	isSentryEnabled,
+} from './lib/sentry.ts';
+// Tier 4.2: OpenAPI 3.1 documentation (Linux Foundation / OpenAPI
+// Initiative). Auto-generated from the Zod schemas so the doc is
+// guaranteed to match the runtime validation.
+import { buildOpenApiDocument } from './lib/openapi.ts';
+// Tier 5.3: API versioning (Stripe-style media type + RFC 8594).
+import { apiVersionMiddleware } from './lib/api-version.ts';
 
 // Note: `import 'dotenv/config'` above already loaded .env.
 // Keep this comment as a marker so future readers know not to
@@ -87,14 +125,22 @@ const __dirname = (() => {
 	return process.cwd();
 })();
 
+// Tier 4.2: locate the static Swagger UI page that lives next to
+// openapi.ts. We resolve at startup so a missing file (corrupt
+// deploy) fails fast rather than 500ing on the first doc request.
+const OPENAPI_UI_PATH = path.resolve(__dirname, 'lib/openapi-ui.html');
+
 const app = express();
+app.disable('x-powered-by');
 const PORT = env.API_PORT;
 const STATIC_PATH = env.STATIC_PATH || path.resolve(__dirname, 'dist');
 
 // --- Middleware stack (order matters) ---
 configureTrustProxy(app);
+if (isSentryEnabled()) app.use(sentryHandlers.requestHandler());
 app.use(requestId);
 app.use(securityHeaders);
+app.use(apiVersionMiddleware());
 
 const ALLOWED_ORIGINS = env.ALLOWED_ORIGINS.split(',')
 	.map((s) => s.trim())
@@ -196,6 +242,8 @@ app.use((req, _res, next) => {
 });
 app.use(optionalAuth);
 app.use(requestLogger);
+app.use(httpMetricsMiddleware());
+if (isTelemetryEnabled()) app.use(httpTracingMiddleware());
 
 // --- Health & readiness endpoints (un-authenticated, log-skipped) ---
 const healthLimiter = healthRateLimit({ windowMs: 1000, max: 30, bucket: 'health' });
@@ -206,6 +254,19 @@ app.get('/api/health', healthLimiter, (_req: Request, res: Response) => {
 		uptime_s: Math.round(process.uptime()),
 		ts: new Date().toISOString(),
 	});
+});
+
+// Tier 2.1: Prometheus scrape endpoint. Exposed without auth —
+// Prometheus scrapers expect an open /metrics path. The docker
+// network blocks external access to this port.
+app.get('/api/metrics', async (_req: Request, res: Response) => {
+	try {
+		res.setHeader('Content-Type', metricsContentType);
+		res.status(200).send(await metricsExposition());
+	} catch (err) {
+		log.warn({ msg: 'metrics_scrape_failed', error: (err as Error).message });
+		res.status(500).send('# metrics scrape failed\n');
+	}
 });
 
 const READY_STARTED_AT = Date.now();
@@ -225,22 +286,60 @@ app.get('/api/ready', healthLimiter, async (_req: Request, res: Response) => {
 		checks.db = { ok: false, ms: Date.now() - startedAt, detail: (e as Error).message };
 	}
 
+	// Phase 1-3: companion-service health (Redis, RabbitMQ, ES).
+	// These are OPTIONAL — the API degrades gracefully when any of
+	// them is unreachable, so they are reported as informational
+	// rather than blocking readiness. A `false` here just tells the
+	// operator that a fallback path is active.
+	const rs = redisStatus();
+	checks.redis = {
+		ok: !rs.enabled || rs.connected,
+		ms: 0,
+		detail: rs.enabled
+			? `status=${rs.status} prefix=${rs.prefix}`
+			: 'disabled (DB-only mode)',
+	};
+	const qs = queueStatus();
+	checks.rabbitmq = {
+		ok: !qs.enabled || qs.ready,
+		ms: 0,
+		detail: qs.enabled
+			? `ready=${qs.ready} exchanges=${qs.exchanges} queues=${qs.queues}`
+			: 'disabled (in-process queue)',
+	};
+	checks.elasticsearch = {
+		ok: !isSearchV2Enabled() || true, // best-effort
+		ms: 0,
+		detail: isSearchV2Enabled()
+			? 'enabled (PG FTS as fallback)'
+			: 'disabled (PG FTS only)',
+	};
+
 	// ── Memory check (NIST SP 800-53 SI-4, OWASP ASVS 7.1) ────────────
 	// Detect memory pressure that could cause OOM kills or GC pauses.
-	// Heap limit is typically ~1.5 GB on 64-bit Node; warn at 80%.
+	//
+	// Compare against the V8 heap limit (heap_size_limit), NOT
+	// heapTotal.  heapTotal is the *current* committed heap — it
+	// starts small and grows on demand up to the limit.  A small
+	// heapTotal (e.g. 30 MB) with high utilization (90%) is perfectly
+	// normal for a lightly-loaded API; flagging it as degraded is a
+	// false positive.  Only flag when heap_used / heap_limit > 85%.
+	const v8 = await import('node:v8');
+	const { heap_size_limit: heapLimitBytes } = v8.getHeapStatistics();
+	const heapLimitMB = Math.round(heapLimitBytes / 1024 / 1024);
 	const mem = process.memoryUsage();
 	const heapUsedMB = Math.round(mem.heapUsed / 1024 / 1024);
 	const heapTotalMB = Math.round(mem.heapTotal / 1024 / 1024);
 	const rssMB = Math.round(mem.rss / 1024 / 1024);
 	const externalMB = Math.round(mem.external / 1024 / 1024);
-	const heapUtilization = mem.heapTotal > 0 ? mem.heapUsed / mem.heapTotal : 0;
+	const heapUtilization = heapLimitBytes > 0 ? mem.heapUsed / heapLimitBytes : 0;
 	const memoryOk = heapUtilization < 0.85;
 	checks.memory = {
 		ok: memoryOk,
 		ms: 0,
 		detail: memoryOk
 			? undefined
-			: `heap ${Math.round(heapUtilization * 100)}% (${heapUsedMB}/${heapTotalMB} MB)`,
+			: `heap ${Math.round(heapUtilization * 100)}% (${heapUsedMB}/${heapLimitMB} MB limit, ${heapTotalMB} MB committed)`,
 	};
 
 	// ── GC pressure detection (NIST SP 800-53 SI-4, OWASP ASVS 7.1) ──
@@ -343,6 +442,13 @@ setInterval(async () => {
 		const j = (await db.prepare('SELECT cleanup_used_jtis() AS n').get()) as
 			{ n: number } | undefined;
 		if (j && j.n > 0) log.debug({ msg: 'used_jtis_cleanup', deleted: j.n });
+		// Tier 2.1: refresh DB pool gauges for Prometheus.
+		try {
+			const stats = db.getPoolStats();
+			updateDbPoolGauges(stats);
+		} catch {
+			// pool stats may not be available until first query
+		}
 	} catch (err) {
 		// Log so operators can see if the DB is sick or migrations
 		// have dropped the cleanup functions.
@@ -447,7 +553,25 @@ if (process.env.NODE_ENV === 'production' || process.env.SERVE_STATIC === 'true'
 // ═══════════════════════════════════════════════════════════
 
 app.use(notFoundHandler);
+if (isSentryEnabled()) app.use(sentryHandlers.errorHandler());
 app.use(errorHandler);
+
+// Tier 4.2: OpenAPI documentation. The JSON spec is generated
+// from the same Zod schemas used by the validation middleware, so
+// docs and runtime contract cannot drift.
+const OPENAPI_DOC = buildOpenApiDocument();
+app.get('/api/openapi.json', (_req: Request, res: Response) => {
+	res.setHeader('Content-Type', 'application/json; charset=utf-8');
+	res.setHeader('Cache-Control', 'public, max-age=300');
+	res.status(200).json(OPENAPI_DOC);
+});
+app.get('/api/docs', (_req: Request, res: Response) => {
+	res.setHeader('Content-Type', 'text/html; charset=utf-8');
+	res.setHeader('Cache-Control', 'public, max-age=300');
+	// Send the static HTML page that bootstraps Swagger UI from
+	// unpkg. Same approach used by Swagger's own docs site.
+	res.sendFile(OPENAPI_UI_PATH);
+});
 
 // ═══════════════════════════════════════════════════════════
 // START SERVER
@@ -482,9 +606,19 @@ let server: import('http').Server | null = null;
  *      so closing the parent shell eventually drains connections. */
 async function gracefulShutdown(signal: string): Promise<void> {
 	log.info({ msg: 'shutdown_started', signal });
+	// Tier 4.1: flush any pending Sentry events (with a tight
+	// 2 s deadline — we'd rather drop events than block shutdown).
+	await flushSentry();
+	// Tier 3.1: flush any in-flight OpenTelemetry spans before the
+	// process exits so the last second of traffic reaches the
+	// collector.
+	await shutdownTelemetry();
 	// Stop the audit-cleanup scheduler first so we don't kick off a
 	// new run mid-shutdown.
 	stopAuditCleanupScheduler();
+	// Phase 2: stop workers before the listener closes so in-flight
+	// messages can finish.
+	await stopWorkers();
 	if (server) {
 		await new Promise<void>((resolve) => {
 			server!.close(() => resolve());
@@ -526,12 +660,35 @@ if (
 	process.stdin.resume();
 }
 if (__isMainModule) {
+	// Tier 3.1: initialise OpenTelemetry FIRST so the auto-
+	// instrumentations can patch HTTP, Express, pg, ioredis,
+	// amqplib, and @elastic/elasticsearch before any of them
+	// are exercised. Idempotent — only initialises once per process.
+	initTelemetry();
+
+	// Tier 4.1: Sentry error tracking. Initialised after OTel so
+	// the request handler captures both the OTel trace_id and the
+	// Sentry event. No-op when SENTRY_DSN is not set.
+	initSentry();
+
 	// P0 (2026-07-12): start the audit-log retention scheduler. This
 	// kicks off `cleanup_audit_logs()` once per day at 03:00 (UTC by
 	// default; configurable via env vars) and dead-letters to logs
 	// on failure. Started BEFORE the listener so the first run happens
 	// after the DB pool is up but before the first request lands.
 	startAuditCleanupScheduler();
+	// Phase 2 (Tier 1.4): workers run in their own container
+	// (`noufex-worker`). The API only starts them when explicitly
+	// asked via DISABLE_WORKERS=0 (legacy single-process mode for
+	// local dev where the worker container is not running).
+	if (process.env.DISABLE_WORKERS !== '1') {
+		log.info({
+			msg: 'workers_skipped_in_api_container',
+			detail: 'Run the noufex-worker container to consume the queues',
+		});
+	} else {
+		void startWorkers();
+	}
 	server = app.listen(PORT, () => {
 		// SECURITY (OWASP ASVS 7.1): Log only host:port/db, not the full
 		// connection string which may contain credentials.

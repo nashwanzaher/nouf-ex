@@ -405,14 +405,15 @@ export async function calculateBundleDiscount(
 				case 'fixed_price':
 					discount = deal.discount_value;
 					break;
-				case 'percentage_off':
-					// Calculate total of required items
-					const totalRequired = requiredItems.reduce((sum, reqItem) => {
-						const cartItem = cartItems.find((ci) => ci.productId === reqItem.product_id);
-						return sum + (cartItem?.quantity || 0) * reqItem.quantity;
-					}, 0);
-					discount = totalRequired * (deal.discount_value / 100);
-					break;
+			case 'percentage_off': {
+				// Calculate total of required items
+				const totalRequired = requiredItems.reduce((sum, reqItem) => {
+					const cartItem = cartItems.find((ci) => ci.productId === reqItem.product_id);
+					return sum + (cartItem?.quantity || 0) * reqItem.quantity;
+				}, 0);
+				discount = totalRequired * (deal.discount_value / 100);
+				break;
+			}
 				case 'buy_x_get_y':
 					// Simple implementation: discount_value is the discount amount
 					discount = deal.discount_value;

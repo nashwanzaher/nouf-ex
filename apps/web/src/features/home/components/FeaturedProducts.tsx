@@ -27,10 +27,11 @@ interface FeaturedCard {
 	reviews: number;
 }
 
-function productToCard(p: Product, merchant = ''): FeaturedCard {
+function productToCard(p: Product, merchant = '', lang = 'ar'): FeaturedCard {
+	const name = lang === 'en' ? p.name_en : lang === 'zh' ? p.name_zh : p.name_ar;
 	return {
 		id: p.id,
-		name: p.name_ar ?? '',
+		name: name ?? '',
 		nameEn: p.name_en ?? '',
 		merchant,
 		verified: true,
@@ -43,7 +44,7 @@ function productToCard(p: Product, merchant = ''): FeaturedCard {
 }
 
 export default function FeaturedProducts() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const sectionRef = useRef<HTMLDivElement>(null);
 	const [activeTab, setActiveTab] = useState(0);
 	const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -89,7 +90,7 @@ export default function FeaturedProducts() {
 		getProducts({ limit: 8 }, { signal: controller.signal })
 			.then((res) => {
 				if (cancelled) return;
-				setProducts(res.products.map((p) => productToCard(p)));
+				setProducts(res.products.map((p) => productToCard(p, '', i18n.language)));
 				setLoading(false);
 			})
 			.catch((err) => {
@@ -101,7 +102,7 @@ export default function FeaturedProducts() {
 			cancelled = true;
 			controller.abort();
 		};
-	}, []);
+	}, [i18n.language]);
 
 	useEffect(() => {
 		const ctx = gsap.context(() => {

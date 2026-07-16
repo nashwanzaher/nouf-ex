@@ -1,0 +1,86 @@
+# ============================================================================
+# Noufex — Worker image (Phase 2, Tier 1.4).
+# ----------------------------------------------------------------------------
+# Separate container for the RabbitMQ consumers (notification, email,
+# search-indexer, analytics). Runs the same monorepo install as the API
+# but exposes the worker entrypoint instead of the HTTP server.
+#
+# Benefits over in-process workers:
+#   - `docker restart noufex-api` never kills in-flight jobs.
+#   - Independent CPU + memory budget (separate deploy unit).
+#   - Horizontal scaling: bump worker replicas without touching the API.
+#   - Independent deploys: a notification template change doesn't
+#     restart the API.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Stage 1: install npm dependencies (shared with the API image so the
+# Docker layer cache works across both builds).
+# ----------------------------------------------------------------------------
+FROM node:20.19-alpine AS deps
+
+ENV npm_config_loglevel=error \
+    npm_config_fetch_timeout=1800000 \
+    npm_config_fetch_retries=3 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000
+WORKDIR /build
+
+COPY package.json package-lock.json* ./
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/db/package.json ./packages/db/
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY apps/mcp-server/package.json ./apps/mcp-server/
+
+RUN npm ci --no-audit --no-fund \
+    --fetch-timeout=1800000 --fetch-retries=3 \
+    --workspaces --include-workspace-root
+
+# ----------------------------------------------------------------------------
+# Stage 2: bundle the worker entrypoint.
+# ----------------------------------------------------------------------------
+FROM node:20.19-alpine AS worker-build
+
+WORKDIR /build
+COPY --from=deps /build/node_modules ./node_modules
+COPY packages/ ./packages/
+COPY apps/api/ ./apps/api/
+
+RUN cd /build/apps/api && npx esbuild src/worker.ts \
+        --bundle \
+        --platform=node \
+        --target=node20.19 \
+        --format=esm \
+        --outfile=/build/apps/api/dist/worker.js \
+        --packages=external
+
+# ----------------------------------------------------------------------------
+# Stage 3: minimal runtime image (no SPA, no Express).
+# ----------------------------------------------------------------------------
+FROM node:20.19-alpine AS runtime
+
+RUN apk add --no-cache tini
+
+WORKDIR /app
+
+COPY --from=deps /build/node_modules ./node_modules
+COPY --from=worker-build /build/apps/api/dist ./apps/api/dist
+COPY --from=worker-build /build/apps/api/package.json ./apps/api/package.json
+COPY scripts/devops/docker-entrypoint.sh /usr/local/bin/noufex-worker-entrypoint.sh
+RUN chmod +x /usr/local/bin/noufex-worker-entrypoint.sh
+
+RUN chown -R node:node /app
+USER node
+
+ENV NODE_ENV=production
+
+# We deliberately do NOT expose any port — this container talks to
+# RabbitMQ + ES + PG over the internal Docker network only.
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD node -e "process.exit(process.pid % 1 === 0 ? 0 : 1)" || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/noufex-worker-entrypoint.sh"]

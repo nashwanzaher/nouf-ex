@@ -1,0 +1,10 @@
+{
+	"extends": "@noufex/typescript-config/node.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"outDir": "./dist",
+		"noEmit": true,
+		"types": ["node", "vitest/globals"]
+	},
+	"include": ["src/**/*", "tests/**/*"]
+}

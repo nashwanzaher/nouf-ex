@@ -39,7 +39,7 @@ interface FeaturedDeal {
 	now: number; // ms - kept in state to trigger re-render every minute
 }
 
-function pickFeaturedDeal(products: Product[], now: number): FeaturedDeal | null {
+function pickFeaturedDeal(products: Product[], now: number, lang: string): FeaturedDeal | null {
 	if (products.length === 0) return null;
 	// Sort by discount percent descending; take the highest.
 	const ranked = products
@@ -51,10 +51,11 @@ function pickFeaturedDeal(products: Product[], now: number): FeaturedDeal | null
 	const top = ranked[0];
 	if (!top || top.discount <= 0) return null;
 	const endsAt = top.product.deal_ends_at ? new Date(top.product.deal_ends_at) : null;
+	const name = lang === 'en' ? top.product.name_en : lang === 'zh' ? top.product.name_zh : top.product.name_ar;
 	return {
 		id: top.product.id,
 		productId: top.product.id,
-		name: top.product.name_ar ?? '',
+		name: name ?? '',
 		nameEn: top.product.name_en ?? '',
 		discountPercent: top.discount,
 		endsAt,
@@ -75,7 +76,7 @@ function formatCountdown(target: Date | null, now: number, t: (k: string) => str
 }
 
 export default function DealsBar() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const [deal, setDeal] = useState<FeaturedDeal | null>(null);
 	const [now, setNow] = useState(() => Date.now());
 	const [loading, setLoading] = useState(true);
@@ -88,7 +89,7 @@ export default function DealsBar() {
 		getProducts({ onSale: true, limit: 50 }, { signal: controller.signal })
 			.then((res) => {
 				if (cancelled) return;
-				setDeal(pickFeaturedDeal(res.products, Date.now()));
+				setDeal(pickFeaturedDeal(res.products, Date.now(), i18n.language));
 				setLoading(false);
 			})
 			.catch(() => {
@@ -100,7 +101,7 @@ export default function DealsBar() {
 			cancelled = true;
 			controller.abort();
 		};
-	}, []);
+	}, [i18n.language]);
 
 	// Tick the countdown every 30s. Cheap and prevents the
 	// countdown from looking stuck.

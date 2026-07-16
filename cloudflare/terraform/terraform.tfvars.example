@@ -1,0 +1,9 @@
+# Example tfvars — copy to prod.tfvars / staging.tfvars and fill in.
+# Never commit the real values to git.
+
+zone_name    = "noufex.com"
+api_origin   = "api.noufex.com"
+web_origin   = "app.noufex.com"
+
+# Override target_countries only if expanding to new markets.
+# target_countries = ["YE", "SA", "AE", "OM", "BH", "KW", "QA", "EG", "JO", "IQ", "SD"]

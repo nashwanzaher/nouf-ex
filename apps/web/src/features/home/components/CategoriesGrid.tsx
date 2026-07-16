@@ -59,7 +59,7 @@ const pickIcon = (name: string) => {
 };
 
 export default function CategoriesGrid() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const sectionRef = useRef<HTMLDivElement>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -68,6 +68,7 @@ export default function CategoriesGrid() {
 	useEffect(() => {
 		const controller = new AbortController();
 		let cancelled = false;
+		const lang = i18n.language;
 		getCategories({ signal: controller.signal })
 			.then((res: Category[]) => {
 				if (cancelled) return;
@@ -75,7 +76,7 @@ export default function CategoriesGrid() {
 				setCategories(
 					res.map((c: Category) => ({
 						id: c.id,
-						name: c.name_ar ?? '',
+						name: lang === 'en' ? c.name_en : lang === 'zh' ? c.name_zh : c.name_ar,
 						nameEn: c.name_en ?? '',
 						imageUrl: c.image_url ?? null,
 						productCount: Number(c.product_count ?? 0),
@@ -91,7 +92,7 @@ export default function CategoriesGrid() {
 			cancelled = true;
 			controller.abort();
 		};
-	}, []);
+	}, [i18n.language]);
 
 	useEffect(() => {
 		const ctx = gsap.context(() => {

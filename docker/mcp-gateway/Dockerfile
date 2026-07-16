@@ -8,7 +8,7 @@
 # proxies MCP messages between SSE (port 8811) and stdio (this container's
 # node process).
 # ============================================================================
-FROM node:20-alpine AS build
+FROM node:20.19-alpine AS build
 
 WORKDIR /build
 
@@ -26,7 +26,7 @@ RUN cd /build/apps/mcp-server && npx tsc -p tsconfig.json
 # ----------------------------------------------------------------------------
 # Runtime image.
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS runtime
+FROM node:20.19-alpine AS runtime
 
 WORKDIR /app
 

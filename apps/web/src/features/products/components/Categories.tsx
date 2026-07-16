@@ -444,7 +444,7 @@ export default function CategoriesPage() {
 										/>
 										{product.badges?.includes('bestseller') && (
 											<span className="absolute top-2 right-2 bg-aliOrange text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-												Hot
+												{t('product.badge.hot', 'Hot')}
 											</span>
 										)}
 										{product.deal_discount > 0 && (
@@ -466,9 +466,9 @@ export default function CategoriesPage() {
 											<span className="text-aliTextMute text-xs ml-1">
 												{t('product.currency')}
 											</span>
-											{product.original_price > product.price && (
+											{product.original_price != null && product.original_price > product.price && (
 												<span className="text-aliTextMute text-xs line-through ml-1">
-													{product.original_price.toLocaleString()}
+													{Number(product.original_price).toLocaleString()}
 												</span>
 											)}
 										</div>
@@ -486,11 +486,10 @@ export default function CategoriesPage() {
 										</div>
 										<div className="flex items-center gap-1.5 mt-1.5">
 											<span className="text-[10px] bg-aliSurface text-aliTextSec px-1.5 py-0.5 rounded">
-												MOQ:{' '}
-												{product.moq ?? 10}
+												{t('product.moqBadge', 'MOQ')}: {product.moq ?? 10}
 											</span>
 											<span className="text-[10px] text-aliTextMute">
-												{product.sold_count} sold
+												{product.sold_count} {t('product.soldSuffix', 'sold')}
 											</span>
 										</div>
 										<button
@@ -502,7 +501,7 @@ export default function CategoriesPage() {
 											}`}
 										>
 											<ShoppingCart size={12} />
-											{addedIds.has(product.id) ? 'Added!' : 'Add to Cart'}
+											{addedIds.has(product.id) ? t('product.addToCart.added', 'Added!') : t('product.addToCart.idle', 'Add to Cart')}
 										</button>
 									</div>
 								</div>

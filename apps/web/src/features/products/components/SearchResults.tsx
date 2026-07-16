@@ -409,11 +409,11 @@ export default function SearchResults() {
 												<span className="text-base font-bold text-[#FF6A00]">
 													{p.price.toLocaleString()}
 												</span>
-												{p.original_price > p.price && (
-													<span className="text-xs text-[#999] line-through">
-														{p.original_price.toLocaleString()}
-													</span>
-												)}
+											{p.original_price != null && p.original_price > p.price && (
+												<span className="text-xs text-[#999] line-through">
+													{Number(p.original_price).toLocaleString()}
+												</span>
+											)}
 											</div>
 											<span className="text-xs text-[#999]">
 												{t('product.currency')}

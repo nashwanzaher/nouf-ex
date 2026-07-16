@@ -1,0 +1,16 @@
+# Noufex — robots.txt
+# https://developers.google.com/search/docs/crawling-indexing/robots/intro
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /customer/
+Disallow: /seller/
+Disallow: /delivery-agent/
+Disallow: /auth/
+Disallow: /checkout/
+Disallow: /messages/
+
+# Sitemap
+Sitemap: https://noufex.com/sitemap.xml

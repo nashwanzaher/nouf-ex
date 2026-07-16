@@ -57,7 +57,7 @@ The image is **4-stage** (see `Dockerfile`):
 1. `deps` — workspace-wide `npm ci`
 2. `api-build` — `esbuild` → `apps/api/dist/index.js`
 3. `web-build` — `vite build` → `apps/web/dist/`
-4. `runtime` — `node:20-alpine` + `tini` (PID 1) + non-root user
+4. `runtime` — `node:20.19-alpine` + `tini` (PID 1) + non-root user
 
 ### 2.3 Set up the GitHub Environment
 
@@ -225,6 +225,91 @@ See [monitoring.md](monitoring.md) for details (TODO).
 - **Keep a Changelog** — see [CHANGELOG.md](../../CHANGELOG.md)
 - **Conventional Commits** — enforced by commitlint + release-please
 - **SemVer 2.0** — release-please bumps automatically
+
+---
+
+## 11. Local-dev troubleshooting (added 2026-07-15)
+
+### 11.1 PostgreSQL connection refused (`ECONNREFUSED 127.0.0.1:5432`)
+
+If the API boots but every request returns:
+
+```
+Error: connect ECONNREFUSED 127.0.0.1:5432
+```
+
+the app is pointing at the **default** `5432` port while the dev
+cluster runs on `5435` (per `.env`). The `.env` loader uses
+`dotenv/config`, but **Vitest imports `lib/shared.ts` directly** (no
+side-effect import of `dotenv/config`), so unit tests that need a DB
+must run with the env pre-loaded:
+
+```powershell
+# PowerShell — one-shot env load
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^([^#][^=]+)=(.*)$') {
+    [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2], 'Process')
+  }
+}
+npx vitest run apps/api/src/tests
+```
+
+Or export the var before invoking vitest:
+
+```sh
+# bash / zsh
+set -a; source .env; set +a
+npx vitest run apps/api/src/tests
+```
+
+### 11.2 PostgreSQL `pg_hba.conf` — scram-sha-256 vs trust
+
+The bundled `start-postgres.bat` starts the cluster in **trust** mode
+so the local dev flow never trips on a password mismatch. If you boot
+a vanilla Postgres container instead (`docker run postgres:17`), the
+default `pg_hba.conf` requires `scram-sha-256` and you'll see:
+
+```
+password authentication failed for user "noufex_app"
+```
+
+Two fixes — pick one:
+
+1. **Local dev (recommended):** add the lines below to the running
+   container's `pg_hba.conf` and reload:
+
+   ```
+   host    noufex_db      noufex_app     127.0.0.1/32    trust
+   host    noufex_db      postgres       127.0.0.1/32    trust
+   ```
+
+   ```sh
+   docker exec noufex-postgres bash -c 'echo "host noufex_db noufex_app 127.0.0.1/32 trust" >> /var/lib/postgresql/data/pg_hba.conf'
+   docker exec noufex-postgres pg_ctl reload
+   ```
+
+2. **Production-style:** keep `scram-sha-256` and set a real
+   `DB_PASSWORD` in `.env` that matches the role created by
+   `roles.sql` (`noufex_owner` / `noufex_app`).
+
+### 11.3 `tsc --noEmit` reports 0 errors but CI fails
+
+CI uses `NODE_VERSION=20.19` while a stale local install can still be
+on Node 20.18.0. Re-install after the engine bump:
+
+```powershell
+rm -r node_modules apps/*/node_modules packages/*/node_modules
+npm ci
+```
+
+### 11.4 Vite 7 warnings on Node <20.19
+
+```
+Warning: Unsupported engine: wanted: {"node":"^20.19.0 || >=22.12.0"}
+```
+
+Install Node 20.19+ (`nvm install 20.19 && nvm use 20.19`) or Node 22.12+
+before running `npm run dev` / `npm run build` in `apps/web`.
 
 ---
 

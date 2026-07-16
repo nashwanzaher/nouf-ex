@@ -53,7 +53,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19"
           # No cache-dependency-path: this workflow only runs
           # `npm install --no-save` for a single CLI tool, so the
           # `node_modules` cache doesn't help and pointing at the

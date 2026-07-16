@@ -1,0 +1,46 @@
+{
+	"nav": {
+		"home": "الرئيسية",
+		"categories": "الفئات",
+		"search": "بحث",
+		"cart": "السلة",
+		"profile": "حسابي"
+	},
+	"home": {
+		"hero_title": "تسوق من اليمن والشرق الأوسط",
+		"hero_subtitle": "آلاف المنتجات من تجار محليين موثوقين",
+		"search_placeholder": "ابحث عن منتج أو متجر…",
+		"deals": "عروض اليوم",
+		"featured": "منتجات مميزة",
+		"trusted_by": "يثق بنا",
+		"customers": "عميل",
+		"stores": "متجر",
+		"products": "منتج",
+		"orders": "طلب",
+		"error": "تعذّر تحميل الصفحة الرئيسية"
+	},
+	"product": {
+		"add_to_cart": "أضف إلى السلة",
+		"buy_now": "اشترِ الآن",
+		"in_stock": "متوفر",
+		"out_of_stock": "غير متوفر",
+		"reviews": "التقييمات",
+		"description": "الوصف",
+		"specifications": "المواصفات"
+	},
+	"cart": {
+		"empty": "سلتك فارغة",
+		"subtotal": "المجموع الفرعي",
+		"shipping": "الشحن",
+		"total": "الإجمالي",
+		"checkout": "إتمام الشراء"
+	},
+	"auth": {
+		"login": "تسجيل الدخول",
+		"register": "إنشاء حساب",
+		"email": "البريد الإلكتروني",
+		"password": "كلمة المرور",
+		"forgot_password": "نسيت كلمة المرور؟",
+		"logout": "تسجيل الخروج"
+	}
+}

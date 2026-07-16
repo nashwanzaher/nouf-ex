@@ -31,7 +31,6 @@ import {
 } from '@/lib/utils/safe-format';
 import { formatMoney } from '@/lib/format';
 import {
-	Search,
 	ShoppingCart,
 	ChevronRight,
 	ShieldCheck,
@@ -45,8 +44,6 @@ import {
 	Package,
 	Users,
 	Headphones,
-	Camera,
-	ChevronDown,
 	RefreshCw,
 } from 'lucide-react';
 
@@ -215,7 +212,6 @@ export default function Home() {
 	const { dispatch } = useCart();
 
 	/* ── state ────────────────────────────────────────── */
-	const [searchQ, setSearchQ] = useState('');
 	const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 	const [activeTab, setActiveTab] = useState<'rfq' | 'hot' | 'fast'>('hot');
 	const addedTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
@@ -264,11 +260,6 @@ export default function Home() {
 	const stats = statsData;
 
 	/* ── handlers ─────────────────────────────────────── */
-	const handleSearch = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (searchQ.trim()) navigate(`/search?q=${encodeURIComponent(searchQ.trim())}`);
-	};
-
 	const addToCart = useCallback(
 		(p: Product) => {
 			const store = storeMap.get(p.store_id);
@@ -358,78 +349,39 @@ export default function Home() {
 								</p>
 							</div>
 
-							{/* Mega Search Bar */}
-							<div className="max-w-2xl mx-auto w-full">
-								<form
-									onSubmit={handleSearch}
-									className="flex w-full h-14 rounded-3xl border-2 border-aliOrange overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow"
-								>
-									<div className="flex items-center px-4 border-r border-aliBorder shrink-0">
-										<span className="text-sm text-aliTextSec font-medium">
-											{t('nav.allCategories', 'All Categories')}
-										</span>
-										<ChevronDown size={14} className="text-aliTextMute ms-1" />
-									</div>
-									<input
-										type="text"
-										value={searchQ}
-										onChange={(e) => setSearchQ(e.target.value)}
-										placeholder={t(
-											'nav.searchPlaceholder',
-											'Search products...',
-										)}
-										className="flex-1 h-full px-4 text-base text-aliText placeholder-aliTextMute outline-none bg-transparent"
-									/>
+							{/* Tabs (RFQ / Hot / Fast) */}
+							<div className="flex justify-center gap-4 mt-3">
+								{[
+									{
+										key: 'rfq' as const,
+										label: t('home.tabRfq', 'RFQ'),
+										icon: TrendingUp,
+									},
+									{
+										key: 'hot' as const,
+										label: t('home.tabHot', 'Hot Products'),
+										icon: Zap,
+									},
+									{
+										key: 'fast' as const,
+										label: t('home.tabFast', 'Fast Customization'),
+										icon: Clock,
+									},
+								].map((tab) => (
 									<button
+										key={tab.key}
 										type="button"
-										title={t('nav.imageSearch', 'Search by image')}
-										aria-label={t('nav.imageSearch', 'Search by image')}
-										className="h-full px-3 text-aliTextMute hover:text-aliOrange transition-colors"
+										onClick={() => setActiveTab(tab.key)}
+										className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+											activeTab === tab.key
+												? 'text-aliOrange bg-orange-50'
+												: 'text-aliTextMute hover:text-aliText'
+										}`}
 									>
-										<Camera size={20} />
+										<tab.icon size={14} />
+										{tab.label}
 									</button>
-									<button
-										type="submit"
-										className="h-full px-8 bg-aliOrange text-white font-bold text-base hover:bg-aliOrangeHover transition-colors flex items-center gap-2"
-									>
-										<Search size={18} />
-										<span className="hidden sm:inline">{t('nav.search')}</span>
-									</button>
-								</form>
-
-								<div className="flex justify-center gap-4 mt-3">
-									{[
-										{
-											key: 'rfq' as const,
-											label: t('home.tabRfq', 'RFQ'),
-											icon: TrendingUp,
-										},
-										{
-											key: 'hot' as const,
-											label: t('home.tabHot', 'Hot Products'),
-											icon: Zap,
-										},
-										{
-											key: 'fast' as const,
-											label: t('home.tabFast', 'Fast Customization'),
-											icon: Clock,
-										},
-									].map((tab) => (
-										<button
-											key={tab.key}
-											type="button"
-											onClick={() => setActiveTab(tab.key)}
-											className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-												activeTab === tab.key
-													? 'text-aliOrange bg-orange-50'
-													: 'text-aliTextMute hover:text-aliText'
-											}`}
-										>
-											<tab.icon size={14} />
-											{tab.label}
-										</button>
-									))}
-								</div>
+								))}
 							</div>
 
 							{/* Hot Searches */}

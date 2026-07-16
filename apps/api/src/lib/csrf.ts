@@ -32,10 +32,19 @@
  *
  * Exemptions:
  *   - GET / HEAD / OPTIONS — never mutate state.
- *   - `/api/auth/login` and `/api/auth/register` — pre-session; the
- *     attacker has nothing to forge against (no cookie auth yet).
- *     Login CSRF is mitigated by SameSite=Strict on the auth cookie.
+ *   - `/api/auth/forgot-password` and `/api/auth/reset-password` —
+ *     email-driven flows; the reset token itself acts as the nonce.
+ *   - `/api/auth/refresh` — called by the SPA's automatic token refresh
+ *     interceptor; protected by the HttpOnly auth cookie + SameSite=Strict.
+ *   - `/api/auth/csrf` — the endpoint that mints the token.
  *   - `/api/health` and `/api/ready` — public health probes.
+ *
+ * SECURITY NOTE (2026-07-15): `/api/auth/login` and `/api/auth/register`
+ * are NO LONGER exempt. Login CSRF is real: an attacker can trick a victim
+ * into logging into the attacker's account, causing the victim's subsequent
+ * actions (orders, addresses, reviews) to be linked to the attacker.
+ * The SPA mints a CSRF token via `ensureCsrfToken()` on boot and on every
+ * safe request, so the token is available before login.
  */
 import type { Request, Response, NextFunction } from 'express';
 import { timingSafeEqual, randomBytes } from 'node:crypto';
@@ -47,8 +56,8 @@ const CSRF_HEADER = 'x-csrf-token';
  *  endpoints (login, register, health probes). Everything else
  *  — including every authenticated mutation — requires the token. */
 const CSRF_EXEMPT_PREFIXES = [
-	'/api/auth/login',
-	'/api/auth/register',
+	// Unauthenticated login/registration are NOT exempt — the SPA mints
+	// a CSRF token on boot and on every safe request before calling them.
 	'/api/auth/forgot-password',
 	'/api/auth/reset-password',
 	'/api/auth/refresh',
@@ -73,8 +82,20 @@ function generateToken(): string {
 }
 
 /** Attach a freshly-minted CSRF token to the response. Safe to call
- *  on every request — only sets cookies if they're missing. */
+ *  on every request — only sets cookies if they're missing.
+ *
+ *  Uses `res.locals.csrfToken` to ensure multiple calls within the
+ *  same request lifecycle (e.g. middleware + `/api/auth/csrf` endpoint)
+ *  reuse the SAME token. Without this, the endpoint would mint a second
+ *  token because `req.cookies` is not updated after the middleware sets
+ *  the cookie on the response, causing a mismatch.
+ */
 export function ensureCsrfCookie(req: Request, res: Response): string {
+	// Reuse token already minted earlier in this request lifecycle.
+	if (res.locals.csrfToken) {
+		return res.locals.csrfToken as string;
+	}
+
 	const existing = req.cookies?.[CSRF_COOKIE];
 	if (existing && /^[A-Za-z0-9_-]{20,}$/.test(existing)) {
 		// Make sure the HttpOnly mirror is also set, in case it was
@@ -89,6 +110,7 @@ export function ensureCsrfCookie(req: Request, res: Response): string {
 				maxAge: 24 * 60 * 60 * 1000,
 			});
 		}
+		res.locals.csrfToken = existing;
 		return existing;
 	}
 	const token = generateToken();
@@ -106,6 +128,7 @@ export function ensureCsrfCookie(req: Request, res: Response): string {
 		path: '/',
 		maxAge: 24 * 60 * 60 * 1000,
 	});
+	res.locals.csrfToken = token;
 	return token;
 }
 

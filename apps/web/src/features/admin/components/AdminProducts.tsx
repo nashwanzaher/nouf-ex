@@ -11,6 +11,7 @@
  * Writes to admin_audit_log (visible on the /admin/audit-log page).
  */
 import { useState, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	Package,
 	Search,
@@ -33,6 +34,7 @@ import { useApp } from '@/context/AppContext';
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 export default function AdminProducts() {
+	const { t } = useTranslation();
 	const [search, setSearch] = useState('');
 	const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive' | 'featured'>(
 		'all',
@@ -254,7 +256,7 @@ export default function AdminProducts() {
 														{p.name_ar || p.name_en || `#${p.id}`}
 													</p>
 													<p className="text-[11px] text-[#6B6B6B] font-cairo">
-														#{p.id} · مخزون: {p.stock ?? '—'}
+														#{p.id} · {t('admin.products.stock', 'Stock')}: {p.stock ?? '—'}
 													</p>
 												</div>
 											</td>
@@ -266,19 +268,19 @@ export default function AdminProducts() {
 											</td>
 											<td className="px-4 py-3">
 												<div className="flex flex-wrap gap-1">
-													{isActive ? (
-														<Badge className="font-cairo text-[10px] bg-emerald-50 text-emerald-600">
-															نشط
-														</Badge>
-													) : (
-														<Badge className="font-cairo text-[10px] bg-[#F8F8F8] text-[#6B6B6B]">
-															مخفي
-														</Badge>
-													)}
+												{isActive ? (
+													<Badge className="font-cairo text-[10px] bg-emerald-50 text-emerald-600">
+														{t('admin.products.active', 'Active')}
+													</Badge>
+												) : (
+													<Badge className="font-cairo text-[10px] bg-[#F8F8F8] text-[#6B6B6B]">
+														{t('admin.products.hidden', 'Hidden')}
+													</Badge>
+												)}
 													{isFeatured && (
 														<Badge className="font-cairo text-[10px] bg-amber-50 text-amber-600">
 															<Star className="w-3 h-3 ml-0.5" />
-															مميَّز
+															{t('admin.products.featured', 'Featured')}
 														</Badge>
 													)}
 												</div>

@@ -6,6 +6,7 @@ import { useCart } from '@/features/cart/context/CartContext';
 import { useProducts } from '@/hooks/useApi';
 import type { Product } from '@/hooks/useApi';
 import { ShoppingCart, Clock, Zap, Flame, Star, BadgeCheck } from 'lucide-react';
+import { formatMoney } from '@/lib/format';
 import styles from './Deals.module.css';
 
 interface TimeLeft {
@@ -183,6 +184,7 @@ export default function DealsPage() {
 									addToCart={addToCart}
 									getName={getName}
 									t={t}
+									i18n={i18n}
 									hot
 								/>
 							))}
@@ -208,6 +210,7 @@ export default function DealsPage() {
 									addToCart={addToCart}
 									getName={getName}
 									t={t}
+									i18n={i18n}
 								/>
 							))}
 						</div>
@@ -238,6 +241,7 @@ function DealCard({
 	addToCart,
 	getName,
 	t,
+	i18n,
 	hot = false,
 }: {
 	product: Product;
@@ -245,6 +249,7 @@ function DealCard({
 	addToCart: (p: Product) => void;
 	getName: (p: Product) => string;
 	t: TFunction;
+	i18n: { language: string };
 	hot?: boolean;
 }) {
 	const discount = product.deal_discount ?? 0;
@@ -295,18 +300,17 @@ function DealCard({
 					</h3>
 				</Link>
 
-				{/* Price */}
-				<div className="flex items-baseline gap-2 mt-2">
-					<span className="text-xl font-bold text-aliOrange">
-						{product.price.toLocaleString()}
+			{/* Price */}
+			<div className="flex items-baseline gap-2 mt-2">
+				<span className="text-xl font-bold text-aliOrange">
+					{formatMoney(Number(product.price), { lang: i18n.language as 'ar' | 'en' | 'zh' })}
+				</span>
+				{product.original_price && (
+					<span className="text-aliTextMute text-sm line-through">
+						{formatMoney(Number(product.original_price), { lang: i18n.language as 'ar' | 'en' | 'zh' })}
 					</span>
-					<span className="text-aliTextMute text-xs">{t('product.currency')}</span>
-					{product.original_price && (
-						<span className="text-aliTextMute text-sm line-through">
-							{product.original_price.toLocaleString()}
-						</span>
-					)}
-				</div>
+				)}
+			</div>
 
 				{/* Savings */}
 				{product.original_price && (

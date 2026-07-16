@@ -10,6 +10,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
+import { invalidate } from '../lib/cache-invalidate.ts';
 import {
 	db,
 	sendError,
@@ -675,6 +676,8 @@ adminRouter.patch('/products/:id', ...adminAuth, async (req: Request, res: Respo
 			.get(...params)) as Record<string, unknown>;
 
 		await writeAuditLog(req, 'update_product', 'product', productId, current, updated);
+		await invalidate.product(productId);
+		await invalidate.stats();
 		return sendSuccess(res, updated, 'Product updated');
 	} catch (err) {
 		return sendError(res, err);

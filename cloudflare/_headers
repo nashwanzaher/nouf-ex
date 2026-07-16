@@ -1,0 +1,84 @@
+/*
+ * Cloudflare configuration for noufex.com
+ * ─────────────────────────────────────────────────────────────────────
+ * Phase 4 — competitive-architecture-analysis.
+ *
+ * This directory holds the Cloudflare-side configuration (cache rules,
+ * WAF, image optimization, rate limits). The Express API itself is
+ * kept CDN-agnostic: it just emits `Cache-Control` headers (already
+ * done in apps/api/src/index.ts via the `cacheControl()` middleware
+ * for catalog/stats/shipping routes) and `X-Request-Id` for tracing.
+ *
+ * Files:
+ *   - page-rules.md         Cache + Page Rules in plain markdown
+ *   - waf-rules.md          WAF custom rules + Bot Fight Mode
+ *   - rate-limits.md        Rate limiting rules per endpoint class
+ *   - image-optimization.md Image Resizing + Polish + Mirage
+ *   - terraform/main.tf     Optional Terraform config (idempotent)
+ *   - workers/purge.ts      Origin → Cloudflare cache purge integration
+ *   - workers/_headers      Static-headers file for Pages / Workers
+ *
+ * To bootstrap from scratch:
+ *   1. Provision a Cloudflare account + zone for `noufex.com`.
+ *   2. Point NS records to Cloudflare (orange-cloud proxy).
+ *   3. Apply the rules below via the dashboard OR `terraform apply`.
+ *   4. Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ZONE_ID in the API's
+ *      environment so the integration in workers/purge.ts can purge
+ *      cache on writes (admin → product PATCH, etc.).
+ */
+
+/*
+  _headers — static-headers fallback for Cloudflare Pages or
+  Cloudflare Workers static-asset hosting. Applied per-path; later
+  rules override earlier ones.
+  https://developers.cloudflare.com/pages/configuration/headers/
+
+  We ship this file so that even if someone later migrates the SPA
+  from "Express + static" to "Cloudflare Pages" (a common Phase 5+
+  refactor), the security and caching headers are preserved.
+*/
+
+# ───────────── Security baseline (every response) ─────────────
+/*
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=(self), payment=()
+Cross-Origin-Opener-Policy: same-origin
+*/
+
+/*
+# ───────────── Immutable hashed assets (vite build output) ─────
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.svg
+  Cache-Control: public, max-age=86400
+
+/*.png
+  Cache-Control: public, max-age=86400
+
+/*.webp
+  Cache-Control: public, max-age=86400
+
+/*.jpg
+  Cache-Control: public, max-age=86400
+
+# ───────────── Service Worker (PWA) ────────────────────────────
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/manifest.webmanifest
+  Cache-Control: public, max-age=86400
+
+# ───────────── SPA fallback ────────────────────────────────────
+/*
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  # Note: SPA shell HTML is NOT cached here — the server injects a
+  # per-request CSP nonce that would break if served from cache.
+*/

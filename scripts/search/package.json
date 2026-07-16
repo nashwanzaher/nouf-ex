@@ -1,0 +1,17 @@
+{
+	"name": "@noufex/search-reindex",
+	"version": "1.0.0",
+	"private": true,
+	"description": "One-shot Elasticsearch backfill from PostgreSQL — used at first deploy and after schema migrations.",
+	"type": "module",
+	"main": "reindex.ts",
+	"scripts": {
+		"reindex": "node --experimental-strip-types scripts/search/reindex.ts",
+		"reindex:products": "node --experimental-strip-types scripts/search/reindex.ts --only=products",
+		"reindex:stores": "node --experimental-strip-types scripts/search/reindex.ts --only=stores",
+		"reindex:categories": "node --experimental-strip-types scripts/search/reindex.ts --only=categories"
+	},
+	"engines": {
+		"node": ">=20.19.0"
+	}
+}

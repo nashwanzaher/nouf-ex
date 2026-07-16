@@ -1,0 +1,100 @@
+# Yemeni / Arabic synonyms for Elasticsearch (Tier 3.3)
+# Format: Solr-style synonyms file (https://www.elastic.co/guide/en/elasticsearch/reference/current/analysis-synonym-tokenfilter.html#_solr_synonyms_file)
+# One equivalence per line, comma-separated, with optional "=>" for explicit mapping.
+# Comments start with #.
+#
+# Bidirectional forms first (split on whitespace inside an equivalence),
+# then explicit directional aliases at the bottom.
+
+# ─── Currency / money ───────────────────────────────────────────────────
+دينار, ريال, riyal, diner
+درهم, dirham, درهم إماراتي
+جنيه, جنيه مصري, pound, egp
+ريال سعودي, sar, ريال سعودى
+ريال يمني, yer, ريال يمنى
+
+# ─── Common shopping synonyms ─────────────────────────────────────────
+شراء, تسوق, buying, shopping, طلب
+بيع, بيعي, sale, sell
+تخفيض, خصم, discount, offer
+شحن, توصيل, delivery, shipping
+دفع, دفع الكتروني, payment, checkout
+
+# ─── Food and beverage (Yemen/GCC focus) ──────────────────────────────
+قهوة, بن, coffee, qahwa, قهوه
+قهوة عربية, بن, قهوة يمنية
+قهوة تركية, turkish coffee
+تمر, عجوة, dates, tamr
+عسل, honey, عسل يمني, عسل حضرموت
+حبق, بازلاء, beans, fasoulia, فاصوليا
+شاي, tea, chai
+زنجبيل, ginger
+قهوة, قهوه, بن
+بخور, incence, لبان, frankincense
+
+# ─── Spices ─────────────────────────────────────────────────────────────
+هيل, cardamom, هيل
+زعفران, saffron
+قرفة, cinnamon
+زنجبيل, ginger
+
+# ─── Electronics ───────────────────────────────────────────────────────
+هاتف, جوال, موبايل, mobile, phone
+لابتوب, كمبيوتر محمول, laptop
+تلفزيون, تلفاز, tv, television
+سماعات, headphones
+شاحن, charger
+
+# ─── Clothing ──────────────────────────────────────────────────────────
+ثوب, ثوب عربي, thobe, thobe
+شماغ, غترة, shemagh, ghutra
+عباية, abaya
+حذاء, shoes
+
+# ─── Yemen-specific merchants / regional ──────────────────────────────
+بن يمني, موكا, mokha
+عطارة, عطار, perfumery
+بخور يمني, yemeni incense
+
+# ─── General web search (explicit directional aliases) ───────────────
+# هدية => present => gift
+هدية => present, gift
+# سعر => price
+سعر => price, cost
+# مخزون => stock => inventory
+مخزون => stock, inventory
+
+# ─── Yemen governorates (aliases) ──────────────────────────────────────
+صنعاء => Sana'a, Sanaa
+عدن => Aden
+تعز => Taiz
+الحديدة => Hodeidah, Hodeida
+حضرموت => Hadramaut, Hadhramaut
+إب => Ibb
+لحج => Lahij
+أبين => Abyan
+شبوة => Shabwah
+الجوف => Al Jawf
+مأرب => Ma'rib, Marib
+البيضاء => Al Bayda
+ريمة => Raydah, Raima
+المهرة => Al Mahrah
+سقطرى => Socotra
+
+# Plural stemming (very lightweight, Arabic morphology is complex;
+# serious production deployments should use dedicated Arabic analyzers
+# such as `arabic` analyzer + a custom dictionary, or `elasticsearch-analysis-arabic`
+# community plugin).
+منتج, منتجات => product, products
+متجر, متاجر => store, stores
+سلعة, سلع => good, goods
+توصيلة => shipping
+
+# ─── Make sure rank-aware queries match what people actually type ────────
+# A search for "جوال" should also surface results stored under "هاتف"
+جوال => هاتف, mobile, phone
+كمبيوتر محمول => لابتوب, laptop
+
+# (End of file. As data accumulates, add new synonym rules here
+# based on the top zero-result queries exported by the analytics
+# worker — see /api/stats/zero-result-searches.)

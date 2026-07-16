@@ -593,12 +593,66 @@ const authCache = new Map<number, AuthCacheEntry>();
 const AUTH_CACHE_TTL_MS = 30_000; // 30s per request window
 const AUTH_CACHE_MAX_SIZE = 10_000; // cap to prevent unbounded growth
 
+/**
+ * Phase 1 (competitive-architecture-analysis): cross-process auth
+ * cache. The in-process `Map` above still works as an L1 cache, but
+ * workers behind a load-balancer now share state via Redis so a
+ * `users.token_version` bump or `users.role` change is visible
+ * everywhere within one round-trip. Same 30s TTL; the in-process
+ * map additionally short-circuits hot users within a single
+ * process.
+ */
+async function readAuthRedis(userId: number): Promise<AuthCacheEntry | null> {
+	try {
+		const { getRedis } = await import('./lib/redis.ts');
+		const r = getRedis();
+		if (!r) return null;
+		const raw = await r.get(`auth:${userId}`);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw) as { ver: number; role: AuthRole };
+		return { ver: parsed.ver, role: parsed.role, cachedAt: Date.now() };
+	} catch {
+		return null;
+	}
+}
+
+async function writeAuthRedis(
+	userId: number,
+	entry: { ver: number; role: AuthRole },
+): Promise<void> {
+	try {
+		const { getRedis } = await import('./lib/redis.ts');
+		const r = getRedis();
+		if (!r) return;
+		await r.set(`auth:${userId}`, JSON.stringify(entry), 'PX', AUTH_CACHE_TTL_MS);
+	} catch {
+		// best-effort; the in-process map still has the entry
+	}
+}
+
+async function deleteAuthRedis(userId: number): Promise<void> {
+	try {
+		const { getRedis } = await import('./lib/redis.ts');
+		const r = getRedis();
+		if (!r) return;
+		await r.del(`auth:${userId}`);
+	} catch {
+		// ignore
+	}
+}
+
 async function fetchUserAuth(
 	userId: number,
 ): Promise<{ ver: number; role: AuthRole } | null> {
 	const cached = authCache.get(userId);
 	if (cached && Date.now() - cached.cachedAt < AUTH_CACHE_TTL_MS) {
 		return { ver: cached.ver, role: cached.role };
+	}
+	// L1 (process-local) miss → consult L2 (Redis) before the DB.
+	const l2 = await readAuthRedis(userId);
+	if (l2 && Date.now() - l2.cachedAt < AUTH_CACHE_TTL_MS) {
+		authCache.set(userId, l2);
+		return { ver: l2.ver, role: l2.role };
 	}
 	try {
 		const row = (await pgDb
@@ -624,11 +678,13 @@ async function fetchUserAuth(
 			const oldestKey = authCache.keys().next().value;
 			if (oldestKey !== undefined) authCache.delete(oldestKey);
 		}
-		authCache.set(userId, {
+		const entry: AuthCacheEntry = {
 			ver: row.token_version,
 			role: row.role,
 			cachedAt: Date.now(),
-		});
+		};
+		authCache.set(userId, entry);
+		void writeAuthRedis(userId, { ver: entry.ver, role: entry.role });
 		return { ver: row.token_version, role: row.role };
 	} catch (err) {
 		// If the lookup itself fails we don't have a reliable way to
@@ -664,6 +720,7 @@ export function __setCachedAuthForTests(
  *  request reads the fresh values. */
 export function invalidateAuthCache(userId: number): void {
 	authCache.delete(userId);
+	void deleteAuthRedis(userId);
 }
 
 /** Backward-compat alias — older call sites (e.g. /auth/logout,

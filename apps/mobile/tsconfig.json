@@ -1,0 +1,14 @@
+{
+	"extends": "@noufex/typescript-config/tsconfig.react.json",
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"],
+			"@noufex/shared": ["../../packages/shared/src"],
+			"@noufex/shared/*": ["../../packages/shared/src/*"]
+		},
+		"types": ["react", "react-native", "expo"]
+	},
+	"include": ["src/**/*", "app.json", "index.ts"]
+}

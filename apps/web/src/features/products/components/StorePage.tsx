@@ -128,9 +128,9 @@ export default function StorePage() {
 		const q = searchQuery.toLowerCase();
 		displayProducts = displayProducts.filter(
 			(p) =>
-				p.name_ar.toLowerCase().includes(q) ||
-				p.name_en.toLowerCase().includes(q) ||
-				p.name_zh.includes(q),
+				(p.name_ar ?? '').toLowerCase().includes(q) ||
+				(p.name_en ?? '').toLowerCase().includes(q) ||
+				(p.name_zh ?? '').includes(q),
 		);
 	}
 	if (catFilter !== 'all') {

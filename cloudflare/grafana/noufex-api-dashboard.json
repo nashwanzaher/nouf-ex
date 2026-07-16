@@ -1,0 +1,164 @@
+{
+	"title": "Noufex — API & Workers",
+	"schemaVersion": 39,
+	"version": 1,
+	"refresh": "30s",
+	"time": { "from": "now-1h", "to": "now" },
+	"tags": ["noufex", "production"],
+	"panels": [
+		{
+			"id": 1,
+			"title": "HTTP request rate (req/s)",
+			"type": "timeseries",
+			"gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+			"targets": [
+				{
+					"expr": "sum by (status) (rate(noufex_http_requests_total[1m]))",
+					"legendFormat": "{{status}}",
+					"refId": "A"
+				}
+			],
+			"fieldConfig": { "defaults": { "unit": "reqps" } }
+		},
+		{
+			"id": 2,
+			"title": "HTTP latency (p50 / p95 / p99)",
+			"type": "timeseries",
+			"gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+			"targets": [
+				{
+					"expr": "histogram_quantile(0.50, sum by (le) (rate(noufex_http_request_duration_seconds_bucket[5m])))",
+					"legendFormat": "p50",
+					"refId": "A"
+				},
+				{
+					"expr": "histogram_quantile(0.95, sum by (le) (rate(noufex_http_request_duration_seconds_bucket[5m])))",
+					"legendFormat": "p95",
+					"refId": "B"
+				},
+				{
+					"expr": "histogram_quantile(0.99, sum by (le) (rate(noufex_http_request_duration_seconds_bucket[5m])))",
+					"legendFormat": "p99",
+					"refId": "C"
+				}
+			],
+			"fieldConfig": { "defaults": { "unit": "s" } }
+		},
+		{
+			"id": 3,
+			"title": "Cache hit ratio",
+			"type": "stat",
+			"gridPos": { "h": 6, "w": 6, "x": 0, "y": 8 },
+			"targets": [
+				{
+					"expr": "sum(rate(noufex_cache_ops_total{result=\"hit\"}[5m])) / clamp_min(sum(rate(noufex_cache_ops_total{result=~\"hit|miss\"}[5m])), 1)",
+					"refId": "A"
+				}
+			],
+			"fieldConfig": {
+				"defaults": {
+					"unit": "percentunit",
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{ "color": "red", "value": 0 },
+							{ "color": "yellow", "value": 0.7 },
+							{ "color": "green", "value": 0.9 }
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": 4,
+			"title": "DB pool — waiting connections",
+			"type": "timeseries",
+			"gridPos": { "h": 6, "w": 6, "x": 6, "y": 8 },
+			"targets": [
+				{
+					"expr": "noufex_db_pool_connections{state=\"waiting\"}",
+					"legendFormat": "waiting",
+					"refId": "A"
+				},
+				{
+					"expr": "noufex_db_pool_connections{state=\"total\"}",
+					"legendFormat": "total",
+					"refId": "B"
+				}
+			],
+			"fieldConfig": { "defaults": { "unit": "short" } }
+		},
+		{
+			"id": 5,
+			"title": "Queue throughput",
+			"type": "timeseries",
+			"gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+			"targets": [
+				{
+					"expr": "sum by (exchange, op) (rate(noufex_queue_messages_total[1m]))",
+					"legendFormat": "{{exchange}} / {{op}}",
+					"refId": "A"
+				}
+			]
+		},
+		{
+			"id": 6,
+			"title": "Worker handler duration (p95)",
+			"type": "timeseries",
+			"gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+			"targets": [
+				{
+					"expr": "histogram_quantile(0.95, sum by (le, queue) (rate(noufex_queue_message_duration_seconds_bucket[5m])))",
+					"legendFormat": "{{queue}} p95",
+					"refId": "A"
+				}
+			],
+			"fieldConfig": { "defaults": { "unit": "s" } }
+		},
+		{
+			"id": 7,
+			"title": "Search source split",
+			"type": "piechart",
+			"gridPos": { "h": 6, "w": 8, "x": 0, "y": 22 },
+			"targets": [
+				{
+					"expr": "sum by (source) (rate(noufex_search_source_total[5m]))",
+					"legendFormat": "{{source}}",
+					"refId": "A"
+				}
+			]
+		},
+		{
+			"id": 8,
+			"title": "Process memory (RSS)",
+			"type": "timeseries",
+			"gridPos": { "h": 6, "w": 8, "x": 8, "y": 22 },
+			"targets": [
+				{
+					"expr": "noufex_process_resident_memory_bytes",
+					"legendFormat": "RSS",
+					"refId": "A"
+				}
+			],
+			"fieldConfig": { "defaults": { "unit": "bytes" } }
+		},
+		{
+			"id": 9,
+			"title": "CPU usage",
+			"type": "timeseries",
+			"gridPos": { "h": 6, "w": 8, "x": 16, "y": 22 },
+			"targets": [
+				{
+					"expr": "rate(noufex_process_cpu_user_seconds_total[1m])",
+					"legendFormat": "user CPU",
+					"refId": "A"
+				},
+				{
+					"expr": "rate(noufex_process_cpu_system_seconds_total[1m])",
+					"legendFormat": "system CPU",
+					"refId": "B"
+				}
+			]
+		}
+	]
+}

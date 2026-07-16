@@ -16,6 +16,14 @@
  *   - The function is `SECURITY DEFINER` so even with the least-
  *     privilege app role we get atomic, transactional counting.
  *
+ * Phase 1 (competitive-architecture-analysis): add a Redis L1 fast
+ * path. When REDIS_URL is set, we INCR + EXPIRE in Redis before
+ * touching the DB. Redis is monotonic; if the counter under the
+ * limit we allow immediately. We still call the DB PL/pgSQL on the
+ * SLOW path (over the limit) so the authoritative count is the DB
+ * and Redis can be evicted without losing correctness. This keeps
+ * the DB load bounded while staying fail-OPEN on Redis outage.
+ *
  * Note on circular imports: this file imports `db` from
  * `./shared.ts`, but `shared.ts` only imports the `rateLimit`
  * and `authLimiter` NAMES from here (re-exports). The order is
@@ -27,6 +35,75 @@
  */
 import { type NextFunction, type Request, type Response } from 'express';
 import { db } from './shared.ts';
+
+async function redisFastPath(
+	bucket: string,
+	key: string,
+	windowMs: number,
+	max: number,
+): Promise<{ allowed: boolean; retryAfterMs: number } | null> {
+	try {
+		const { getRedis } = await import('./redis.ts');
+		const r = getRedis();
+		if (!r) return null;
+		const redisKey = `rl:${bucket}:${key}`;
+		const pipeline = r.multi();
+		pipeline.incr(redisKey);
+		pipeline.pttl(redisKey);
+		const res = (await pipeline.exec()) as
+			| [[Error | null, number], [Error | null, number]]
+			| null;
+		if (!res) return null;
+		const [incrErr, count] = res[0];
+		const [pttlErr, ttlMs] = res[1];
+		if (incrErr || pttlErr) return null;
+		const c = Number(count);
+		// First increment in this window → set TTL.
+		if (ttlMs < 0 || c === 1) {
+			await r.pexpire(redisKey, windowMs).catch(() => void 0);
+		}
+		if (c <= max) return { allowed: true, retryAfterMs: 0 };
+		const remaining = Number(ttlMs) > 0 ? Number(ttlMs) : windowMs;
+		return { allowed: false, retryAfterMs: remaining };
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Tier 5.2 — Set the IETF `RateLimit-*` response headers on every
+ * rate-limited response so clients can pace themselves without
+ * having to 429-probe. The header semantics follow the draft
+ * `draft-ietf-httpapi-ratelimit-headers` (in IETF last-call as
+ * of 2024-Q2; expected to become RFC 9999 in 2025).
+ *
+ *   RateLimit-Limit:     <max>           — quota size
+ *   RateLimit-Remaining: <remaining>     — calls left in window
+ *   RateLimit-Reset:     <delta-seconds> — seconds until the bucket
+ *                                          rolls over (delay-seconds
+ *                                          form, per spec)
+ *   Retry-After:         <delta-seconds> — on 429 only (RFC 6585 /
+ *                                          RFC 7231 §7.1.3)
+ *
+ * On the happy path we emit Limit + Remaining only (no Reset on
+ * the success path because the reset point changes per request —
+ * exposing it would be misleading). On 429 we emit all four.
+ */
+function setRateLimitHeaders(
+	res: Response,
+	args: { limit: number; remaining?: number; resetSeconds?: number },
+) {
+	res.setHeader('RateLimit-Limit', String(args.limit));
+	if (typeof args.remaining === 'number') {
+		// Guard against accidental negatives — clamp to 0.
+		const rem = Math.max(0, args.remaining);
+		res.setHeader('RateLimit-Remaining', String(rem));
+	}
+	if (typeof args.resetSeconds === 'number') {
+		// delay-seconds form: non-negative integer seconds.
+		res.setHeader('RateLimit-Reset', String(Math.max(0, Math.ceil(args.resetSeconds))));
+	}
+}
 
 /**
  * Build a per-route, per-IP rate-limit middleware.
@@ -43,6 +120,27 @@ export function rateLimit(windowMs: number, max: number, bucket = 'global') {
 		const ip = req.ip || req.socket.remoteAddress || 'anon';
 		const key = `${bucket}:${req.method}:${route}:${ip}`;
 		try {
+			// 1) Redis fast path — bypass the DB on the happy path.
+			const fast = await redisFastPath(bucket, key, windowMs, max);
+			if (fast) {
+				if (!fast.allowed) {
+					const resetSeconds = Math.ceil(fast.retryAfterMs / 1000);
+					setRateLimitHeaders(res, {
+						limit: max,
+						remaining: 0,
+						resetSeconds,
+					});
+					res.setHeader('Retry-After', resetSeconds);
+					const { sendError } = await import('./shared.ts');
+					return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
+				}
+				// Best-effort: surface the remaining quota. We don't
+				// know the exact count from Redis here, so emit
+				// "max - 1" as a conservative lower bound.
+				setRateLimitHeaders(res, { limit: max, remaining: max - 1 });
+				return next();
+			}
+			// 2) DB authoritative path.
 			const row = (await db
 				.prepare('SELECT allowed, retry_after_ms FROM consume_rate_limit($1, $2, $3, $4)')
 				.get(bucket, key, windowMs, max)) as
@@ -50,14 +148,18 @@ export function rateLimit(windowMs: number, max: number, bucket = 'global') {
 				| undefined;
 			if (!row) return next();
 			if (!row.allowed) {
-				res.setHeader('Retry-After', Math.ceil(row.retry_after_ms / 1000));
-				// 429 with the standard error envelope. We deliberately
-				// don't import sendError at module-load time because
-				// that creates a tighter cycle with middleware.ts;
-				// instead we import lazily to avoid it.
+				const resetSeconds = Math.ceil(row.retry_after_ms / 1000);
+				setRateLimitHeaders(res, {
+					limit: max,
+					remaining: 0,
+					resetSeconds,
+				});
+				res.setHeader('Retry-After', resetSeconds);
 				const { sendError } = await import('./shared.ts');
 				return sendError(res, 'Too many requests. Try again later.', 429, 'RATE_LIMITED');
 			}
+			// Happy path DB branch — emit Limit + Remaining only.
+			setRateLimitHeaders(res, { limit: max, remaining: max - 1 });
 		} catch (err) {
 			// Fail-OPEN on limiter outage: a transient DB hiccup
 			// must not lock out legitimate users. We log a

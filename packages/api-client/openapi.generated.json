@@ -1,0 +1,1141 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Noufex Public API",
+    "version": "1.0.0",
+    "description": "Yemen & Middle East B2B/B2C marketplace REST API. This is the canonical machine-readable contract — all schemas here are auto-generated from the Zod validation the API enforces, so docs and runtime cannot drift. For the rendered UI visit `/api/docs` (Swagger UI) or `/api/redoc` (ReDoc).\n\n## Versioning\n\nThe API uses Stripe-style media-type versioning. Specify the version via `Accept`:\n\n  - `application/vnd.noufex.v1+json` (current)\n\nRequests with no `Accept` header (or `application/json` / wildcard) get the latest stable version automatically.",
+    "contact": {
+      "name": "Noufex Engineering",
+      "url": "https://noufex.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://noufex.com/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.noufex.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://staging-api.noufex.com",
+      "description": "Staging"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local dev (run `npm run dev --workspace @noufex/api`)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Catalog",
+      "description": "Products, categories, stores — public, read-only, cache-friendly"
+    },
+    {
+      "name": "Search",
+      "description": "Full-text search via Elasticsearch with PG FTS fallback"
+    },
+    {
+      "name": "Auth",
+      "description": "Email/password login + 2FA + CSRF"
+    },
+    {
+      "name": "Operational",
+      "description": "Health, readiness, metrics — for k8s probes and Prometheus"
+    }
+  ],
+  "externalDocs": {
+    "url": "https://github.com/anomalyco/opencode/blob/main/ARCHITECTURE.md",
+    "description": "Full architecture overview"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Bearer token from /api/auth/login (sent on mobile requests)."
+      },
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "noufex_auth",
+        "description": "HttpOnly session cookie issued by /api/auth/login."
+      }
+    },
+    "schemas": {
+      "ProductHit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "store_id": {
+            "type": "integer"
+          },
+          "store_name": {
+            "type": "string"
+          },
+          "category_id": {
+            "type": "integer"
+          },
+          "name_ar": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string",
+            "nullable": true
+          },
+          "name_zh": {
+            "type": "string",
+            "nullable": true
+          },
+          "main_image": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "sold_count": {
+            "type": "integer"
+          },
+          "deal_discount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "store_id",
+          "store_name",
+          "category_id",
+          "name_ar",
+          "price",
+          "currency"
+        ]
+      },
+      "ProductsListResponse": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductHit"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "products",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "ProductsListEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProductsListResponse"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable error code (e.g. `NOT_FOUND`)"
+          },
+          "request_id": {
+            "type": "string",
+            "description": "Server-generated correlation id"
+          },
+          "details": {
+            "nullable": true
+          }
+        },
+        "required": [
+          "success",
+          "error"
+        ]
+      },
+      "LimitParam": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "default": 20
+      },
+      "OffsetParam": {
+        "type": "integer",
+        "nullable": true,
+        "minimum": 0,
+        "default": 0
+      },
+      "ProductHitListEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductHit"
+            }
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "CategoryNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name_ar": {
+            "type": "string"
+          },
+          "name_en": {
+            "type": "string",
+            "nullable": true
+          },
+          "name_zh": {
+            "type": "string",
+            "nullable": true
+          },
+          "product_count": {
+            "type": "integer"
+          },
+          "parent_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name_ar"
+        ]
+      },
+      "CategoriesListResponse": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryNode"
+            }
+          }
+        },
+        "required": [
+          "categories"
+        ]
+      },
+      "CategoriesListEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/CategoriesListResponse"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "HomeStats": {
+        "type": "object",
+        "properties": {
+          "counts": {
+            "type": "object",
+            "properties": {
+              "products": {
+                "type": "integer"
+              },
+              "stores": {
+                "type": "integer"
+              },
+              "orders": {
+                "type": "integer"
+              },
+              "users": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "products",
+              "stores",
+              "orders",
+              "users"
+            ]
+          },
+          "featured": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductHit"
+            }
+          },
+          "deals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductHit"
+            }
+          }
+        },
+        "required": [
+          "counts",
+          "featured",
+          "deals"
+        ]
+      },
+      "HomeStatsEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/HomeStats"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "elasticsearch",
+              "postgresql"
+            ]
+          },
+          "facets": {
+            "type": "object",
+            "properties": {
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "count"
+                  ]
+                }
+              },
+              "priceRanges": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "count"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "categories",
+              "priceRanges"
+            ]
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductHit"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "total",
+          "limit",
+          "offset",
+          "duration_ms",
+          "source",
+          "products"
+        ]
+      },
+      "SearchEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/SearchResponse"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "SuggestResponse": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "text",
+                "score"
+              ]
+            }
+          }
+        },
+        "required": [
+          "suggestions"
+        ]
+      },
+      "SuggestEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/SuggestResponse"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "merchant",
+              "admin"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          },
+          "token": {
+            "type": "string",
+            "description": "Bearer token (mobile clients only)"
+          }
+        },
+        "required": [
+          "user"
+        ]
+      },
+      "LoginEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "data": {
+            "$ref": "#/components/schemas/LoginResponse"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/products": {
+      "get": {
+        "description": "List products with filters and pagination.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Category slug"
+            },
+            "required": false,
+            "description": "Category slug",
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Full-text search term (LIKE-based in dev, ES in prod)"
+            },
+            "required": false,
+            "description": "Full-text search term (LIKE-based in dev, ES in prod)",
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "nullable": true
+            },
+            "required": false,
+            "name": "store",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "minPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "maxPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "relevance",
+                "price_asc",
+                "price_desc",
+                "newest",
+                "popular"
+              ]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/LimitParam"
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/OffsetParam"
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductsListEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/featured": {
+      "get": {
+        "description": "Curated featured products (homepage hero).",
+        "responses": {
+          "200": {
+            "description": "Up to 10 featured products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductHitListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/deals": {
+      "get": {
+        "description": "Products with an active deal_discount > 0.",
+        "responses": {
+          "200": {
+            "description": "Up to 10 deal products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductHitListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "description": "Single product + its store + reviews + images.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details"
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "description": "Full category tree with product counts.",
+        "responses": {
+          "200": {
+            "description": "Category tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stats/home": {
+      "get": {
+        "description": "Homepage stats: counts, featured, deals. (Redis-cached 30s.)",
+        "responses": {
+          "200": {
+            "description": "Homepage data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeStatsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "description": "Full-text product search. Elasticsearch-first with PostgreSQL FTS fallback.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "nullable": true
+            },
+            "required": false,
+            "name": "store",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "minPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "nullable": true
+            },
+            "required": false,
+            "name": "maxPrice",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "relevance",
+                "price_asc",
+                "price_desc",
+                "newest",
+                "best_selling"
+              ]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/LimitParam"
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/OffsetParam"
+            },
+            "required": false,
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search hits + facets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing query parameter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "All search backends unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/suggest": {
+      "get": {
+        "description": "Autocomplete suggestions for the search box. Backs the typeahead.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Top 10 suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuggestEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "description": "Email + password login. Sets the `noufex_auth` HttpOnly cookie on success.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate-limited",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "Liveness probe — returns 200 while the process is running.",
+        "responses": {
+          "200": {
+            "description": "Process alive"
+          }
+        }
+      }
+    },
+    "/api/ready": {
+      "get": {
+        "description": "Readiness probe — reports status of PG / Redis / RabbitMQ / Elasticsearch.",
+        "responses": {
+          "200": {
+            "description": "All checks passed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ready"
+                      ]
+                    },
+                    "checks": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "ok": {
+                            "type": "boolean"
+                          },
+                          "ms": {
+                            "type": "number"
+                          },
+                          "detail": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "ok",
+                          "ms"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "checks"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "At least one check failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "degraded"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "description": "Prometheus exposition (text/plain version 0.0.4). No auth — bind to internal network only.",
+        "responses": {
+          "200": {
+            "description": "Metrics in Prometheus format",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/openapi.json": {
+      "get": {
+        "description": "This document. OpenAPI 3.1, JSON.",
+        "responses": {
+          "200": {
+            "description": "OpenAPI document"
+          }
+        }
+      }
+    }
+  }
+}

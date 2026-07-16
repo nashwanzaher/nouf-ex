@@ -35,13 +35,12 @@ describe('useHomeStats', () => {
 		expect(result.current.error).toBeNull();
 		// `getHomeStats` hits `/api/stats/home`. The MSW handler returns
 		// the server-shaped payload: `{ counts: { products, ... }, ... }`.
+		// `getHomeStats` maps this to `{ products_count, stores_count, ... }`.
 		expect(result.current.data).toMatchObject({
-			counts: {
-				products: expect.any(Number),
-				stores: expect.any(Number),
-				orders: expect.any(Number),
-				users: expect.any(Number),
-			},
+			products_count: expect.any(Number),
+			stores_count: expect.any(Number),
+			orders_count: expect.any(Number),
+			users_count: expect.any(Number),
 		});
 	});
 

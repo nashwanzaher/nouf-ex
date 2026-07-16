@@ -17,6 +17,8 @@
  *     store existence.
  */
 import { Router, type Request, type Response } from 'express';
+import { invalidate } from '../lib/cache-invalidate.ts';
+import { productTags, purgeTags } from '../lib/cloudflare.ts';
 import {
 	db,
 	sendSuccess,
@@ -259,8 +261,19 @@ sellerRouter.post('/products', ...sellerAuth, async (req: Request, res: Response
 				JSON.stringify(data.features ?? []),
 				JSON.stringify(data.badges ?? []),
 				JSON.stringify(data.specifications ?? {}),
-			)) as { id: number };
+)) as { id: number };
 		await writeAuditLog(req, 'product.create', 'products', result.id, null, data);
+		await invalidate.product(result.id);
+		await invalidate.stats();
+		// Phase 2+3: publish a search.index event so the ES indexer
+		// worker can upsert this product. Best-effort: if the broker
+		// is down the row stays in PG (PG FTS still works) and the
+		// backfill script will reconcile it later.
+		void import('../lib/queue.ts').then(({ publish }) =>
+			publish('noufex.search', 'search.index', { entity: 'product', id: result.id }).catch(
+				() => void 0,
+			),
+		);
 		return sendSuccess(res, { id: result.id }, 'Product created');
 	} catch (err) {
 		const pg = err as { code?: string };
@@ -335,6 +348,12 @@ sellerRouter.patch('/products/:id', ...sellerAuth, async (req: Request, res: Res
 			.get(...params)) as Record<string, unknown> | undefined;
 		if (!updated) return sendError(res, 'Product not found', 404);
 		await writeAuditLog(req, 'product.update', 'products', id, null, updates);
+		await invalidate.product(id);
+		await invalidate.stats();
+		void import('../lib/queue.ts').then(({ publish }) =>
+			publish('noufex.search', 'search.index', { entity: 'product', id }).catch(() => void 0),
+		);
+		void purgeTags(productTags(id));
 		return sendSuccess(res, getProductWithParsedFields(updated), 'Product updated');
 	} catch (err) {
 		return sendError(res, err);
@@ -359,6 +378,11 @@ sellerRouter.delete('/products/:id', ...sellerAuth, async (req: Request, res: Re
 			.get(id, myStoreId)) as { id: number } | undefined;
 		if (!result) return sendError(res, 'Product not found', 404);
 		await writeAuditLog(req, 'product.delete', 'products', id, null, { soft: true });
+		await invalidate.product(id);
+		await invalidate.stats();
+		void import('../lib/queue.ts').then(({ publish }) =>
+			publish('noufex.search', 'search.deindex', { entity: 'product', id }).catch(() => void 0),
+		);
 		return sendSuccess(res, { id: result.id }, 'Product deleted');
 	} catch (err) {
 		return sendError(res, err);
@@ -584,7 +608,7 @@ sellerRouter.get('/inventory', ...sellerAuth, async (req: Request, res: Response
 		if (myStoreId == null) return sendError(res, 'You do not have a store yet', 404);
 		const rows = (await db
 			.prepare(
-				`SELECT id, name_ar, name_en, sku, stock, sold_count, is_active,
+				`SELECT id, name_ar, name_en, stock, sold_count, is_active,
                 CASE
                   WHEN stock = 0 THEN 'out_of_stock'
                   WHEN stock < 10 THEN 'low_stock'

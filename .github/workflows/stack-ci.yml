@@ -1,0 +1,187 @@
+# ============================================================================
+# Noufex — Full-stack CI (API + Redis + RabbitMQ + Elasticsearch)
+# ----------------------------------------------------------------------------
+# Phase 1-3 of the competitive-architecture-analysis rollout. This job
+# exercises the API with the real companion services to verify the
+# fail-OPEN contract works end-to-end:
+#   - Redis is REQUIRED; if it's down the cache must report "disabled".
+#   - RabbitMQ is REQUIRED; if it's down the workers must report "disabled".
+#   - Elasticsearch is REQUIRED; if it's down the search must fall back
+#     to PostgreSQL FTS (lib/search.ts).
+#
+# Runs in parallel with the regular ci.yml pipeline (lint/typecheck/test/
+# build) and gates production deploys.
+# ============================================================================
+
+name: Stack CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/api/src/**'
+      - 'apps/api/package.json'
+      - 'docker-compose.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/stack-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/api/src/**'
+      - 'apps/api/package.json'
+      - 'docker-compose.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20.19'
+
+jobs:
+  stack-ci:
+    name: Stack CI (Redis + RabbitMQ + Elasticsearch)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_superuser_test_password_only
+          POSTGRES_DB: noufex_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      rabbitmq:
+        image: rabbitmq:3.13-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: noufex_app
+          RABBITMQ_DEFAULT_PASS: rabbitmq_test_password_only
+          RABBITMQ_DEFAULT_VHOST: noufex
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 10
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: 'false'
+          ES_JAVA_OPTS: '-Xms512m -Xmx512m'
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd "curl -fsS http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 15
+    env:
+      NODE_ENV: test
+      API_PORT: '3000'
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_superuser_test_password_only
+      DATABASE_URL_SUPERUSER: postgresql://postgres:postgres_superuser_test_password_only@localhost:5432/noufex_db
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_NAME: noufex_db
+      DB_USER: noufex_app
+      DB_PASSWORD: noufex_app_test_password_only
+      DATABASE_URL: postgresql://noufex_app:noufex_app_test_password_only@localhost:5432/noufex_db
+      AUTH_SECRET: test-secret-must-be-at-least-32-chars-long-xyz
+      # Phase 1
+      REDIS_URL: redis://localhost:6379
+      REDIS_KEY_PREFIX: 'noufex-test:'
+      # Phase 2
+      RABBITMQ_URL: amqp://noufex_app:rabbitmq_test_password_only@localhost:5672/noufex
+      RABBITMQ_PREFETCH: '5'
+      # Phase 3
+      ELASTICSEARCH_URL: http://localhost:9200
+      ELASTICSEARCH_INDEX_PREFIX: 'noufex-test'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+
+      - name: Apply schema + seed (as postgres superuser)
+        run: DATABASE_URL=$DATABASE_URL_SUPERUSER node scripts/db/db-setup.cjs
+
+      - name: Reindex Elasticsearch (bulk backfill from PG)
+        run: |
+          # Tier 1.2: backfill the ES indices so /api/search hits
+          # Elasticsearch instead of falling back to PG FTS.
+          # The script is idempotent (skips existing indices).
+          node --experimental-strip-types scripts/search/reindex.ts
+
+      - name: Boot API + verify companion health
+        run: |
+          set -e
+          cd apps/api
+          (npx tsx src/index.ts > /tmp/noufex-api.log 2>&1) &
+          API_PID=$!
+          trap "kill $API_PID 2>/dev/null || true" EXIT
+
+          # Wait up to 60s for the server to come up.
+          BOOTED=0
+          for i in $(seq 1 60); do
+            CODE=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/health 2>/dev/null || echo 000)
+            if [ "$CODE" = "200" ]; then
+              echo "API ready after ${i}s"
+              BOOTED=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$BOOTED" != "1" ]; then
+            echo "API did not become ready within 60s"
+            cat /tmp/noufex-api.log
+            exit 1
+          fi
+
+          # /api/ready should report all three companions healthy.
+          READY_BODY=$(curl -sS http://127.0.0.1:3000/api/ready)
+          echo "/api/ready: $READY_BODY"
+          echo "$READY_BODY" | grep -q '"redis":{"ok":true' || { echo "redis not ok"; exit 1; }
+          echo "$READY_BODY" | grep -q '"rabbitmq":{"ok":true' || { echo "rabbitmq not ok"; exit 1; }
+          echo "$READY_BODY" | grep -q '"elasticsearch":{"ok":true' || { echo "elasticsearch not ok"; exit 1; }
+
+          # Public catalog endpoints must respond.
+          PRODS=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/products)
+          CATS=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/categories)
+          STATS=$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/stats/home)
+          echo "products: $PRODS  categories: $CATS  stats: $STATS"
+          if [ "$PRODS" != "200" ] || [ "$CATS" != "200" ] || [ "$STATS" != "200" ]; then
+            echo "Public catalog endpoint failed"
+            cat /tmp/noufex-api.log
+            exit 1
+          fi
+
+          # Search endpoint: with ES up it should report source=elasticsearch.
+          SEARCH=$(curl -sS 'http://127.0.0.1:3000/api/search?q=honey')
+          echo "search: $SEARCH" | head -c 300
+          echo
+          echo "$SEARCH" | grep -q '"source":"elasticsearch"' || { echo "search did not hit elasticsearch"; exit 1; }

@@ -1,0 +1,48 @@
+{
+	"expo": {
+		"name": "Noufex",
+		"slug": "noufex",
+		"version": "0.1.0",
+		"orientation": "portrait",
+		"icon": "./assets/icon.png",
+		"userInterfaceStyle": "automatic",
+		"newArchEnabled": true,
+		"splash": {
+			"image": "./assets/splash.png",
+			"resizeMode": "contain",
+			"backgroundColor": "#0d9488"
+		},
+		"assetBundlePatterns": ["**/*"],
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.noufex.mobile",
+			"infoPlist": {
+				"NSCameraUsageDescription": "Used to scan QR codes for order tracking.",
+				"NSLocationWhenInUseUsageDescription": "Used to find stores near you."
+			}
+		},
+		"android": {
+			"package": "com.noufex.mobile",
+			"permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "CAMERA"],
+			"adaptiveIcon": {
+				"foregroundImage": "./assets/adaptive-icon.png",
+				"backgroundColor": "#0d9488"
+			}
+		},
+		"web": {
+			"bundler": "metro",
+			"output": "static"
+		},
+		"plugins": [
+			"expo-secure-store",
+			"expo-localization",
+			"expo-notifications"
+		],
+		"extra": {
+			"apiUrl": "http://localhost:3000",
+			"router": {
+				"origin": false
+			}
+		}
+	}
+}

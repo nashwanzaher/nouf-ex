@@ -65,6 +65,9 @@ wait_for_db() {
 
 wait_for_db
 
+echo "[entrypoint] Creating uploads directories..."
+mkdir -p /app/uploads/images /app/uploads/documents /app/uploads/videos
+
 echo "[entrypoint] Starting Nouf-ex API server on port ${API_PORT:-3000}..."
 cd /app
 # Run the esbuild-bundled ESM output produced by the build stage of

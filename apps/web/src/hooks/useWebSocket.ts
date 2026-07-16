@@ -148,6 +148,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 	const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const messageHandlersRef = useRef<Map<string, Set<(message: WebSocketMessageUnion) => void>>>(new Map());
+	const connectRef = useRef<(() => void) | null>(null);
 
 	/**
 	 * Get WebSocket URL from current host.
@@ -227,7 +228,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 						maxReconnectInterval
 					);
 					reconnectAttemptsRef.current++;
-					reconnectTimeoutRef.current = setTimeout(connect, delay);
+					reconnectTimeoutRef.current = setTimeout(connectRef.current!, delay);
 				}
 			};
 
@@ -240,6 +241,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 			setError(err instanceof Error ? err.message : 'Failed to connect');
 		}
 	}, [getWebSocketUrl, heartbeatInterval, reconnectInterval, maxReconnectInterval, maxReconnectAttempts]);
+
+	// Keep the ref in sync so the onclose handler can access the latest connect.
+	useEffect(() => { connectRef.current = connect; });
 
 	/**
 	 * Disconnect from WebSocket server.

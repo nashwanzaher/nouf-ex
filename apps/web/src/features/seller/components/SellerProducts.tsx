@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { useCategories, useSellerProducts } from '@/hooks/useApi';
 import { deleteSellerProduct } from '@/lib/api';
+import { formatMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import DashboardShell from './DashboardShell';
 import { AddProductDialog } from './AddProductDialog';
@@ -1107,7 +1108,7 @@ const deleteProduct = useCallback(
 									</h3>
 									<div className="flex items-center justify-between">
 										<span className="text-sm font-bold font-mono text-[#D4A853]">
-											{product.price} ر.ي
+											{formatMoney(Number(product.price), { lang: i18n.language as 'ar' | 'en' | 'zh' })}
 										</span>
 										<span className="text-[10px] text-[#6B6B6B] font-cairo">
 											{product.stock} {t('seller.inStock', 'in stock')}
@@ -1180,7 +1181,7 @@ const deleteProduct = useCallback(
 											{product.name}
 										</td>
 										<td className="px-4 py-3 text-xs font-mono text-[#111111] font-semibold">
-											{product.price} ر.ي
+											{formatMoney(Number(product.price), { lang: i18n.language as 'ar' | 'en' | 'zh' })}
 										</td>
 										<td className="px-4 py-3 text-xs font-mono text-[#6B6B6B]">
 											{product.stock}

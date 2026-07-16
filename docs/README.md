@@ -833,7 +833,7 @@ nouf-ex/
 | UI | Tailwind 3 + shadcn/ui | Utility-first, accessible primitives |
 | State | React Context + useReducer | No Redux needed at current scale |
 | Testing | Vitest 4 + supertest + axe-core + MSW | pg mocked globally; happy-dom for DOM |
-| Container | `node:20-alpine` + tini | PID 1 reaping, small image |
+| Container | `node:20.19-alpine` + tini | PID 1 reaping, small image |
 | CI | GitHub Actions | Matrix of cheap → expensive jobs |
 
 ## §4.3 Architecture decisions (ADRs)

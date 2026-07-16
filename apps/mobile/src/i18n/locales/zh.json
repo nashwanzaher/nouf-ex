@@ -1,0 +1,46 @@
+{
+	"nav": {
+		"home": "首页",
+		"categories": "分类",
+		"search": "搜索",
+		"cart": "购物车",
+		"profile": "我的"
+	},
+	"home": {
+		"hero_title": "也门和中东购物",
+		"hero_subtitle": "来自可信本地商家的数千种商品",
+		"search_placeholder": "搜索商品或店铺…",
+		"deals": "今日特价",
+		"featured": "精选商品",
+		"trusted_by": "值得信赖",
+		"customers": "位客户",
+		"stores": "家商店",
+		"products": "件商品",
+		"orders": "个订单",
+		"error": "无法加载首页"
+	},
+	"product": {
+		"add_to_cart": "加入购物车",
+		"buy_now": "立即购买",
+		"in_stock": "有货",
+		"out_of_stock": "缺货",
+		"reviews": "评价",
+		"description": "描述",
+		"specifications": "规格"
+	},
+	"cart": {
+		"empty": "购物车为空",
+		"subtotal": "小计",
+		"shipping": "运费",
+		"total": "总计",
+		"checkout": "结算"
+	},
+	"auth": {
+		"login": "登录",
+		"register": "注册",
+		"email": "电子邮箱",
+		"password": "密码",
+		"forgot_password": "忘记密码？",
+		"logout": "退出登录"
+	}
+}

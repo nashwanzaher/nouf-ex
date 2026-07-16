@@ -1,0 +1,46 @@
+{
+	"nav": {
+		"home": "Home",
+		"categories": "Categories",
+		"search": "Search",
+		"cart": "Cart",
+		"profile": "Profile"
+	},
+	"home": {
+		"hero_title": "Shop Yemen & the Middle East",
+		"hero_subtitle": "Thousands of products from trusted local merchants",
+		"search_placeholder": "Search for a product or store…",
+		"deals": "Today's deals",
+		"featured": "Featured products",
+		"trusted_by": "Trusted by",
+		"customers": "customers",
+		"stores": "stores",
+		"products": "products",
+		"orders": "orders",
+		"error": "Could not load the homepage"
+	},
+	"product": {
+		"add_to_cart": "Add to cart",
+		"buy_now": "Buy now",
+		"in_stock": "In stock",
+		"out_of_stock": "Out of stock",
+		"reviews": "Reviews",
+		"description": "Description",
+		"specifications": "Specifications"
+	},
+	"cart": {
+		"empty": "Your cart is empty",
+		"subtotal": "Subtotal",
+		"shipping": "Shipping",
+		"total": "Total",
+		"checkout": "Checkout"
+	},
+	"auth": {
+		"login": "Log in",
+		"register": "Create account",
+		"email": "Email",
+		"password": "Password",
+		"forgot_password": "Forgot password?",
+		"logout": "Log out"
+	}
+}

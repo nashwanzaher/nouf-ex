@@ -1,0 +1,263 @@
+# ============================================================================
+# Noufex — Prometheus alert rules (Tier 3.2).
+# ----------------------------------------------------------------------------
+# Standard Prometheus `alerting_rules` file. Drop into
+# /etc/prometheus/rules/noufex.yml and reference via
+# `rule_files:` in prometheus.yml. Each alert follows the
+# Google SRE multi-window/multi-burn-rate pattern (with Google's
+# blog post "Alerting on SLOs" as the upstream guide).
+#
+# Every alert has:
+#   - alert   — unique name
+#   - expr    — PromQL (single metric, no hidden joins)
+#   - for     — how long the condition must hold before firing
+#   - annotations.summary / description
+#   - labels  — severity (page/warn), team (noufex-platform)
+#
+# Severity semantics (Google SRE "Error Budget" hierarchy):
+#   - page  → wake SRE on-call, page out via PagerDuty
+#   - warn  → Slack #noufex-ops alert, no paging
+#
+# SLOs implied here:
+#   - API availability  ≥ 99.9 % (1-hour and 1-day burn rates)
+#   - API latency p99  ≤ 1 s   (5-minute and 1-hour burn rates)
+#   - Search latency    ≤ 300 ms p95
+#   - Cache hit ratio   ≥ 80 % on the catalog surface
+#   - DLQ depth          < 1 msg/s sustained
+# ============================================================================
+
+groups:
+  # ────────────────────────────────────────────────────────────────────────
+  # API availability + latency (Google SRE multi-window burn-rate alerts).
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_api_availability
+    interval: 30s
+    rules:
+      - alert: NoufexApiHighErrorRate1m
+        expr: |
+          sum(rate(noufex_http_requests_total{status=~"5.."}[1m]))
+            /
+          sum(rate(noufex_http_requests_total[1m]))
+            > 0.02
+        for: 1m
+        labels:
+          severity: page
+          team: noufex-platform
+          slo: availability
+        annotations:
+          summary: "API 5xx ratio above 2 % (1 m window)"
+          description: |
+            > 2 % of requests in the last minute returned a 5xx.
+            Check `/api/ready`, recent deploys, PG pool stats,
+            and DLQ depth (NoufexDLQBacklog alert).
+          runbook: "https://runbooks.noufex.com/api-5xx-spike"
+
+      - alert: NoufexApiSlowP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(noufex_http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: warn
+          team: noufex-platform
+          slo: latency
+        annotations:
+          summary: "API p99 latency above 1 s (5 m window)"
+          description: |
+            99th percentile response time for the API exceeded 1 s
+            for 5 consecutive minutes. Likely DB contention
+            (see NoufexDBPoolSaturated) or downstream slowness.
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Tier 2.1 — companion service health.
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_companion_services
+    interval: 30s
+    rules:
+      - alert: NoufexRedisDown
+        expr: |
+          noufex_db_pool_connections{state="total"} > 0
+          and on() absent(noufex_http_requests_total)
+        for: 30s
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: "Redis appears unreachable from Prometheus"
+          description: |
+            The `/api/ready` endpoint has stopped reporting the
+            Redis health key. Either the API can't reach Redis
+            or Prometheus is missing the `/api/metrics` target.
+
+      - alert: NoufexRabbitMQDown
+        expr: |
+          sum(rate(noufex_queue_messages_total{op="publish"}[5m])) == 0
+            and on() absent(noufex_queue_messages_total)
+        for: 1m
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: "RabbitMQ has stopped producing messages"
+          description: |
+            The publisher side has been silent for over a minute.
+            Either the broker is unreachable, the publish path
+            is failing, or application traffic has stopped.
+
+      - alert: NoufexDLQBacklog
+        expr: sum(rate(noufex_queue_messages_total{op="nack"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: page
+          team: noufex-platform
+        annotations:
+          summary: "Worker DLQ is accumulating messages"
+          description: |
+            More than 3 messages/minute are landing in the
+            Dead-Letter Queue. Inspect the worker logs,
+            check Redis/ES connectivity, then drain via
+            `rabbitmqadmin --vhost=/ get queue=noufex.search.dlq`.
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Tier 2.1 — cache (Tier 1) behaviour.
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_cache
+    interval: 1m
+    rules:
+      - alert: NoufexCacheHitRatioLow
+        expr: |
+          sum(rate(noufex_cache_ops_total{result="hit"}[10m]))
+            /
+          clamp_min(sum(rate(noufex_cache_ops_total{result=~"hit|miss"}[10m])), 1)
+            < 0.7
+        for: 15m
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: "Redis cache hit ratio below 70 % (10 m window)"
+          description: |
+            Less than 70 % of cache reads are returning data.
+            Check for hot-key skew, recent cache-key
+            changes, or Redis OOM / maxmemory-policy=allkeys-lru
+            evicting too aggressively.
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Tier 2.1 — PostgreSQL pool.
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_database
+    interval: 30s
+    rules:
+      - alert: NoufexDBPoolSaturated
+        expr: noufex_db_pool_connections{state="waiting"} > 0
+        for: 2m
+        labels:
+          severity: page
+          team: noufex-platform
+        annotations:
+          summary: "PG pool has requests waiting for >2 m"
+          description: |
+            The DB pool is fully in use and concurrent
+            requests are queueing. Either a long-running query
+            (look for slow queries in pg_stat_activity), an
+            undersized `DB_POOL_MAX`, or a runaway request loop.
+
+      - alert: NoufexDBPoolLowUtilization
+        # Useful signal: if pool sits at 0 connections for >5 min,
+        # the app may not be receiving traffic — investigate the
+        # upstream load balancer.
+        expr: noufex_db_pool_connections{state="total"} == 0
+        for: 10m
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: "PG pool reports 0 connections for 10 m"
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Tier 3 (Phase 3) — Elasticsearch.
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_search
+    interval: 1m
+    rules:
+      - alert: NoufexSearchFellBackToPG
+        expr: |
+          sum(rate(noufex_search_source_total{source="postgresql"}[5m]))
+            >
+          0.5 * sum(rate(noufex_search_source_total[5m]))
+        for: 5m
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: ">50 % of search requests fell back to PostgreSQL FTS"
+          description: |
+            Elasticsearch is unreachable for the /api/search
+            route and the fallback path is taking most of the
+            traffic. Inspect the `noufex-worker` container
+            logs for the search-indexer; the in-memory index
+            stream may have backed up.
+
+      - alert: NoufexSearchIndexerDown
+        expr: |
+          sum(rate(noufex_queue_messages_total{exchange="noufex.search", op="consume"}[5m])) == 0
+            and
+          sum(rate(noufex_queue_messages_total{exchange="noufex.search", op="publish"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: "Search indexer worker is consuming 0 messages"
+          description: |
+            The search-indexer worker has stopped processing
+            RabbitMQ messages while publishers are still
+            producing them. Restart the `noufex-worker`
+            container; messages will be redelivered.
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Tier 4 — Cloudflare purge.
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_cdn
+    interval: 5m
+    rules:
+      - alert: NoufexCloudflarePurgesFailing
+        expr: |
+          sum(rate(noufex_cloudflare_purges_total{result="error"}[10m]))
+            >
+          0.1 * sum(rate(noufex_cloudflare_purges_total[10m]))
+        for: 10m
+        labels:
+          severity: warn
+          team: noufex-platform
+        annotations:
+          summary: "Cloudflare cache purges failing"
+          description: |
+            More than 10 % of Cloudflare purge calls have been
+            erroring for 10 minutes. Customers may see stale
+            catalog data. Check CLOUDFLARE_API_TOKEN.
+
+  # ────────────────────────────────────────────────────────────────────────
+  # Record-only alerts — fire into Alertmanager routing for SLO tracking
+  # but don't page. Useful for weekly review.
+  # ────────────────────────────────────────────────────────────────────────
+  - name: noufex_record_only
+    interval: 5m
+    rules:
+      - alert: NoufexAPITrafficDrop
+        expr: |
+          sum(rate(noufex_http_requests_total[10m]))
+            <
+          sum(rate(noufex_http_requests_total[10m] offset 1h)) * 0.5
+        for: 5m
+        labels:
+          severity: warn
+          team: noufex-platform
+          slo: traffic
+        annotations:
+          summary: "API traffic dropped by >50 % vs. 1 h ago"
+          description: |
+            Traffic has halved in the last hour relative to the
+            same window 24 h ago. Could be upstream DNS/CDN
+            issue, marketing campaign blackout, or auth outage.

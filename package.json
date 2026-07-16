@@ -5,12 +5,18 @@
 	"private": true,
 	"type": "module",
 	"engines": {
-		"node": ">=20.18.0",
+		"node": "^20.19.0 || >=22.12.0",
 		"npm": ">=10.0.0"
 	},
 	"workspaces": [
-		"apps/*",
-		"packages/*"
+		"apps/api",
+		"apps/web",
+		"apps/mcp-server",
+		"packages/api-client",
+		"packages/db",
+		"packages/eslint-config",
+		"packages/shared",
+		"packages/typescript-config"
 	],
 	"scripts": {
 		"dev": "turbo run dev --parallel",
@@ -18,9 +24,18 @@
 		"typecheck": "turbo run typecheck",
 		"lint": "turbo run lint",
 		"test": "turbo run test",
-		"clean": "turbo run clean"
+		"clean": "turbo run clean",
+		"openapi:generate": "tsx scripts/openapi/generate-json.ts",
+		"openapi:types": "npm run generate --workspace @noufex/api-client",
+		"openapi": "npm run openapi:generate && npm run openapi:types"
 	},
+	"mobileInstall": "cd apps/mobile && npm install",
+	"mobileStart": "cd apps/mobile && npm run start",
+	"mobileTypecheck": "cd apps/mobile && npm run typecheck",
+	"mobileBuild:preview": "cd apps/mobile && npm run build:preview",
+	"mobileBuild:prod": "cd apps/mobile && npm run build:prod",
 	"devDependencies": {
+		"@types/amqplib": "^0.10.8",
 		"husky": "^9.1.7",
 		"lint-staged": "^17.0.8",
 		"turbo": "^2.5.0"
@@ -34,5 +49,8 @@
 		"*.{js,cjs,mjs,json,md,css}": [
 			"prettier --write"
 		]
+	},
+	"dependencies": {
+		"openapi-typescript": "^7.4.4"
 	}
 }

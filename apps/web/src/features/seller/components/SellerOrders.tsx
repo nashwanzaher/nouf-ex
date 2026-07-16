@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatMoney } from '@/lib/format';
 import { useSellerOrders } from '@/hooks/useApi';
 import { updateSellerOrderStatus, getSellerOrder } from '@/lib/api';
 import type { SellerOrderWithItems } from '@/lib/api';
@@ -469,7 +470,7 @@ function SummaryCards({
 /* ------------------------------------------------------------------ */
 
 export default function SellerOrders() {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { addToast } = useApp();
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
@@ -495,7 +496,7 @@ export default function SellerOrders() {
 				customer: String(r.customer_email ?? r.customer_id ?? '—'),
 				phone: '—',
 				date: String(r.created_at ?? '').slice(0, 10),
-				amount: `${Number(r.total ?? 0).toLocaleString('ar-EG')} ر.ي`,
+				amount: formatMoney(Number(r.total ?? 0), { lang: i18n.language as 'ar' | 'en' | 'zh' }),
 				paymentStatus: String(r.payment_status ?? 'pending'),
 				status: String(r.status ?? 'pending') as Order['status'],
 				statusLabel: String(r.status ?? ''),
@@ -508,7 +509,7 @@ export default function SellerOrders() {
 				timeline: [],
 			};
 		});
-	}, [ordersResp]);
+	}, [ordersResp, i18n.language]);
 
 	const dataOrders = apiOrders;
 
@@ -536,9 +537,9 @@ export default function SellerOrders() {
 					? {
 							...prev,
 							items: detail.items.map((it) => ({
-								name: `منتج #${it.product_id}`,
+								name: `${t('seller.productItem', 'Product')} #${it.product_id}`,
 								qty: it.quantity,
-								price: `${it.unit_price.toLocaleString('ar-EG')} ر.ي`,
+								price: formatMoney(Number(it.unit_price ?? 0), { lang: i18n.language as 'ar' | 'en' | 'zh' }),
 							})),
 							paymentMethod: detail.payment_method ?? '—',
 							timeline: Array.isArray(detail.timeline)
@@ -560,7 +561,7 @@ export default function SellerOrders() {
 		} finally {
 			setDetailLoading(false);
 		}
-	}, []);
+	}, [i18n.language, t]);
 
 	return (
 		<DashboardShell

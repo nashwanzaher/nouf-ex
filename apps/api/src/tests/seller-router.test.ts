@@ -32,7 +32,7 @@ import { signTestToken } from './test-token';
 // customer.
 const MERCHANT_TOKEN = signTestToken({ sub: 2, role: 'merchant' });
 const CUSTOMER_TOKEN = signTestToken({ sub: 3, role: 'customer' });
-const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });
+const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'super_admin' });
 const STRANGER_TOKEN = signTestToken({ sub: 99, role: 'merchant' });
 
 function buildApp(): Express {

@@ -14,6 +14,8 @@ import {
     sendError,
     sendSuccess,
     validate,
+    isAdminOperator,
+    ADMIN_OPERATOR_ROLES,
 } from '../lib/shared.ts';
 
 export const paymentsRouter = Router();
@@ -187,7 +189,7 @@ paymentsRouter.post('/', authLimiter, requireAuth, async (req: Request, res: Res
 			| undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
 
-		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
+		if (isAdminOperator(req.user!.role) && order.customer_id !== req.user!.id) {
 			return sendError(res, 'Forbidden', 403);
 		}
 
@@ -325,7 +327,7 @@ paymentsRouter.get('/order/:orderId', requireAuth, async (req: Request, res: Res
 			.prepare('SELECT customer_id FROM orders WHERE id = ?')
 			.get(orderId)) as { customer_id: number } | undefined;
 		if (!order) return sendError(res, 'Order not found', 404);
-		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
+		if (isAdminOperator(req.user!.role) && order.customer_id !== req.user!.id) {
 			return sendError(res, 'Forbidden', 403);
 		}
 		// DB-P2-03 (added 2026-07-02): explicit column list. The previous
@@ -348,7 +350,7 @@ paymentsRouter.get('/order/:orderId', requireAuth, async (req: Request, res: Res
 	}
 });
 
-paymentsRouter.post('/:id/confirm', requireAuth, requireRole('admin'), async (req: Request, res: Response) => {
+paymentsRouter.post('/:id/confirm', requireAuth, requireRole(...ADMIN_OPERATOR_ROLES), async (req: Request, res: Response) => {
 	try {
 		const id = Number(req.params.id);
 		if (!Number.isInteger(id) || id <= 0) return sendError(res, 'Invalid payment id', 400);

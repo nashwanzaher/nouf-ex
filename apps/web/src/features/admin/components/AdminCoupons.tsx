@@ -349,7 +349,7 @@ export default function AdminCoupons() {
 										code: v.toUpperCase().replace(/[^A-Z0-9_-]/g, ''),
 									})
 								}
-								placeholder="WELCOME10"
+								placeholder={t('admin.coupons.codePlaceholder', 'PROMO_CODE')}
 								required
 							/>
 							<div className="grid grid-cols-2 gap-3">

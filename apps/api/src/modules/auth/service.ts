@@ -123,6 +123,22 @@ export type SafeUser = {
 	role: AuthRole;
 };
 
+/**
+ * Public registration surface. SECURITY (R-SUPER-3):
+ *   The self-service register endpoint can ONLY produce
+ *   `'merchant'` or `'customer'` rows. Operator roles
+ *   (`super_admin`, `store_reviewer`, `catalog_moderator`,
+ *   `finance_admin`, `support_agent`) are NEVER settable via
+ *   /api/auth/register — they can only be provisioned by an
+ *   existing super_admin (via the admin user-edit endpoint) or
+ *   by the bootstrap CLI (`npm run bootstrap:admin`).
+ */
+const SELF_REGISTRABLE_ROLES = ['merchant', 'customer'] as const;
+type SelfRegistrableRole = (typeof SELF_REGISTRABLE_ROLES)[number];
+// Silence the "unused" warning on the type alias — the constant
+// is exported below and re-used by the `input.role` narrowing.
+void SELF_REGISTRABLE_ROLES;
+
 export async function register(input: {
 	email: string;
 	password: string;
@@ -130,7 +146,30 @@ export async function register(input: {
 	role?: string;
 }): Promise<{ user: SafeUser; token: string }> {
 	const { email, password, name } = input;
-	const role: AuthRole = input.role === 'merchant' ? 'merchant' : 'customer';
+	// SECURITY (M-9, OWASP ASVS 2.5.1): an attacker who sends
+	// `role: 'super_admin'` in the registration body MUST NOT
+	// get the privileges they asked for. We coerce the input to
+	// the safe set and log the attempt.
+	let role: AuthRole;
+	if (input.role === 'merchant') {
+		role = 'merchant';
+	} else if (input.role === 'customer' || input.role === undefined) {
+		role = 'customer';
+	} else {
+		role = 'customer';
+		// Down-cast for the log entry; the input.role is a string
+		// we want to record for the audit trail. The type check
+		// proves the only legitimate self-roles are 'merchant' and
+		// 'customer'; anything else is an attempted privilege
+		// escalation.
+		const attempted = input.role as SelfRegistrableRole;
+		log.warn({
+			msg: 'register_role_downgrade',
+			attempted: String(attempted),
+			applied: 'customer',
+			email,
+		});
+	}
 	const passwordHash = await hashPassword(password);
 
 	const userId = await repo.createUser({ email, passwordHash, name, role });

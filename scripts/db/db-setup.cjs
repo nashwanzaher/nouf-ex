@@ -13,8 +13,9 @@
  *   5. functions.sql      ── PL/pgSQL trigger functions
  *   6. triggers.sql       ── wires functions to tables
  *   7. roles.sql          ── noufex_app, noufex_owner, noufex_readonly + GRANTs
- *   8. seed.sql           ── demo data (idempotent via ON CONFLICT)
- *   9. migrations/NNNN_*.sql ── any pending incremental migrations
+ *   8. reference-seed.sql ── production-safe reference rows
+ *   9. demo-seed.sql      ── development/test-only demo rows
+ *  10. migrations/NNNN_*.sql ── any pending incremental migrations
  *
  * All steps use IF NOT EXISTS / OR REPLACE / ON CONFLICT, so the script
  * is safe to re-run on a fully-seeded database.
@@ -148,36 +149,18 @@ async function main() {
 		for (const [label, relPath] of PIPELINE) {
 			await applyFile(client, label, relPath);
 		}
-		// Apply migrations BEFORE roles/seed because roles.sql GRANTs
-		// reference tables that are introduced by migrations
-		// (e.g. rate_limit_buckets in 0004, used_jtis in 0010,
-		// webhook_events in 0020, app_settings in 0023, delivery_agents
-		// in 0031, etc.) and seed.sql INSERTs into those tables too.
 		await applyPendingMigrations(client);
+		await applyFile(client, 'reference-seed', 'reference-seed.sql');
 		await applyFile(client, 'roles', 'roles.sql');
 
-		// seed.sql is gated by a GUC and is dev/test only.
-		// Production deploys skip this step because the file
-		// contains demo credentials (admin123, customer123, etc.).
 		if (process.env.NODE_ENV === 'production') {
-			console.warn(
-				'[db:setup] (skip) seed: NODE_ENV=production ' +
-					'— seed.sql contains demo credentials and will not run.'
-			);
+			console.warn('[db:setup] (skip) demo-seed: NODE_ENV=production');
 		} else {
-			// Latch the GUC that seed.sql's safety check looks for.
-// SECURITY (fix 2026-07-04): use plain SET, not SET LOCAL.
-// SET LOCAL only persists inside a transaction; db-setup.cjs
-// runs `applyFile` in autocommit mode, so the previous SET LOCAL
-// was a no-op by the time seed.sql ran. The GUC is bound to this
-// Client's session, which is closed at the end of main()
-// (`client.end()`), so it cannot leak to other sessions.
-// The seed.sql safety check uses
-// `current_setting(...) IS DISTINCT FROM 'on'`, so the literal
-// value MUST be the string 'on' — PostgreSQL's custom GUC
-// validator will reject any other value.
-			await client.query("SET noufex.allow_seed = 'on'");
-			await applyFile(client, 'seed', 'seed.sql');
+			await client.query("SET noufex.allow_demo_seed = 'on'");
+			await client.query("SELECT set_config('noufex.environment', $1, false)", [
+				process.env.NODE_ENV || 'development',
+			]);
+			await applyFile(client, 'demo-seed', 'demo-seed.sql');
 		}
 		console.log('[db:setup] done.');
 	} finally {

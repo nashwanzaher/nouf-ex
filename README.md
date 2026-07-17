@@ -122,8 +122,9 @@ npm run db:setup
 - `packages/db/triggers.sql` (triggers)
 - `packages/db/views.sql` (views)
 - `packages/db/roles.sql` (الأدوار + GRANTs)
-- `packages/db/seed.sql` (بيانات تجريبية)
-- `packages/db/migrations/0001..0030/*.sql`
+- `packages/db/reference-seed.sql` (بيانات مرجعية مسموحة في الإنتاج)
+- `packages/db/demo-seed.sql` (بيانات تجريبية للتطوير والاختبار فقط؛ لا تعمل في production)
+- `packages/db/migrations/0001..0036/*.sql`
 
 ### خطوة 4: تشغيل التطبيق
 

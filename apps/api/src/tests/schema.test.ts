@@ -106,31 +106,31 @@ describe('SQL schema files', () => {
 		});
 	});
 
-	describe('database/seed.sql (data dump)', () => {
-		const sql = readSql('packages/db/seed.sql');
+	describe('database/reference-seed.sql (production-safe reference data)', () => {
+		const sql = readSql('packages/db/reference-seed.sql');
 
-		it('exists and contains INSERT statements', () => {
-			expect(sql.length).toBeGreaterThan(1000);
-			expect(sql).toMatch(/INSERT INTO/i);
+		it('exists and contains only reference inserts', () => {
+			expect(sql.length).toBeGreaterThan(500);
+			expect(sql).toMatch(/INSERT INTO\s+categories/i);
+			expect(sql).toMatch(/INSERT INTO\s+shipping_methods/i);
+			expect(sql).not.toMatch(/INSERT INTO\s+(users|stores|products|orders|payments|reviews)/i);
+		});
+	});
+
+	describe('database/demo-seed.sql (development/test data)', () => {
+		const sql = readSql('packages/db/demo-seed.sql');
+
+		it('contains an explicit non-production gate', () => {
+			expect(sql).toMatch(/noufex\.allow_demo_seed/);
+			expect(sql).toMatch(/noufex\.environment/);
+			expect(sql).toMatch(/production/);
 		});
 
-		it('contains data for the core business tables', () => {
-			const tables = ['users', 'categories', 'stores', 'products', 'orders'];
-			// The dump uses double-quoted identifiers ("users"). Match both forms.
-			// We require whitespace after the table name (always true in valid SQL).
-			// We can't use \b here because after "users" the next char is `"` (a
-			// non-word char before another non-word char — no boundary).
-			for (const t of tables) {
-				const re = new RegExp(`INSERT INTO\\s+(?:"${t}"|${t})\\s`, 'i');
-				expect(sql, `Missing INSERT for "${t}"`).toMatch(re);
-			}
-		});
-
-		it('uses TRUE/FALSE for boolean literals (PG-compatible)', () => {
-			// Spot-check: we expect at least some TRUE/FALSE tokens.
-			const hasTrue = /\bTRUE\b/.test(sql);
-			const hasFalse = /\bFALSE\b/.test(sql);
-			expect(hasTrue || hasFalse).toBe(true);
+		it('does not contain a super-admin row or fixed admin credential', () => {
+			expect(sql).not.toMatch(/admin@noufex\.com/i);
+			expect(sql).not.toMatch(/admin123/i);
+			expect(sql).toMatch(/INSERT INTO\s+users/i);
+			expect(sql).toMatch(/INSERT INTO\s+stores/i);
 		});
 	});
 });

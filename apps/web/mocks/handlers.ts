@@ -461,6 +461,24 @@ export const handlers = [
 	}),
 
 	// Coupons
+	http.get('*/api/coupons/mine', async () => {
+		return HttpResponse.json({
+			success: true,
+			data: [
+				{
+					id: 1,
+					code: 'SAVE10',
+					type: 'percentage',
+					value: 10,
+					min_order_amount: 0,
+					max_discount: null,
+					starts_at: null,
+					expires_at: null,
+					description: 'Test coupon',
+				},
+			],
+		});
+	}),
 	http.post('*/api/coupons/validate', async ({ request }) => {
 		const body = (await request.json().catch(() => ({}))) as { code: string; order_subtotal: number };
 		if (body.code !== 'SAVE10') {

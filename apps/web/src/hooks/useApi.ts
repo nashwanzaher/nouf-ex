@@ -16,6 +16,7 @@ import type {
 	CartItem,
 	Category,
 	CategoryWithProducts,
+	Coupon,
 	CouponValidation,
 	CreateOrderBody,
 	HomeStats,
@@ -48,6 +49,7 @@ import {
 	getAddresses,
 	getCategories,
 	getHomeStats,
+	getMyCoupons,
 	getNotifications,
 	getOrders,
 	getProduct,
@@ -66,6 +68,7 @@ export type {
 	CartItem,
 	Category,
 	CategoryWithProducts,
+	Coupon,
 	CouponValidation,
 	HomeStats,
 	Notification,
@@ -230,8 +233,10 @@ export function useOrders(): HookResult<Order[]> {
 	return useDataHook((signal) => getOrders(undefined, { signal }));
 }
 
-// (Removed useOrder in K.5 — was orphaned. When a CustomerOrderDetail
-// page is needed, re-introduce from git history.)
+export function useMyCoupons(): HookResult<Coupon[]> {
+	return useDataHook((signal) => getMyCoupons({ signal }));
+}
+
 
 // ─── My Reviews ───────────────────────────────────────────────────
 // Fetches reviews written by the current customer.

@@ -2,10 +2,11 @@
  * Coupons feature public surface.
  */
 export {
+	getMyCoupons,
 	redeemCoupon,
 	validateCoupon,
 	 type RedeemCouponBody,
 	 type ValidateCouponBody,
 } from './api/coupons';
 
-export type { CouponValidation } from '@/lib/api/types';
+export type { Coupon, CouponValidation } from '@/lib/api/types';

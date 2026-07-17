@@ -1,4 +1,4 @@
-import { log } from '../../lib/shared.ts';
+import { log, isAdminOperator, type AuthRole } from '../../lib/shared.ts';
 import * as repo from './repository.ts';
 
 function parseAttachments(raw: unknown): unknown[] {
@@ -17,7 +17,7 @@ export async function send(input: {
 	productId?: number;
 	orderId?: number;
 	attachments?: string[];
-	role: string;
+	role: AuthRole;
 }) {
 	if (input.receiverId === input.senderId) {
 		return { ok: false as const, error: 'Cannot send a message to yourself', status: 400 };
@@ -40,7 +40,7 @@ export async function send(input: {
 	if (input.orderId) {
 		const o = await repo.findOrder(input.orderId);
 		if (!o) return { ok: false as const, error: 'Order not found', status: 404 };
-		if (input.role !== 'admin' && o.customer_id !== input.senderId) {
+		if (!isAdminOperator(input.role) && o.customer_id !== input.senderId) {
 			return {
 				ok: false as const,
 				error: "Cannot attach message to another user's order",

@@ -100,9 +100,6 @@ export default function SellerDashboard() {
 		[products.data],
 	);
 
-	// Build a chart-friendly series out of the analytics payload. If the
-	// API didn't return time series, we generate a 14-day moving series
-	// from the revenue/orders KPIs so the chart never looks empty.
 	const chartData = useMemo(() => {
 		const a = analytics.data as
 			| {
@@ -110,48 +107,20 @@ export default function SellerDashboard() {
 					orders_series?: Array<{ date: string; orders: number }>;
 			  }
 			| null;
-		const days = period === '7d' ? 7 : period === '30d' ? 14 : 30;
-		if (a?.revenue_series?.length || a?.orders_series?.length) {
-			const map = new Map<string, { date: string; revenue: number; orders: number }>();
-			a.revenue_series?.forEach((p) => {
-				const existing = map.get(p.date) ?? { date: p.date, revenue: 0, orders: 0 };
-				existing.revenue = Number(p.revenue) || 0;
-				map.set(p.date, existing);
-			});
-			a.orders_series?.forEach((p) => {
-				const existing = map.get(p.date) ?? { date: p.date, revenue: 0, orders: 0 };
-				existing.orders = Number(p.orders) || 0;
-				map.set(p.date, existing);
-			});
-			return Array.from(map.values()).sort((x, y) => x.date.localeCompare(y.date));
-		}
-		// Fallback: deterministic series derived from KPIs
-		const totalRev = Number(
-			(analytics.data as unknown as { gross_revenue?: number })?.gross_revenue ??
-				(analytics.data as unknown as { total_revenue?: number })?.total_revenue ??
-				dashboard.data?.revenue ??
-				0,
-		);
-		const totalOrders = Number(
-			(analytics.data as unknown as { total_orders?: number })?.total_orders ??
-				orders.data?.items?.length ??
-				0,
-		);
-		const today = new Date();
-		const series: Array<{ date: string; revenue: number; orders: number }> = [];
-		for (let i = days - 1; i >= 0; i--) {
-			const d = new Date(today);
-			d.setDate(d.getDate() - i);
-			const dateStr = d.toISOString().slice(5, 10);
-			const wave = Math.sin((i / days) * Math.PI * 2) * 0.25 + 1;
-			series.push({
-				date: dateStr,
-				revenue: Math.round((totalRev / days) * wave),
-				orders: Math.max(1, Math.round((totalOrders / days) * wave)),
-			});
-		}
-		return series;
-	}, [analytics.data, dashboard.data, period, orders.data?.items?.length]);
+		if (!a?.revenue_series?.length && !a?.orders_series?.length) return [];
+		const map = new Map<string, { date: string; revenue: number; orders: number }>();
+		a.revenue_series?.forEach((point) => {
+			const existing = map.get(point.date) ?? { date: point.date, revenue: 0, orders: 0 };
+			existing.revenue = Number(point.revenue) || 0;
+			map.set(point.date, existing);
+		});
+		a.orders_series?.forEach((point) => {
+			const existing = map.get(point.date) ?? { date: point.date, revenue: 0, orders: 0 };
+			existing.orders = Number(point.orders) || 0;
+			map.set(point.date, existing);
+		});
+		return Array.from(map.values()).sort((left, right) => left.date.localeCompare(right.date));
+	}, [analytics.data]);
 
 	const handleUpdateStatus = async (id: number, status: string) => {
 		await mutations.updateOrderStatus(id, { status });
@@ -238,8 +207,6 @@ export default function SellerDashboard() {
 						),
 						{ lang },
 					)}
-					trend="up"
-					trendPct={12}
 					color="bg-emerald-50 text-emerald-700"
 				/>
 				<KpiTile
@@ -250,8 +217,6 @@ export default function SellerDashboard() {
 							orders.data?.items?.length ??
 							0,
 					)}
-					trend="up"
-					trendPct={8}
 					color="bg-blue-50 text-blue-700"
 				/>
 				<KpiTile
@@ -267,8 +232,6 @@ export default function SellerDashboard() {
 										?.unique_customers ?? '—',
 								)
 					}
-					trend="down"
-					trendPct={3}
 					color="bg-purple-50 text-purple-700"
 				/>
 				<KpiTile
@@ -287,8 +250,6 @@ export default function SellerDashboard() {
 						}
 						return '—';
 					})()}
-					trend="up"
-					trendPct={1.2}
 					color="bg-amber-50 text-amber-700"
 				/>
 			</div>
@@ -352,7 +313,12 @@ export default function SellerDashboard() {
 						))}
 					</div>
 				</div>
-				<div className="h-64 -mx-2">
+				{chartData.length === 0 ? (
+					<div className="h-64 flex items-center justify-center text-sm text-gray-500">
+						{t('seller.noChartData', 'No analytics data is available yet.')}
+					</div>
+				) : (
+					<div className="h-64 -mx-2">
 					<ResponsiveContainer width="100%" height="100%">
 						<AreaChart data={chartData}>
 							<defs>
@@ -409,7 +375,8 @@ export default function SellerDashboard() {
 							/>
 						</AreaChart>
 					</ResponsiveContainer>
-				</div>
+					</div>
+				)}
 				<div className="flex items-center gap-4 mt-3 text-xs">
 					<span className="flex items-center gap-1.5 text-gray-600">
 						<span className="w-2.5 h-2.5 rounded-full bg-[#D4A853]" />
@@ -732,8 +699,8 @@ function KpiTile({
 	icon: typeof ShoppingBag;
 	label: string;
 	value: string;
-	trend: 'up' | 'down';
-	trendPct: number;
+	trend?: 'up' | 'down';
+	trendPct?: number;
 	color: string;
 }) {
 	return (
@@ -747,14 +714,16 @@ function KpiTile({
 				>
 					<Icon size={18} />
 				</div>
-				<span
-					className={cn(
-						'text-[10px] font-bold flex items-center gap-0.5',
-						trend === 'up' ? 'text-emerald-600' : 'text-red-600',
-					)}
-				>
-					{trend === 'up' ? '↑' : '↓'} {trendPct}%
-				</span>
+				{trend && trendPct !== undefined && (
+					<span
+						className={cn(
+							'text-[10px] font-bold flex items-center gap-0.5',
+							trend === 'up' ? 'text-emerald-600' : 'text-red-600',
+						)}
+					>
+						{trend === 'up' ? '↑' : '↓'} {trendPct}%
+					</span>
+				)}
 			</div>
 			<p className="text-2xl font-extrabold text-gray-900 truncate">{value}</p>
 			<p className="text-xs text-gray-500 mt-0.5 font-medium">{label}</p>

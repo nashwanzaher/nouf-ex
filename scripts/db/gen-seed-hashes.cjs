@@ -11,9 +11,9 @@
  *                     DB_* vars) and UPSERT the password_hash on each
  *                     SEED_USER. The actual user record (full_name,
  *                     role, etc.) is left alone — that data lives in
- *                     seed.sql and is the source of truth for new
- *                     installs. The script only guarantees the hashes
- *                     are valid so the demo logins work.
+ *                     demo-seed.sql and is the source of truth for
+ *                     new development installs. The script is blocked
+ *                     in production.
  *
  * Format: `scrypt$<salt_b64>$<hash_b64>` (matches the server's
  * hashPassword() / verifyPassword() implementation).
@@ -34,7 +34,6 @@ const scryptAsync = promisify(scrypt);
 const SCRYPT_KEYLEN = 64;
 
 const SEED_USERS = [
-	['admin@noufex.com', 'admin123', 'admin'],
 	['ahmed@gmail.com', 'customer123', 'customer'],
 	['sara@gmail.com', 'customer123', 'customer'],
 	['omar@gmail.com', 'customer123', 'customer'],
@@ -93,7 +92,7 @@ async function runPrint(users) {
 }
 
 function loadEnv() {
-	const envPath = path.resolve(__dirname, '..', '.env');
+	const envPath = path.resolve(__dirname, '..', '..', '.env');
 	if (!fs.existsSync(envPath)) return;
 	for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
 		const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
@@ -112,6 +111,9 @@ function resolveDatabaseUrl() {
 
 async function runApply(users, { dryRun }) {
 	loadEnv();
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error('demo seed hash updates are disabled when NODE_ENV=production');
+	}
 	let Client;
 	try {
 		({ Client } = require(path.join(__dirname, '..', '..', 'node_modules', 'pg')));
@@ -133,8 +135,7 @@ async function runApply(users, { dryRun }) {
 				);
 				continue;
 			}
-			// UPSERT so this also works on a brand-new install where the
-			// seed.sql has not been run yet.
+			// demo-seed.sql is intentionally development/test-only.
 			await client.query(
 				`INSERT INTO users (email, password_hash, full_name, role, status, is_verified, email_verified, phone_verified, preferred_language)
          VALUES ($1, $2, $3, $4, 'active', TRUE, TRUE, FALSE, 'ar')

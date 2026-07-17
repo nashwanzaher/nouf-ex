@@ -39,6 +39,7 @@ import {
 	paginationSchema,
 	HttpError,
 	ErrorCodes,
+	ADMIN_OPERATOR_ROLES,
 } from '../lib/shared.ts';
 
 export const sellerRouter = Router();
@@ -46,7 +47,7 @@ export const sellerRouter = Router();
 // Every seller route requires a logged-in merchant (admin is also
 // allowed, as a power-user / support escape hatch). The store is
 // looked up server-side via stores.owner_id = req.user.id.
-const sellerAuth = [requireAuth, requireRole('merchant', 'admin')];
+const sellerAuth = [requireAuth, requireRole('merchant', ...ADMIN_OPERATOR_ROLES)];
 
 /**
  * Look up the merchant's store. Returns the store id, or null if the

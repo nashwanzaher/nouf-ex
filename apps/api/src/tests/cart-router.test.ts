@@ -19,7 +19,7 @@ import { cartRouter } from '../routes/cart.ts';
 import { signTestToken } from './test-token';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
-const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });
+const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'super_admin' });
 const bearer = { Authorization: `Bearer ${CUSTOMER_TOKEN}` };
 
 function buildApp(): Express {

@@ -29,12 +29,13 @@ import {
 	adminCouponUpdateSchema,
 	adminBroadcastSchema,
 	adminSettingUpdateSchema,
+	ADMIN_OPERATOR_ROLES,
 } from '../../lib/shared.ts';
 import { validateSettingValue } from '../../lib/settings-validation.ts';
 
 export const adminExtrasRouter = Router();
 
-const adminAuth = [requireAuth, requireRole('admin')];
+const adminAuth = [requireAuth, requireRole(...ADMIN_OPERATOR_ROLES)];
 
 // ─── Categories ────────────────────────────────────────────────────────
 

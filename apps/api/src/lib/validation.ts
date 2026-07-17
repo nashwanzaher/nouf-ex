@@ -231,13 +231,7 @@ export const registerSchema = z
 		email: emailSchema,
 		password: passwordSchema,
 		name: z.string().trim().min(2).max(100),
-		// G1 fix 2026-07-11: clients can request a 'merchant' role at
-		// signup. We also accept 'admin' here as a string so the
-		// coercion in auth.ts (line ~52) can silently downgrade it to
-		// 'customer' — the API contract is "ask for any role, we keep
-		// the safe one". Rejecting 'admin' at parse time would leak the
-		// existence of admin-only fields to the client.
-		role: z.enum(['customer', 'merchant', 'admin', 'delivery_agent']).optional(),
+		role: z.enum(['customer', 'merchant']).optional(),
 	})
 	.strict()
 	.refine((data) => evaluatePasswordStrength(data.password, data.email) === null, {
@@ -246,7 +240,7 @@ export const registerSchema = z
 	});
 
 // SECURITY (OWASP ASVS 5.1.1): .strict() prevents mass-assignment
-// attacks where an attacker sends extra fields (e.g. {email, password, role: 'admin'}).
+// attacks where an attacker sends extra fields (e.g. {email, password, role: 'super_admin'}).
 export const loginSchema = z
 	.object({
 		email: emailSchema,

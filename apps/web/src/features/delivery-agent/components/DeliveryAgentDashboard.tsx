@@ -116,8 +116,8 @@ function KpiTile({
 	icon: typeof PackageCheck;
 	label: string;
 	value: string;
-	trend: 'up' | 'down';
-	trendPct: number;
+	trend?: 'up' | 'down';
+	trendPct?: number;
 	color: string;
 }) {
 	return (
@@ -126,14 +126,16 @@ function KpiTile({
 				<div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', color)}>
 					<Icon size={18} />
 				</div>
-				<span
-					className={cn(
-						'text-[10px] font-bold flex items-center gap-0.5',
-						trend === 'up' ? 'text-emerald-600' : 'text-red-600',
-					)}
-				>
-					{trend === 'up' ? '↑' : '↓'} {trendPct}%
-				</span>
+				{trend && trendPct !== undefined && (
+					<span
+						className={cn(
+							'text-[10px] font-bold flex items-center gap-0.5',
+							trend === 'up' ? 'text-emerald-600' : 'text-red-600',
+						)}
+					>
+						{trend === 'up' ? '↑' : '↓'} {trendPct}%
+					</span>
+				)}
 			</div>
 			<p className="text-2xl font-extrabold text-gray-900 truncate">{value}</p>
 			<p className="text-xs text-gray-500 mt-0.5 font-medium">{label}</p>
@@ -357,32 +359,24 @@ export default function DeliveryAgentDashboard() {
 						icon={CircleDollarSign}
 						label={t('delivery.todayEarnings')}
 						value={formatMoney(Number(stats?.earnings_today ?? 0), { lang })}
-						trend="up"
-						trendPct={12}
 						color="bg-emerald-50 text-emerald-700"
 					/>
 					<KpiTile
 						icon={PackageCheck}
 						label={t('delivery.completedToday')}
 						value={String(stats?.completed_today ?? 0)}
-						trend="up"
-						trendPct={8}
 						color="bg-blue-50 text-blue-700"
 					/>
 					<KpiTile
 						icon={Clock}
 						label={t('delivery.avgDeliveryTime')}
 						value={`${stats?.avg_delivery_time ?? 0} ${t('delivery.minutes')}`}
-						trend="down"
-						trendPct={3}
 						color="bg-purple-50 text-purple-700"
 					/>
 					<KpiTile
 						icon={Star}
 						label={t('delivery.rating')}
-						value={String(stats?.rating?.toFixed(1) ?? '5.0')}
-						trend="up"
-						trendPct={1.2}
+						value={stats?.rating != null ? stats.rating.toFixed(1) : '—'}
 						color="bg-amber-50 text-amber-700"
 					/>
 				</div>

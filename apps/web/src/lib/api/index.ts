@@ -50,6 +50,7 @@ export type {
 	CartItem,
 	Category,
 	CategoryWithProducts,
+	Coupon,
 	CouponValidation,
 	HomeStats,
 	InboxResponse,
@@ -159,7 +160,7 @@ export { createAddress, deleteAddress, getAddresses, updateAddress } from '@/fea
 export { getShippingMethods } from '@/features/shipping';
 
 // ─── Coupons ────────────────────────────────────────────────
-export { redeemCoupon, validateCoupon } from '@/features/coupons';
+export { getMyCoupons, redeemCoupon, validateCoupon } from '@/features/coupons';
 
 // ─── Payments ───────────────────────────────────────────────
 export { confirmPayment, createPayment, getOrderPayments, getPaymentProviders } from '@/features/checkout';

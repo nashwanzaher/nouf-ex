@@ -26,8 +26,13 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash         TEXT        NOT NULL,
     full_name             TEXT        NOT NULL,
     phone                 VARCHAR(20),
-    role                  VARCHAR(20) NOT NULL
+      role                  VARCHAR(20) NOT NULL
         CHECK (role IN ('customer','merchant','admin','delivery_agent')),
+        -- NOTE: the CHECK is widened in 0036_extend_role_enum.sql
+        -- to add the four operator roles (store_reviewer,
+        -- catalog_moderator, finance_admin, support_agent) and to
+        -- split 'admin' into 'super_admin'. Don't add new values
+        -- here — add a new migration instead.
     status                VARCHAR(20) NOT NULL DEFAULT 'active'
         CHECK (status IN ('active','suspended','banned')),
     is_verified           BOOLEAN     NOT NULL DEFAULT FALSE,

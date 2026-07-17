@@ -104,7 +104,7 @@ describe('storeFollowersRouter — GET /api/store-followers/check', () => {
 	describe('as authenticated admin (sub=1)', () => {
 		it('allows checking any user (not just self)', async () => {
 			const app = buildApp();
-			const token = signTestToken({ sub: 1, role: 'admin' });
+			const token = signTestToken({ sub: 1, role: 'super_admin' });
 			const res = await request(app)
 				.get('/api/store-followers/check?store_id=1&user_id=99')
 				.set('Authorization', `Bearer ${token}`);

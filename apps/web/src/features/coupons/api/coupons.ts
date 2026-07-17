@@ -3,7 +3,13 @@
  */
 
 import { apiRequest } from '@/lib/api/client';
-import type { CouponValidation } from '@/lib/api/types';
+import type { RequestOptions } from '@/lib/api/client';
+import type { Coupon, CouponValidation } from '@/lib/api/types';
+
+export async function getMyCoupons(options?: RequestOptions): Promise<Coupon[]> {
+	return apiRequest('/coupons/mine', { signal: options?.signal });
+}
+
 
 export interface ValidateCouponBody {
 	code: string;

@@ -239,7 +239,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Phase A — db:setup as postgres (creates roles + applies schema + seed)
         run: |
-          DATABASE_URL=$DATABASE_URL_SUPERUSER node scripts/db/db-setup.cjs
+          NODE_ENV=production DATABASE_URL=$DATABASE_URL_SUPERUSER node scripts/db/db-setup.cjs
       - name: Phase B — verify noufex_app can read every public table
         run: |
           node -e "const{Client}=require('pg');(async()=>{
@@ -250,9 +250,13 @@ jobs:
               const r=await c.query('SELECT COUNT(*)::int AS n FROM '+t);
               console.log(t+':',r.rows[0].n);
             }
-            const m=await c.query('SELECT current_user, version()');
-            console.log('as:',m.rows[0].current_user,'|',m.rows[0].version.slice(0,40));
-            await c.end();
+             const m=await c.query('SELECT current_user, version()');
+             console.log('as:',m.rows[0].current_user,'|',m.rows[0].version.slice(0,40));
+             const ref=await c.query("SELECT (SELECT COUNT(*) FROM categories)::int AS categories,(SELECT COUNT(*) FROM shipping_methods)::int AS shipping");
+             const demo=await c.query("SELECT COUNT(*)::int AS n FROM users WHERE email IN ('ahmed@gmail.com','admin@noufex.com')");
+             if(ref.rows[0].categories===0||ref.rows[0].shipping===0||demo.rows[0].n!==0) throw new Error('production setup contains invalid seed rows');
+             console.log('reference rows:',ref.rows[0],'demo users:',demo.rows[0].n);
+             await c.end();
           })()"
 
   # ─────────────────────────────────────────────────────────────────

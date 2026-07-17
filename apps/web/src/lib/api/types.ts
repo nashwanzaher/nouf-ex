@@ -279,6 +279,18 @@ export interface ShippingMethod {
 	estimated_total?: number;
 }
 
+export interface Coupon {
+	id: number;
+	code: string;
+	type: 'percentage' | 'fixed';
+	value: number;
+	min_order_amount: number;
+	max_discount: number | null;
+	starts_at: string | null;
+	expires_at: string | null;
+	description: string | null;
+}
+
 export interface CouponValidation {
 	code: string;
 	type: 'percentage' | 'fixed';

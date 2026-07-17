@@ -27,6 +27,7 @@ import {
 	adminProductUpdateSchema,
 	adminDisputeUpdateSchema,
 	getProductWithParsedFields,
+	ADMIN_OPERATOR_ROLES,
 } from '../lib/shared.ts';
 
 export const adminRouter = Router();
@@ -34,7 +35,7 @@ export const adminRouter = Router();
 // All admin routes require an authenticated admin. The middleware
 // chain below mirrors the role gate used in the original index.ts
 // inline routes.
-const adminAuth = [requireAuth, requireRole('admin')];
+const adminAuth = [requireAuth, requireRole(...ADMIN_OPERATOR_ROLES)];
 
 // ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
 // READ-ONLY (GET)
@@ -548,7 +549,10 @@ adminRouter.patch('/users/:id', ...adminAuth, async (req: Request, res: Response
 			if (v.data.status === 'banned') {
 				return sendError(res, 'You cannot ban your own account.', 400, 'SELF_BAN');
 			}
-			if (v.data.role && v.data.role !== 'admin') {
+			if (v.data.role && v.data.role !== req.user!.role) {
+				return sendError(res, 'Only super_admin may change a user role', 403, 'FORBIDDEN');
+			}
+			if (v.data.role && req.user!.role !== 'super_admin' && req.user!.id === userId) {
 				return sendError(res, 'You cannot remove your own admin role.', 400, 'SELF_DEMOTE');
 			}
 		}

@@ -17,6 +17,54 @@ Progress / Done).
 
 ## Critical
 
+### R-SUPER-1 — First user is `super_admin` (provisioned via bootstrap CLI)
+
+**Why.** A multi-tenant marketplace must NEVER let the first
+caller of the public signup endpoint become the platform owner.
+The OWASP ASVS V2.5.1 / NIST SP 800-53 IA-5 controls require that
+privileged accounts be provisioned through a separate, audited
+channel. Without `super_admin` bootstrap, an attacker who
+discovers the platform pre-launch would gain full control by
+signing up first.
+
+**What.**
+- New `super_admin` role (`apps/api/src/lib/types.ts`).
+- Migration `packages/db/migrations/0036_extend_role_enum.sql`
+  splits `'admin'` into `'super_admin'` + four operator roles
+  (`store_reviewer`, `catalog_moderator`, `finance_admin`,
+  `support_agent`) and widens the `users_role_check` constraint.
+- New env vars in `.env.example`:
+  `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_FULL_NAME`,
+  `BOOTSTRAP_ADMIN_PHONE`, `BOOTSTRAP_ADMIN_PASSWORD`,
+  `BOOTSTRAP_ADMIN_REQUIRE_2FA`.
+- CLI: `npm run bootstrap:admin` →
+  `scripts/bootstrap-admin.ts` (idempotent, refuses if a
+  `super_admin` already exists; exit code 2).
+- Helper module `scripts/bootstrap-admin-validate.ts`
+  (`validateBootstrapEnv`, `existsSuperAdmin`) tested via
+  `scripts/bootstrap-admin.test.ts` (17 unit tests).
+- Self-registration hardening in
+  `apps/api/src/modules/auth/service.ts`: anyone POSTing
+  `role: 'super_admin'` (or any operator role) to
+  `/api/auth/register` is silently downgraded to `customer` and
+  the attempt is logged in the audit trail.
+
+**Standards applied.** OWASP ASVS 2.5.1 (operator definition),
+2.1.1 (cryptographic credential storage), NIST SP 800-53 IA-5
+(authenticator management).
+
+**Effort.** 1–2 days (done).
+
+**Status.** Done (commit pending).
+
+**Acceptance criteria.**
+- [x] No path in the codebase can self-register a `super_admin`.
+- [x] `bootstrap:admin` refuses to run a second time after the
+      first `super_admin` exists.
+- [x] Password is never logged (only the on-disk scrypt hash is
+      written to the audit log).
+- [x] 17 unit tests for the validation logic pass.
+
 ### R-1 — Fix pg mock in vitest.setup.ts
 
 **Why.** Standalone runs of router test files (`addresses-router`,

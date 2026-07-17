@@ -11,7 +11,10 @@
 	"scripts": {
 		"db:setup": "node ../../scripts/db/db-setup.cjs",
 		"migrate": "node ../../scripts/db/migrate.cjs",
-		"seed": "psql -f seed.sql",
+		"bootstrap:admin": "node ../../scripts/db/bootstrap-admin.cjs",
+		"reference-seed": "psql -f reference-seed.sql",
+		"demo-seed": "NODE_ENV=development node ../../scripts/db/run-demo-seed.cjs",
+		"seed": "npm run reference-seed && npm run demo-seed",
 		"clean": "node -e \"require('node:fs').rmSync('node_modules/.tmp',{recursive:true,force:true})\""
 	},
 	"files": [
@@ -21,7 +24,8 @@
 		"triggers.sql",
 		"views.sql",
 		"roles.sql",
-		"seed.sql",
+		"reference-seed.sql",
+		"demo-seed.sql",
 		"migrations/**/*"
 	]
 }

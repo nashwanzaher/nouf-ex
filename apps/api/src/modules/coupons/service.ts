@@ -1,10 +1,12 @@
 import * as repo from './repository.ts';
 import { computeCouponDiscount } from '../../lib/shared.ts';
 
+export async function listAvailableForUser(userId: number): Promise<repo.AvailableCouponRow[]> {
+	return repo.listAvailableForUser(userId);
+}
 export type ValidateResult =
 	| { ok: true; data: { code: string; type: string; value: number; discount: number; final_total: number } }
 	| { ok: false; error: string };
-
 export async function validateCoupon(
 	code: string,
 	orderSubtotal: number,

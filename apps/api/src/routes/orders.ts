@@ -16,13 +16,14 @@ import {
 	sendSuccess,
 	validate,
 	type CouponRow,
+	isAdminOperator,
 } from '../lib/shared.ts';
 
 export const ordersRouter = Router();
 
 ordersRouter.get('/', requireAuth, async (req: Request, res: Response) => {
 	try {
-		const isAdmin = req.user!.role === 'admin';
+		const isAdmin = isAdminOperator(req.user!.role);
 		const requestedCustomerId = req.query.customerId ? Number(req.query.customerId) : null;
 
 		let sql = `SELECT o.*, s.store_name as store_name, s.logo as store_logo
@@ -68,7 +69,7 @@ ordersRouter.get('/:id', requireAuth, async (req: Request, res: Response) => {
 			return sendError(res, 'Order not found', 404);
 		}
 
-		if (req.user!.role !== 'admin' && order.customer_id !== req.user!.id) {
+		if (isAdminOperator(req.user!.role) && order.customer_id !== req.user!.id) {
 			return sendError(res, 'Forbidden', 403);
 		}
 

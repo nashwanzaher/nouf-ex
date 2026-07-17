@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { requireAuth, sendError, sendSuccess, validate } from '../../lib/shared.ts';
+import { requireAuth, sendError, sendSuccess, validate, isAdminOperator } from '../../lib/shared.ts';
 import * as service from './service.ts';
 
 const checkFollowSchema = z.object({
@@ -28,7 +28,7 @@ async function checkHandler(req: Request, res: Response) {
 	try {
 		const v = validate(checkFollowSchema, req.query);
 		if (!v.ok) return sendError(res, 'Invalid query: ' + v.error, 400);
-		if (req.user!.id !== v.data.user_id && req.user!.role !== 'admin') {
+		if (req.user!.id !== v.data.user_id && !isAdminOperator(req.user!.role)) {
 			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
 		}
 		const result = await service.check(v.data.store_id, v.data.user_id);

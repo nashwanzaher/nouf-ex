@@ -10,6 +10,7 @@ import {
 	requireRole,
 	refundCreateSchema,
 	ErrorCodes,
+	ADMIN_OPERATOR_ROLES,
 } from '../lib/shared.ts';
 
 export const refundsRouter = Router();
@@ -110,7 +111,7 @@ refundsRouter.post('/', requireAuth, async (req: Request, res: Response) => {
 refundsRouter.post(
 	'/:id/resolve',
 	requireAuth,
-	requireRole('admin'),
+	requireRole(...ADMIN_OPERATOR_ROLES),
 	async (req: Request, res: Response) => {
 		try {
 			const id = Number(req.params.id);

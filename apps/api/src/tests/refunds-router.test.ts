@@ -20,7 +20,7 @@ import { refundsRouter } from '../routes/refunds.ts';
 import { signTestToken } from './test-token';
 
 const CUSTOMER_TOKEN = signTestToken({ sub: 7, role: 'customer' });
-const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'admin' });
+const ADMIN_TOKEN = signTestToken({ sub: 1, role: 'super_admin' });
 const customerBearer = { Authorization: `Bearer ${CUSTOMER_TOKEN}` };
 const adminBearer = { Authorization: `Bearer ${ADMIN_TOKEN}` };
 

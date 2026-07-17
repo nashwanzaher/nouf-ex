@@ -1,9 +1,40 @@
 import { db, COUPON_COLUMNS, type CouponRow } from '../../lib/shared.ts';
 
+export type AvailableCouponRow = {
+	id: number;
+	code: string;
+	type: 'percentage' | 'fixed';
+	value: number;
+	min_order_amount: number;
+	max_discount: number | null;
+	starts_at: string | null;
+	expires_at: string | null;
+	description: string | null;
+};
+
 export async function findByCode(code: string): Promise<CouponRow | undefined> {
 	return (await db
 		.prepare(`SELECT ${COUPON_COLUMNS} FROM coupons WHERE code = ? AND is_active = TRUE`)
 		.get(code)) as CouponRow | undefined;
+}
+
+export async function listAvailableForUser(userId: number): Promise<AvailableCouponRow[]> {
+	return (await db
+		.prepare(
+			`SELECT c.id, c.code, c.type, c.value, c.min_order_amount, c.max_discount,
+			        c.starts_at, c.expires_at, c.description
+			 FROM coupons c
+			 LEFT JOIN coupon_usage cu ON cu.coupon_id = c.id AND cu.user_id = ?
+			 WHERE c.is_active = TRUE
+			   AND (c.starts_at IS NULL OR c.starts_at <= CURRENT_TIMESTAMP)
+			   AND (c.expires_at IS NULL OR c.expires_at >= CURRENT_TIMESTAMP)
+			   AND (c.usage_limit IS NULL OR c.usage_count < c.usage_limit)
+			 GROUP BY c.id, c.code, c.type, c.value, c.min_order_amount, c.max_discount,
+			          c.starts_at, c.expires_at, c.description, c.per_user_limit
+			 HAVING COUNT(cu.id) < c.per_user_limit
+			 ORDER BY c.expires_at NULLS LAST, c.id`,
+		)
+		.all(userId)) as AvailableCouponRow[];
 }
 
 export async function getUserUsageCount(couponId: number, userId: number): Promise<number> {

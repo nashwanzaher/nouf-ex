@@ -7,7 +7,7 @@
  *   - Admin/merchant endpoints for managing promotions
  */
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../../lib/shared.ts';
+import { requireAuth, requireRole, ADMIN_OPERATOR_ROLES } from '../../lib/shared.ts';
 import {
 	getFlashSalesHandler,
 	getFlashSaleHandler,
@@ -31,8 +31,8 @@ export const promotionsRouter = Router();
 // =====================================================================
 promotionsRouter.get('/flash-sales', getFlashSalesHandler);
 promotionsRouter.get('/flash-sales/:id', getFlashSaleHandler);
-promotionsRouter.post('/flash-sales', requireAuth, requireRole('admin'), createFlashSaleHandler);
-promotionsRouter.post('/flash-sales/:id/items', requireAuth, requireRole('admin'), addFlashSaleItemHandler);
+promotionsRouter.post('/flash-sales', requireAuth, requireRole(...ADMIN_OPERATOR_ROLES), createFlashSaleHandler);
+promotionsRouter.post('/flash-sales/:id/items', requireAuth, requireRole(...ADMIN_OPERATOR_ROLES), addFlashSaleItemHandler);
 
 // =====================================================================
 // LOYALTY POINTS (authenticated)
@@ -47,6 +47,6 @@ promotionsRouter.get('/loyalty/config', getLoyaltyConfigHandler);
 // =====================================================================
 promotionsRouter.get('/bundles', getBundleDealsHandler);
 promotionsRouter.get('/bundles/:id', getBundleDealHandler);
-promotionsRouter.post('/bundles', requireAuth, requireRole('admin', 'merchant'), createBundleDealHandler);
-promotionsRouter.post('/bundles/:id/items', requireAuth, requireRole('admin', 'merchant'), addBundleDealItemHandler);
+promotionsRouter.post('/bundles', requireAuth, requireRole('merchant', ...ADMIN_OPERATOR_ROLES), createBundleDealHandler);
+promotionsRouter.post('/bundles/:id/items', requireAuth, requireRole('merchant', ...ADMIN_OPERATOR_ROLES), addBundleDealItemHandler);
 promotionsRouter.post('/bundles/calculate', calculateBundleDiscountHandler);

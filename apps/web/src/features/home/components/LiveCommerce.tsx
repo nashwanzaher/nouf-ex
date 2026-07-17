@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { MessageSquare, Zap, Heart, Bell, Play } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { MessageSquare, Zap, Heart, Bell } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,7 +14,6 @@ const features = [
 
 export default function LiveCommerce() {
 	const sectionRef = useRef<HTMLDivElement>(null);
-	const [isPlaying, setIsPlaying] = useState(false);
 
 	useEffect(() => {
 		const ctx = gsap.context(() => {
@@ -50,44 +48,8 @@ export default function LiveCommerce() {
 		<section ref={sectionRef} className="gradient-hero py-16 md:py-24 lg:py-[100px]">
 			<div className="max-w-container mx-auto container-pad">
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-					{/* Video Column */}
-					<div className="lc-video relative rounded-3xl overflow-hidden aspect-video shadow-2xl">
-						<video
-							src="/live-commerce-teaser.mp4"
-							className="w-full h-full object-cover"
-							loop
-							muted
-							playsInline
-							autoPlay={isPlaying}
-						/>
-						{/* Overlay */}
-						<div className="absolute inset-0 bg-black/20" />
-
-						{/* Live Badge */}
-						<Badge className="absolute top-4 right-4 bg-[#EF4444] text-white text-xs font-cairo font-bold px-3 py-1.5 animate-pulse-glow">
-							● بث مباشر
-						</Badge>
-
-						{/* Viewer Count */}
-						<div className="absolute bottom-4 right-4 glass-dark px-3 py-1.5 rounded-lg">
-							<span className="text-white text-xs font-cairo font-semibold">
-								👁 ١,٢٤٥ مشاهد
-							</span>
-						</div>
-
-						{/* Play Button */}
-						<button
-							onClick={() => setIsPlaying(!isPlaying)}
-							className="absolute inset-0 flex items-center justify-center group"
-						>
-							<div className="w-20 h-20 rounded-full glass-light flex items-center justify-center animate-pulse-glow group-hover:scale-110 transition-transform">
-								<Play
-									className="w-8 h-8 text-[#1A1612] mr-1"
-									strokeWidth={1.5}
-									fill="#1A1612"
-								/>
-							</div>
-						</button>
+					<div className="lc-video relative rounded-3xl overflow-hidden aspect-video shadow-2xl bg-[#1A1612] flex items-center justify-center p-8 text-center">
+						<p className="text-white/70 font-cairo">قريباً</p>
 					</div>
 
 					{/* Content Column */}

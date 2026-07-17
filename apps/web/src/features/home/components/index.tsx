@@ -104,6 +104,12 @@ const StatSkeleton = () => (
 	</div>
 );
 
+const EmptyState = ({ message }: { message: string }) => (
+	<div className="col-span-full rounded-xl border border-dashed border-aliBorder bg-white p-10 text-center text-sm text-aliTextSec">
+		{message}
+	</div>
+);
+
 /* ─── ProductCard sub-component (used by every grid below) ── */
 
 function ProductCard({
@@ -515,19 +521,21 @@ export default function Home() {
 				</div>
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-					{popularLoading
-						? Array.from({ length: 10 }).map((_, i) => <ProductSkeleton key={i} />)
-						: allProducts
-								.slice(0, 10)
-								.map((product) => (
-									<ProductCard
-										key={product.id}
-										product={product}
-										lang={i18n.language}
-										added={addedIds.has(product.id)}
-										onAdd={() => addToCart(product)}
-									/>
-								))}
+					{popularLoading ? (
+						Array.from({ length: 10 }).map((_, i) => <ProductSkeleton key={i} />)
+					) : allProducts.length > 0 ? (
+						allProducts.slice(0, 10).map((product) => (
+							<ProductCard
+								key={product.id}
+								product={product}
+								lang={i18n.language}
+								added={addedIds.has(product.id)}
+								onAdd={() => addToCart(product)}
+							/>
+						))
+					) : (
+						<EmptyState message={t('home.emptyProducts', 'No products are available yet.')} />
+					)}
 				</div>
 			</section>
 
@@ -577,55 +585,54 @@ export default function Home() {
 					</Link>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-					{storesLoading
-						? Array.from({ length: 8 }).map((_, i) => <StoreSkeleton key={i} />)
-						: (stores ?? []).slice(0, 8).map((store) => (
-								<Link
-									key={store.id}
-									to={`/store/${store.id}`}
-									className="bg-white rounded-lg border border-aliBorder p-4 hover:shadow-md hover:border-aliOrange/30 transition-all group text-center"
-								>
-									<div className="w-16 h-16 rounded-full bg-aliSurface mx-auto mb-3 overflow-hidden">
-										<img
-											src={safeImageUrl(store.logo, {
-												kind: 'store',
-												fallback: '/default-avatar.png',
-											})}
-											alt={getStoreName(store, i18n.language)}
-											className="w-full h-full object-cover"
-											loading="lazy"
-										/>
-									</div>
-									<h3 className="font-semibold text-sm text-aliText line-clamp-1 group-hover:text-aliOrange transition-colors">
-										{getStoreName(store, i18n.language)}
-									</h3>
-									<div className="flex items-center justify-center gap-1 mt-1">
-										<Star
-											size={12}
-											className="text-yellow-400 fill-yellow-400"
-										/>
-										<span className="text-xs text-aliTextSec">
-											{store.rating}
-										</span>
-									</div>
-									<div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-aliTextMute">
-										<span className="bg-aliSurface px-1.5 py-0.5 rounded">
-											{t('home.storeProductsCount', {
-												count: store.products_count,
-												defaultValue: `${store.products_count} products`,
-											})}
-										</span>
-										<span
-											className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${store.is_verified ? 'bg-orange-50 text-aliOrange' : 'bg-gray-100 text-gray-400'}`}
-										>
-											<BadgeCheck size={10} />{' '}
-											{store.is_verified
-												? t('home.storeVerified', 'Verified')
-												: t('home.storeUnverified', 'Unverified')}
-										</span>
-									</div>
-								</Link>
-							))}
+					{storesLoading ? (
+						Array.from({ length: 8 }).map((_, i) => <StoreSkeleton key={i} />)
+					) : (stores ?? []).length > 0 ? (
+						(stores ?? []).slice(0, 8).map((store) => (
+							<Link
+								key={store.id}
+								to={`/store/${store.id}`}
+								className="bg-white rounded-lg border border-aliBorder p-4 hover:shadow-md hover:border-aliOrange/30 transition-all group text-center"
+							>
+								<div className="w-16 h-16 rounded-full bg-aliSurface mx-auto mb-3 overflow-hidden">
+									<img
+										src={safeImageUrl(store.logo, {
+										kind: 'store',
+										fallback: '/default-avatar.png',
+									})}
+									alt={getStoreName(store, i18n.language)}
+									className="w-full h-full object-cover"
+									loading="lazy"
+								/>
+								</div>
+								<h3 className="font-semibold text-sm text-aliText line-clamp-1 group-hover:text-aliOrange transition-colors">
+									{getStoreName(store, i18n.language)}
+								</h3>
+								<div className="flex items-center justify-center gap-1 mt-1">
+									<Star size={12} className="text-yellow-400 fill-yellow-400" />
+									<span className="text-xs text-aliTextSec">{store.rating}</span>
+								</div>
+								<div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-aliTextMute">
+									<span className="bg-aliSurface px-1.5 py-0.5 rounded">
+										{t('home.storeProductsCount', {
+											count: store.products_count,
+											defaultValue: `${store.products_count} products`,
+										})}
+									</span>
+									<span
+										className={`px-1.5 py-0.5 rounded flex items-center gap-0.5 ${store.is_verified ? 'bg-orange-50 text-aliOrange' : 'bg-gray-100 text-gray-400'}`}
+									>
+										<BadgeCheck size={10} />{' '}
+										{store.is_verified
+											? t('home.storeVerified', 'Verified')
+											: t('home.storeUnverified', 'Unverified')}
+									</span>
+								</div>
+							</Link>
+						))
+					) : (
+						<EmptyState message={t('home.emptyStores', 'No stores are available yet.')} />
+					)}
 				</div>
 			</section>
 
@@ -705,20 +712,24 @@ export default function Home() {
 					</Link>
 				</div>
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-					{popularLoading
-						? Array.from({ length: 5 }).map((_, i) => <ProductSkeleton key={i} />)
-						: allProducts
-								.filter((p) => p.stock > 5)
-								.slice(0, 10)
-								.map((product) => (
-									<ProductCard
-										key={product.id}
-										product={product}
-										lang={i18n.language}
-										added={addedIds.has(product.id)}
-										onAdd={() => addToCart(product)}
-									/>
-								))}
+					{popularLoading ? (
+						Array.from({ length: 5 }).map((_, i) => <ProductSkeleton key={i} />)
+					) : allProducts.filter((p) => p.stock > 5).length > 0 ? (
+						allProducts
+							.filter((p) => p.stock > 5)
+							.slice(0, 10)
+							.map((product) => (
+								<ProductCard
+									key={product.id}
+									product={product}
+									lang={i18n.language}
+									added={addedIds.has(product.id)}
+									onAdd={() => addToCart(product)}
+								/>
+							))
+					) : (
+						<EmptyState message={t('home.emptyReadyToShip', 'No products are ready to ship yet.')} />
+					)}
 				</div>
 			</section>
 		</div>

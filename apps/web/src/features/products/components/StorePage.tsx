@@ -19,19 +19,6 @@ import {
 } from 'lucide-react';
 import styles from './StorePage.module.css';
 
-/* ─── Helpers (module-level) ─────────────────────────────── */
-
-/**
- * Deterministic pseudo-random phone suffix derived from a store ID.
- * Replaces Math.random() during render — keeps the same shape across renders
- * while still varying per store, so React Compiler sees a pure expression.
- */
-function storePhone(id: number | string | undefined): string {
-	const n = typeof id === 'string' ? parseInt(id, 10) || 1 : (id ?? 1);
-	const suffix = 1_000_000 + ((n * 7919) % 9_000_000);
-	return `+967-${suffix}`;
-}
-
 /* ─── Tiny SVG icons (module-level) ──────────────────────── */
 
 function StoreIcon({ size, className }: { size: number; className?: string }) {
@@ -97,6 +84,14 @@ export default function StorePage() {
 	const lang = i18n.language;
 	const isRTL = lang === 'ar';
 	const storeProducts = store?.products ?? [];
+	const storeMetadata = store as
+		| (NonNullable<typeof store> & {
+				phone?: string | null;
+				website?: string | null;
+				capabilities?: string[];
+				export_markets?: Array<{ country: string; pct: number; flag?: string }>;
+			})
+		| undefined;
 
 	const getName = (p: { name_ar: string; name_en: string; name_zh: string }) =>
 		lang === 'en' ? p.name_en : lang === 'zh' ? p.name_zh : p.name_ar;
@@ -532,14 +527,14 @@ export default function StorePage() {
 										{
 											icon: Globe,
 											label: t('store.website', 'Website'),
-											value: 'www.nouf-ex.com/' + store.id,
+											value: storeMetadata?.website ?? '',
 										},
 										{
 											icon: Phone,
 											label: t('store.phone', 'Phone'),
-											value: storePhone(store.id),
+											value: storeMetadata?.phone ?? '',
 										},
-									].map((item, i) => (
+									].filter((item) => item.value).map((item, i) => (
 										<div key={i} className="flex items-center gap-3 text-sm">
 											<div className="w-8 h-8 rounded bg-[#F7F8FA] flex items-center justify-center flex-shrink-0">
 												<item.icon size={14} className="text-[#FF6A00]" />
@@ -561,30 +556,21 @@ export default function StorePage() {
 									{t('store.capabilities', 'Capabilities & Certifications')}
 								</h3>
 								<div className="space-y-3">
-									{[
-										t(
-											'store.capShipping',
-											'Shipping to 50+ countries worldwide',
-										),
-										t('store.capOem', 'OEM/ODM Manufacturing Available'),
-										t('store.capSupport', '24/7 Technical Support Team'),
-										t(
-											'store.capQuality',
-											'International Quality Certifications (ISO 9001)',
-										),
-										t('store.capAudit', 'Annual Factory Audits'),
-									].map((cap, i) => (
-										<div
-											key={i}
-											className="flex items-center gap-2 text-sm text-[#666]"
-										>
-											<BadgeCheck
-												size={14}
-												className="text-[#4CAF50] flex-shrink-0"
-											/>
-											<span>{cap}</span>
-										</div>
-									))}
+									{storeMetadata?.capabilities?.length ? (
+										storeMetadata.capabilities.map((capability) => (
+											<div
+												key={capability}
+												className="flex items-center gap-2 text-sm text-[#666]"
+											>
+												<BadgeCheck size={14} className="text-[#4CAF50] flex-shrink-0" />
+												<span>{capability}</span>
+											</div>
+										))
+									) : (
+										<p className="text-sm text-[#999]">
+											{t('store.noCapabilities', 'No capability information is available.')}
+										</p>
+									)}
 								</div>
 							</div>
 						</div>
@@ -597,76 +583,43 @@ export default function StorePage() {
 								{t('store.marketsTitle', 'Main Export Markets')}
 							</h3>
 							<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-								{[
-									{
-										country: t('store.countrySaudi', 'Saudi Arabia'),
-										pct: 35,
-										flag: 'SA',
-									},
-									{
-										country: t('store.countryUae', 'UAE'),
-										pct: 25,
-										flag: 'AE',
-									},
-									{
-										country: t('store.countryKuwait', 'Kuwait'),
-										pct: 15,
-										flag: 'KW',
-									},
-									{
-										country: t('store.countryQatar', 'Qatar'),
-										pct: 10,
-										flag: 'QA',
-									},
-									{
-										country: t('store.countryUs', 'United States'),
-										pct: 8,
-										flag: 'US',
-									},
-									{
-										country: t('store.countryUk', 'United Kingdom'),
-										pct: 5,
-										flag: 'UK',
-									},
-									{
-										country: t('store.countryMalaysia', 'Malaysia'),
-										pct: 2,
-										flag: 'MY',
-									},
-								].map((m, i) => (
-									<div
-										key={i}
-										className="bg-[#F7F8FA] rounded p-3 border border-[#E5E5E5]"
-									>
-										<div className="flex items-center gap-2 mb-2">
-											<Globe size={14} className="text-[#FF6A00]" />
-											<span className="text-sm font-medium text-[#333]">
-												{m.country}
-											</span>
+								{storeMetadata?.export_markets?.length ? (
+									storeMetadata.export_markets.map((market) => (
+										<div
+											key={`${market.country}-${market.flag ?? ''}`}
+											className="bg-[#F7F8FA] rounded p-3 border border-[#E5E5E5]"
+										>
+											<div className="flex items-center gap-2 mb-2">
+												<Globe size={14} className="text-[#FF6A00]" />
+												<span className="text-sm font-medium text-[#333]">{market.country}</span>
+											</div>
+											<div className="h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
+												<div
+													className={`h-full bg-[#FF6A00] rounded-full transition-all ${styles.exportBar}`}
+													style={{ '--export-pct': `${market.pct}%` } as React.CSSProperties}
+												/>
+											</div>
+											<span className="text-xs text-[#999] mt-1">{market.pct}%</span>
 										</div>
-										<div className="h-2 bg-[#E5E5E5] rounded-full overflow-hidden">
-											<div
-												className={`h-full bg-[#FF6A00] rounded-full transition-all ${styles.exportBar}`}
-												style={
-													{
-														'--export-pct': `${m.pct}%`,
-													} as React.CSSProperties
-												}
-											/>
-										</div>
-										<span className="text-xs text-[#999] mt-1">{m.pct}%</span>
-									</div>
-								))}
+									))
+								) : (
+									<p className="col-span-full text-sm text-[#999]">
+										{t('store.noMarkets', 'No export market information is available.')}
+									</p>
+								)}
 							</div>
 							<div className="mt-6 p-4 bg-[#F7F8FA] rounded border border-[#E5E5E5]">
 								<h4 className="text-sm font-bold text-[#333] mb-2">
 									{t('store.totalExport', 'Total Export Volume')}
 								</h4>
 								<p className="text-sm text-[#666]">
-									{t(
-										'store.totalExportDesc',
-										`${getStoreName(store)} has exported products to over 25 countries worldwide, with ${((Number(store.sales_count) || 0) / 1000).toFixed(1)}K+ successful transactions.`,
-									)}
+									{storeMetadata?.export_markets?.length
+										? t('store.totalExportDesc', {
+											count: storeMetadata.export_markets.length,
+											transactions: Number(store.sales_count) || 0,
+											defaultValue: `${getStoreName(store)} exports to {{count}} markets with {{transactions}} successful transactions.`,
+										})
+										: t('store.noExportSummary', 'No export summary is available.')}
 								</p>
 							</div>
 						</div>

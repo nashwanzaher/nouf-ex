@@ -23,8 +23,8 @@ describe('signTestToken helper', () => {
 	});
 
 	it('honours the role', () => {
-		const t = signTestToken({ sub: 1, role: 'admin' });
+		const t = signTestToken({ sub: 1, role: 'super_admin' });
 		const payload = verifyAuthToken(t);
-		expect(payload?.role).toBe('admin');
+		expect(payload?.role).toBe('super_admin');
 	});
 });

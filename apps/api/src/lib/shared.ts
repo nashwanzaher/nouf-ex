@@ -26,6 +26,10 @@ import {
 // of this barrel — route files that imported `AuthRole` from here
 // continue to work.
 export type { AuthRole, TokenPayload } from './types.js';
+// Tier 7 R-SUPER-3: helper that returns true for any operator
+// role (super_admin + the four functional admin roles). Drop-in
+// replacement for `role === 'admin'` after the role-enum migration.
+export { isAdminOperator, ADMIN_OPERATOR_ROLES, ADMIN_ROLES } from './types.js';
 // Password helpers (`hashPassword`, `verifyPassword`) re-exported
 // from `./auth.ts` (extracted 2026-07-03 to break the god object).
 export { hashPassword, verifyPassword } from './auth.js';

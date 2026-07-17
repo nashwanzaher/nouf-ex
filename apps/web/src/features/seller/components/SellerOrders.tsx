@@ -576,7 +576,7 @@ export default function SellerOrders() {
 							{t('seller.orders', 'Orders')}
 						</h1>
 						<span className="px-2.5 py-1 bg-[#EF4444] text-white rounded-xl text-xs font-bold font-cairo">
-							١٢ {t('seller.new', 'New')}
+							{apiOrders.length} {t('seller.new', 'New')}
 						</span>
 					</div>
 					<button className="flex items-center gap-2 px-4 py-2.5 border border-[#D4A853] text-[#D4A853] hover:bg-[#F3EDE4] rounded-xl text-sm font-cairo font-semibold transition-colors w-fit">

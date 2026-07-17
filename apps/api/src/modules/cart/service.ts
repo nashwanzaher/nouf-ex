@@ -1,5 +1,5 @@
 import { ErrorCodes } from '../../lib/error-codes.ts';
-import { HttpError, type AuthRole } from '../../lib/shared.ts';
+import { HttpError, type AuthRole, isAdminOperator } from '../../lib/shared.ts';
 import * as repo from './repository.ts';
 
 export async function clear(userId: number) {
@@ -8,7 +8,7 @@ export async function clear(userId: number) {
 }
 
 export async function count(userId: number, requesterId: number, requesterRole: AuthRole) {
-	if (requesterId !== userId && requesterRole !== 'admin') {
+	if (requesterId !== userId && !isAdminOperator(requesterRole)) {
 		throw new HttpError(403, 'Forbidden', { code: 'FORBIDDEN' });
 	}
 	const c = await repo.sumQuantity(userId);
@@ -16,7 +16,7 @@ export async function count(userId: number, requesterId: number, requesterRole: 
 }
 
 export async function list(userId: number, requesterId: number, requesterRole: AuthRole) {
-	if (requesterId !== userId && requesterRole !== 'admin') {
+	if (requesterId !== userId && !isAdminOperator(requesterRole)) {
 		throw new HttpError(403, 'Forbidden', { code: 'FORBIDDEN' });
 	}
 	return repo.listForUser(userId);

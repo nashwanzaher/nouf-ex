@@ -10,7 +10,7 @@
 	},
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc -b && vite build",
+		"build": "tsc -b && vite build && node ../../scripts/quality/verify-production-data.cjs",
 		"typecheck": "tsc -b --noEmit",
 		"lint": "eslint .",
 		"format": "prettier --write .",

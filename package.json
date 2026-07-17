@@ -27,7 +27,8 @@
 		"clean": "turbo run clean",
 		"openapi:generate": "tsx scripts/openapi/generate-json.ts",
 		"openapi:types": "npm run generate --workspace @noufex/api-client",
-		"openapi": "npm run openapi:generate && npm run openapi:types"
+		"openapi": "npm run openapi:generate && npm run openapi:types",
+		"bootstrap:admin": "tsx scripts/bootstrap-admin.ts"
 	},
 	"mobileInstall": "cd apps/mobile && npm install",
 	"mobileStart": "cd apps/mobile && npm run start",

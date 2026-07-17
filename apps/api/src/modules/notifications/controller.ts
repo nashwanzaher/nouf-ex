@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { notificationIdParamSchema, requireAuth, sendError, sendSuccess, validate } from '../../lib/shared.ts';
+import { notificationIdParamSchema, requireAuth, sendError, sendSuccess, validate, isAdminOperator } from '../../lib/shared.ts';
 import * as service from './service.ts';
 
 export function attachNotificationsRoutes(router: import('express').Router) {
@@ -35,7 +35,7 @@ async function unreadCountHandler(req: Request, res: Response) {
 		if (!Number.isInteger(userId) || userId <= 0) {
 			return sendError(res, 'Invalid user id', 400);
 		}
-		if (req.user!.id !== userId && req.user!.role !== 'admin') {
+		if (req.user!.id !== userId && !isAdminOperator(req.user!.role)) {
 			return sendError(res, 'Forbidden', 403, 'FORBIDDEN');
 		}
 		const unread = await service.getUnreadCount(userId);

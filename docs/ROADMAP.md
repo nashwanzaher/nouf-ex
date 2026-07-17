@@ -80,7 +80,32 @@ already enforces it — the SDK reflects the server contract).
 
 **Effort.** 4–6 hours.
 
-**Status.** Open.
+**Status.** Foundation done (commit `ae8830f`).
+
+**Progress.**
+- [x] Add `@noufex/api-client` dependency.
+- [x] Create `apps/web/src/lib/api/sdk-client.ts` as a thin
+      wrapper exposing `sdkGet/sdkPost/sdkPatch/sdkDelete` plus
+      the legacy-compatible `apiClient` proxy and `ApiError`.
+- [ ] Migrate `apps/web/src/features/products/api/products.ts`
+      (attempted in commit `ae8830f` then reverted; see below).
+- [ ] Migrate the remaining 12 `features/*/api/*.ts` files.
+- [ ] Migrate `apps/web/src/hooks/useApi.tsx` to use the SDK.
+- [ ] Delete the legacy `apps/web/src/lib/api/client.ts`.
+
+**Blocker.** The legacy `src/lib/__tests__/api.test.ts` uses
+`vi.spyOn(globalThis, 'fetch')` to wrap the fetch-spy mock at
+test time. openapi-fetch captures `globalThis.fetch` ONCE at
+`createClient()` time — that frozen reference bypasses the
+test-time `vi.spyOn` wrapper, so the SDK calls never reach
+the spy. Two paths forward:
+
+a) Refactor `mocks/fetch-spy.ts` to wrap fetch via the SDK's
+   config rather than `globalThis`. ~1–2 h.
+b) Migrate `src/lib/__tests__/api.test.ts` to assert against
+   the SDK's URL shape. ~2 h.
+
+Either unblocks the full migration in 1–2 hours.
 
 ### R-3 — Migrate `apps/mobile` to `@noufex/api-client`
 

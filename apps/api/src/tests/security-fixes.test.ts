@@ -200,8 +200,8 @@ describe('write_audit_log() exists with prosecdef=true (live DB)', () => {
 	});
 });
 
-describe('seed.sql refuses to run in production', () => {
-	const src = SRC_REPO('packages/db/seed.sql');
+describe('demo-seed.sql refuses to run in production', () => {
+	const src = SRC_REPO('packages/db/demo-seed.sql');
 	void src; // touch to satisfy unused-var lint
 	it('first non-comment code block is a GUC guard (DO $$)', () => {
 		// Find the first non-comment, non-empty line of code.
@@ -216,7 +216,7 @@ describe('seed.sql refuses to run in production', () => {
 		expect(lines[i]).toMatch(/DO\s*\$\$|BEGIN/i);
 	});
 	it('the guard raises an exception when noufex.allow_seed is not on', () => {
-		expect(src).toMatch(/noufex\.allow_seed/);
+			expect(src).toMatch(/noufex\.allow_demo_seed/);
 		// Should RAISE an exception (not just a notice).
 		expect(src).toMatch(/RAISE\s+EXCEPTION|RAISE/i);
 	});

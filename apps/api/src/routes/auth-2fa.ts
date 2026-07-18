@@ -515,3 +515,89 @@ auth2faRouter.post(
 		}
 	},
 );
+
+// ────────────────────────────────────────────────────────────────────
+// R-SUPER-FINAL: 2FA enrollment gate.
+//
+// Behavior
+//   - Requires the caller to be authenticated (must run AFTER
+//     `requireAuth`).
+//   - If `users.require_2fa_enrollment = TRUE`, the caller must
+//     also have a confirmed TOTP enrollment (`totp_enabled_at`
+//     IS NOT NULL) before any downstream handler runs.
+//   - If `require_2fa_enrollment = FALSE` (customer / merchant /
+//     delivery_agent without the policy), the middleware is a
+//     no-op — those roles never had 2FA required in the first
+//     place.
+//   - Operator roles (super_admin + the four functional admin
+//     roles) always have `require_2fa_enrollment = TRUE` thanks
+//     to migration 0037, so this gate IS active for them.
+//
+// Why an explicit gate (rather than extending requireRole)
+//   The user.role enum doesn't carry the "enrolled" bit — that's
+//   a column-level state. Mixing the two would require re-issuing
+//   the JWT every time an admin enables/disables 2FA, which is
+//   worse than a single middleware check on every privileged
+//   request.
+//
+// Allowed paths while NOT enrolled
+//   The setup flow itself (/api/auth/2fa/setup, /api/auth/2fa/
+//   enable) MUST be reachable without 2FA already enabled. The
+//   bootstrap script wires this gate only onto the privileged
+//   endpoints (typically /api/admin/*).
+// ────────────────────────────────────────────────────────────────────
+async function load2faState(userId: number): Promise<
+	| { ok: true; totp_enabled_at: Date | null }
+	| { ok: false; reason: string }
+> {
+	const row = (await db
+		.prepare(
+			`SELECT
+				require_2fa_enrollment,
+				(totp_enabled_at IS NOT NULL) AS totp_confirmed
+			 FROM users WHERE id = $1 AND deleted_at IS NULL`,
+		)
+		.get(userId)) as
+		| { require_2fa_enrollment: boolean; totp_confirmed: boolean | null }
+		| undefined;
+	if (!row) return { ok: false, reason: 'user_not_found' };
+	if (!row.require_2fa_enrollment) {
+		// Policy says this user doesn't NEED 2FA. Always allow.
+		return { ok: true, totp_enabled_at: null };
+	}
+	// Policy requires it — the caller's confirmed enrollment
+	// determines the outcome.
+	if (row.totp_confirmed) {
+		return { ok: true as const, totp_enabled_at: new Date() };
+	}
+	return { ok: false as const, reason: 'totp_not_enrolled' };
+}
+
+export const require2faEnrollment: import('express').RequestHandler = async (
+	req,
+	res,
+	next,
+) => {
+	try {
+		if (!req.user) {
+			return sendError(res, 'Authentication required.', 401, 'AUTH_REQUIRED');
+		}
+		const state = await load2faState(req.user.id);
+		if (!state.ok) {
+			log.warn({
+				msg: 'admin_blocked_2fa_not_enrolled',
+				user_id: req.user.id,
+				role: req.user.role,
+			});
+			return sendError(
+				res,
+				'2FA enrolment required. Complete setup at /api/auth/2fa/enable before accessing admin endpoints.',
+				403,
+				'TWO_FA_ENROLMENT_REQUIRED',
+			);
+		}
+		next();
+	} catch (err) {
+		sendError(res, err);
+	}
+};

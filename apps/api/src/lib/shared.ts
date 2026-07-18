@@ -17,6 +17,7 @@ import {
     log,
     requireAuth,
     requireRole,
+    require2faEnrollment,
     sendError,
     sendSuccess,
 } from '../middleware.js';
@@ -33,7 +34,7 @@ export { isAdminOperator, ADMIN_OPERATOR_ROLES, ADMIN_ROLES } from './types.js';
 // Password helpers (`hashPassword`, `verifyPassword`) re-exported
 // from `./auth.ts` (extracted 2026-07-03 to break the god object).
 export { hashPassword, verifyPassword } from './auth.js';
-export { HttpError, log, requireAuth, requireRole, sendError, sendSuccess };
+export { HttpError, log, requireAuth, requireRole, require2faEnrollment, sendError, sendSuccess };
 export { ErrorCodes } from './error-codes.js';
 
 // Re-export the pg-wrapper connection so route files have a single

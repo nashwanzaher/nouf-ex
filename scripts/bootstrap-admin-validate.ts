@@ -26,7 +26,17 @@ export interface BootstrapEnv {
 	full_name: string;
 	phone: string;
 	password: string;
-	require_2fa: boolean;
+	/**
+	 * If true, the admin must enroll in TOTP on first login.
+	 * At bootstrap time this is recorded as
+	 * `users.require_2fa_enrollment = TRUE` but TOTP itself is
+	 * NOT activated (`two_factor_enabled = false`,
+	 * `totp_secret = null`, `totp_enabled_at = null`). The admin
+	 * must run the `/api/auth/2fa/setup` flow before they can
+	 * access any `/api/admin/*` endpoint (enforced by the
+	 * `require2fa` middleware in `auth-2fa.ts`).
+	 */
+	require_2fa_enrollment: boolean;
 }
 
 export class BootstrapValidationError extends Error {
@@ -46,7 +56,7 @@ export function validateBootstrapEnv(env: NodeJS.ProcessEnv = process.env): Boot
 	const full_name = (env.BOOTSTRAP_ADMIN_FULL_NAME ?? 'مدير منصة نوفكس').trim();
 	const phone = (env.BOOTSTRAP_ADMIN_PHONE ?? '').trim();
 	const password = env.BOOTSTRAP_ADMIN_PASSWORD ?? '';
-	const require_2fa = (env.BOOTSTRAP_ADMIN_REQUIRE_2FA ?? 'true').toLowerCase() !== 'false';
+	const require_2fa_enrollment = (env.BOOTSTRAP_ADMIN_REQUIRE_2FA ?? 'true').toLowerCase() !== 'false';
 
 	const errors: string[] = [];
 	if (!email) errors.push('BOOTSTRAP_ADMIN_EMAIL is not set');
@@ -68,7 +78,7 @@ export function validateBootstrapEnv(env: NodeJS.ProcessEnv = process.env): Boot
 
 	if (errors.length > 0) throw new BootstrapValidationError(errors);
 
-	return { email, full_name, phone, password, require_2fa };
+	return { email, full_name, phone, password, require_2fa_enrollment };
 }
 
 /**

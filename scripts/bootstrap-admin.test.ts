@@ -29,7 +29,7 @@ describe('validateBootstrapEnv', () => {
 		expect(env.full_name).toBe('Admin User');
 		expect(env.phone).toBe('+967771234567');
 		expect(env.password).toBe('StrongPassword!2026Secure');
-		expect(env.require_2fa).toBe(true);
+		expect(env.require_2fa_enrollment).toBe(true);
 	});
 
 	it('defaults full_name to "مدير منصة نوفكس" when unset', () => {
@@ -40,12 +40,12 @@ describe('validateBootstrapEnv', () => {
 		expect(env.full_name).toBe('مدير منصة نوفكس');
 	});
 
-	it('defaults require_2fa to true (safer default)', () => {
+	it('defaults require_2fa_enrollment to true (safer default)', () => {
 		const env = validateBootstrapEnv({
 			...validEnv,
 			BOOTSTRAP_ADMIN_REQUIRE_2FA: undefined,
 		});
-		expect(env.require_2fa).toBe(true);
+		expect(env.require_2fa_enrollment).toBe(true);
 	});
 
 	it('treats BOOTSTRAP_ADMIN_REQUIRE_2FA=false as opt-out', () => {
@@ -53,7 +53,7 @@ describe('validateBootstrapEnv', () => {
 			...validEnv,
 			BOOTSTRAP_ADMIN_REQUIRE_2FA: 'false',
 		});
-		expect(env.require_2fa).toBe(false);
+		expect(env.require_2fa_enrollment).toBe(false);
 	});
 
 	it('treats any non-"false" value as opt-in', () => {
@@ -61,7 +61,7 @@ describe('validateBootstrapEnv', () => {
 			...validEnv,
 			BOOTSTRAP_ADMIN_REQUIRE_2FA: 'no',
 		});
-		expect(env.require_2fa).toBe(true);
+		expect(env.require_2fa_enrollment).toBe(true);
 	});
 
 	it('rejects missing email', () => {

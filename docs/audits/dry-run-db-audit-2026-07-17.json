@@ -1,0 +1,2813 @@
+{
+  "database": {
+    "host": "127.0.0.1",
+    "port": "5435",
+    "name": "noufex_db",
+    "user": "postgres"
+  },
+  "table_counts": {
+    "addresses": 95,
+    "admin_audit_log": 101,
+    "app_settings": 3,
+    "cart_items": 10,
+    "categories": 18,
+    "coupon_usage": 2,
+    "coupons": 4,
+    "delivery_agent_assignments": 0,
+    "delivery_agents": 3,
+    "disputes": 1,
+    "inventory_log": 9,
+    "messages": 4,
+    "notifications": 12,
+    "order_items": 9,
+    "orders": 8,
+    "payments": 6,
+    "product_images": 0,
+    "product_variants": 0,
+    "products": 24,
+    "rate_limit_buckets": 0,
+    "refunds": 1,
+    "reviews": 11,
+    "schema_migrations": 33,
+    "search_logs": 631,
+    "shipping_methods": 4,
+    "store_balance": 7,
+    "store_followers": 8,
+    "stores": 9,
+    "subscriptions": 7,
+    "transactions": 8,
+    "used_jtis": 0,
+    "users": 16,
+    "webhook_events": 93,
+    "wishlist": 10
+  },
+  "target": {
+    "users": [
+      {
+        "id": 2,
+        "email": "ahmed@gmail.com",
+        "role": "customer",
+        "status": "active"
+      },
+      {
+        "id": 3,
+        "email": "sara@gmail.com",
+        "role": "customer",
+        "status": "active"
+      },
+      {
+        "id": 4,
+        "email": "omar@gmail.com",
+        "role": "customer",
+        "status": "active"
+      },
+      {
+        "id": 5,
+        "email": "fatima@spice-yemen.com",
+        "role": "merchant",
+        "status": "active"
+      },
+      {
+        "id": 6,
+        "email": "hassan@dates-yemen.com",
+        "role": "merchant",
+        "status": "active"
+      },
+      {
+        "id": 7,
+        "email": "mohammed@handicrafts-yemen.com",
+        "role": "merchant",
+        "status": "active"
+      },
+      {
+        "id": 8,
+        "email": "khalid@electronics-yemen.com",
+        "role": "merchant",
+        "status": "active"
+      },
+      {
+        "id": 9,
+        "email": "noor@perfume-yemen.com",
+        "role": "merchant",
+        "status": "active"
+      },
+      {
+        "id": 10,
+        "email": "layla@mokha-coffee.com",
+        "role": "merchant",
+        "status": "active"
+      },
+      {
+        "id": 11,
+        "email": "ahmed.delivery@noufex.com",
+        "role": "delivery_agent",
+        "status": "active"
+      },
+      {
+        "id": 12,
+        "email": "mohammed.delivery@noufex.com",
+        "role": "delivery_agent",
+        "status": "active"
+      },
+      {
+        "id": 13,
+        "email": "sara.delivery@noufex.com",
+        "role": "delivery_agent",
+        "status": "active"
+      }
+    ],
+    "stores": [
+      {
+        "id": 1,
+        "slug": "yemen-spice-house",
+        "owner_id": 5,
+        "is_active": true,
+        "is_verified": true
+      },
+      {
+        "id": 2,
+        "slug": "queen-perfumes",
+        "owner_id": 5,
+        "is_active": true,
+        "is_verified": true
+      },
+      {
+        "id": 3,
+        "slug": "jawf-dates",
+        "owner_id": 6,
+        "is_active": true,
+        "is_verified": true
+      },
+      {
+        "id": 4,
+        "slug": "yemen-handicrafts",
+        "owner_id": 7,
+        "is_active": true,
+        "is_verified": true
+      },
+      {
+        "id": 5,
+        "slug": "yemen-electronics",
+        "owner_id": 8,
+        "is_active": true,
+        "is_verified": false
+      },
+      {
+        "id": 6,
+        "slug": "incense-perfumes",
+        "owner_id": 9,
+        "is_active": true,
+        "is_verified": false
+      },
+      {
+        "id": 7,
+        "slug": "mokha-coffee",
+        "owner_id": 10,
+        "is_active": true,
+        "is_verified": true
+      }
+    ],
+    "storeProducts": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "main_image": "/products/p1-original-yemeni-sidr-honey-500g.jpg",
+        "name_en": "Original Yemeni Sidr Honey 500g",
+        "is_active": true
+      },
+      {
+        "id": 2,
+        "store_id": 1,
+        "main_image": "/products/p2-yemeni-mokha-coffee-250g.jpg",
+        "name_en": "Yemeni Mokha Coffee 250g",
+        "is_active": true
+      },
+      {
+        "id": 3,
+        "store_id": 1,
+        "main_image": "/products/p3-wild-thyme-honey-1kg.jpg",
+        "name_en": "Wild Thyme Honey 1kg",
+        "is_active": true
+      },
+      {
+        "id": 4,
+        "store_id": 3,
+        "main_image": "/products/p4-premium-majdool-dates-1kg.jpg",
+        "name_en": "Premium Majdool Dates 1kg",
+        "is_active": true
+      },
+      {
+        "id": 5,
+        "store_id": 3,
+        "main_image": "/products/p5-ajwa-madinah-dates-500g.jpg",
+        "name_en": "Ajwa Madinah Dates 500g",
+        "is_active": true
+      },
+      {
+        "id": 6,
+        "store_id": 4,
+        "main_image": "/products/p6-handmade-yemeni-palm-basket.jpg",
+        "name_en": "Handmade Yemeni Palm Basket",
+        "is_active": true
+      },
+      {
+        "id": 7,
+        "store_id": 4,
+        "main_image": "/products/p7-yemeni-silver-set.jpg",
+        "name_en": "Yemeni Silver Set",
+        "is_active": true
+      },
+      {
+        "id": 8,
+        "store_id": 4,
+        "main_image": "/products/p8-carved-wooden-incense-burner.jpg",
+        "name_en": "Carved Wooden Incense Burner",
+        "is_active": true
+      },
+      {
+        "id": 9,
+        "store_id": 2,
+        "main_image": "/products/p9-premium-malaysian-oud-incense.jpg",
+        "name_en": "Premium Cambodian Oud 100g",
+        "is_active": true
+      },
+      {
+        "id": 10,
+        "store_id": 2,
+        "main_image": "/products/p10-pure-white-musk-50ml.jpg",
+        "name_en": "Pure White Musk 50ml",
+        "is_active": true
+      },
+      {
+        "id": 11,
+        "store_id": 2,
+        "main_image": "/products/p11-original-oud-oil-25ml.jpg",
+        "name_en": "Original Oud Oil 25ml",
+        "is_active": true
+      },
+      {
+        "id": 12,
+        "store_id": 5,
+        "main_image": "/products/p12-smartphone-6-5-inch.jpg",
+        "name_en": "Smartphone 6.5 inch",
+        "is_active": true
+      },
+      {
+        "id": 13,
+        "store_id": 5,
+        "main_image": "/products/p13-tablet-10-inch.jpg",
+        "name_en": "Tablet 10 inch",
+        "is_active": true
+      },
+      {
+        "id": 14,
+        "store_id": 5,
+        "main_image": "/products/p14-wireless-bluetooth-headphones.jpg",
+        "name_en": "Wireless Bluetooth Headphones",
+        "is_active": true
+      },
+      {
+        "id": 15,
+        "store_id": 5,
+        "main_image": "/products/p15-power-bank-20000-mah.jpg",
+        "name_en": "Power Bank 20000 mAh",
+        "is_active": true
+      },
+      {
+        "id": 16,
+        "store_id": 6,
+        "main_image": "/products/p16-yemeni-black-honey-500g.jpg",
+        "name_en": "Yemeni Black Honey 500g",
+        "is_active": true
+      },
+      {
+        "id": 17,
+        "store_id": 6,
+        "main_image": "/products/p17-meadow-honey-1kg.jpg",
+        "name_en": "Meadow Honey 1kg",
+        "is_active": true
+      },
+      {
+        "id": 18,
+        "store_id": 7,
+        "main_image": "/products/p18-arabic-cardamom-coffee-250g.jpg",
+        "name_en": "Arabic Cardamom Coffee 250g",
+        "is_active": true
+      },
+      {
+        "id": 19,
+        "store_id": 7,
+        "main_image": "/products/p19-roasted-turkish-coffee-500g.jpg",
+        "name_en": "Roasted Turkish Coffee 500g",
+        "is_active": true
+      },
+      {
+        "id": 20,
+        "store_id": 7,
+        "main_image": "/products/p20-premium-arabica-beans.jpg",
+        "name_en": "Premium Arabica Beans",
+        "is_active": true
+      },
+      {
+        "id": 21,
+        "store_id": 3,
+        "main_image": "/products/p21-saqei-dates-500g.jpg",
+        "name_en": "Saqei Dates 500g",
+        "is_active": true
+      },
+      {
+        "id": 22,
+        "store_id": 4,
+        "main_image": "/products/p22-traditional-yemeni-jambiya.jpg",
+        "name_en": "Traditional Yemeni Jambiya",
+        "is_active": true
+      },
+      {
+        "id": 23,
+        "store_id": 2,
+        "main_image": "/products/p23-premium-bakhour-badi-100g.jpg",
+        "name_en": "Premium Bakhour Badi 100g",
+        "is_active": true
+      },
+      {
+        "id": 24,
+        "store_id": 7,
+        "main_image": "/products/p24-italian-espresso-250g.jpg",
+        "name_en": "Italian Espresso 250g",
+        "is_active": true
+      }
+    ],
+    "products": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "main_image": "/products/p1-original-yemeni-sidr-honey-500g.jpg",
+        "name_en": "Original Yemeni Sidr Honey 500g",
+        "is_active": true
+      },
+      {
+        "id": 2,
+        "store_id": 1,
+        "main_image": "/products/p2-yemeni-mokha-coffee-250g.jpg",
+        "name_en": "Yemeni Mokha Coffee 250g",
+        "is_active": true
+      },
+      {
+        "id": 3,
+        "store_id": 1,
+        "main_image": "/products/p3-wild-thyme-honey-1kg.jpg",
+        "name_en": "Wild Thyme Honey 1kg",
+        "is_active": true
+      },
+      {
+        "id": 4,
+        "store_id": 3,
+        "main_image": "/products/p4-premium-majdool-dates-1kg.jpg",
+        "name_en": "Premium Majdool Dates 1kg",
+        "is_active": true
+      },
+      {
+        "id": 5,
+        "store_id": 3,
+        "main_image": "/products/p5-ajwa-madinah-dates-500g.jpg",
+        "name_en": "Ajwa Madinah Dates 500g",
+        "is_active": true
+      },
+      {
+        "id": 6,
+        "store_id": 4,
+        "main_image": "/products/p6-handmade-yemeni-palm-basket.jpg",
+        "name_en": "Handmade Yemeni Palm Basket",
+        "is_active": true
+      },
+      {
+        "id": 7,
+        "store_id": 4,
+        "main_image": "/products/p7-yemeni-silver-set.jpg",
+        "name_en": "Yemeni Silver Set",
+        "is_active": true
+      },
+      {
+        "id": 8,
+        "store_id": 4,
+        "main_image": "/products/p8-carved-wooden-incense-burner.jpg",
+        "name_en": "Carved Wooden Incense Burner",
+        "is_active": true
+      },
+      {
+        "id": 9,
+        "store_id": 2,
+        "main_image": "/products/p9-premium-malaysian-oud-incense.jpg",
+        "name_en": "Premium Cambodian Oud 100g",
+        "is_active": true
+      },
+      {
+        "id": 10,
+        "store_id": 2,
+        "main_image": "/products/p10-pure-white-musk-50ml.jpg",
+        "name_en": "Pure White Musk 50ml",
+        "is_active": true
+      },
+      {
+        "id": 11,
+        "store_id": 2,
+        "main_image": "/products/p11-original-oud-oil-25ml.jpg",
+        "name_en": "Original Oud Oil 25ml",
+        "is_active": true
+      },
+      {
+        "id": 12,
+        "store_id": 5,
+        "main_image": "/products/p12-smartphone-6-5-inch.jpg",
+        "name_en": "Smartphone 6.5 inch",
+        "is_active": true
+      },
+      {
+        "id": 13,
+        "store_id": 5,
+        "main_image": "/products/p13-tablet-10-inch.jpg",
+        "name_en": "Tablet 10 inch",
+        "is_active": true
+      },
+      {
+        "id": 14,
+        "store_id": 5,
+        "main_image": "/products/p14-wireless-bluetooth-headphones.jpg",
+        "name_en": "Wireless Bluetooth Headphones",
+        "is_active": true
+      },
+      {
+        "id": 15,
+        "store_id": 5,
+        "main_image": "/products/p15-power-bank-20000-mah.jpg",
+        "name_en": "Power Bank 20000 mAh",
+        "is_active": true
+      },
+      {
+        "id": 16,
+        "store_id": 6,
+        "main_image": "/products/p16-yemeni-black-honey-500g.jpg",
+        "name_en": "Yemeni Black Honey 500g",
+        "is_active": true
+      },
+      {
+        "id": 17,
+        "store_id": 6,
+        "main_image": "/products/p17-meadow-honey-1kg.jpg",
+        "name_en": "Meadow Honey 1kg",
+        "is_active": true
+      },
+      {
+        "id": 18,
+        "store_id": 7,
+        "main_image": "/products/p18-arabic-cardamom-coffee-250g.jpg",
+        "name_en": "Arabic Cardamom Coffee 250g",
+        "is_active": true
+      },
+      {
+        "id": 19,
+        "store_id": 7,
+        "main_image": "/products/p19-roasted-turkish-coffee-500g.jpg",
+        "name_en": "Roasted Turkish Coffee 500g",
+        "is_active": true
+      },
+      {
+        "id": 20,
+        "store_id": 7,
+        "main_image": "/products/p20-premium-arabica-beans.jpg",
+        "name_en": "Premium Arabica Beans",
+        "is_active": true
+      },
+      {
+        "id": 21,
+        "store_id": 3,
+        "main_image": "/products/p21-saqei-dates-500g.jpg",
+        "name_en": "Saqei Dates 500g",
+        "is_active": true
+      },
+      {
+        "id": 22,
+        "store_id": 4,
+        "main_image": "/products/p22-traditional-yemeni-jambiya.jpg",
+        "name_en": "Traditional Yemeni Jambiya",
+        "is_active": true
+      },
+      {
+        "id": 23,
+        "store_id": 2,
+        "main_image": "/products/p23-premium-bakhour-badi-100g.jpg",
+        "name_en": "Premium Bakhour Badi 100g",
+        "is_active": true
+      },
+      {
+        "id": 24,
+        "store_id": 7,
+        "main_image": "/products/p24-italian-espresso-250g.jpg",
+        "name_en": "Italian Espresso 250g",
+        "is_active": true
+      }
+    ],
+    "orders": [
+      {
+        "id": 1,
+        "order_number": "NOF-2026-0001",
+        "customer_id": 2,
+        "store_id": 1,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE1234567890",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-09T01:16:08.475Z",
+        "delivered_at": "2026-07-12T01:16:08.475Z"
+      },
+      {
+        "id": 2,
+        "order_number": "NOF-2026-0002",
+        "customer_id": 2,
+        "store_id": 3,
+        "status": "shipped",
+        "payment_status": "pending",
+        "tracking_number": "YE0987654321",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-16T01:16:08.475Z",
+        "delivered_at": null
+      },
+      {
+        "id": 3,
+        "order_number": "NOF-2026-0003",
+        "customer_id": 3,
+        "store_id": 2,
+        "status": "processing",
+        "payment_status": "paid",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      },
+      {
+        "id": 4,
+        "order_number": "NOF-2026-0004",
+        "customer_id": 3,
+        "store_id": 7,
+        "status": "pending",
+        "payment_status": "pending",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      },
+      {
+        "id": 5,
+        "order_number": "NOF-2026-0005",
+        "customer_id": 4,
+        "store_id": 5,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE1122334455",
+        "shipping_company": "Aramex",
+        "estimated_delivery": "2026-07-06T01:16:08.475Z",
+        "delivered_at": "2026-07-10T01:16:08.475Z"
+      },
+      {
+        "id": 6,
+        "order_number": "NOF-2026-0006",
+        "customer_id": 2,
+        "store_id": 4,
+        "status": "confirmed",
+        "payment_status": "paid",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      },
+      {
+        "id": 7,
+        "order_number": "NOF-2026-0007",
+        "customer_id": 3,
+        "store_id": 1,
+        "status": "cancelled",
+        "payment_status": "failed",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      },
+      {
+        "id": 8,
+        "order_number": "NOF-2026-0008",
+        "customer_id": 4,
+        "store_id": 7,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE5566778899",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-08T01:16:08.475Z",
+        "delivered_at": "2026-07-11T01:16:08.475Z"
+      }
+    ],
+    "coupons": [
+      {
+        "id": 1,
+        "code": "WELCOME10",
+        "is_active": true,
+        "starts_at": "2026-07-13T01:16:08.475Z",
+        "expires_at": "2026-08-13T01:16:08.475Z"
+      },
+      {
+        "id": 2,
+        "code": "FREESHIP",
+        "is_active": true,
+        "starts_at": "2026-07-07T01:16:08.475Z",
+        "expires_at": "2026-10-12T01:16:08.475Z"
+      },
+      {
+        "id": 3,
+        "code": "YEMEN25",
+        "is_active": true,
+        "starts_at": "2026-06-14T01:16:08.475Z",
+        "expires_at": "2026-09-12T01:16:08.475Z"
+      },
+      {
+        "id": 4,
+        "code": "SPICE20",
+        "is_active": true,
+        "starts_at": "2026-06-30T01:16:08.475Z",
+        "expires_at": "2026-08-13T01:16:08.475Z"
+      }
+    ]
+  },
+  "relations": {
+    "addresses": [
+      {
+        "id": 1,
+        "user_id": 2
+      },
+      {
+        "id": 2,
+        "user_id": 2
+      },
+      {
+        "id": 3,
+        "user_id": 3
+      },
+      {
+        "id": 4,
+        "user_id": 3
+      },
+      {
+        "id": 5,
+        "user_id": 4
+      },
+      {
+        "id": 6,
+        "user_id": 7
+      },
+      {
+        "id": 7,
+        "user_id": 7
+      },
+      {
+        "id": 8,
+        "user_id": 7
+      },
+      {
+        "id": 9,
+        "user_id": 7
+      },
+      {
+        "id": 10,
+        "user_id": 7
+      },
+      {
+        "id": 11,
+        "user_id": 7
+      },
+      {
+        "id": 12,
+        "user_id": 7
+      },
+      {
+        "id": 13,
+        "user_id": 7
+      },
+      {
+        "id": 14,
+        "user_id": 7
+      },
+      {
+        "id": 15,
+        "user_id": 7
+      },
+      {
+        "id": 16,
+        "user_id": 7
+      },
+      {
+        "id": 17,
+        "user_id": 7
+      },
+      {
+        "id": 18,
+        "user_id": 7
+      },
+      {
+        "id": 19,
+        "user_id": 7
+      },
+      {
+        "id": 20,
+        "user_id": 7
+      },
+      {
+        "id": 21,
+        "user_id": 7
+      },
+      {
+        "id": 22,
+        "user_id": 7
+      },
+      {
+        "id": 23,
+        "user_id": 7
+      },
+      {
+        "id": 24,
+        "user_id": 7
+      },
+      {
+        "id": 25,
+        "user_id": 7
+      },
+      {
+        "id": 26,
+        "user_id": 7
+      },
+      {
+        "id": 27,
+        "user_id": 7
+      },
+      {
+        "id": 28,
+        "user_id": 7
+      },
+      {
+        "id": 29,
+        "user_id": 7
+      },
+      {
+        "id": 30,
+        "user_id": 7
+      },
+      {
+        "id": 31,
+        "user_id": 7
+      },
+      {
+        "id": 32,
+        "user_id": 7
+      },
+      {
+        "id": 33,
+        "user_id": 7
+      },
+      {
+        "id": 34,
+        "user_id": 7
+      },
+      {
+        "id": 35,
+        "user_id": 7
+      },
+      {
+        "id": 36,
+        "user_id": 7
+      },
+      {
+        "id": 37,
+        "user_id": 7
+      },
+      {
+        "id": 38,
+        "user_id": 7
+      },
+      {
+        "id": 39,
+        "user_id": 7
+      },
+      {
+        "id": 40,
+        "user_id": 7
+      },
+      {
+        "id": 41,
+        "user_id": 7
+      },
+      {
+        "id": 42,
+        "user_id": 7
+      },
+      {
+        "id": 43,
+        "user_id": 7
+      },
+      {
+        "id": 44,
+        "user_id": 7
+      },
+      {
+        "id": 45,
+        "user_id": 7
+      },
+      {
+        "id": 46,
+        "user_id": 7
+      },
+      {
+        "id": 47,
+        "user_id": 7
+      },
+      {
+        "id": 48,
+        "user_id": 7
+      },
+      {
+        "id": 49,
+        "user_id": 7
+      },
+      {
+        "id": 50,
+        "user_id": 7
+      },
+      {
+        "id": 51,
+        "user_id": 7
+      },
+      {
+        "id": 52,
+        "user_id": 7
+      },
+      {
+        "id": 53,
+        "user_id": 7
+      },
+      {
+        "id": 54,
+        "user_id": 7
+      },
+      {
+        "id": 55,
+        "user_id": 7
+      },
+      {
+        "id": 56,
+        "user_id": 7
+      },
+      {
+        "id": 57,
+        "user_id": 7
+      },
+      {
+        "id": 58,
+        "user_id": 7
+      },
+      {
+        "id": 59,
+        "user_id": 7
+      },
+      {
+        "id": 60,
+        "user_id": 7
+      },
+      {
+        "id": 61,
+        "user_id": 7
+      },
+      {
+        "id": 62,
+        "user_id": 7
+      },
+      {
+        "id": 63,
+        "user_id": 7
+      },
+      {
+        "id": 64,
+        "user_id": 7
+      },
+      {
+        "id": 65,
+        "user_id": 7
+      },
+      {
+        "id": 66,
+        "user_id": 7
+      },
+      {
+        "id": 67,
+        "user_id": 7
+      },
+      {
+        "id": 68,
+        "user_id": 7
+      },
+      {
+        "id": 69,
+        "user_id": 7
+      },
+      {
+        "id": 70,
+        "user_id": 7
+      },
+      {
+        "id": 71,
+        "user_id": 7
+      },
+      {
+        "id": 72,
+        "user_id": 7
+      },
+      {
+        "id": 73,
+        "user_id": 7
+      },
+      {
+        "id": 74,
+        "user_id": 7
+      },
+      {
+        "id": 75,
+        "user_id": 7
+      },
+      {
+        "id": 76,
+        "user_id": 7
+      },
+      {
+        "id": 77,
+        "user_id": 7
+      },
+      {
+        "id": 78,
+        "user_id": 7
+      },
+      {
+        "id": 79,
+        "user_id": 7
+      },
+      {
+        "id": 80,
+        "user_id": 7
+      },
+      {
+        "id": 81,
+        "user_id": 7
+      },
+      {
+        "id": 82,
+        "user_id": 7
+      },
+      {
+        "id": 83,
+        "user_id": 7
+      },
+      {
+        "id": 84,
+        "user_id": 7
+      },
+      {
+        "id": 85,
+        "user_id": 7
+      },
+      {
+        "id": 86,
+        "user_id": 7
+      },
+      {
+        "id": 87,
+        "user_id": 7
+      },
+      {
+        "id": 88,
+        "user_id": 7
+      },
+      {
+        "id": 89,
+        "user_id": 7
+      },
+      {
+        "id": 90,
+        "user_id": 7
+      },
+      {
+        "id": 91,
+        "user_id": 7
+      },
+      {
+        "id": 92,
+        "user_id": 7
+      },
+      {
+        "id": 93,
+        "user_id": 7
+      },
+      {
+        "id": 94,
+        "user_id": 7
+      },
+      {
+        "id": 95,
+        "user_id": 7
+      }
+    ],
+    "delivery_agents": [
+      {
+        "id": 1,
+        "user_id": 11,
+        "status": "active"
+      },
+      {
+        "id": 2,
+        "user_id": 12,
+        "status": "active"
+      },
+      {
+        "id": 3,
+        "user_id": 13,
+        "status": "offline"
+      }
+    ],
+    "products_in_demo_stores": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "main_image": "/products/p1-original-yemeni-sidr-honey-500g.jpg",
+        "name_en": "Original Yemeni Sidr Honey 500g",
+        "is_active": true
+      },
+      {
+        "id": 2,
+        "store_id": 1,
+        "main_image": "/products/p2-yemeni-mokha-coffee-250g.jpg",
+        "name_en": "Yemeni Mokha Coffee 250g",
+        "is_active": true
+      },
+      {
+        "id": 3,
+        "store_id": 1,
+        "main_image": "/products/p3-wild-thyme-honey-1kg.jpg",
+        "name_en": "Wild Thyme Honey 1kg",
+        "is_active": true
+      },
+      {
+        "id": 4,
+        "store_id": 3,
+        "main_image": "/products/p4-premium-majdool-dates-1kg.jpg",
+        "name_en": "Premium Majdool Dates 1kg",
+        "is_active": true
+      },
+      {
+        "id": 5,
+        "store_id": 3,
+        "main_image": "/products/p5-ajwa-madinah-dates-500g.jpg",
+        "name_en": "Ajwa Madinah Dates 500g",
+        "is_active": true
+      },
+      {
+        "id": 6,
+        "store_id": 4,
+        "main_image": "/products/p6-handmade-yemeni-palm-basket.jpg",
+        "name_en": "Handmade Yemeni Palm Basket",
+        "is_active": true
+      },
+      {
+        "id": 7,
+        "store_id": 4,
+        "main_image": "/products/p7-yemeni-silver-set.jpg",
+        "name_en": "Yemeni Silver Set",
+        "is_active": true
+      },
+      {
+        "id": 8,
+        "store_id": 4,
+        "main_image": "/products/p8-carved-wooden-incense-burner.jpg",
+        "name_en": "Carved Wooden Incense Burner",
+        "is_active": true
+      },
+      {
+        "id": 9,
+        "store_id": 2,
+        "main_image": "/products/p9-premium-malaysian-oud-incense.jpg",
+        "name_en": "Premium Cambodian Oud 100g",
+        "is_active": true
+      },
+      {
+        "id": 10,
+        "store_id": 2,
+        "main_image": "/products/p10-pure-white-musk-50ml.jpg",
+        "name_en": "Pure White Musk 50ml",
+        "is_active": true
+      },
+      {
+        "id": 11,
+        "store_id": 2,
+        "main_image": "/products/p11-original-oud-oil-25ml.jpg",
+        "name_en": "Original Oud Oil 25ml",
+        "is_active": true
+      },
+      {
+        "id": 12,
+        "store_id": 5,
+        "main_image": "/products/p12-smartphone-6-5-inch.jpg",
+        "name_en": "Smartphone 6.5 inch",
+        "is_active": true
+      },
+      {
+        "id": 13,
+        "store_id": 5,
+        "main_image": "/products/p13-tablet-10-inch.jpg",
+        "name_en": "Tablet 10 inch",
+        "is_active": true
+      },
+      {
+        "id": 14,
+        "store_id": 5,
+        "main_image": "/products/p14-wireless-bluetooth-headphones.jpg",
+        "name_en": "Wireless Bluetooth Headphones",
+        "is_active": true
+      },
+      {
+        "id": 15,
+        "store_id": 5,
+        "main_image": "/products/p15-power-bank-20000-mah.jpg",
+        "name_en": "Power Bank 20000 mAh",
+        "is_active": true
+      },
+      {
+        "id": 16,
+        "store_id": 6,
+        "main_image": "/products/p16-yemeni-black-honey-500g.jpg",
+        "name_en": "Yemeni Black Honey 500g",
+        "is_active": true
+      },
+      {
+        "id": 17,
+        "store_id": 6,
+        "main_image": "/products/p17-meadow-honey-1kg.jpg",
+        "name_en": "Meadow Honey 1kg",
+        "is_active": true
+      },
+      {
+        "id": 18,
+        "store_id": 7,
+        "main_image": "/products/p18-arabic-cardamom-coffee-250g.jpg",
+        "name_en": "Arabic Cardamom Coffee 250g",
+        "is_active": true
+      },
+      {
+        "id": 19,
+        "store_id": 7,
+        "main_image": "/products/p19-roasted-turkish-coffee-500g.jpg",
+        "name_en": "Roasted Turkish Coffee 500g",
+        "is_active": true
+      },
+      {
+        "id": 20,
+        "store_id": 7,
+        "main_image": "/products/p20-premium-arabica-beans.jpg",
+        "name_en": "Premium Arabica Beans",
+        "is_active": true
+      },
+      {
+        "id": 21,
+        "store_id": 3,
+        "main_image": "/products/p21-saqei-dates-500g.jpg",
+        "name_en": "Saqei Dates 500g",
+        "is_active": true
+      },
+      {
+        "id": 22,
+        "store_id": 4,
+        "main_image": "/products/p22-traditional-yemeni-jambiya.jpg",
+        "name_en": "Traditional Yemeni Jambiya",
+        "is_active": true
+      },
+      {
+        "id": 23,
+        "store_id": 2,
+        "main_image": "/products/p23-premium-bakhour-badi-100g.jpg",
+        "name_en": "Premium Bakhour Badi 100g",
+        "is_active": true
+      },
+      {
+        "id": 24,
+        "store_id": 7,
+        "main_image": "/products/p24-italian-espresso-250g.jpg",
+        "name_en": "Italian Espresso 250g",
+        "is_active": true
+      }
+    ],
+    "product_images": [],
+    "product_variants": [],
+    "order_items": [
+      {
+        "id": 1,
+        "order_id": 1,
+        "product_id": 1
+      },
+      {
+        "id": 2,
+        "order_id": 1,
+        "product_id": 2
+      },
+      {
+        "id": 3,
+        "order_id": 2,
+        "product_id": 4
+      },
+      {
+        "id": 4,
+        "order_id": 3,
+        "product_id": 9
+      },
+      {
+        "id": 5,
+        "order_id": 4,
+        "product_id": 18
+      },
+      {
+        "id": 6,
+        "order_id": 5,
+        "product_id": 12
+      },
+      {
+        "id": 7,
+        "order_id": 6,
+        "product_id": 7
+      },
+      {
+        "id": 8,
+        "order_id": 7,
+        "product_id": 1
+      },
+      {
+        "id": 9,
+        "order_id": 8,
+        "product_id": 19
+      }
+    ],
+    "reviews": [
+      {
+        "id": 1,
+        "product_id": 1,
+        "store_id": 1,
+        "customer_id": 2,
+        "order_id": 1
+      },
+      {
+        "id": 2,
+        "product_id": 1,
+        "store_id": 1,
+        "customer_id": 3,
+        "order_id": 3
+      },
+      {
+        "id": 3,
+        "product_id": 2,
+        "store_id": 1,
+        "customer_id": 2,
+        "order_id": 1
+      },
+      {
+        "id": 4,
+        "product_id": 4,
+        "store_id": 3,
+        "customer_id": 3,
+        "order_id": null
+      },
+      {
+        "id": 5,
+        "product_id": 5,
+        "store_id": 3,
+        "customer_id": 2,
+        "order_id": null
+      },
+      {
+        "id": 6,
+        "product_id": 9,
+        "store_id": 2,
+        "customer_id": 3,
+        "order_id": 3
+      },
+      {
+        "id": 7,
+        "product_id": 10,
+        "store_id": 2,
+        "customer_id": 2,
+        "order_id": null
+      },
+      {
+        "id": 8,
+        "product_id": 12,
+        "store_id": 5,
+        "customer_id": 4,
+        "order_id": 5
+      },
+      {
+        "id": 9,
+        "product_id": 14,
+        "store_id": 5,
+        "customer_id": 2,
+        "order_id": null
+      },
+      {
+        "id": 10,
+        "product_id": 19,
+        "store_id": 7,
+        "customer_id": 4,
+        "order_id": 8
+      },
+      {
+        "id": 14,
+        "product_id": 1,
+        "store_id": 1,
+        "customer_id": 7,
+        "order_id": null
+      }
+    ],
+    "store_followers": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "user_id": 2
+      },
+      {
+        "id": 2,
+        "store_id": 1,
+        "user_id": 3
+      },
+      {
+        "id": 3,
+        "store_id": 2,
+        "user_id": 2
+      },
+      {
+        "id": 4,
+        "store_id": 3,
+        "user_id": 3
+      },
+      {
+        "id": 5,
+        "store_id": 4,
+        "user_id": 4
+      },
+      {
+        "id": 6,
+        "store_id": 5,
+        "user_id": 2
+      },
+      {
+        "id": 7,
+        "store_id": 7,
+        "user_id": 3
+      },
+      {
+        "id": 8,
+        "store_id": 7,
+        "user_id": 4
+      }
+    ],
+    "wishlist": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "product_id": 5
+      },
+      {
+        "id": 2,
+        "user_id": 2,
+        "product_id": 11
+      },
+      {
+        "id": 3,
+        "user_id": 2,
+        "product_id": 22
+      },
+      {
+        "id": 4,
+        "user_id": 3,
+        "product_id": 9
+      },
+      {
+        "id": 5,
+        "user_id": 3,
+        "product_id": 11
+      },
+      {
+        "id": 6,
+        "user_id": 3,
+        "product_id": 14
+      },
+      {
+        "id": 7,
+        "user_id": 4,
+        "product_id": 15
+      },
+      {
+        "id": 8,
+        "user_id": 4,
+        "product_id": 12
+      },
+      {
+        "id": 9,
+        "user_id": 7,
+        "product_id": 1
+      },
+      {
+        "id": 10,
+        "user_id": 2,
+        "product_id": 3
+      }
+    ],
+    "cart_items": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "product_id": 3
+      },
+      {
+        "id": 2,
+        "user_id": 3,
+        "product_id": 14
+      },
+      {
+        "id": 3,
+        "user_id": 4,
+        "product_id": 8
+      },
+      {
+        "id": 81,
+        "user_id": 35,
+        "product_id": 14
+      },
+      {
+        "id": 29,
+        "user_id": 2,
+        "product_id": 1
+      },
+      {
+        "id": 31,
+        "user_id": 2,
+        "product_id": 1
+      },
+      {
+        "id": 32,
+        "user_id": 2,
+        "product_id": 1
+      },
+      {
+        "id": 33,
+        "user_id": 2,
+        "product_id": 1
+      },
+      {
+        "id": 35,
+        "user_id": 2,
+        "product_id": 1
+      },
+      {
+        "id": 36,
+        "user_id": 2,
+        "product_id": 1
+      }
+    ],
+    "messages": [
+      {
+        "id": 1,
+        "sender_id": 2,
+        "receiver_id": 5,
+        "store_id": 1
+      },
+      {
+        "id": 2,
+        "sender_id": 5,
+        "receiver_id": 2,
+        "store_id": 1
+      },
+      {
+        "id": 3,
+        "sender_id": 3,
+        "receiver_id": 6,
+        "store_id": 3
+      },
+      {
+        "id": 4,
+        "sender_id": 6,
+        "receiver_id": 3,
+        "store_id": 3
+      }
+    ],
+    "notifications": [
+      {
+        "id": 1,
+        "user_id": 2,
+        "type": "order"
+      },
+      {
+        "id": 2,
+        "user_id": 2,
+        "type": "order"
+      },
+      {
+        "id": 3,
+        "user_id": 2,
+        "type": "order"
+      },
+      {
+        "id": 4,
+        "user_id": 3,
+        "type": "order"
+      },
+      {
+        "id": 5,
+        "user_id": 3,
+        "type": "promo"
+      },
+      {
+        "id": 6,
+        "user_id": 4,
+        "type": "order"
+      },
+      {
+        "id": 7,
+        "user_id": 3,
+        "type": "refund"
+      },
+      {
+        "id": 8,
+        "user_id": 4,
+        "type": "system"
+      },
+      {
+        "id": 10,
+        "user_id": 5,
+        "type": "review"
+      }
+    ],
+    "disputes": [
+      {
+        "id": 1,
+        "order_id": 7,
+        "customer_id": 3,
+        "store_id": 1,
+        "status": "investigating"
+      }
+    ],
+    "coupon_usage": [
+      {
+        "id": 1,
+        "coupon_id": 1,
+        "user_id": 4,
+        "order_id": 5
+      },
+      {
+        "id": 2,
+        "coupon_id": 2,
+        "user_id": 3,
+        "order_id": 4
+      }
+    ],
+    "subscriptions": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "status": "active"
+      },
+      {
+        "id": 2,
+        "store_id": 2,
+        "status": "active"
+      },
+      {
+        "id": 3,
+        "store_id": 3,
+        "status": "active"
+      },
+      {
+        "id": 4,
+        "store_id": 4,
+        "status": "active"
+      },
+      {
+        "id": 5,
+        "store_id": 5,
+        "status": "active"
+      },
+      {
+        "id": 6,
+        "store_id": 6,
+        "status": "active"
+      },
+      {
+        "id": 7,
+        "store_id": 7,
+        "status": "active"
+      }
+    ],
+    "admin_audit_log": [
+      {
+        "id": 6,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 7,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 8,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 9,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 10,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 11,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 12,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 13,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 14,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 15,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 16,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 17,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 18,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 19,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 20,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 21,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 22,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 23,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 24,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 25,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 26,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 27,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 28,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 29,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 30,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 31,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 32,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 33,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 34,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 36,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 37,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 38,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 39,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 40,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 41,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 42,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 43,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 44,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 45,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 46,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 47,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 48,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 49,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 50,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 51,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 52,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 53,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 54,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 55,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 56,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 57,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 58,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 59,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 60,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 61,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 62,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 63,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 64,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 65,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 66,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 67,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 68,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 69,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 70,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 71,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 72,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 73,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 74,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 75,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 76,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 77,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 78,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 79,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 80,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 81,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 82,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 83,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 84,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 85,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 86,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 87,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 88,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 89,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 90,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 91,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 92,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 93,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 94,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 95,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 96,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 97,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 98,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 99,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      },
+      {
+        "id": 100,
+        "user_id": 7,
+        "action": "change_password",
+        "entity_type": "user",
+        "entity_id": "7"
+      }
+    ],
+    "store_balance": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "available": "250000.00",
+        "pending": "35000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 2,
+        "store_id": 2,
+        "available": "180000.00",
+        "pending": "22000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 3,
+        "store_id": 3,
+        "available": "320000.00",
+        "pending": "45000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 4,
+        "store_id": 4,
+        "available": "95000.00",
+        "pending": "12000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 5,
+        "store_id": 5,
+        "available": "150000.00",
+        "pending": "28000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 6,
+        "store_id": 6,
+        "available": "75000.00",
+        "pending": "8000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 7,
+        "store_id": 7,
+        "available": "420000.00",
+        "pending": "65000.00",
+        "currency": "YER"
+      }
+    ],
+    "payments": [
+      {
+        "id": 1,
+        "order_id": 1,
+        "user_id": 2,
+        "status": "completed",
+        "amount": "13700.00",
+        "currency": "YER",
+        "provider_txn_id": null
+      },
+      {
+        "id": 2,
+        "order_id": 3,
+        "user_id": 3,
+        "status": "completed",
+        "amount": "26000.00",
+        "currency": "YER",
+        "provider_txn_id": "pi_3MxxxDemo0001"
+      },
+      {
+        "id": 3,
+        "order_id": 5,
+        "user_id": 4,
+        "status": "completed",
+        "amount": "78000.00",
+        "currency": "YER",
+        "provider_txn_id": "WALLET-TXN-0001"
+      },
+      {
+        "id": 4,
+        "order_id": 6,
+        "user_id": 2,
+        "status": "completed",
+        "amount": "16000.00",
+        "currency": "YER",
+        "provider_txn_id": "BANK-TXN-0001"
+      },
+      {
+        "id": 5,
+        "order_id": 8,
+        "user_id": 4,
+        "status": "completed",
+        "amount": "8000.00",
+        "currency": "YER",
+        "provider_txn_id": null
+      },
+      {
+        "id": 6,
+        "order_id": 7,
+        "user_id": 3,
+        "status": "failed",
+        "amount": "9200.00",
+        "currency": "YER",
+        "provider_txn_id": "pi_3MxxxDemo0002"
+      }
+    ],
+    "refunds": [
+      {
+        "id": 1,
+        "order_id": 7,
+        "payment_id": null,
+        "user_id": 3,
+        "status": "processed",
+        "amount": "9200.00"
+      }
+    ],
+    "transactions": [
+      {
+        "id": 1,
+        "store_id": 1,
+        "reference_type": "order",
+        "reference_id": 1,
+        "amount": "10700.00",
+        "currency": "YER"
+      },
+      {
+        "id": 2,
+        "store_id": 1,
+        "reference_type": "order",
+        "reference_id": 1,
+        "amount": "535.00",
+        "currency": "YER"
+      },
+      {
+        "id": 3,
+        "store_id": 2,
+        "reference_type": "order",
+        "reference_id": 3,
+        "amount": "26000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 4,
+        "store_id": 2,
+        "reference_type": "order",
+        "reference_id": 3,
+        "amount": "1300.00",
+        "currency": "YER"
+      },
+      {
+        "id": 5,
+        "store_id": 3,
+        "reference_type": "order",
+        "reference_id": 2,
+        "amount": "7200.00",
+        "currency": "YER"
+      },
+      {
+        "id": 6,
+        "store_id": 3,
+        "reference_type": "order",
+        "reference_id": 2,
+        "amount": "360.00",
+        "currency": "YER"
+      },
+      {
+        "id": 7,
+        "store_id": 7,
+        "reference_type": "order",
+        "reference_id": 8,
+        "amount": "8000.00",
+        "currency": "YER"
+      },
+      {
+        "id": 8,
+        "store_id": 7,
+        "reference_type": "order",
+        "reference_id": 8,
+        "amount": "400.00",
+        "currency": "YER"
+      }
+    ],
+    "delivery_agent_assignments": []
+  },
+  "unexpected": {
+    "stores": [],
+    "products": [],
+    "orders": []
+  },
+  "blockers": [
+    {
+      "reason": "payment status",
+      "row": {
+        "id": 1,
+        "order_number": "NOF-2026-0001",
+        "customer_id": 2,
+        "store_id": 1,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE1234567890",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-09T01:16:08.475Z",
+        "delivered_at": "2026-07-12T01:16:08.475Z"
+      }
+    },
+    {
+      "reason": "shipment fields",
+      "row": {
+        "id": 1,
+        "order_number": "NOF-2026-0001",
+        "customer_id": 2,
+        "store_id": 1,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE1234567890",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-09T01:16:08.475Z",
+        "delivered_at": "2026-07-12T01:16:08.475Z"
+      }
+    },
+    {
+      "reason": "shipment fields",
+      "row": {
+        "id": 2,
+        "order_number": "NOF-2026-0002",
+        "customer_id": 2,
+        "store_id": 3,
+        "status": "shipped",
+        "payment_status": "pending",
+        "tracking_number": "YE0987654321",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-16T01:16:08.475Z",
+        "delivered_at": null
+      }
+    },
+    {
+      "reason": "payment status",
+      "row": {
+        "id": 3,
+        "order_number": "NOF-2026-0003",
+        "customer_id": 3,
+        "store_id": 2,
+        "status": "processing",
+        "payment_status": "paid",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      }
+    },
+    {
+      "reason": "payment status",
+      "row": {
+        "id": 5,
+        "order_number": "NOF-2026-0005",
+        "customer_id": 4,
+        "store_id": 5,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE1122334455",
+        "shipping_company": "Aramex",
+        "estimated_delivery": "2026-07-06T01:16:08.475Z",
+        "delivered_at": "2026-07-10T01:16:08.475Z"
+      }
+    },
+    {
+      "reason": "shipment fields",
+      "row": {
+        "id": 5,
+        "order_number": "NOF-2026-0005",
+        "customer_id": 4,
+        "store_id": 5,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE1122334455",
+        "shipping_company": "Aramex",
+        "estimated_delivery": "2026-07-06T01:16:08.475Z",
+        "delivered_at": "2026-07-10T01:16:08.475Z"
+      }
+    },
+    {
+      "reason": "payment status",
+      "row": {
+        "id": 6,
+        "order_number": "NOF-2026-0006",
+        "customer_id": 2,
+        "store_id": 4,
+        "status": "confirmed",
+        "payment_status": "paid",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      }
+    },
+    {
+      "reason": "payment status",
+      "row": {
+        "id": 7,
+        "order_number": "NOF-2026-0007",
+        "customer_id": 3,
+        "store_id": 1,
+        "status": "cancelled",
+        "payment_status": "failed",
+        "tracking_number": null,
+        "shipping_company": null,
+        "estimated_delivery": null,
+        "delivered_at": null
+      }
+    },
+    {
+      "reason": "payment status",
+      "row": {
+        "id": 8,
+        "order_number": "NOF-2026-0008",
+        "customer_id": 4,
+        "store_id": 7,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE5566778899",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-08T01:16:08.475Z",
+        "delivered_at": "2026-07-11T01:16:08.475Z"
+      }
+    },
+    {
+      "reason": "shipment fields",
+      "row": {
+        "id": 8,
+        "order_number": "NOF-2026-0008",
+        "customer_id": 4,
+        "store_id": 7,
+        "status": "delivered",
+        "payment_status": "paid",
+        "tracking_number": "YE5566778899",
+        "shipping_company": "Yemen Post",
+        "estimated_delivery": "2026-07-08T01:16:08.475Z",
+        "delivered_at": "2026-07-11T01:16:08.475Z"
+      }
+    },
+    {
+      "reason": "payments",
+      "rows": [
+        {
+          "id": 1,
+          "order_id": 1,
+          "user_id": 2,
+          "status": "completed",
+          "amount": "13700.00",
+          "currency": "YER",
+          "provider_txn_id": null
+        },
+        {
+          "id": 2,
+          "order_id": 3,
+          "user_id": 3,
+          "status": "completed",
+          "amount": "26000.00",
+          "currency": "YER",
+          "provider_txn_id": "pi_3MxxxDemo0001"
+        },
+        {
+          "id": 3,
+          "order_id": 5,
+          "user_id": 4,
+          "status": "completed",
+          "amount": "78000.00",
+          "currency": "YER",
+          "provider_txn_id": "WALLET-TXN-0001"
+        },
+        {
+          "id": 4,
+          "order_id": 6,
+          "user_id": 2,
+          "status": "completed",
+          "amount": "16000.00",
+          "currency": "YER",
+          "provider_txn_id": "BANK-TXN-0001"
+        },
+        {
+          "id": 5,
+          "order_id": 8,
+          "user_id": 4,
+          "status": "completed",
+          "amount": "8000.00",
+          "currency": "YER",
+          "provider_txn_id": null
+        },
+        {
+          "id": 6,
+          "order_id": 7,
+          "user_id": 3,
+          "status": "failed",
+          "amount": "9200.00",
+          "currency": "YER",
+          "provider_txn_id": "pi_3MxxxDemo0002"
+        }
+      ]
+    },
+    {
+      "reason": "refunds",
+      "rows": [
+        {
+          "id": 1,
+          "order_id": 7,
+          "payment_id": null,
+          "user_id": 3,
+          "status": "processed",
+          "amount": "9200.00"
+        }
+      ]
+    },
+    {
+      "reason": "transactions",
+      "rows": [
+        {
+          "id": 1,
+          "store_id": 1,
+          "reference_type": "order",
+          "reference_id": 1,
+          "amount": "10700.00",
+          "currency": "YER"
+        },
+        {
+          "id": 2,
+          "store_id": 1,
+          "reference_type": "order",
+          "reference_id": 1,
+          "amount": "535.00",
+          "currency": "YER"
+        },
+        {
+          "id": 3,
+          "store_id": 2,
+          "reference_type": "order",
+          "reference_id": 3,
+          "amount": "26000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 4,
+          "store_id": 2,
+          "reference_type": "order",
+          "reference_id": 3,
+          "amount": "1300.00",
+          "currency": "YER"
+        },
+        {
+          "id": 5,
+          "store_id": 3,
+          "reference_type": "order",
+          "reference_id": 2,
+          "amount": "7200.00",
+          "currency": "YER"
+        },
+        {
+          "id": 6,
+          "store_id": 3,
+          "reference_type": "order",
+          "reference_id": 2,
+          "amount": "360.00",
+          "currency": "YER"
+        },
+        {
+          "id": 7,
+          "store_id": 7,
+          "reference_type": "order",
+          "reference_id": 8,
+          "amount": "8000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 8,
+          "store_id": 7,
+          "reference_type": "order",
+          "reference_id": 8,
+          "amount": "400.00",
+          "currency": "YER"
+        }
+      ]
+    },
+    {
+      "reason": "store_balance",
+      "rows": [
+        {
+          "id": 1,
+          "store_id": 1,
+          "available": "250000.00",
+          "pending": "35000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 2,
+          "store_id": 2,
+          "available": "180000.00",
+          "pending": "22000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 3,
+          "store_id": 3,
+          "available": "320000.00",
+          "pending": "45000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 4,
+          "store_id": 4,
+          "available": "95000.00",
+          "pending": "12000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 5,
+          "store_id": 5,
+          "available": "150000.00",
+          "pending": "28000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 6,
+          "store_id": 6,
+          "available": "75000.00",
+          "pending": "8000.00",
+          "currency": "YER"
+        },
+        {
+          "id": 7,
+          "store_id": 7,
+          "available": "420000.00",
+          "pending": "65000.00",
+          "currency": "YER"
+        }
+      ]
+    }
+  ]
+}

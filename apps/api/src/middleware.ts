@@ -824,6 +824,73 @@ export const requireRole = (...allowed: AuthRole[]): RequestHandler => {
 	};
 };
 
+// R-SUPER-FINAL: 2FA-enrolment gate (inline — see comment below).
+//
+// Implemented inline (not re-exported from routes/auth-2fa.ts) to
+// avoid the import cycle:
+//   routes/auth-2fa.ts → lib/shared.ts → middleware.ts → routes/auth-2fa.ts
+//
+// The canonical export is the one defined right below in this
+// file. The duplicate in routes/auth-2fa.ts is kept for backwards
+// compat with existing imports but is no longer re-exported here.
+async function load2faStateInline(
+	userId: number,
+): Promise<
+	| { ok: true; totp_enabled_at: Date | null }
+	| { ok: false; reason: string }
+> {
+	const row = (await pgDb
+		.prepare(
+			`SELECT
+				require_2fa_enrollment,
+				(totp_enabled_at IS NOT NULL) AS totp_confirmed
+			 FROM users WHERE id = ? AND deleted_at IS NULL`,
+		)
+		.get(userId)) as
+		| { require_2fa_enrollment: boolean; totp_confirmed: boolean | null }
+		| undefined;
+	if (!row) return { ok: false, reason: 'user_not_found' };
+	if (!row.require_2fa_enrollment) {
+		return { ok: true, totp_enabled_at: null };
+	}
+	if (row.totp_confirmed) {
+		return { ok: true as const, totp_enabled_at: new Date() };
+	}
+	return { ok: false as const, reason: 'totp_not_enrolled' };
+}
+
+export const require2faEnrollment: RequestHandler = async (req, res, next) => {
+	try {
+		if (!req.user) {
+			return res.status(401).json({
+				success: false,
+				error: 'Authentication required.',
+				code: 'AUTH_REQUIRED',
+				request_id: req.id,
+			});
+		}
+		const state = await load2faStateInline(req.user.id);
+		if (!state.ok) {
+			log.warn({
+				msg: 'admin_blocked_2fa_not_enrolled',
+				user_id: req.user.id,
+				role: req.user.role,
+			});
+			return res.status(403).json({
+				success: false,
+				error:
+					'2FA enrolment required. Complete setup at /api/auth/2fa/enable ' +
+					'before accessing admin endpoints.',
+				code: 'TWO_FA_ENROLMENT_REQUIRED',
+				request_id: req.id,
+			});
+		}
+		next();
+	} catch (err) {
+		sendError(res, err);
+	}
+};
+
 // =========================================================================
 // 6b. Health-endpoint rate limiter (in-memory, no DB dependency)
 //

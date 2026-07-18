@@ -12,7 +12,7 @@ const {
 	DEMO_COUPON_CODES,
 } = require('./demo-signatures.cjs');
 
-dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env'), quiet: true, debug: false });
 
 function resolveDatabaseUrl() {
 	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
@@ -33,6 +33,7 @@ async function rows(client, sql, params = []) {
 }
 
 async function collectReport(client) {
+	await client.query('SET TRANSACTION READ ONLY');
 	const available = {};
 	for (const table of [
 		'users',
@@ -186,11 +187,12 @@ async function collectReport(client) {
 	await relation('disputes', 'disputes', 'SELECT id, order_id, customer_id, store_id, status FROM disputes WHERE order_id = ANY($1::int[]) OR customer_id = ANY($2::int[]) OR store_id = ANY($3::int[])', [orderIds, userIds, storeIds], 'dispute relation');
 	await relation('coupon_usage', 'coupon_usage', 'SELECT id, coupon_id, user_id, order_id FROM coupon_usage WHERE coupon_id = ANY($1::int[]) OR user_id = ANY($2::int[]) OR order_id = ANY($3::int[])', [couponIds, userIds, orderIds], 'coupon usage relation');
 	await relation('subscriptions', 'subscriptions', 'SELECT id, store_id, status FROM subscriptions WHERE store_id = ANY($1::int[])', [storeIds], 'subscription relation');
+	// entity_id is TEXT but we send only digits; cast to ::text on the column
 	await relation('admin_audit_log', 'admin_audit_log', 'SELECT id, user_id, action, entity_type, entity_id FROM admin_audit_log WHERE user_id = ANY($1::int[]) OR entity_id = ANY($2::text[])', [userIds, targetStoreIds.concat(targetProductIds, targetOrderIds).map(String)], 'audit log relation', true);
 	await relation('store_balance', 'store_balance', 'SELECT id, store_id, available, pending, currency FROM store_balance WHERE store_id = ANY($1::int[])', [storeIds], 'store balance relation', true);
 	await relation('payments', 'payments', 'SELECT id, order_id, user_id, status, amount, currency, provider_txn_id FROM payments WHERE order_id = ANY($1::int[]) OR user_id = ANY($2::int[])', [orderIds, userIds], 'payment relation', true);
 	await relation('refunds', 'refunds', 'SELECT id, order_id, payment_id, user_id, status, amount FROM refunds WHERE order_id = ANY($1::int[]) OR user_id = ANY($2::int[])', [orderIds, userIds], 'refund relation', true);
-	await relation('transactions', 'transactions', 'SELECT id, store_id, reference_type, reference_id, amount, currency FROM transactions WHERE store_id = ANY($1::int[]) OR reference_id = ANY($2::text[])', [storeIds, targetOrderIds.map(String)], 'financial ledger relation', true);
+	await relation('transactions', 'transactions', 'SELECT id, store_id, reference_type, reference_id, amount, currency FROM transactions WHERE store_id = ANY($1::int[]) OR reference_id = ANY($2::int[])', [storeIds, targetOrderIds], 'financial ledger relation', true);
 	await relation('shipments', 'shipments', 'SELECT * FROM shipments WHERE order_id = ANY($1::int[])', [orderIds], 'shipment relation', true);
 	await relation('invoices', 'invoices', 'SELECT * FROM invoices WHERE order_id = ANY($1::int[])', [orderIds], 'invoice relation', true);
 	await relation('delivery_agent_assignments', 'delivery_agent_assignments', 'SELECT * FROM delivery_agent_assignments WHERE order_id = ANY($1::int[]) OR agent_id IN (SELECT id FROM delivery_agents WHERE user_id = ANY($2::int[]))', [orderIds, userIds], 'delivery assignment relation', true);
@@ -217,8 +219,13 @@ async function main() {
 	const client = new Client({ connectionString: resolveDatabaseUrl() });
 	await client.connect();
 	try {
+		await client.query('BEGIN READ ONLY');
 		const report = redactReport(await collectReport(client));
+		await client.query('COMMIT');
 		console.log(JSON.stringify(report, null, 2));
+	} catch (error) {
+		await client.query('ROLLBACK').catch(() => undefined);
+		throw error;
 	} finally {
 		await client.end();
 	}

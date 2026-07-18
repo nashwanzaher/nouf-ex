@@ -17,6 +17,7 @@ import {
 	sendSuccess,
 	requireAuth,
 	requireRole,
+	require2faEnrollment,
 	validate,
 	buildUpdateSet,
 	writeAuditLog,
@@ -34,8 +35,14 @@ export const adminRouter = Router();
 
 // All admin routes require an authenticated admin. The middleware
 // chain below mirrors the role gate used in the original index.ts
-// inline routes.
-const adminAuth = [requireAuth, requireRole(...ADMIN_OPERATOR_ROLES)];
+// inline routes. R-SUPER-FINAL: add the 2FA-enrolment gate so an
+// admin who hasn't completed /api/auth/2fa/enable cannot reach
+// the privileged endpoints.
+const adminAuth = [
+	requireAuth,
+	requireRole(...ADMIN_OPERATOR_ROLES),
+	require2faEnrollment,
+];
 
 // ��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?��?
 // READ-ONLY (GET)
